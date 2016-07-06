@@ -1,0 +1,13 @@
+DDSIP_126_x64*
+DDSIP_126_x64_debug
+ddsiphelp_x64
+ddsiphelp_x64_debug
+linux.obj
+sunos.obj
+linux.debug.obj/*
+.git
+.gitignore
+Makefile*
+Manual/ddsip-man.aux
+Manual/ddsip-man.log
+Manual/ddsip-man.tex

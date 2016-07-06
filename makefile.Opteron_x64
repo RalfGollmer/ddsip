@@ -1,0 +1,97 @@
+# Makefile for gnumake on linux
+# Set OS type
+OSTYPE		:=	$(shell uname -s | tr '[A-Z]' '[a-z]')
+# for CPLEX 11.2
+#CPLEX     =/usr/local/ILOG/cplex112
+#LINUXVAR  = x86-64_debian4.0_4.1
+# for CPLEX 12.6
+CPLEX    = /opt/ibm/ILOG/CPLEX_Enterprise_Server1263/CPLEX_Studio/cplex
+LINUXVAR = x86-64_linux
+CB       = ../ConicBundle
+
+LIBTYPE   = static_pic
+
+PROCESSOR = -mtune=opteron -march=opteron -mmmx -msse -msse2 -m3dnow -m64
+
+# Directories and target
+HOME      = .
+# Source files are here
+SRCDIR    = $(HOME)
+# Object files go there
+OBJDIR    = $(SRCDIR)/$(OSTYPE).obj
+# Install here
+BINARY    = $(HOME)
+TARGET    = $(SRCDIR)/DDSIP_126_x64
+HELP      = $(SRCDIR)/ddsiphelp_x64
+
+# Compiler 
+CC = gcc
+# All warnings, Optimizing level 3
+linux.CFLAGS  =  -std=c99 -O2 -fno-strict-aliasing -Wall -Wextra -Wformat=2 -Wmissing-prototypes  $(PROCESSOR) -DCONIC_BUNDLE
+# Header files are here
+CDIRS   = -I./include -I$(CPLEX)/include/ilcplex -I$(CB)/include
+
+# Linker is g++ because of ConicBundle
+LINKER  = g++
+LIBRARIES = -lcplex -lm
+# Needed for CPLEX library
+linux.LIB = -lpthread
+linux.CBLIB = -L$(CB)/lib -lcb
+
+# Linker flags
+linux.LDFLAGS= $(PROCESSOR) -O2
+
+# Linker directories
+LDDIRS = -L./lib 
+# CPLEX library
+linux.CPLEX.LDDIR = -L$(CPLEX)/lib/$(LINUXVAR)/$(LIBTYPE)/
+
+#Objects
+OBJECTS = DDSIPmain.o DDSIPsmall.o DDSIPmem.o DDSIPread.o DDSIPrisk.o DDSIPinit.o DDSIPeev.o DDSIPterm.o DDSIPprint.o \
+			DDSIPdual.o  DDSIPub.o DDSIPlb.o DDSIPheur.o DDSIPbandb.o DDSIPchg.o DDSIPrest.o DDSIPdetequ.o
+
+#Objects with directories
+OBJSWITHDIR = $(addprefix $(OBJDIR)/,$(OBJECTS))
+
+#Rules
+#Compile
+all: $(TARGET) $(HELP)
+
+$(OBJDIR)/%.o: %.c ./include/DDSIP.h ./include/DDSIPconst.h 
+	@if [ ! -d $(OBJDIR) ]; then mkdir $(OBJDIR); fi
+	$(CC) $($(OSTYPE).CFLAGS) $(CDIRS) -c $< -o $@
+
+
+#Link
+$(TARGET): $(OBJSWITHDIR)
+	$(LINKER) $($(OSTYPE).LDFLAGS) $(LDDIRS) $($(OSTYPE).CPLEX.LDDIR) $(OBJSWITHDIR) $(LIBRARIES) $($(OSTYPE).LIB)  $($(OSTYPE).CBLIB) -o $(TARGET) 
+
+#Link statically
+static: $(OBJSWITHDIR)
+	$(LINKER) -v $($(OSTYPE).LDFLAGS) -static $(LDDIRS) $($(OSTYPE).CPLEX.LDDIR) $(OBJSWITHDIR) $(LIBRARIES) $($(OSTYPE).LIB)  $($(OSTYPE).CBLIB) -o $(TARGET).stat 
+
+$(HELP): $(SRCDIR)/DDSIPhelp.c
+	$(CC) $($(OSTYPE).CFLAGS) $(CDIRS) $(LDDIRS) $($(OSTYPE).CPLEX.LDDIR) $(SRCDIR)/DDSIPhelp.c $(LIBRARIES) $($(OSTYPE).LIB) -o $(HELP) 
+
+#Purify
+pure: $(OBJSWITHDIR)
+	purify $(LINKER) $(LDFLAGS) $(LDDIRS) $($(OSTYPE).CPLEX.LDDIR) $(OBJSWITHDIR) $(LIBRARIES) $($(OSTYPE).LIB)  $($(OSTYPE).CBLIB) \
+		-o $(TARGET) 
+
+#Install
+install:
+	@echo "Installing ..."
+	@mv $(TARGET) $(BINARY)
+
+#Clean
+clean:
+	@echo "Cleaning up ..."
+	@rm -rf $(OBJDIR) $(TARGET) $(HELP) *~ include/*~
+
+#Tarfile
+tar: 
+	@echo "Building ../DDSIP_12.6_`date +%y-%m-%d-%H%M`.tar.bz2 ..."
+	@rm -rf $(OBJDIR) *~ include/*~
+	@tar cjf ../DDSIP_12.6_`date +%y-%m-%d-%H%M`.tar.bz2 --exclude-from=./exclude .
+	@ls -ltr ../DDSIP_12.6_*.tar.bz2
+

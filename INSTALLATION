@@ -1,0 +1,28 @@
+makefile in the DDSIP directory currently is a symbolic link to makefile.debug_Core2_x64,
+which compiles for a pre-i7 Core2 processor with optimization settings.
+Set the link to a makefile with compiler options in PROCESSOR which best fit your machine
+or edit these settings accordingly.
+
+The makefiles with 'debug' in their name use no code optimization and the option '-g' for debugging purposes.
+
+DDSIP depends on installations of CPLEX and Christoph Helmberg's Conic Bundle.
+The location of these programs is defined in the makefile in three macros:
+
+CPLEX     - the loction of directory cplex in your installation
+LINUXVAR  - the name of the subdirectory under cplex/lib (which changes with installation and CPLEX version)
+
+CB        - the root directory of your installation of Conic Bundle (containing the subdirectories include and lib)
+
+The current version CB_v0.3.11.tgz produces some uninitialized reads of memory allocated within CB.
+I added an initializaton of allocated memory in the Conic Bundle code. The file Matrix/memarray.cxx
+contains the change I applied to $(CB)/Matrix/memarray.cxx.
+
+The choice for the macro MODE in the Makefile for Conic Bundle (OPTI or DEBUG) should be made according to
+the intended version of DDSIP (optimized or debug) before issuing the make command for Conic Bundle.
+
+Then call 'make' in the DDSIP directory.
+The name of the executable is set in the makefiles differently, indicating the version used.
+
+DDSIP can be compiled without usage of Conic Bundle when the macro definition -DCONIC_BUNDLE
+is deleted from your makefile. If the macro CONIC_BUNDLE is not defined, this disables all parts
+of the program depending on the Conic Bundle package.

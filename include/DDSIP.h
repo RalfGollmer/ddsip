@@ -279,7 +279,9 @@ extern "C" {
         // Stochastic cost coefficients
         double *cost;
 
-        // Indices for stochastic cost coefficients
+        // Row indices for stochastic rhs coefficients
+        int    *rhsind;
+        // Column indices for stochastic cost coefficients
         int    *costind;
         // Row indices for stochastic matrix entries
         int    *matrow;
@@ -487,6 +489,7 @@ extern "C" {
         int heurSuccess;
         int cutoff;
         cb_problemp dualProblem;
+        double correct_bounding;
     } bb_t;
 
     typedef struct
@@ -566,8 +569,8 @@ extern "C" {
 
 // DDSIP globals
 // CPLEX environement and lp pointer
-    extern CPXENVptr    env;
-    extern CPXLPptr     lp;
+    extern CPXENVptr    DDSIP_env;
+    extern CPXLPptr     DDSIP_lp;
 
     extern FILE         *DDSIP_outfile;
 

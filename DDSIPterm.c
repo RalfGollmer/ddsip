@@ -178,7 +178,7 @@ DDSIP_Continue (int *noiter, int *boundstat)
                     fprintf (outputfile, "-----------------------------------\n");
 
                     // Get all variable names
-                    (*boundstat) = CPXgetcolname (env, lp, colname, colstore, DDSIP_bb->novar * DDSIP_ln_varname, &i, 0, DDSIP_bb->novar - 1);
+                    (*boundstat) = CPXgetcolname (DDSIP_env, DDSIP_lp, colname, colstore, DDSIP_bb->novar * DDSIP_ln_varname, &i, 0, DDSIP_bb->novar - 1);
                     if (*boundstat)
                     {
                         fprintf (stderr, "ERROR: Failed to get column names (Continue)\n");

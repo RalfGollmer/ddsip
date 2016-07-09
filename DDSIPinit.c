@@ -37,24 +37,24 @@ DDSIP_SetCpxPara (const int cnt, const int * isdbl, const int * which, const dou
     int i;
     int status = 0;
 
-    status = CPXsetdefaults (env);
+    status = CPXsetdefaults (DDSIP_env);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to set default parameters\n");
         return status;
     }
     // if not changed by user, we require minimal feasibilty, optimality and integrality tolerances
-    if ((status = CPXsetdblparam (env, CPX_PARAM_EPRHS, 1e-9)))
+    if ((status = CPXsetdblparam (DDSIP_env, CPX_PARAM_EPRHS, 1e-9)))
     {
         fprintf (stderr, "ERROR: Failed to set minimal feasibility tolerance\n");
         return status;
     }
-    if ((status = CPXsetdblparam (env, CPX_PARAM_EPOPT, 1e-9)))
+    if ((status = CPXsetdblparam (DDSIP_env, CPX_PARAM_EPOPT, 1e-9)))
     {
         fprintf (stderr, "ERROR: Failed to set minimal optimality tolerance\n");
         return status;
     }
-    if ((status = CPXsetdblparam (env, CPX_PARAM_EPINT, 0.0)))
+    if ((status = CPXsetdblparam (DDSIP_env, CPX_PARAM_EPINT, 0.0)))
     {
         fprintf (stderr, "ERROR: Failed to set minimal integrality tolerance\n");
         return status;
@@ -65,11 +65,11 @@ DDSIP_SetCpxPara (const int cnt, const int * isdbl, const int * which, const dou
         for (i = 0; i < DDSIP_param->cpxno; i++)
         {
             if (DDSIP_param->cpxisdbl[i] == 1)
-                status = CPXsetdblparam (env, DDSIP_param->cpxwhich[i], DDSIP_param->cpxwhat[i]);
+                status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxwhich[i], DDSIP_param->cpxwhat[i]);
             else if (DDSIP_param->cpxisdbl[i] == 0)
-                status = CPXsetintparam (env, DDSIP_param->cpxwhich[i], floor (DDSIP_param->cpxwhat[i] + 0.1));
+                status = CPXsetintparam (DDSIP_env, DDSIP_param->cpxwhich[i], floor (DDSIP_param->cpxwhat[i] + 0.1));
             else if (DDSIP_param->cpxisdbl[i] == 3)
-                status = CPXsetlongparam (env, DDSIP_param->cpxwhich[i], floor (DDSIP_param->cpxwhat[i] + 0.1));
+                status = CPXsetlongparam (DDSIP_env, DDSIP_param->cpxwhich[i], floor (DDSIP_param->cpxwhat[i] + 0.1));
             else
             {
                 fprintf (stderr,"Error: unexpected parameter type for parameter (general) %d\n", DDSIP_param->cpxwhich[i]);
@@ -86,11 +86,11 @@ DDSIP_SetCpxPara (const int cnt, const int * isdbl, const int * which, const dou
     for (i = 0; i < cnt; i++)
     {
         if (isdbl[i] == 1)
-            status = CPXsetdblparam (env, which[i], what[i]);
+            status = CPXsetdblparam (DDSIP_env, which[i], what[i]);
         else if (isdbl[i] == 0)
-            status = CPXsetintparam (env, which[i], floor (what[i] + 0.1));
+            status = CPXsetintparam (DDSIP_env, which[i], floor (what[i] + 0.1));
         else if (isdbl[i] == 3)
-            status = CPXsetlongparam (env, which[i], floor (what[i] + 0.1));
+            status = CPXsetlongparam (DDSIP_env, which[i], floor (what[i] + 0.1));
         else
         {
             fprintf (stderr,"Error: unexpected parameter type for parameter (section) %d\n", which[i]);
@@ -105,7 +105,7 @@ DDSIP_SetCpxPara (const int cnt, const int * isdbl, const int * which, const dou
     }
     if (DDSIP_param->watchkappa)
     {
-        if ((status = CPXsetintparam (env, CPX_PARAM_MIPKAPPASTATS, DDSIP_param->watchkappa)))
+        if ((status = CPXsetintparam (DDSIP_env, CPX_PARAM_MIPKAPPASTATS, DDSIP_param->watchkappa)))
         {
             fprintf (stderr, "ERROR: Failed to set kappastats\n");
             return status;
@@ -225,23 +225,23 @@ DDSIP_InitCpxPara (void)
 
     // Some parameters need an initialization
     // Screen indicator
-    status = CPXinfointparam (env, CPX_PARAM_SCRIND, &i, NULL, NULL);
+    status = CPXinfointparam (DDSIP_env, CPX_PARAM_SCRIND, &i, NULL, NULL);
     DDSIP_param->cpxscr = i;
     DDSIP_param->cpxubscr = i;
     // Time limit
-    status = CPXinfodblparam (env, CPX_PARAM_TILIM, &tmp, NULL, NULL);
+    status = CPXinfodblparam (DDSIP_env, CPX_PARAM_TILIM, &tmp, NULL, NULL);
     DDSIP_param->cpxtime = tmp;
     DDSIP_param->cpxubtime = tmp;
     // Relative gap
-    status = CPXinfodblparam (env, CPX_PARAM_EPGAP, &tmp, NULL, NULL);
+    status = CPXinfodblparam (DDSIP_env, CPX_PARAM_EPGAP, &tmp, NULL, NULL);
     DDSIP_param->cpxgap = tmp;
     DDSIP_param->cpxubgap = tmp;
     // Node limit
-    status = CPXinfointparam (env, CPX_PARAM_NODELIM, &i, NULL, NULL);
+    status = CPXinfointparam (DDSIP_env, CPX_PARAM_NODELIM, &i, NULL, NULL);
     DDSIP_param->cpxnodelim = i;
     DDSIP_param->cpxubnodelim = i;
     // Order
-    status = CPXinfointparam (env, CPX_PARAM_MIPORDIND, &i, NULL, NULL);
+    status = CPXinfointparam (DDSIP_env, CPX_PARAM_MIPORDIND, &i, NULL, NULL);
     DDSIP_param->cpxorder = i;
 
     // save some parameters seperately
@@ -358,6 +358,7 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->secvar = DDSIP_param->secvar;
     DDSIP_bb->firstcon = DDSIP_param->firstcon;
     DDSIP_bb->seccon = DDSIP_param->seccon;
+    DDSIP_bb->correct_bounding = 0.;
 
     // Change according to risk model
     if (!DDSIP_param->riskalg && !DDSIP_param->scalarization)
@@ -571,7 +572,7 @@ DDSIP_InitStages (void)
 
     //Prepare first- and second-stage variables
     // Get all variable names
-    status = CPXgetcolname (env, lp, colname, colstore, DDSIP_bb->novar * DDSIP_ln_varname, &i, 0, DDSIP_bb->novar - 1);
+    status = CPXgetcolname (DDSIP_env, DDSIP_lp, colname, colstore, DDSIP_bb->novar * DDSIP_ln_varname, &i, 0, DDSIP_bb->novar - 1);
     if(i < 0)
     {
         fprintf (stderr, "ERROR: variable names require more storage than expected by DDSIP, missing extra storage: %d\n",-i);
@@ -579,7 +580,7 @@ DDSIP_InitStages (void)
         cnt = 0;
         for (seccnt=0; seccnt<DDSIP_bb->novar; seccnt++)
         {
-            status = CPXgetcolname (env, lp, colname, colstore, DDSIP_bb->novar * DDSIP_ln_varname, &i, seccnt, seccnt);
+            status = CPXgetcolname (DDSIP_env, DDSIP_lp, colname, colstore, DDSIP_bb->novar * DDSIP_ln_varname, &i, seccnt, seccnt);
             cnt = DDSIP_Dmax(cnt, strlen(colname[0]));
         }
         fprintf (stderr, "       maximal variable name length: %d,  reserved for each variable name: %d chars.\n", cnt, DDSIP_ln_varname-1);
@@ -591,7 +592,7 @@ DDSIP_InitStages (void)
         return status;
     }
     // Get all types
-    status = CPXgetctype (env, lp, ctype, 0, DDSIP_bb->novar - 1);
+    status = CPXgetctype (DDSIP_env, DDSIP_lp, ctype, 0, DDSIP_bb->novar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get variables \n");
@@ -697,7 +698,7 @@ DDSIP_InitStages (void)
     // Provisorisch
     DDSIP_bb->cost = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar, "DDSIP_bb->cost,InitStages");
 
-    status = CPXgetobj (env, lp, cost, 0, DDSIP_bb->novar - 1);
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, cost, 0, DDSIP_bb->novar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get objective (InitStages)\n");
@@ -732,7 +733,7 @@ DDSIP_AdvSolInit (void)
 
     DDSIP_bb->objbndind = INT_MIN;
     // Get all types
-    status = CPXgetctype (env, lp, ctype, 0, DDSIP_bb->novar - 1);
+    status = CPXgetctype (DDSIP_env, DDSIP_lp, ctype, 0, DDSIP_bb->novar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get variable typess \n");
@@ -790,7 +791,7 @@ DDSIP_AdvSolInit (void)
         rhs[0] = -DDSIP_infty;
 
         // Add constraint to problem
-        status = CPXnewrows (env, lp, 1, rhs, sense, NULL, NULL);
+        status = CPXnewrows (DDSIP_env, DDSIP_lp, 1, rhs, sense, NULL, NULL);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to add new constraint (BbInit) \n");
@@ -810,14 +811,14 @@ DDSIP_AdvSolInit (void)
             collist[i] = i;
         }
 
-        status = CPXgetobj (env, lp, vallist, 0, DDSIP_bb->novar - 1);
+        status = CPXgetobj (DDSIP_env, DDSIP_lp, vallist, 0, DDSIP_bb->novar - 1);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to get objective function coefficients (AdvSolInit) \n");
             return status;
         }
 
-        status = CPXchgcoeflist (env, lp, DDSIP_bb->novar, rowlist, collist, vallist);
+        status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_bb->novar, rowlist, collist, vallist);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change coefficients (AdvSolInit) \n");
@@ -854,18 +855,18 @@ DDSIP_BbInit (void)
 
     // Print infos
     // Check specifications for consistency
-    if (!(DDSIP_param->firstvar + DDSIP_param->secvar == CPXgetnumcols (env, lp)))
+    if (!(DDSIP_param->firstvar + DDSIP_param->secvar == CPXgetnumcols (DDSIP_env, DDSIP_lp)))
     {
         printf ("\nTotal no. of variables in specification file: ");
         printf ("%d (%d,%d)\n", DDSIP_param->firstvar + DDSIP_param->secvar, DDSIP_param->firstvar, DDSIP_param->secvar);
-        printf ("Total no. of variables in model file: %d\n", CPXgetnumcols (env, lp));
+        printf ("Total no. of variables in model file: %d\n", CPXgetnumcols (DDSIP_env, DDSIP_lp));
         return 121;
     }
-    else if (!(DDSIP_param->firstcon + DDSIP_param->seccon == CPXgetnumrows (env, lp)))
+    else if (!(DDSIP_param->firstcon + DDSIP_param->seccon == CPXgetnumrows (DDSIP_env, DDSIP_lp)))
     {
         printf ("\nTotal no. of constraints in specification file: ");
         printf ("%d\n", DDSIP_param->firstcon + DDSIP_param->seccon);
-        printf ("Total no. of constraints in model file: %d\n", CPXgetnumrows (env, lp));
+        printf ("Total no. of constraints in model file: %d\n", CPXgetnumrows (DDSIP_env, DDSIP_lp));
         return 121;
     }
     else
@@ -875,7 +876,7 @@ DDSIP_BbInit (void)
     }
 
     DDSIP_bb->adv_sol = NULL;
-    if (CPXgetobjsen (env, lp) == CPX_MAX)
+    if (CPXgetobjsen (DDSIP_env, DDSIP_lp) == CPX_MAX)
     {
         DDSIP_bb->novar = DDSIP_param->firstvar + DDSIP_param->secvar;
         int *index = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_bb->novar), "index(BbInit)");
@@ -883,7 +884,7 @@ DDSIP_BbInit (void)
 
         printf ("Maximization becomes minimization (objective=-1*objective).\n");
 
-        status = CPXgetobj (env, lp, value, 0, DDSIP_bb->novar - 1);
+        status = CPXgetobj (DDSIP_env, DDSIP_lp, value, 0, DDSIP_bb->novar - 1);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to get objective coefficients\n");
@@ -897,14 +898,14 @@ DDSIP_BbInit (void)
             index[i] = i;
         }
 
-        status = CPXchgobj (env, lp, DDSIP_bb->novar, index, value);
+        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_bb->novar, index, value);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change obj coefficients\n");
             return status;
         }
         // Change problem to minimization
-        CPXchgobjsen (env, lp, CPX_MIN);
+        CPXchgobjsen (DDSIP_env, DDSIP_lp, CPX_MIN);
         for (i = 0; i < DDSIP_param->firstvar + DDSIP_param->secvar + DDSIP_param->stoccost * DDSIP_param->scenarios; i++)
             if (DDSIP_data->cost[i] != 0.0)
                 DDSIP_data->cost[i] = -DDSIP_data->cost[i];
@@ -962,14 +963,14 @@ DDSIP_BbInit (void)
     // Preserve lower and upper bounds on first stage variables
     lb = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_bb->novar), "lb(AdvSolInit)");
     ub = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_bb->novar), "ub(AdvSolInit)");
-    status = CPXgetlb (env, lp, lb, 0, DDSIP_bb->novar - 1);
+    status = CPXgetlb (DDSIP_env, DDSIP_lp, lb, 0, DDSIP_bb->novar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get lower bounds \n");
         return status;
     }
 
-    status = CPXgetub (env, lp, ub, 0, DDSIP_bb->novar - 1);
+    status = CPXgetub (DDSIP_env, DDSIP_lp, ub, 0, DDSIP_bb->novar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get upper bounds \n");

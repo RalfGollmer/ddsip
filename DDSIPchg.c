@@ -45,21 +45,21 @@ DDSIP_ChgBounds (void)
         for (i = 0; i < DDSIP_bb->curbdcnt; i++)
         {
             j = index[i];
-            status = CPXgetcolname (env, lp, DDSIP_bb->name_buffer, DDSIP_bb->n_buffer, DDSIP_bb->n_buffer_len, &j, j, j);
+            status = CPXgetcolname (DDSIP_env, DDSIP_lp, DDSIP_bb->name_buffer, DDSIP_bb->n_buffer, DDSIP_bb->n_buffer_len, &j, j, j);
             if (status)
                 fprintf (stderr," Error when querying name of variable %d: %d\n",j,status);
             fprintf (DDSIP_bb->moreoutfile, "%3d  %6d  %16.14g  %16.14g   %s\n", i, index[i], DDSIP_bb->curlb[i], DDSIP_bb->curub[i], DDSIP_bb->n_buffer);
         }
     }
 
-    status = CPXchgbds (env, lp, DDSIP_bb->curbdcnt, index, DDSIP_bb->lbident, DDSIP_bb->curlb);
+    status = CPXchgbds (DDSIP_env, DDSIP_lp, DDSIP_bb->curbdcnt, index, DDSIP_bb->lbident, DDSIP_bb->curlb);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change lower bounds\n");
         return status;
     }
 
-    status = CPXchgbds (env, lp, DDSIP_bb->curbdcnt, index, DDSIP_bb->ubident, DDSIP_bb->curub);
+    status = CPXchgbds (DDSIP_env, DDSIP_lp, DDSIP_bb->curbdcnt, index, DDSIP_bb->ubident, DDSIP_bb->curub);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change upper bounds\n");
@@ -78,7 +78,7 @@ DDSIP_ChgProb (int scen)
 {
     int j, i, status = 0;
     int m = DDSIP_Imax (DDSIP_param->stocmat, DDSIP_Imax (DDSIP_param->stocrhs, DDSIP_param->stoccost));
-    int *index = (int *) DDSIP_Alloc (sizeof (int), m, "index(chgprob)");
+    //int *index = (int *) DDSIP_Alloc (sizeof (int), m, "index(chgprob)");
     char **colname;
     char *colstore;
 
@@ -115,7 +115,7 @@ DDSIP_ChgProb (int scen)
             {
                 colname = (char **) DDSIP_Alloc (sizeof (char *), (DDSIP_bb->firstvar + DDSIP_bb->secvar), "colname(Change)");
                 colstore = (char *) DDSIP_Alloc (sizeof (char), (DDSIP_bb->firstvar + DDSIP_bb->secvar) * DDSIP_ln_varname, "colstore(Change)");
-                status = CPXgetcolname (env, lp, colname, colstore,
+                status = CPXgetcolname (DDSIP_env, DDSIP_lp, colname, colstore,
                                         (DDSIP_bb->firstvar + DDSIP_bb->secvar) * DDSIP_ln_varname, &j, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
                 if (status)
                 {
@@ -189,7 +189,7 @@ DDSIP_ChgProb (int scen)
         }
 #endif
 
-        status = CPXchgobj (env, lp, DDSIP_bb->firstvar, DDSIP_bb->firstindex, cost);
+        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_bb->firstvar, DDSIP_bb->firstindex, cost);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to update objective coefficients\n");
@@ -204,7 +204,6 @@ DDSIP_ChgProb (int scen)
         {
             for (j = 0; j < DDSIP_param->stocrhs; j++)
             {
-                index[j] = DDSIP_bb->firstcon + j;
                 value[j] = 0.0;
                 for (i = 0; i < DDSIP_param->scenarios; i++)
                     value[j] += DDSIP_data->prob[i] * DDSIP_data->rhs[i * DDSIP_param->stocrhs + j];
@@ -218,12 +217,11 @@ DDSIP_ChgProb (int scen)
         {
             for (j = 0; j < DDSIP_param->stocrhs; j++)
             {
-                index[j] = DDSIP_bb->firstcon + j;
                 value[j] = DDSIP_data->rhs[scen * DDSIP_param->stocrhs + j];
             }
         }
 
-        status = CPXchgrhs (env, lp, DDSIP_param->stocrhs, index, value);
+        status = CPXchgrhs (DDSIP_env, DDSIP_lp, DDSIP_param->stocrhs, DDSIP_data->rhsind, value);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change rhs, return code %d\n", status);
@@ -257,7 +255,7 @@ DDSIP_ChgProb (int scen)
                     value[j] = DDSIP_data->cost[scen * DDSIP_param->stoccost + j];
         }
 
-        status = CPXchgobj (env, lp, DDSIP_param->stoccost, DDSIP_data->costind, value);
+        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_param->stoccost, DDSIP_data->costind, value);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change objective, return code %d\n", status);
@@ -283,7 +281,7 @@ DDSIP_ChgProb (int scen)
             for (j = 0; j < DDSIP_param->stocmat; j++)
                 value[j] = DDSIP_data->matval[scen * DDSIP_param->stocmat + j];
 
-        status = CPXchgcoeflist (env, lp, DDSIP_param->stocmat, DDSIP_data->matrow, DDSIP_data->matcol, value);
+        status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_param->stocmat, DDSIP_data->matrow, DDSIP_data->matcol, value);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change matrix, return code %d\n", status);
@@ -291,7 +289,7 @@ DDSIP_ChgProb (int scen)
         }
     }
 
-    DDSIP_Free ((void **) &(index));
+    //DDSIP_Free ((void **) &(index));
     DDSIP_Free ((void **) &(value));
     DDSIP_Free ((void **) &(cost));
     return status;

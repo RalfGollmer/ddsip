@@ -71,21 +71,21 @@ DDSIP_Alloc (int elsize, int nelem, char *name)
     }
 
     // DDSIP_Free the problem as allocated by CPXcreateprob, if necessary
-    if (lp != NULL)
+    if (DDSIP_lp != NULL)
     {
-        status = CPXfreeprob (env, &lp);
+        status = CPXfreeprob (DDSIP_env, &DDSIP_lp);
         if (status)
             printf ("ERROR: CPXfreeprob failed, error code %d\n", status);
     }
     // DDSIP_Free the CPLEX environment, if necessary
-    if (env != NULL)
+    if (DDSIP_env != NULL)
     {
-        status = CPXcloseCPLEX (&env);
+        status = CPXcloseCPLEX (&DDSIP_env);
         if (status)
         {
             char errmsg[1024];
             fprintf (stderr, "ERROR: Failed to close CPLEX environment.\n");
-            CPXgeterrorstring (env, status, errmsg);
+            CPXgeterrorstring (DDSIP_env, status, errmsg);
             printf ("%s\n", errmsg);
         }
     }
@@ -188,6 +188,11 @@ DDSIP_FreeData ()
     DDSIP_Free ((void **) &(DDSIP_param->cpxubwhat));
     DDSIP_Free ((void **) &(DDSIP_param->cpxubwhich2));
     DDSIP_Free ((void **) &(DDSIP_param->cpxubwhat2));
+    if (DDSIP_param->stocrhs)
+    {
+        DDSIP_Free ((void **) &(DDSIP_data->rhsind));
+        DDSIP_Free ((void **) &(DDSIP_data->rhs));
+    }
     if (DDSIP_param->stocmat)
     {
         DDSIP_Free ((void **) &(DDSIP_data->matval));
@@ -195,8 +200,10 @@ DDSIP_FreeData ()
         DDSIP_Free ((void **) &(DDSIP_data->matrow));
     }
     if (DDSIP_param->stoccost)
+    {
         DDSIP_Free ((void **) &(DDSIP_data->costind));
-    DDSIP_Free ((void **) &(DDSIP_data->cost));
+        DDSIP_Free ((void **) &(DDSIP_data->cost));
+    }
     if (DDSIP_param->cb)
     {
         DDSIP_Free ((void **) &(DDSIP_data->nabeg));
@@ -205,8 +212,6 @@ DDSIP_FreeData ()
         DDSIP_Free ((void **) &(DDSIP_data->naval));
     }
 
-    if (DDSIP_param->stocrhs)
-        DDSIP_Free ((void **) &(DDSIP_data->rhs));
     DDSIP_Free ((void **) &(DDSIP_data->prob));
 }
 

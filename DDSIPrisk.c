@@ -66,7 +66,7 @@ DDSIP_ExpExcess (void)
     colname[0] = & (colstore[0]);
     sprintf (colname[0], "DDSIP_v_aux_02");
 
-    status = CPXnewcols (env, lp, 1, obj, lb, ub, ctype, colname);
+    status = CPXnewcols (DDSIP_env, DDSIP_lp, 1, obj, lb, ub, ctype, colname);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to add risk variables (BbInit) \n");
@@ -84,7 +84,7 @@ DDSIP_ExpExcess (void)
     rhs[0] = -DDSIP_param->risktarget;	//0.0;
     sense[0] = 'G';
 
-    status = CPXnewrows (env, lp, 1, rhs, sense, NULL, NULL);
+    status = CPXnewrows (DDSIP_env, DDSIP_lp, 1, rhs, sense, NULL, NULL);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to add risk constraint (BbInit) \n");
@@ -94,7 +94,7 @@ DDSIP_ExpExcess (void)
     DDSIP_Free ((void **) &(sense));
 
     // New coefficients: v_i >= c x+q y_i - target
-    status = CPXgetobj (env, lp, vallist, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, vallist, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get objective coefficients\n");
@@ -112,7 +112,7 @@ DDSIP_ExpExcess (void)
     collist[i] = DDSIP_param->firstvar + DDSIP_param->secvar;
     vallist[i] = 1;
 
-    status = CPXchgcoeflist (env, lp, DDSIP_param->firstvar + DDSIP_param->secvar + 1, rowlist, collist, vallist);
+    status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar + 1, rowlist, collist, vallist);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change coefficients for risk model (RiskModel) \n");
@@ -128,7 +128,7 @@ DDSIP_ExpExcess (void)
         }
 
         // Set objective function coefficients to 0
-        status = CPXchgobj (env, lp, DDSIP_param->firstvar + DDSIP_param->secvar, collist, vallist);
+        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar, collist, vallist);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change objective coefficients (Risk model 3)\n");
@@ -175,7 +175,7 @@ DDSIP_ExcessProb (void)
     colname[0] = & (colstore[0]);
     sprintf (colname[0], "DDSIP_u02");
 
-    status = CPXnewcols (env, lp, 1, obj, lb, ub, ctype, colname);
+    status = CPXnewcols (DDSIP_env, DDSIP_lp, 1, obj, lb, ub, ctype, colname);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to add risk variables (BbInit) \n");
@@ -196,7 +196,7 @@ DDSIP_ExcessProb (void)
     rhs[0] = DDSIP_param->risktarget;
     sense[0] = 'L';
 
-    status = CPXnewrows (env, lp, 1, rhs, sense, NULL, NULL);
+    status = CPXnewrows (DDSIP_env, DDSIP_lp, 1, rhs, sense, NULL, NULL);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to add risk constraint (BbInit) \n");
@@ -211,7 +211,7 @@ DDSIP_ExcessProb (void)
     vallist = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_param->firstvar + DDSIP_param->secvar + 1), "vallist(RiskModel)");
 
     // Get objective function coefficients
-    status = CPXgetobj (env, lp, vallist, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, vallist, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get objective coefficients\n");
@@ -228,7 +228,7 @@ DDSIP_ExcessProb (void)
     collist[i] = DDSIP_param->firstvar + DDSIP_param->secvar;
     vallist[i] = -DDSIP_param->riskM;
 
-    status = CPXchgcoeflist (env, lp, DDSIP_param->firstvar + DDSIP_param->secvar + 1, rowlist, collist, vallist);
+    status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar + 1, rowlist, collist, vallist);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change coefficients for risk model (BbInit) \n");
@@ -244,7 +244,7 @@ DDSIP_ExcessProb (void)
         }
 
         // Set objective function coefficients to 0
-        status = CPXchgobj (env, lp, DDSIP_param->firstvar + DDSIP_param->secvar, collist, vallist);
+        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar, collist, vallist);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change objective coefficients (Risk model 3)\n");
@@ -291,7 +291,7 @@ DDSIP_SemDev (void)
     colname[0] = & (colstore[0]);
     sprintf (colname[0], "DDSIP_v_aux_02");
 
-    status = CPXnewcols (env, lp, 1, obj, lb, ub, ctype, colname);
+    status = CPXnewcols (DDSIP_env, DDSIP_lp, 1, obj, lb, ub, ctype, colname);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to add risk variables (SemDev) \n");
@@ -309,7 +309,7 @@ DDSIP_SemDev (void)
     rhs[0] = 0.0;
     sense[0] = 'G';
 
-    status = CPXnewrows (env, lp, 1, rhs, sense, NULL, NULL);
+    status = CPXnewrows (DDSIP_env, DDSIP_lp, 1, rhs, sense, NULL, NULL);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to add risk constraint (SemDev) \n");
@@ -319,7 +319,7 @@ DDSIP_SemDev (void)
     DDSIP_Free ((void **) &(sense));
 
     // New coefficients: v_i >= c x+q y_i
-    status = CPXgetobj (env, lp, vallist, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, vallist, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get objective coefficients\n");
@@ -337,7 +337,7 @@ DDSIP_SemDev (void)
     collist[i] = DDSIP_param->firstvar + DDSIP_param->secvar;
     vallist[i] = 1;
 
-    status = CPXchgcoeflist (env, lp, DDSIP_param->firstvar + DDSIP_param->secvar + 1, rowlist, collist, vallist);
+    status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar + 1, rowlist, collist, vallist);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change coefficients for risk model (SemDev) \n");
@@ -348,7 +348,7 @@ DDSIP_SemDev (void)
     for (i = 0; i < DDSIP_param->firstvar + DDSIP_param->secvar; i++)
         vallist[i] = (DDSIP_param->riskweight - 1) * vallist[i];
 
-    status = CPXchgobj (env, lp, DDSIP_param->firstvar + DDSIP_param->secvar, collist, vallist);
+    status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar, collist, vallist);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change objective coefficients (SemDev)\n");
@@ -384,7 +384,7 @@ DDSIP_SemDevChgBd (void)
     value[0] = DDSIP_node[DDSIP_bb->curnode]->target;
     lu[0] = 'L';
 
-    status = CPXchgbds (env, lp, 1, index, lu, value);
+    status = CPXchgbds (DDSIP_env, DDSIP_lp, 1, index, lu, value);
     if (status)
         fprintf (stderr, "ERROR: Failed to change bound (SemDevChgBd) \n");
 
@@ -411,7 +411,7 @@ DDSIP_SemDevGetNodeTarget (void)
     value[0] = -DDSIP_infty;
     lu[0] = 'L';
 
-    status = CPXchgbds (env, lp, 1, index, lu, value);
+    status = CPXchgbds (DDSIP_env, DDSIP_lp, 1, index, lu, value);
     if (status)
         fprintf (stderr, "ERROR: Failed to change bound (SemDevGetNodeTarget) \n");
 
@@ -460,7 +460,7 @@ DDSIP_SemDevGetNodeTarget (void)
             char s[DDSIP_ln_fname];
             sprintf (s, "%s/asd_%d_node_%d%s", DDSIP_outdir, scen + 1, DDSIP_bb->curnode, DDSIP_param->coretype);
 
-            status = CPXwriteprob (env, lp, s, NULL);
+            status = CPXwriteprob (DDSIP_env, DDSIP_lp, s, NULL);
             if (status)
             {
                 fprintf (stderr, "ERROR: Failed to write problem\n");
@@ -472,7 +472,7 @@ DDSIP_SemDevGetNodeTarget (void)
             printf ("--->\n");
 
 //  if (DDSIP_param->cpxtime > DDSIP_param->timelim - GetCpuTime ()) {
-//    status = CPXsetdblparam (env, CPX_PARAM_TILIM, DDSIP_Dmax (0, DDSIP_param->timelim - GetCpuTime ()));
+//    status = CPXsetdblparam (DDSIP_env, CPX_PARAM_TILIM, DDSIP_Dmax (0, DDSIP_param->timelim - GetCpuTime ()));
 //    if (status) {
 //      fprintf (stderr, "ERROR: Failed to set cplex parameter (LowerBound) \n");
 //      return status;
@@ -482,7 +482,7 @@ DDSIP_SemDevGetNodeTarget (void)
 //    }
 //  }
 
-        status = CPXmipopt (env, lp);
+        status = CPXmipopt (DDSIP_env, DDSIP_lp);
         // We handle some errors separately (blatant infeasible, error in scenario problem)
         if (DDSIP_Error (status))
         {
@@ -505,7 +505,7 @@ DDSIP_SemDevGetNodeTarget (void)
         }
         else
         {
-            mipstatus = CPXgetstat (env, lp);
+            mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
 
             // We did not detect infeasibility
             // If we couldn't find a feasible solution we can at least obtain a lower bound
@@ -513,7 +513,7 @@ DDSIP_SemDevGetNodeTarget (void)
             {
                 objval = DDSIP_infty;
 
-                status = CPXgetbestobjval (env, lp, &bobjval);
+                status = CPXgetbestobjval (DDSIP_env, DDSIP_lp, &bobjval);
                 if (status)
                 {
                     fprintf (stderr, "ERROR: Failed to get value of best remaining node (LowerBound)\n");
@@ -522,7 +522,7 @@ DDSIP_SemDevGetNodeTarget (void)
             }
             else			// Solution exists
             {
-                status = CPXgetobjval (env, lp, &objval);
+                status = CPXgetobjval (DDSIP_env, DDSIP_lp, &objval);
                 if (status)
                 {
                     fprintf (stderr, "ERROR: Failed to get best objective value \n");
@@ -535,7 +535,7 @@ DDSIP_SemDevGetNodeTarget (void)
                 }
                 else
                 {
-                    status = CPXgetbestobjval (env, lp, &bobjval);
+                    status = CPXgetbestobjval (DDSIP_env, DDSIP_lp, &bobjval);
                     if (status)
                     {
                         fprintf (stderr, "ERROR: Failed to get value of best remaining node\n");
@@ -635,7 +635,7 @@ DDSIP_WorstCase (void)
         }
         sprintf (colname[0], "DDSIP_n_aux01_%s",DDSIP_param->postfix);
     }
-    status = CPXnewcols (env, lp, 1, obj, lb, ub, ctype, colname);
+    status = CPXnewcols (DDSIP_env, DDSIP_lp, 1, obj, lb, ub, ctype, colname);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to add risk variables (WC) \n");
@@ -656,7 +656,7 @@ DDSIP_WorstCase (void)
     rhs[0] = 0;
     sense[0] = 'G';
 
-    status = CPXnewrows (env, lp, 1, rhs, sense, NULL, NULL);
+    status = CPXnewrows (DDSIP_env, DDSIP_lp, 1, rhs, sense, NULL, NULL);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to add risk constraint (WC) \n");
@@ -671,7 +671,7 @@ DDSIP_WorstCase (void)
     vallist = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_param->firstvar + DDSIP_param->secvar + 1), "vallist(RiskModel)");
 
     // Get objective function coefficients
-    status = CPXgetobj (env, lp, vallist, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, vallist, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get objective coefficients\n");
@@ -689,7 +689,7 @@ DDSIP_WorstCase (void)
     collist[i] = DDSIP_param->firstvar + DDSIP_param->secvar;
     vallist[i] = 1;
 
-    status = CPXchgcoeflist (env, lp, DDSIP_param->firstvar + DDSIP_param->secvar + 1, rowlist, collist, vallist);
+    status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar + 1, rowlist, collist, vallist);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change coefficients for risk model (BbInit) \n");
@@ -705,7 +705,7 @@ DDSIP_WorstCase (void)
         }
 
         // Set objective function coefficients to 0
-        status = CPXchgobj (env, lp, DDSIP_param->firstvar + DDSIP_param->secvar, collist, vallist);
+        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar, collist, vallist);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change objective coefficients (Risk model 3)\n");
@@ -786,7 +786,7 @@ DDSIP_TVaR (void)
     colname[1] = & (colstore[DDSIP_ln_varname]);
     sprintf (colname[1], "DDSIP_v_aux_02");
 
-    status = CPXnewcols (env, lp, 2, obj, lb, ub, ctype, colname);
+    status = CPXnewcols (DDSIP_env, DDSIP_lp, 2, obj, lb, ub, ctype, colname);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to add risk variables () \n");
@@ -804,7 +804,7 @@ DDSIP_TVaR (void)
     rhs[0] = 0.0;
     sense[0] = 'G';
 
-    status = CPXnewrows (env, lp, 1, rhs, sense, NULL, NULL);
+    status = CPXnewrows (DDSIP_env, DDSIP_lp, 1, rhs, sense, NULL, NULL);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to add risk constraint (BbInit) \n");
@@ -815,7 +815,7 @@ DDSIP_TVaR (void)
 
     // New coefficients: n + v_i - c x  - q y_i >= 0
     // Change objective sense and coefficients if problem is a maximization
-    status = CPXgetobj (env, lp, vallist, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, vallist, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get objective coefficients\n");
@@ -839,7 +839,7 @@ DDSIP_TVaR (void)
     collist[i] = DDSIP_param->firstvar + DDSIP_param->secvar + 1;
     vallist[i] = 1;
 
-    status = CPXchgcoeflist (env, lp, DDSIP_param->firstvar + DDSIP_param->secvar + 2, rowlist, collist, vallist);
+    status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar + 2, rowlist, collist, vallist);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change coefficients for risk model (RiskModel) \n");
@@ -855,7 +855,7 @@ DDSIP_TVaR (void)
         }
 
         // Set objective function coefficients to 0
-        status = CPXchgobj (env, lp, DDSIP_param->firstvar + DDSIP_param->secvar, collist, vallist);
+        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar, collist, vallist);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change objective coefficients (Risk model 3)\n");
@@ -1004,7 +1004,7 @@ DDSIP_RiskModel (void)
     if (DDSIP_param->files > 1)
     {
         sprintf (fname, "%s/risk%s", DDSIP_outdir, DDSIP_param->coretype);
-        status = CPXwriteprob (env, lp, fname, NULL);
+        status = CPXwriteprob (DDSIP_env, DDSIP_lp, fname, NULL);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to write problem\n");
@@ -1040,7 +1040,7 @@ DDSIP_DeleteRiskObj (void)
         vallist[1] = 0.0;
     }
 
-    status = CPXchgobj (env, lp, cnt, collist, vallist);
+    status = CPXchgobj (DDSIP_env, DDSIP_lp, cnt, collist, vallist);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change objective function (DeleteRiskObj(1)) \n");
@@ -1067,7 +1067,7 @@ DDSIP_DeleteRiskObj (void)
             collist[i] = i;
         }
 
-        status = CPXchgobj (env, lp, cnt, collist, DDSIP_data->cost + DDSIP_param->scenarios * DDSIP_param->stoccost);
+        status = CPXchgobj (DDSIP_env, DDSIP_lp, cnt, collist, DDSIP_data->cost + DDSIP_param->scenarios * DDSIP_param->stoccost);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change objective function (DeleteRiskObj(2)) \n");
@@ -1111,7 +1111,7 @@ DDSIP_UndeleteRiskObj (void)
         vallist[1] = DDSIP_param->riskweight / (1 - DDSIP_param->risklevel);
     }
 
-    status = CPXchgobj (env, lp, cnt, collist, vallist);
+    status = CPXchgobj (DDSIP_env, DDSIP_lp, cnt, collist, vallist);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change objective function (UndeleteRiskObj(1)) \n");
@@ -1138,7 +1138,7 @@ DDSIP_UndeleteRiskObj (void)
                 vallist[i] = (1 - DDSIP_param->riskweight) * DDSIP_data->cost[i];
         }
 
-        status = CPXchgobj (env, lp, cnt, collist, vallist);
+        status = CPXchgobj (DDSIP_env, DDSIP_lp, cnt, collist, vallist);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change objective function (UndeleteRiskObj(2)) \n");

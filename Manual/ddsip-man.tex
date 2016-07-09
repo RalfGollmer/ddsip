@@ -1,0 +1,1112 @@
+\documentclass[11pt,draft]{article}
+\usepackage{a4,amsmath,amssymb,theorem,enumerate,supertabular}
+% natural science referencing
+\usepackage{natbib}
+\usepackage{german}
+\usepackage{longtable}
+\frenchspacing
+
+\newcommand{\expect}{{\textsc{E}}} % Expectation operator
+\newcommand{\E}{{\expect}} % Expectation operator
+\newcommand{\risk}{{\mathcal{R}}} % Risk operator
+\newcommand{\RI}{{\risk}}
+\newcommand{\QE}{{Q_\E}}
+\newcommand{\ti}[1]{\text{\tiny{#1}}}
+\newcommand{\tLD}{{\ti{LD}}}
+\newcommand{\+}{{\ti{+}}}
+\newcommand{\1}{{\ti{1}}}
+\newcommand{\tS}{{\ti{S}}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\ie}{i.e.\ }
+\newcommand{\etal}{et al.\/}
+\newcommand{\st}{\;:\;}
+\newcommand{\tends}{\rightarrow}
+\newcommand{\ZtiRp}{{\Z^m_\+ \times \R^{m'}_\+}}
+\newcommand{\Rsn}{{\R^{s \times n}}}
+\newcommand{\Rsm}{{\R^{s \times m}}}
+\newcommand{\Rsmp}{{\R^{s \times m'}}}
+\newcommand{\eg}{e.g.\ }
+\renewcommand{\P}{{\textsc{I}\!\textsc{P}}} 
+\newcommand{\Prob}{{\P}} 
+\newcommand{\OmAP}{(\Omega,\mathcal{A},\Prob)} % Probability space
+\newcommand{\OmA}{(\Omega,\mathcal{A})} % Measure space
+\newcommand{\domeg}{(d \omega)}
+\newcommand{\Pdo}{{~\Prob(d \omega)}}
+
+\title{\huge User's Guide to ddsip -- A C Package for the Dual
+Decomposition of Two-Stage Stochastic Programs with Mixed-Integer Recourse}
+\author{A. M\"arkert, R. Gollmer\\
+	Department of Mathematics\\
+	University Duisburg-Essen, Campus Essen\\
+	Thea-Leymann-Stra"se 9, D-45127 Essen, Germany\\
+	\small ralf.gollmer@uni-due.de
+}
+
+
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+ \texttt{ddsip} is a C-implementation of a number of scenario decomposition algorithms for two-stage
+stochastic linear programs with mixed-integer recourse. It expects a MIP, stochastic LPs are not supported.\\
+The program is based on a previous Fortran~90-implementation
+of C.C. Car\o e. Main idea of the decomposition algorithms is the Lagrangian relaxation of the
+non\-anti\-ci\-pa\-tivity constraints and a branch-and-bound algorithm to reestablish
+non\-anti\-ci\-pa\-tivity. The original scenarios decomposition algorithm has been developed in
+\cite{cs1}. Extensions including the treatment of mean-risk models have been made in \cite{diss}. 
+
+For the dual optimization we use \texttt{ConicBundle} -- a C$^{++}$-implementation kindly provided by
+C. Helmberg, see \cite{CB}. We use the CPLEX callable library to solve the mixed-integer subproblems in
+the branch-and-bound tree, see \cite{cp}. The current version of \texttt{ddsip} is ready for CPLEX~12.6.3
+and requires at least version 11.2.
+
+The implementation features risk minimization, too. This version supports mean-risk models involving
+the risk measure {\it expected excess of a target} (see \cite{og}, here: {\it expected shortfall below
+target}), {\it excess probabilities} (as investigated in \cite{tied}), {\it absolute semideviation},
+{\it worst-case-costs}, {\it tail value-at-risk}, {\it value-at-risk}, and {\it standard deviation}.
+
+The code is of research quality, i.e. no production quality should be expected with respect to stability
+and efficiency.
+We kindly ask the user to support us fixing bugs by reporting them to us as they occur.
+
+We did not %yet 
+include support for the SMPS format, but a rather basic input format is implemented, which
+is not very handy with stochastic matrix entries. Any contributions in this respect are welcome.
+Our code only supports the scenario formulation.
+
+This manual describes the format of the input files and the data contained in the output
+files of \texttt{ddsip}. We try to provide all necessary information on the input parameters.
+
+\section{Stochastic programs with mixed-integer re\-course}
+This implementation is appropriate to solve {\it recourse models}. Such problems
+were first investigated by \cite{dant} and \cite{beal}. The conceptual idea behind recourse models is the
+following; assume the decisions are two-stage in the sense that some of them, say $x$, have to
+be taken immediately whilst others, say $y$, may be delayed to a time when uncertainty has revealed. We
+can write a random linear program of this type as
+%
+\begin{equation} \label{E:TWOSTAGE}
+\inf_{x \in X,\,y(\omega) \in \R^m_\+} \{c(\omega)x + q(\omega) y(\omega) \st T(\omega)x +
+W(\omega)y(\omega) = h(\omega)\}.
+\end{equation}
+%
+The random parameter $\xi:=(c,q,T,W,h):\Omega \tends \R^n \times \R^m \times \Rsn \times \Rsm
+\times \R^s$ is defined on the probability space $(\Omega,\Prob,\mathcal{A})$. The set $X \subset
+\{x \in \R_\+^n: Ax = b\}$ contains all deterministic constraints on $x$. Inequality constraints can
+be handled in (\ref{E:TWOSTAGE}) by the introduction of appropriate slack variables. 
+The model (\ref{E:TWOSTAGE}) is also referred to as {\it two-stage model}. 
+
+We note that the problem (\ref{E:TWOSTAGE}) is not yet well-defined. As the constraints include
+random parameters, the meaning of feasibility
+and thus of optimality is not clear. We complete the recourse model by adding an objective function
+criterion. Before we do so, we rewrite problem (\ref{E:TWOSTAGE}) as
+%
+\begin{equation} 
+\inf_{x \in X} \{c(\omega)x + \phi(x,\omega)\}
+\end{equation}
+%
+where
+%
+\begin{equation} 
+\phi(x,\omega)=\inf_{y \in \R^m_\+} \{q(\omega) y \st T(\omega)x + W(\omega) y = h(\omega) \}.
+\end{equation}
+%
+We note that, provided $\phi: \R^n \times \Omega$ is measurable, we can
+regard $\mathcal{Z}:=\{c(\omega)x+ \tilde \phi(x,\omega) : x \in X\}$ as a family of random
+variables. Now, each function $\RI: \mathcal{Z} \to \R$, \eg the expected value, some measure of
+risk, or a weighted sum of both, can serve as objective criterion
+%
+\begin{equation} \label{E:TWOSTAGE-}
+\inf_{x \in X} \RI[c(\omega)x + \tilde \phi(x,\omega)].
+\end{equation}
+%
+Our focus is on integer models, \ie in addition to the constraints employed in problem
+\eqref{E:TWOSTAGE} we may have integrality requirements on the variables $x$ and $y$.
+Note that models with a linear second stage should be dealt with a version of the
+{\it L-shaped algorithm}, see \cite{bir}.
+
+We briefly discuss the implemented algorithm for the expected value case, \ie 
+$$\RI[c(\omega)x + \tilde \phi(x,\omega)]  = \E[c(\omega)x + \tilde \phi(x,\omega)] := \int_\Omega
+c(\omega)x + \tilde \phi(x,\omega) \P d \omega. $$ 
+Further algorithms suitable for the treatment of mean-risk models are described in \cite{diss}.
+
+Assume we
+are given a finite number of scenarios $\xi_j$, $j=1,\ldots,S$, with corresponding 
+probabilities $\pi_j$. Then, problem \eqref{E:TWOSTAGE-} turns into 
+%
+\begin{equation} \label{E:EDISCRETE}
+\min_{x \in X,\,y_j\in \ZtiRp} \{ c_j x + \sum_{j=1}^S \pi_j q_j y_j \st T_jx +W_j y_j = h_j, \quad
+\forall j\},  
+\end{equation}
+%
+cf. \cite{bir}, \cite{kal}, and \cite{pre}. The so-called expected recourse function $\QE$ reads
+%
+\begin{equation*} 
+\QE(x)= c_j x + \min_{y_j\in \ZtiRp} \{ \sum_{j=1}^S \pi_j q_j y_j \st T_jx +W_j y_j = h_j, \quad \forall j\},  
+\end{equation*}
+%
+for all $x \in \R^n$.
+The program (\ref{E:EDISCRETE}) is a large-scale deterministic mixed-integer linear program (MILP)
+with a block-angular 
+structure. A recent and comprehensive overview of existing algorithms for problem
+\eqref{E:EDISCRETE} is provided in \cite{louv}. To mention some of the algorithmic approaches we refer to 
+\cite{vdvl} for simple recourse models ($W=(I,-I)$), to \cite{lapo} for two-stage models
+with a binary first stage, and to \cite{ahme} for models with an integer second stage and a fixed
+technology matrix $T$. An
+algorithm  for problem \eqref{E:EDISCRETE} in its general form has been proposed in \cite{cs1}. It
+works on the expense of a branching on continuous first-stage variables. The latter algorithm is
+implemented in \texttt{ddsip} and described in what follows.
+
+By introducing copies of the first-stage variables, an equivalent formulation of (\ref{E:EDISCRETE})
+is given by  
+%
+\begin{equation} \label{E:COPIES}
+\begin{aligned}
+\min_{x_j,y_j}&\{\sum_{j=1}^S \pi_j(c_j x_j+q_j y_j) \st x_1=\ldots=x_S, \, (x_j,y_j) \in M_j,\,\forall j\}
+\end{aligned}
+\end{equation}
+where $M_j=\{(x_j,y_j):T_jx_j+W_j y_j = h_j, x_j \in X, y_j \in Y \},\; j=1,\ldots,S. $
+
+Considering the constraint matrix of (\ref{E:COPIES}) (cf. Figure~\ref{F:CM2}),
+we can identify $S$ single-scenario subproblems solely coupled by  the equality ({\it
+non\-an\-ti\-ci\-pa\-ti\-vi\-ty}\/)   
+constraints on the copies of the first-stage variables and written as $\sum_{j=1}^S H_jx_j=0$, where
+$H=(H_1,\ldots,H_j)$. The problem decomposes when we relax the non\-an\-ti\-ci\-pa\-ti\-vi\-ty
+constraints. 
+%
+\begin{figure} 
+\begin{center}
+\setlength{\unitlength}{1144sp}%
+%
+\begingroup\makeatletter\ifx\SetFigFont\undefined%
+\gdef\SetFigFont#1#2#3#4#5{%
+  \reset@font\fontsize{#1}{#2pt}%
+  \fontfamily{#3}\fontseries{#4}\fontshape{#5}%
+  \selectfont}%
+\fi\endgroup%
+\begin{picture}(5424,3624)(1789,-4573)
+\thinlines
+\put(1801,-1861){\framebox(900,900){}}
+\put(3601,-3661){\framebox(900,900){}}
+\put(4501,-1861){\framebox(900,900){}}
+\put(6301,-3661){\framebox(900,900){}}
+\put(1801,-4661){\framebox(2700,900){}}
+\multiput(2731,-1891)(90,-90){10}{\makebox(1.5875,11.1125){{\tiny.}}}
+\multiput(5431,-1891)(80,-80){11}{\makebox(1.5875,11.1125){{\tiny.}}}
+\put(2011,-1636){\makebox(0,0)[lb]{\smash{{\small T$_{\!\1}$}}}}
+\put(4651,-1636){\makebox(0,0)[lb]{\smash{{\small W$_{\!\1}$}}}}
+\put(3806,-3436){\makebox(0,0)[lb]{\smash{{{\small T$_{\!\tS}$}}}}}
+\put(6426,-3436){\makebox(0,0)[lb]{\smash{{{\small W$_{\!\tS}$}}}}}
+\put(2926,-4376){\makebox(0,0)[lb]{\smash{{{\small H}}}}}
+\end{picture}
+\caption{Constraints of (\ref{E:COPIES})}  \label{F:CM2}
+\end{center}
+\end{figure}
+
+Upper bounds on the optimal value can be obtained by heuristics based on the
+solutions for the subproblems. We get a lower bound by solving the Lagrangian
+dual, which is a nonlinear concave maximization  
+%
+\begin{equation} \label{E:EXLADU}
+\begin{aligned}
+z_\tLD:=\max_{\lambda \in \mathbb{R}^l}  \min_{x_j,y_j} &\{ \sum_{j=1}^S \pi_j(c_jx_j+q_jy_j)+\lambda
+ \sum_{j=1}^S H_j x_j \st (x_j,y_j) \in M_j,\,\forall j\}. 
+\end{aligned}
+\end{equation}
+%
+In general, the involved integrality
+restrictions lead to an optimality gap. If we are not satisfied with the
+bounds given by the above method, we can elaborate a branch-and-bound algorithm that
+successively reestablishes the equality of the components of the first-stage
+vector. Let $\mathcal{P}$ denote a list of problems.
+\vspace{2ex}
+
+\noindent
+\texttt{Algorithm} \texttt{SD}: Scenario decomposition (\cite{cs1})
+\begin{enumerate}[{\em STEP 1}]
+\item Initialization: Set $z^*= \infty$ and let $\mathcal{P}$ consist of
+problem (\ref{E:EDISCRETE}). 
+\item Termination: If $\mathcal{P}=\emptyset$ then $x^*$ with $z^*=\QE(x^*)$ is optimal.
+\item Node selection: Select and delete a problem $P$ from $\mathcal{P}$ and solve
+its Lagrangian dual. If the associated optimal value $z_{\tLD}(P)$ equals infinity
+(infeasibility of a subproblem) go to {\em STEP 2}.  
+\item Bounding: If $z_{\tLD}(P)$ is greater than $z^*$ go to {\em STEP 2}. 
+Otherwise proceed as follows; if the first-stage solutions $x_j,\,j=1,\ldots,S,$ of the subproblems
+are 
+\vspace{-.2cm}
+\begin{itemize}
+\item[--] identical, then set $z^*:=\min\{z^*,\QE(x_j)\}$, delete all $P' \in \mathcal{P}$ with $z_{\tLD}(P') \ge
+z^*$ and go to {\em STEP 2}.
+\item[--] not identical, then compute a suggestion $\hat x := Heu(x_1,\ldots,x_S)$ using 
+some heuristic. Set $z^*:=\min\{z^*,\QE(\hat x)\}$ and delete all $P'
+\in \mathcal{P}$ with $z_{\tLD}(P') \ge z^*$. 
+\end{itemize}
+\item Branching: Select a component $x_{(k)}$ of $x$ and add two new problems to
+$\mathcal{P}$ that differ from $P$ by the additional constraint $x_{(k)} \le
+\lfloor x_{(k)} \rfloor$ and $x_{(k)} \ge \lfloor x_{(k)} \rfloor + 1$,
+respectively, if $x_{(k)}$ is integer, or   $x_{(k)} \le x_{(k)} - \varepsilon$
+and $x_{(k)} \ge x_{(k)} + \varepsilon$, respectively, if $x_{(k)}$ is
+continuous. $\varepsilon > 0$ has to be chosen such that the two new problems
+have disjoint subdomains. Go to {\em STEP 3}. 
+\end{enumerate}
+%In {\em STEP 6} ~the second-stage solutions $y^R_j$ are obtained by solving the $S$ problems
+%(\ref{E:SSFIX}) with a fix first-stage variable $\hat x$. 
+The algorithm is
+finite if $X$ is bounded and if some stopping criterion is employed that prevents the algorithm from  
+endless branching on the continuous components of $x$, see \cite{cs1}.
+
+The function $\QE$ is evaluated at $x$ by fixing the first stage to $x$, solving the scenario many
+subproblems, and calculating the expected value of the corresponding optimal values. Thus,
+infeasible suggestion are identified immediately. 
+
+We remark that problems related to random recourse have to be cared about by the users, cf. \cite{walk}.
+
+\newpage
+\section{Input files} \label{S:INP}
+
+\texttt{ddsip} requires 3 input files, a number of other files are optional. 
+
+\begin{itemize}
+\item Specification file: a file containing the specifications of the
+stochastic program, some CPLEX- and b\&b-parameters
+\item Model file: a file readable by CPLEX (e.g. lp- or mps-format, possibly in gzipped form) that specifies the 
+single-scenario model
+\item Priority order file for subproblems (optional): a CPLEX order file corresponding to the
+model file
+\item RHS scenario file: a file containing the stochastic right-hand sides
+and the probabilities of the scenarios 
+\item Cost scenario file (optional): a file containing stochastic cost
+coefficients 
+\item Matrix scenario file (optional): a file containing stochastic
+matrix entries
+\item Priority order file for master (optional): a file containing a branching order for the master branch-and-bound
+procedure  
+\item Start information file (optional): a file containing start
+informations such as a feasible solution and/or a lower bound
+\end{itemize}
+A comfortable way to invoke the program on a Unix system is the command 
+\vspace{0.2cm}
+
+\noindent
+~~ ddsip $<$ files2sip
+\vspace{0.2cm}
+
+\noindent
+where the file {\it files2sip} may contain the lines displayed in Figure~\ref{F:F2S}.
+%
+\begin{figure}[ht]
+\begin{center}
+\framebox{\begin{tabular}{l}
+sip.in \\
+model.lp\\
+model.ord\\
+rhs.sc\\
+cost.sc\\
+matrix.sc\\
+order.dat\\
+start.in
+\end{tabular}}
+\end{center} \caption{Input file} \label{F:F2S}
+\end{figure}
+%
+\section{The specification file}
+Comments could be included anywhere in this file apart from the CPLEX parameter section.
+An Asterisk identifies the beginning of a comment until the end of the line.
+This way explanations could be included and parameter lines temporarily inactivated
+Comments or commenting out lines could not be used within the CPLEX parameter section.
+
+Keywords are accepted if their start matches the strings given in the tables.
+Unknown keywords are simply ignored. Lines with the first occurrence of each keyword are evaluated.
+
+A sample specification file is given in Appendix \ref{S:SAM}. %Figure~\ref{F:SPEC}.
+\subsection{Parameters for the two-stage model}
+Hopefully, the identifiers in the first part of the file are self explaining. Otherwise, they should
+become clear when consulting the two-stage chapter of one of the standard text books on stochastic
+programming, see \cite{bir,kal,pre}. Some of the identifiers, as e.g. FIRSTVAR, are redundant. They
+serve to check consistency with the model file.
+
+Either a prefix or a postfix of the variable names for identifying the first-stage variables can be specified.
+The default behaviour is to expect a postfix of the form ''01'' in their names.
+
+
+%\begin{table}[ht]
+\begin{center}
+\begin{tabular}{|llcp{6.9cm}|} 
+\hline
+Name&Type&\multicolumn{2}{l|}{Default/Description}\\ \hline
+FIRSTC    & Int &  0 & Number of First stage constraints               \\
+FIRSTV    & Int &  0 & Number of First stage variables                 \\
+SECCON    & Int &  0 & Number of Second stage constraints              \\
+SECVAR    & Int &  0 & Number of Second stage variables                \\[0.2em]
+POSTFIX   & String &  {\it none} & postfix for first-stage variables\\
+PREFIX    & String &  {\it none} & prefix for first-stage variables\\[0.2em]
+SCENAR    & Int &  0 & Number of scenarios                   \\[0.2em]
+STOCRHS   & Int &  0 & Number of stochastic rhs elements     \\
+STOCCOST  & Int &  0 & Number of stochastic cost coefficients\\
+STOCMAT   & Int &  0 & Number of stochastic matrix entries   \\
+\hline
+\end{tabular}
+\\[0.5em]{Table 1:\quad Problem specification parameters}
+\end{center}
+%\end{center} \caption{Problem specification parameters} \label{T:PROB}
+%\end{table}
+
+%
+\subsection{CPLEX parameters}
+CPLEX parameters to be set different from their defaults have to be specified following a line with the indicator {\it CPLEXBEGIN}.\\
+The contained lines have to start with the CPLEX parameter number followed by the parameter value. This can be followed by a comment, starting with an asterisk.
+The parameter numbers are specified in the CPLEX callable library documentation, section parameter table.\\
+The settings following directly the line with {\it CPLEXBEGIN} are applied to all problems solved.\\[0.5em]
+Special settings for CPLEX parameters can be specified for the different stages of the program.\\
+For the calculation of the EEV
+parameter values can be overwritten after the identifier {\it CPLEXEEV},\\
+for the evaluation of lower bounds after the identifier {\it CPLEXLB},\\
+for a continuation of the evaluation of lower bounds with different settings after the identifier {\it CPLEX2UB},\\
+for the evaluation of upper bounds after the identifier {\it CPLEXUB},\\
+for a continuation of the evaluation of upper bounds with different settings after the identifier {\it CPLEX2UB},\\
+for the subproblems of the Lagrangian dual after the identifier {\it CPLEXDUAL},\\
+for a continuation of the subproblems of the Lagrangian dual after the identifier {\it CPLEX2DUAL}.\\[0.5em]
+For some problems it is beneficial to use two optimization calls with different parameter setings (e.g. mip emphasis, heuristic frequency)
+sequentially, the second one starting with the B\&B tree and solutions obtained in the first call. This is enabled for lower and upper bound calculations and the Lagrangean dual if the sections beginning 
+with {\it CPLEX2LB}, {\it CPLEX2UB}, or  {\it CPLEX2DUAL} are specified.\\[0.5em]
+The CPLEX parameter section has to end with the identifier {\it CPLEXEND}.
+Parameters not present in the mentioned chapters are set according to their CPLEX default values,
+cf. \cite{cp}. \\
+Note that in the section between {\it CPLEXBEGIN} and  {\it CPLEXEND} there could be comments following the pair of numerical parameter identifier and value, but not whole lines could be comments, ie.e. 
+no line should start with an asterisk.
+
+%
+\subsection{Parameters for the decomposition procedure}
+The parameters that effect the amount of output and the termination behavior are listed in the table 
+below. The first column of the table contains the name of the parameter, the second one
+specifies whether it is an integer or a real (Dbl) parameter, and the last column explains the
+parameter's meaning. 
+
+The signal SIGTERM (as defined on LINUX/UNIX-environments) is handled by the program,
+other signals are not handled separately. SIGTERM causes the termination of \texttt{ddsip} after 
+solving the current subproblem. 
+
+So far all termination parameters are static in the sense that they cannot be changed during the
+branch-and-bound algorithm. Therefore, a careful trade-off between these parameters and the
+termination parameters of the bundle method, see Section~\ref{SS:DUAL}, is essential for the
+numerical performance, cf. \cite{cs2}.  \medskip  
+
+Parameters that effect the behavior of the branch-and-bound algorithm are compiled in the
+Tables~2 and ~3. The default values are marked with a star.
+The use of start values is described in
+Section~\ref{S:START}, the use of priority order information in Section~\ref{S:ORDER}.  The
+parameter RELAXL effects the relaxation levels during the evaluation of lower bounds. It relates to
+the scenario subproblems. 
+
+%\begin{table}[ht]
+\begin{center}
+\begin{tabular}{|llllp{6.4cm}|} 
+\hline
+Name&Type&Range&\multicolumn{2}{l|}{Default/Description}\\ \hline
+OUTLEV&Int&0..100&0&Amount of output to {\it more.out}.\\&&&& {\bf Caution:} The file {\it more.out} may become
+large for high values of OUTLEV!\medskip\\  
+OUTFIL&Int&0..6&1&Amount of output files, see
+chapter~\ref{S:OUT}.\\&&&& {\bf Caution:} If OUTFIL is greater than 3, lp- or sav-files are written at each node
+and for each scenario! \medskip\\  
+LOGFRE&Int&0..&1&A line of output is printed every i-th iteration. \medskip\\
+NODELI&Int&0..&10000&The node limit for the branch-and-bound procedure. \medskip\\  
+TIMELI&Dbl&0..&86400.&The total time limit in seconds (CPU-time) 
+including the time needed to solve the EEV problem. \medskip\\ 
+ABSOLU&Dbl&0..&0&The absolute duality gap.\medskip\\ 
+RELATI&Dbl&0..&1e-4&The relative duality gap.\\
+EEVPRO&Int&0..1&0&If the parameter is 1, then solve the EEV-problem and report the VSS, cf. \cite{bir}.\medskip\\  
+%DETEQU&Int&0..1&0&If the parameter is 1, then produce a deterministic equivalent as det\_equ.lp.gz. Only for expectation based problems (and it takes quite a while).\\
+\hline
+\end{tabular}\\[0.5em]
+{Table 2:\quad Output and termination parameters}
+\end{center}
+%\end{center} \caption{Output and termination parameters} \label{T:OUT}
+%\end{table}
+%
+
+The {\it branching value} is used to create two new subproblems as described in {\em STEP 5} of the
+decomposition algorithm. For continuous components it depends on the parameter EPSILON.
+
+The dispersion norm of a node is calculated as $\max_{j}  \{  \max_{i}
+x_{ij} - \min_{i} x_{ij}\}$ where $x_j$, $j=1,\ldots,S$, are the (first-stage part of the) solutions
+of the $S$ subproblems and $x_{ij}$, $i=1,\ldots,n$, are their i-th components.
+Nodes with a dispersion norm smaller than NULLDISP are considered as leaves of the 
+B\&B tree (i.e. no further branching on them).
+
+\newpage
+%\begin{table}[h]
+\begin{center}
+\tablefirsthead{%
+\hline
+Name&Type&Range&\multicolumn{2}{l|}{Default/Description}\\
+\hline}
+\tablehead{%
+\hline
+\multicolumn{5}{|l|}{\small
+\sl
+continued
+from
+previous
+page}\\
+\hline
+Name&Type&Range&\multicolumn{2}{l|}{Default/Description}\\
+\hline}
+\tabletail{%
+\hline
+\multicolumn{5}{|r|}{\small
+\sl
+continued
+on
+next
+page}\\
+\hline}
+\tablelasttail{\hline}
+\begin{supertabular}{|llllp{6.2cm}|} 
+PORDER&Int&0..1&0&Use priority order for branching? If this
+parameter is 1, a priority order file has to be specified. \\[0.2em]
+STARTI&Int&0..1&0&Use start information? If this is 1, a file
+  containing the start values and/or lower bound has to be specified.\\[0.2em]
+MAXINH&Int&0..&5&Maximal level of ''inheritance'' of scen. solutions in the B\&B-tree.\\[0.2em]
+HOTSTA&Int&0..6&0&No warm starts during B\&B.\\
+&&&1*&Use solution pool of previous scenario and integer values of the same scenario in father as initial solutions.\\
+&&&2&Use solution pool of previous scenario and lower bound from father node (not applicable for risk models).\\
+&&&3&Use solutions of all previous scenarios in the same node.\\ 
+&&&4&Use solutions of all previous scenarios of the same node as well as solutions of all scenarios in father node.\\ 
+&&&5&Uses solution info as in 3 together with the lower bound from father node.\\ 
+&&&6&Uses solution info as in 4 together with the lower bound from father node.\\[0.2em]
+BRADIR&Int&-1*,1&-1&Branching down is done first.\\
+&&&1&Branching up is done first. \\[0.2em]
+BRASTR&Int&0..2&0&Use the middle between maximal and minimal value for the chosen variable as branching value.\\
+&&&1&Use the expected value (weighted average) of the scenario solutions for the chosen variable as branching value.\\
+&&&2*&Use a point in between the weighted average of the scenario solutions for the chosen variable and the mean between maximal and minimal value for that variable as branching value.\\[0.2em]
+BRAEQU&Int&-1..1&1&''equal distribution'' -- Among the variables with maximal dispersion value choose one for branching which most equally divides feasibility of scenario solutions among both new nodes\\
+&&&0*&''mixed'' -- in 3/5 of the iterations choose a variable such that most of the scenario solutions remain feasible for one of the new nodes, in the others equally distributed\\[0.2em]
+&&&-1&''unequally'' -- in all iterations choose a variable such that most of the scenario solutions remain feasible for one of the new nodes \\[0.2em]
+INTFIR&Int&0..1&0&Branching exclusively according to branching rules.\\[0.2em]
+&&&1*&Branching on integers first.\\
+BOUSTR&Int&0..10&0&choose node with best bound as next node\\
+&&&1& heuristic: among nodes with sufficiently small bound choose node with biggest dispersion norm (unsolved nodes first)\\
+&&&2& heuristic: among nodes with sufficiently small bound choose node with biggest dispersion norm\\
+&&&3& heuristic: among nodes with sufficiently small bound choose node with least number of violations (unsolved nodes first)\\
+&&&4& heuristic: among nodes with sufficiently small bound choose node with least number of violations\\
+&&&5-9& heuristic: depth first until a incumbent is found, then switch to\\&&&& BOUSTRAT-5\\[0.2em]
+&&&10*& heuristic: among last four generated nodes choose node with best bound (unsolved nodes first) as long as its objective value does not exceed a threshold. Choose the best bound node otherwise and also every 25th node.\\
+PERIOD&Int&1..&32&for BOUSTRAT$>$0: determines the period of bounding steps with changing tolerances for ''sufficiently small''\\
+TOLSMA&Int&1..{\footnotesize PERIOD}&16&for BOUSTRAT$>$0: determines the number of steps in each period with a small tolerance\\[0.2em]
+ACCURA&Dbl&5e-16..1&1e-15& Accuracy -- real values are considered equal if the absolute value of their difference is less than accuracy\\[0.2em]
+EPSILO&Dbl&0..&1e-14&Specifies the gap between disjoint subdomains if continuous variables are branched.\\[0.2em]
+NULLDI&Dbl&0..&2e-14&Branch nodes only if their dispersion norm is greater than NULLDI.\\[0.2em]
+KAPPA&Int&0..2&0*&No gathering of kappa values by CPLEX\\
+&Int&&1&sample gathering of kappa values by CPLEX and reporting\\
+&Int&&2&full gathering of kappa values by CPLEX and reporting\\[0.2em]
+RELAXL&Int&0..2&0*&No integrality relaxation.\\
+&&&1&Relax first-stage variables.\\
+&&&2&Relax first- and second-stage variables.\\[0.2em]
+QUANTI&Int&0..&10&Number of Quantiles to be displayed at the end\\[0.2em]
+PREMA&Int&0..1&1&Should premature stop in upper bounding be used?\\[0.2em]
+MAXINH&Int&0..&5&maximal level of inheritance of solutions in lower bounding\\[0.2em]
+HEURIS&Int&0..13,99,100&100&choice of heuristics, cf. Table 5\\[0.2em]
+\hline
+\end{supertabular}\\[0.5em]
+{Table 3:\quad Branch-and-bound parameters}
+\end{center}
+%\end{center}\caption{Branch-and-bound parameters} \label{T:BB}
+%\end{table}
+
+The MAXINHERIT parameter specifies a maximal level of passing on solutions and bounds in the B\&B-tree
+for the lower bound step.
+This facility is interrupted by an invocation of the conic bundle algorithm, which will change the
+Lagrangian multipliers. It saves half of the solutions of scenario problems, but in case these problems
+are not solved to optimality the lower bound might be inferior to the one possibly obtained for the descendants
+(with the addtional bounds on the variables branched on).
+For this reason the level of inheritance can be bounded to the number
+of branching steps specified with the \mbox{MAXINHERIT} keyword.
+
+After the first node the scenarios are sorted descending wrt. their contribution to the expected value. 
+This serves earlier detection of inferiority and allows stopping of evaluation of scenarios.\\
+If conic bundle is used, the lower bound for each scenario is not fully reliable in upper bounding (which is done without Lagrangean parameters).
+The parameter PREMATURE (default 1) to allow/disallow premature stopping in upper bounding can be set to 0 when conic bundle is used.
+
+\subsection{Heuristic}
+The decomposition algorithm uses a heuristic to guess feasible first-stage solutions based on the
+solutions of the subproblems in the current node. The heuristic is set by means of the parameter
+HEURIS. The possible values of HEURIS are listed in the following table.\\
+More than one of the heuristics could be used sequentially in every node when specifying the value 99, followed by a
+list of heuristics to be used, the specs file line could look like this:\\[0.5em]
+HEURISTIC  99 2 3 12 * heuristics 2, 3, {\bf and} 12 are specified
+%
+%\begin{table}[ht]
+\begin{center}
+\begin{tabular}{|lp{11.2cm}|} 
+\hline
+Value&Description\\ \hline
+1&The average of the solutions is used. Integer components are rounded down.\medskip\\
+2&The average of the solutions is used. Integer components are rounded up.\medskip\\
+3&The average of the solutions is used. Integer components are rounded to the
+next integer.\medskip\\
+4&The solution occurring most frequently is used.\medskip\\
+5&Use the solution of a scenario that is closest ($l_1$ norm) to average.\medskip\\
+6&The first-stage solution with highest probability is chosen (adding probabilities in case of identical first-stage scenario solutions)\medskip\\
+7&Solution with best objective value\medskip\\
+8&Solution with worst objective value\medskip\\
+9&Solution with minimal sum of first-stage variables\medskip\\
+10&Solution with maximal sum of first-stage variables\medskip\\
+12&Try solutions of all scenarios\medskip\\
+13&Apply heuristic 3 and 5 alternating\medskip\\
+99&Indicates that a list of heuristics is given in the sequel. See the example in the Appendix.\\
+100*&Heuristics 1-10 are applied plus the more expensive heuristic 12, if one of the others found a new incumbent. Heuristic 12 is also applied in the first 11 nodes to facilitate dicovery of an incumbent early in the B\&B tree.\\
+\hline
+\end{tabular}
+\\[0.5em]Table 5:\quad Values of parameter HEURIS\\
+\end{center} %\caption{Heuristics, Values of HEURIS}  \label{T:HEU}
+%\end{table}
+%
+\setcounter{table}{4}
+%
+In order to save time the order of evaluation of the scenario problems is changed if an infeasible one is encountered.
+Since often the same scenarios gives infeasibility these ones are evaluated first in the sequel.
+\subsection{Parameters for the risk model}
+The parameters for the risk models are displayed below. Some parameter settings lead to
+ill-posed models, cf. \cite{diss}. \texttt{ddsip} provides only limited consistency checks with this
+respect.  
+
+The same holds true for the choice of an algorithm. Algorithms similar to the scenario decomposition
+as outlined above only apply to mean-risk models with {\it decomposable} linear risk measures. The
+algorithm FSD can be used with any risk measure that is consistent with first-order stochastic
+dominance. The weakest algorithm NFSD allows the minimization of any (nonlinear) risk measure. A
+detailed description of the different algorithms can be found in \cite{diss}. 
+%
+%\begin{table}[ht]
+\begin{center}
+\begin{tabular}{|llllp{5.9cm}|} 
+\hline
+Name&Type&Range&Default&Description\\ \hline
+RISKMO&Int&-7..7&0&Risk model\medskip\\
+WEIGHT&Dbl&0..&0.9&Weight on risk term in objective.\medskip\\
+TARGET&Dbl&..&-1e+20&Target for target measures.\medskip\\
+PROBLE&Dbl&0..1&0&Probability level for (T)VaR.\medskip\\
+RISKAL&Int&0..2&0*&Scenario decomposition.\\
+&&&1&FSD-algorithm (advised for TVaR, also for pure risk models except 4 (worst case costs) and 7 (stadard deviation)).\\
+&&&2&NFSD-algorithm.\medskip\\
+BRAETA&Int&0..1&1&Branch order of additional first-stage variable in models 4 and 5. A value of 0
+means that this variable will not be branched
+and its dispersion ignored.\medskip\\
+RISKBM&Dbl&..&1e+20 &Big M for risk model (-)2, also used as bound for $\eta$ with risk model 5.\\
+\hline
+\end{tabular}
+\\[0.5em]{Table 6:\quad Parameters for the risk model}
+\end{center}% \caption
+%\end{table}
+
+The program offers 7 different mean-risk models and the associated risk models, in which the expected
+value is not minimized. In the following table we have compiled the possible settings.
+%
+%\begin{table}[ht]
+\begin{center}
+\begin{tabular}{|lll|} 
+\hline
+Name&Value&Description\\ \hline
+RISKMO&$1,-1$&Expected excess above target.\\[0.2em]
+&$2,-2$&Excess probabilities.\\[0.2em]
+&$3,-3$&Absolute semideviation.\\[0.2em]
+&$4,-4$&Worst-case-costs.\\[0.2em]
+&$5,-5$&Tail value-at-risk.\\[0.2em]
+&$6,-6$&Value-at-risk.\\[0.2em]
+&$7,-7$&Standard deviation\\
+\hline
+\end{tabular}
+\\[0.5em]{Table 7:\quad Risk models}
+\end{center} %\caption{Risk models}  \label{T:RMOD}
+%\end{table}
+
+Positive values of RISKMO implement the model $\min_X \limits \E X + \alpha \R X$, negative ones
+the risk model $\min_X \limits \R X$. These pure risk models are often harder to solve.
+
+For the (mean-)absolute semideviation model the TARGET has to be set less or equal the optimal expected value when using RISKALG 0 (cf. \cite{diss}).
+%
+\subsection{Parameters for the dual method} \label{SS:DUAL}
+There is an online manual of \texttt{ConicBundle} available \cite{CB}. We refer also
+to \cite{helm2} where the method is described in the context of semidefinite programming.
+Below, we only explain the parameters defined in our implementation.
+
+The dual method cannot be used in combination with the algorithm based on the FSD-consistency of the
+risk measure, cf. \cite{diss}. The user has to take care about this detail. 
+
+The use of stochastic cost coefficient in combination with the Lagrangian dual is not supported,
+yet. We recommend to reformulate the problem by an additional variable and an additional constraint
+representing the objective function. This leads to a stochastic matrix. 
+
+The ConicBundle weight is changed between single dual steps under certain conditions by ConicBundle itself.
+DDSIP offers the possibility to heuristically change (increase or decrease) the weight between descent steps.
+By default this feature is turned on and could be deactivated by parameters.
+
+%\begin{table}[ht]
+\begin{center}
+\begin{tabular}{|llllp{6.6cm}|} 
+\hline
+Name&Type&Range&\multicolumn{2}{l|}{Default/Description}\\ \hline
+CBFREQ&Int&..&-16&Use \texttt{ConicBundle} in every $i$th node. Negative numbers are interpreted as |i|th node plus preceding one.\medskip\\
+CBITLI&Int&0..&20&Iteration limit: descent steps.\medskip\\
+CBRITLI&Int&0..&{\footnotesize CBITLIM+10}&Iteration limit in root node: descent steps.\medskip\\
+CBSTEP&Int&0..&12&Maximal number of iterations within one descent step.\medskip\\
+CBTOTI&Int&0..&5000&Iteration limit: total iterations, i.e. descent and null steps.\medskip\\
+CBCONT &Int&1..&4&Used when CBFREQ$<$0: number of nodes with invocation of \texttt{ConicBundle} in every node after CBBREAK.\medskip\\
+CBBREA &Int&1..&24&Used when CBFREQ$<$0: invocation of \texttt{ConicBundle} in nodes 1..CBBREAK only for nodes, which inherited more than half of the scenario solutions.\medskip\\
+CBPREC&Dbl&0..&1e-14&Precision of bundle method.\medskip\\
+CBPRIN&Int&0..&0&\texttt{ConicBundle} output level.\medskip\\
+NONANT&Int&1..3&& The identity of the first-stage vectors is represented
+by \\
+&&&1*&$x_1 = x_2,\, x_1 = x_3,\ldots,\, x_1 = x_n$\\
+&&&2& $x_1 = x_2,\, x_2 = x_3,\ldots,\, x_{n-1} = x_n$\\
+&&&3& $p_ix_i = \sum_{j=1,j \ne i}^n p_jx_j \; \forall i$\medskip\\ 
+CBBUNS &Int&1..&500&Maximal bundle size\medskip\\ 
+CBWEIG &Dbl&0..&1.&Initial weight (cf. CB manual)\\
+CBFACT &Dbl&0..1&0.01&Initial weight in the next node is final (1-CBFACTOR)*(weight in the father) + CBFACTOR*(initial weight)\\
+CBINHE &Int&0,1&0&Should the solutions of the father node be inherited in the initial evaluation?\medskip\\
+CBCHAN &Int&0,1&0&Should the tolerances and time limits for CPLEX be temporarily changed after a number of unsuccessful steps?\medskip\\
+CBREDU &Int&0,1&1&Should the weight be decreased after successful steps with no or few null steps?\medskip\\
+CBINCR &Int&0,1&1&Should the weight be increased after steps with too many null steps?\medskip\\
+\hline
+\end{tabular}
+\\[0.5em]{Table 8:\quad \texttt{ConicBundle} parameters}
+\end{center} %\caption{\texttt{ConicBundle} parameters} \label{T:CB}
+%\end{table}
+%
+\section{The model file}
+The model file contains the single-scenario model. Its format can be one of the formats readable by
+\texttt{CPLEX}, as e.g.\ the lp- or mps-format. The gzipped forms of these files (with extensions .lp.gz or .mps.gz)
+can be used for the sake of saving disk space. This is especially advisable in case OUTFILE is chosen greater than 2.\\
+The first-stage variables and constraints have to be identified by a prefix or a postfix appended to their names
+as specified in the specs file.\\
+%Variables with stochastic cost coefficients have to be placed at the
+%beginning and according to the order in which the stochastic cost coefficients are provided in the
+%scenario file.\\
+%In the presence of stochastic right-hand sides, the constraints require a certain
+%order, too.\\ First-stage constraints (i.e. constraints with fixed coefficients and right-hand sides containing only first-stage variables) have to be followed by the constraints with stochastic right-hand sides.
+%The right-hand sides of those constraints (their number being specified by the parameter STOCRHS) are changed for each scenario to the values given in the corresponding scenario file in the same order as these constraints appear in the model file.\\
+%Second-stage constraints without stochastic right-hand sides have to be placed at the end.\\
+%The placing of first-stage constraints in the beginning is mandatory for the construction of the deterministic equivalent, too.
+%
+\section{The scenario files}
+Unfortunately, the program \texttt{ddsip} is not conform to the SMPS data format, yet. 
+But in contrast to the SMPS format due to the requirements for the variable and constraint names and the input format for the stochstic coefficients no specific ordering is required in the model file.
+The proprietary data format of the scenario files is described below.
+
+Each file has to start with the keyword 'Names' followed by a list of the names of constraints for the stochastic right-hand sides, variables for the stochastic objective coefficients,
+and pairs of names for constraint and variable for the stochastic matrix entries. These name lists determine the order of objects the coefficients in the different scenarios are
+assigned.
+
+The identifier {\it sce} indicates the begin of the entries for the next
+scenario. Figure~\ref{F:SCRHS} displays the different scenario files.  
+%
+\begin{figure}[ht]
+\begin{center}
+\begin{tabular}{lll}
+right-hand sides&cost coefficients& matrix entries \\ \hline
+Names\hspace*{3cm}& Names\hspace*{3cm}& Names  \\ 
+constr25 & var16 & cons5 var15\\
+constr30 & var18 & cons5 var16\\
+\vdots   & \vdots   & \vdots \\
+scenario1\hspace*{3cm}& scenario1\hspace*{3cm}& scenario1  \\ 
+0.1      & 23.1       &	   0.125 \\ 
+12.12   & 33.33       &	   34	   \\
+32.4     &          &               \\
+\vdots   & \vdots   & \vdots \\
+scenarioN& scenarioN&scenarioN \\
+0.1      & 25.56    &	   30.3 	    \\ 
+30.2       & 11.5       &	   22.56  \\
+41.0       &          &\\
+\vdots   & \vdots   &   \vdots    \\
+\end{tabular}
+\end{center} \caption{Format of the scenario files} \label{F:SCRHS} 
+\end{figure}
+
+In the right-hand side scenario file, the first number after the identifier is the scenario
+probability. For problems without stochastic right-hand sides, this file has to contain only the
+probabilities of the individual scenarios.\\
+%In order to assign the stochastic right-hand sides to constraints, the constraints have to be
+%grouped in the model file, cf. Section~\ref{S:INP}. The constraint section begins with the 
+%first-stage constraints followed by the stochastic constraints ordered corresponding to the entries
+%in the scenario file, and closes with the second-stage constraints without stochastic right-hand sides.
+
+In the cost coefficient scenario file the probability entries are left out. Otherwise the entries
+are the same as those in the right-hand side scenario file, cf. Figure~\ref{F:SCRHS}.
+The number of stochastic cost coefficients $c$ has to be specified in the
+specification file. 
+%The first $c$ variables occurring in the objective function
+%of the model file are assumed to have stochastic cost coefficients. 
+
+%The matrix scenario file requires additionally a row and column index for each
+%stochastic matrix coefficient, see Figure~\ref{F:SCRHS}. The identifier for this index is {\it pos}. If
+%$m$ is the number of stochastic matrix entries, the $(2*i-1)$-th number ($1 \le i \le m$)
+%following {\it pos} is treated as row index and the $(2*i)$-th number as column index of the $i$-th entry
+%of the individual scenarios.
+
+%Indices start with 0 for the first column/row.
+%To facilitate the identification of the indices, a simple program {\tt ddsiphelp} is included in the sources, which reads
+%a model file and produces a gzipped text file with a list of indices and names of rows and columns, named {\tt rows+cols.gz},
+%and optionally an lp-file of the model.
+%
+\section{Optional files}
+\subsection{Start information file} \label{S:START}
+Start information can be provided as displayed in Figure~\ref{F:START}.
+%
+\begin{figure}[ht]
+\begin{center}\framebox{
+\begin{tabular}{ll}
+BEST   &2345\\
+BOUND  &2000\\
+SOLUTION&\\
+1&\\
+2&\\
+\vdots&\\
+MULTIPLIER&\\
+3&\\
+4&\\
+\vdots&
+\end{tabular}}
+\end{center} \caption{File with start values} \label{F:START}
+\end{figure}
+%
+Hereby, BEST should be an upper bound, BOUND a lower bound, SOLUTION a feasible first-stage
+solution, and MULTIPLIER a Lagrangian multiplier. Any item of these four different informations may be
+left out.\\
+The user has to care for the consistency of the data. 
+
+\subsection{The priority order files} \label{S:ORDER}
+If indicated by setting the CPLEX parameter CPX\_PARAM\_MIPORDIND, the name of a CPLEX branching order file to be used for the scenario
+problems has to be specified following the name of the model file (named model.ord in Figure~2). Its format is described in the CPLEX manual.
+
+If the parameter PORDER is set, a file with branching order information for the master problem has to be given (named order.dat in Figure~2).
+The file has two columns whereby the first one contains {\bf indices} (starting with 0 as in the output of {\tt siphelp}) of first-stage variables and
+the second one integer values. High values lead to early branching. 
+
+\section{Output} \label{S:OUT}
+\subsection{Output on screen}
+The following shows typical lines of output as produced by \texttt{ddsip} (accuracy of the values cut due to line length).
+%
+\begin{figure}[ht]
+%\begin{center}\small{
+%\begin{tabular}{rrrrrrrcrr}\hline
+%\mbox{}\hspace{-1.3ex}Node  &\mbox{}\hspace{-2.0ex}Nodes   &\mbox{}\hspace{-2.0ex}Left      &  Objective    &\mbox{}\hspace{-7ex}Heuristic   &\mbox{}\hspace{-1.5ex}Best Value&            Bound  &Viol.&Gap &    Time\\
+%      0  &    1   &   1   &      -85.4728    &   infeasible   &              &   -85.4728& 2&            &   0.01\\
+%      1  &    3   &   2   &     -75.44188    &   infeasible   &              &   -85.4728& 2&            &   0.01\\
+%      2  &    3   &   1   &    infeasible    &   infeasible   &              &   -75.4418& 2&            &   0.01\\
+%*\hfill 3  &    5   &   2   & Heuristic  3     &  -56.6828   &   -56.6828&                 &&            &   0.02\\
+%*\hfill 3  &    5   &   2   & Heuristic  7     &   -63.636   &    -63.6365&                 &&            &   0.02\\
+%      3  &    5   &   2   &    -67.761944    &   -63.636   &    -63.6365&   -75.4418&  2&  \mbox{}\hspace{-2.0ex}18.5\% &    0.02\\
+%      4  &    5   &   2   &    -75.043288    &   infeasible   &    -63.6365&   -75.0432  & 2& \mbox{}\hspace{-2.0ex}17.9\% &    0.02\\
+%\hline
+%\end{tabular}}
+%\end{center} \caption{Output lines} \label{F:TYP}
+{\tiny
+\begin{verbatim}
+ Node Nodes Left  Objective        Heuristic  Best Value    Bound     Viol./Dispersion    Gap Wall Time CPU Time Father
+    0     1    1  44841.3565      infeasible                44841.356    5  3                   0h 00:03 0h 00:03  -1
+    1     3    2  47944.6273      infeasible                44841.356    7  2.7888              0h 00:06 0h 00:06   0
+    2     3    2  44844.5722      infeasible                44844.572    5  2.7888              0h 00:07 0h 00:07   0
+    3     5    3  44953.0125      infeasible                44844.572    7  2.7888              0h 00:09 0h 00:08   2
+    4     5    3  44848.1886        multiple                44848.188    4  2.7888              0h 00:09 0h 00:09   2
+    5     7    4  45549.6459      infeasible                44848.188    5  2.7888              0h 00:10 0h 00:10   4
+    6     7    4  44854.2998      infeasible                44854.299    3  2.7888              0h 00:12 0h 00:12   4
+*   7     9    5  Heuristic  2   66346.70463  66346.70463                                       0h 00:14 0h 00:13
+    7     9    5  45712.4035     66346.70463  66346.70463   44854.299    6  2.7888      32.39%  0h 00:14 0h 00:13   6
+*   8     9    5  Heuristic  2   44864.77749  44864.77749                                       0h 00:16 0h 00:16
+    8     9    1  44859.2107     44864.77749  44864.77749   44859.210    2  2.7888     0.0124%  0h 00:16 0h 00:16   6
+    9    11    1    cutoff                    44864.77749   44859.210                  0.0124%  0h 00:17 0h 00:17   8
+   10    11    1  44863.2847     44865.25242  44864.77749   44863.284    1  2.7888    0.00332%  0h 00:20 0h 00:19   8
+   11    13    2  44864.4325     44865.05453  44864.77749   44863.284    1  1.162     0.00332%  0h 00:22 0h 00:21  10
+*  12    13    2  Heuristic 12   44864.65876  44864.65876                                       0h 00:24 0h 00:23
+*  12    13    2  Heuristic  3   44864.38172  44864.38172                                       0h 00:25 0h 00:24
+   12    13    1  44863.5109     44864.38172  44864.38172   44863.510    1  1.6268    0.00194%  0h 00:25 0h 00:24  10
+   13    15    2  44864.1805     44864.54332  44864.38172   44863.510    1  0.67783   0.00194%  0h 00:27 0h 00:26  12
+\end{verbatim}
+}
+\end{figure}
+%
+The meaning of the single entries is rather straightforward. Here is a short
+explanation. 
+
+\noindent
+\begin{tabbing}
+Name\hspace*{1cm}\=Description \kill
+Node\>gives the number of the currently solved node.\\
+Nodes\>counts the number of nodes generated in the tree.\\
+Left\>counts the number of nodes in the front tree.\\
+Objective\>is the lower bound of the current node. \\
+Heuristic\>is the upper bound returned by the heuristic. \\
+Best Value\> is the overall upper bound.\\
+Bound\> is the overall lower bound.\\
+Viol.\> is the number of variables violationg the nonanticipativity.\\
+Dispersion\> is the greatest difference of first-stage variable values.\\
+Gap\> is the relative gap between {\it Best Value} and {\it Bound}.\\
+Wall Time\> gives the wall time passed since invoking the program.\\
+CPU Time\> gives the CPU time passed since invoking the program.\\
+Father\> gives the number of the father node.\\
+\end{tabbing}
+
+The pruning of nodes is indicated by the entry {\it cutoff} in the row `Objective'. 
+The row `Heuristic' may also contain the entries {\it n-stop} (inferiority, evaluation stopped at
+n-th scenario) or {\it multiple} (a solution has been evaluated previously). When more than one
+solution is evaluated in a branch-and-bound step, the entry indicates the status of the last
+solution.
+
+An asterisk in the first position indicates that a new best value was found.
+In the example a list of heuristics is used in every node, the lines beginning with an asterisk
+indicate which heuristic found a new best solution.
+If the scenario solutions of a node fulfil the nonanticipativiy and yield
+a new best upper bound, in the output line for the node an asterisk is prepended, too.
+%
+\subsection{Output in the file {\it sip.out}}
+All output files will be placed in the subdirectory {\it sipout} of the current
+directory. This directory will be
+created if it does not exist. A further run of  \texttt{ddsip} overwrites the existing output
+files. The output on screen is also directed to the file {\it more.out} in case OUTLEV $>$ 51. In addition, this file
+contains the parameters read and some information on the solution:
+%
+\begin{itemize}
+\item The value of {\it Status} indicates the solution status:
+
+\begin{tabular}{rp{10cm}}
+-1& the process was terminated by the user,\\
+ 1& the node limit has been reached,\\
+ 2& the gap (absolute or relative) has been reached,\\
+ 3& the time limit has been reached,\\
+ 4& the maximal dispersion, i.e.\ the maximal difference of the first-stage
+components within all remaining front nodes, was less then the parameter NULLDISP (null 
+dispersion),\\
+ 5& the whole branching tree was backtracked. 
+\end{tabular}
+
+\item {\it Time} is the total CPU time needed by \texttt{ddsip}.
+\item {\it Upper bounds} is the number of evaluated upper bounds.
+\item {\it Tree depth} is the depth of the branch-and-bound tree.
+\item {\it Nodes} is the total number of nodes.
+\item {\it EEV} is the solution of the EEV problem according to \cite{bir}.
+\item {\it VSS} is the value of stochastic programming according to \cite{bir}.
+\item {\it $Expected value$} is the expected value.
+\item {\it $Risk measure$} is the value of the used risk measure.
+\end{itemize}
+%
+\subsection{Other output files}
+The number of additional output files and their content is ruled via the parameters OUTFIL and
+OUTLEV. Values of OUTFIL greater than 1 are intended for debugging purposes.
+\begin{itemize}
+\item The file {\it more.out} contains more or less information depending on the parameter OUTLEV,
+e.g. the subproblem solutions, the branch-and-bound tree, and the objective function composition. 
+\item The file {\it solution.out} contains information on the solution with the optimal first-stage
+solution among them. It is not written when OUTFILES is set to 0.
+%\item
+%The file {\it recfun.out} contains the sample points of the recourse function.
+\item If OUTFILES is greater than 1, then in addition the following files are written to sipout:
+\begin{itemize}
+\item The files {\it rhs.out}, {\it cost.out}, {\it matrix.out}, and {\it model.lp.gz} offer a check
+for a correct reading of the scenario files and the model file, respectively. 
+\item The files {\it risk.lp.gz} and {\it eev.lp.gz} document the changes made during 
+defining the risk model and solving the expected value problem, respectively. 
+\end{itemize}
+\item If OUTFILES equals 3, then in addition the following files are written to sipout:
+\begin{itemize}
+\item The  single scenario files {\it lb\_sc\_*\_n0\_gc*.lp.gz} and {\it ub\_sc\_*\_n0\_gc*.lp.gz} solved in the root node for lower and upper bounds, respectively.
+\end{itemize}
+\item If OUTFILES equals 4, then in addition the following files are written to sipout:
+\begin{itemize}
+\item The  single scenario files {\it lb\_sc\_*\_n*\_gc*.lp.gz} and {\it ub\_sc\_*\_n*\_gc*.lp.gz} solved in all nodes for lower and upper bounds.
+\end{itemize}
+\item If OUTFILES equals 5, then the files  {\it lb\_sc\_*\_n*\_gc*.lp.gz} and\\  {\it ub\_sc\_*\_n*\_gc*.lp.gz} are not written, but instead
+\begin{itemize}
+\item The single scenario files {\it lb\_sc\_*\_n*.sav.gz} solved in all nodes for lower bounds plus the used MIP starts as {\it lb\_sc\_*\_n*.mst.gz} and
+ the CPLEX settings as {\it lb\_sc\_*\_n*\_1.prm} and {\it lb\_sc\_*\_n*\_2.prm}. In the case of conic bundle use these are overwritten in every dual step,
+ just the ones of the final dual step of each node (or the one causing a program crash) remain.
+\end{itemize}
+\item If OUTFILES equals 6, as in the case 5 the single scenario problem files are not written as lp.gz, but instead
+\begin{itemize}
+\item The single scenario files {\it lb\_sc\_*\_n*\_gc*.sav.gz} solved in all nodes for lower bounds plus the used MIP starts as {\it lb\_sc\_*\_n*\_gc*.mst.gz} and
+ the CPLEX settings as {\it lb\_sc\_*\_n*\_1.prm} and {\it lb\_sc\_*\_n*\_2.prm}.
+ This is the same amount of output files as with the setting 5 in case no conic bundle is used.
+ In the case of conic bundle use these are written in every dual step, increasing the value after gc (global counter) with each step.
+\end{itemize}
+\end{itemize}
+%
+\section{License and bugs}
+\subsection{License}
+The program is free software. It is distributed under the GNU General Public License as published by
+the Free Software Foundation, see \cite{gnu}.
+%
+\subsection{Bug report}
+Please report all bugs via email to ralf.gollmer@uni-due.de. If possible, provide the input
+files to facilitate reproduction of the error.
+%
+%\clearpage
+
+\begin{appendix}
+
+\section{Sample specs file} \label{S:SAM}
+%~\vspace{2ex}
+\begin{center}
+%\begin{supertabular}{lrl}
+\framebox{
+\begin{tabular}{lrl}
+\multicolumn{3}{l}{* Parameters to specify the two-stage model}\medskip\\
+FIRSTCON &             9 & * First stage constraints     \\          
+FIRSTVAR &            30 & * First stage variables      \\           
+SECCON   &          280 & * Second stage constraints   \\           
+SECVAR   &          326 & * Second stage variables   \\             
+STOCRHS  &           70 & * Number of stochastic rhs elements  \\   
+SCENARIOS &           5 & * Number of scenarios  \medskip  \\               
+STOCCOST  &           0 & * Number of stochastic cost coefficients\\
+&&* ({stoch. obj. doesn't work in combination with risk!})\\
+STOCMAT   &           0 & * Number of stochastic matrix entries  \medskip \\
+\multicolumn{3}{l}{* Parameters for dual decomposition procedure}\medskip\\
+OUTLEVEL    &            5 & * Print info to {\it more.out}\\
+OUTFILES    &            1 & * Print files (models and output)\\
+STARTINFO      &          0 & * Use start solution/bound\\
+PREPRO        &       0 & * Sort scenarios\\
+NODELIM  	 &       90 & * \texttt{ddsip} node limit\\
+TIMELIM      &      800 & * \texttt{ddsip} time limit  \\
+HEURISTIC      &   99 3 4 & * Heuristic to produce a feasible solution\\
+EEVPROB    &         1 & * Solve EEV, cf. \cite{bir} \\
+ABSOLUTE     &        0 & * Absolute duality gap \\
+RELATIVE      &   0.001 & * Relative duality gap \medskip\\
+PORDER      &          0 & * Use branching priority order\\
+BRADIR         &     -1 & * Branching direction  \\
+BRASTRAT        &     0 & * Branching strategy  \\
+BOUSTRAT        &     1 & * Bounding strategy  \\
+EPSILON         &   1e-4& * Epsilon used for branching on real variables\\
+RELAXL	          &   1 & * Relaxation level (1= relax first-stage variables\\&&* in scenario problems)\\
+LOGFREQ            &  1 & * Output log frequency\\
+INTFIRST       &      1 & * Branching on integers first\\
+ACCURACY       &     1e-8& * Accuracy used to compare real values\\
+NULLDISP        &     0 & * Tolerance level for null-dispersion\\&&* (used together with ACCURACY!)\\
+QUANTILES      &    10 &* Number of Quantiles\\\medskip\\
+\multicolumn{3}{l}{* Risk model}\medskip\\
+RISKMOD   &             1 & * Risk model\\
+TARGET    &        1e+3 & * Target for target measures\\
+WEIGHT   &         1e+0 & * Weight of the risk term\medskip\\
+RISKBM   &         1e+4 & * Big M used in modeling risk models 2 and 5\\
+BRAETA   &            0 & * Branch on auxiliary variable eta (models 4 and 5)?\\
+\end{tabular}}
+\framebox{
+\begin{tabular}{lrl}
+\multicolumn{3}{l}{* CPLEX Parameters (See CPLEX manual \cite{cp})}\medskip\\
+\multicolumn{3}{l}{CPLEXBEGIN}\\
+1035       &        1 & * Output on screen indicator\\
+2009       &     1e-7 & * Relative gap\\
+\multicolumn{3}{l}{CPLEXEEV}\\
+2009       &      0.1 & * Relative gap for EEV\\
+\multicolumn{3}{l}{CPLEXLB}\\
+2058 &    3&* MIP emphasis\\
+2031 &   10&* heuristic frequency\\
+2009 &0.002&* Relative Gap\\
+1039 &  900&* Time limit\\
+\multicolumn{3}{l}{CPLEX2LB}\\
+2058 &    4&* MIP emphasis\\
+2031 &    5&* heuristic frequency\\
+2061 &   20&* RINS neighbourhood search heuristic frequency\\
+2009 & 1e-6&* Relative Gap\\
+1039 &  350&* Time limit\\
+\multicolumn{3}{l}{CPLEXUB}\\
+2058 &    3&* MIP emphasis\\
+2031 &   10&* heuristic frequency\\
+1039 &  750&* Time limit\\
+2009 &0.001&* Relative Gap\\
+\multicolumn{3}{l}{CPLEX2UB}\\
+2058 &    4&* MIP emphasis\\
+2031 &   15&* heuristic frequency\\
+2061 &   60&* RINS neighbourhood search heuristic frequency\\
+1039 &  300&* Time limit\\
+\multicolumn{3}{l}{CPLEXDUAL}\\
+2009       &      1e-4 & * Relative gap for Lagrangian Dual\\
+1035       &        0 & * Output on screen indicator for Lagrangian dual\\
+\multicolumn{3}{l}{CPLEXEND}\medskip\\
+\multicolumn{3}{l}{*  Parameters specifying the use of \texttt{ConicBundle}}\medskip\\
+CBFREQ &           1000 &* Conic Bundle in every i-th node\\
+CBITLIM&             20 &* Limit for number of descent steps in Conic Bundle\\
+CBTOTIT&           1000 &* Limit for total number of CB iterations (incl. nullsteps)\\
+NONANT       &        2 &* Nonanticipativity representation\\
+CBPRINT&              1 &* Output level of Conic Bundle\\
+CBBUNS&              200&* Maximal bundle size\\
+CBMAXS&               10&* Maximal number of subgradients\\
+CBWEIGHT&             5.&* Conic Bundle initial weight\\
+\end{tabular}}
+%}
+\vspace{2ex}
+
+Specification file
+\end{center} 
+\end{appendix}
+
+
+
+\begin{thebibliography}{99}
+
+\bibitem[Ahmed \etal(2000)]{ahme} Ahmed, S.; M. Tawarmalani; N. V. Sahinidis (2000), A Finite Branch and 
+Bound Algorithm for Two-Stage Stochastic Integer Programs, Stochastic Programming E-Print Series,
+\texttt{http://www.speps.info} 
+
+\bibitem[Beale(1955)]{beal} Beale, E.M.L. (1955), On Minimizing a Convex Function Subject to Linear
+Inequalities, Journal of Royal Statistical Society 17, pp. 173-184.
+
+\bibitem[Birge and Louveaux(1997)]{bir} Birge, J.R.; F.V. Louveaux (1997), Introduction to
+Stochastic Programming, Springer, 
+    New York.
+
+\bibitem[Car\o e and Schultz(1999)]{cs1}
+    Car\o e, C.C.; R. Schultz (1999),         
+        Dual Decomposition in Sto\-chastic Integer Programming, 
+        Operations Research Letters 24, pp. 37-45.
+
+\bibitem[Car\o e and Schultz(1998)]{cs2} Car\o e, C.C.; R. Schultz (1998), A two-stage stochastic program
+for unit commitment under uncertainty in a hydro-thermal power system, 
+Konrad-Zuse-Zentrum f\"ur Informationstechnik Berlin, Preprint SC 98-11. 
+
+\bibitem[Dantzig(1955)]{dant} Dantzig, G.B. (1955), Linear Programming under Uncertainty,
+Management Science 1, pp. 197-206.
+
+\bibitem[GNU Project(2004)]{gnu} GNU Project (2004), \texttt{http://www.gnu.org}
+
+\bibitem[Helmberg(2000)]{helm2} C. Helmberg (2000), Semidefinite Programming for Combinatorial
+Optimization, ZIB-Report ZR-00-34, Konrad-Zuse-Zentrum Berlin.
+
+%\bibitem[Helmberg(2004)]{he} C. Helmberg (2004), \texttt{http://www-user.tu-chemnitz.de/\symbol{126}helmberg/}
+
+\bibitem[Helmberg(2012)]{CB} C. Helmberg (2012), {\small \texttt{http://www-user.tu-chemnitz.de/\symbol{126}helmberg/ConicBundle/}}
+
+\bibitem[CPLEX(2016)]{cp}
+	IBM ILOG (2016), ILOG CPLEX 12.6.3 Reference Manual, installed with the product or online:\\  \texttt{http://www-01.ibm.com/support/docview.wss?uid=swg21503602}
+
+\bibitem[Kall and Wallace(1994)]{kal} Kall, P.; S.W. Wallace (1994), Stochastic Programming, Wiley, Chichester.
+
+\bibitem[Laporte and Louveaux(1993)]{lapo} Laporte, G.; F.V. Louveaux (1993), The Integer L-Shape Method for
+Stochastic Integer Programs with Complete Recourse, Operations Research Letters 13, pp. 133-142.
+
+\bibitem[Louveaux and Schultz(2003)]{louv} Louveaux, F.V.; R. Schultz (2003), Stochastic Integer Programming, In:
+A. Ruszczynski, A. Shapiro (Eds.), Stochastic Programming, Elsevier, North-Holland.
+
+\bibitem[M\"arkert(2004)]{diss} A. M\"arkert (2004), Deviation Measures in Stochastic Programming with Mixed-Integer
+  Recourse, Doctoral thesis, Institute of Mathematics, University Duisburg-Essen, Campus Duisburg.
+
+\bibitem[Ogryczak\- and Ruszczynski(1999)]{og} Ogryszak, W.; A. Ruszczinsky (1999), From Sto\-chastic
+Dominance to Mean-Risk Models: 
+Semideviations as Risk Measures, European Journal of Operations Research 116, 33-50.
+
+\bibitem[Prekopa(1995)]{pre} Prekopa, A. (1995), Stochastic Programming, Kluwer, Dordrecht.
+
+\bibitem[Schultz and Tiedemann(2003)]{tied} Schultz, R.; S. Tiedemann (2003), Risk Aversion via Excess
+Probabilities in Stochastic Programs with Mixed-Integer Recourse, SIAM Journal on Optimization 14, pp. 115-138.
+
+\bibitem[van der Vlerk(1995)]{vdvl} van der Vlerk, M.H. (1995), Stochastic Programming with Integer Recourse, PhD
+thesis, University of Groningen, The Netherlands. 
+
+\bibitem[Walkup and Wets(1967)]{walk} Walkup, D.; R.J.-B. Wets (1967), Stochastic Programs with Recourse, SIAM
+Journal on Applied Mathematics 15, pp. 1299-1314.
+
+\end{thebibliography}
+
+\end{document}
+
+
+
+

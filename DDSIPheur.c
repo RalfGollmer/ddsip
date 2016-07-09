@@ -521,9 +521,6 @@ DDSIP_Heuristics (int *comb)
             *comb = 5;
         }
         break;
-    case 14:
-        DDSIP_Probable();
-        break;
     default:
         DDSIP_RoundNear (average);
         break;

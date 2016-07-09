@@ -52,7 +52,7 @@ DDSIP_ExpValProb (void)
     if (DDSIP_param->files > 1)
     {
         sprintf (fname, "%s/ev%s", DDSIP_outdir, DDSIP_param->coretype);
-        status = CPXwriteprob (env, lp, fname, NULL);
+        status = CPXwriteprob (DDSIP_env, DDSIP_lp, fname, NULL);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to write problem\n");
@@ -70,7 +70,7 @@ DDSIP_ExpValProb (void)
         }
     }
 
-    mipstatus = CPXmipopt (env, lp);
+    mipstatus = CPXmipopt (DDSIP_env, DDSIP_lp);
 
     // Reset cplex parameters
     if (DDSIP_param->cpxnoeev)
@@ -96,14 +96,14 @@ DDSIP_ExpValProb (void)
         goto TERMINATE;
     }
     // No solution found ? (integer infeasible, some limit (node, time))
-    mipstatus = CPXgetstat (env, lp);
+    mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
     if (DDSIP_NoSolution (mipstatus))
     {
         status = 1;
         goto TERMINATE;
     }
 
-    status = CPXgetx (env, lp, mipx, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
+    status = CPXgetx (DDSIP_env, DDSIP_lp, mipx, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get solution \n");

@@ -58,7 +58,7 @@ DDSIP_PrintErrorMsg (int status)
     else if (status > 1000)
     {
         char errmsg[1024];
-        CPXgeterrorstring (env, status, errmsg);
+        CPXgeterrorstring (DDSIP_env, status, errmsg);
         printf ("%s", errmsg);
     }
 

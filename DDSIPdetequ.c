@@ -77,8 +77,8 @@ DDSIP_DetEqu ()
     }
 
 
-    det_equ = CPXcloneprob (env, lp, &status);
-    CPXchgprobname (env, det_equ, probname);
+    det_equ = CPXcloneprob (DDSIP_env, DDSIP_lp, &status);
+    CPXchgprobname (DDSIP_env, det_equ, probname);
 
     if (!(rowname = (char **) calloc (DDSIP_param->seccon, sizeof (char *)))
             || !(scen_spec_rowname = (char **) calloc (DDSIP_param->seccon, sizeof (char *)))
@@ -88,7 +88,7 @@ DDSIP_DetEqu ()
         return;
     }
     rowstorespace = DDSIP_param->seccon * 255;
-    status = CPXgetrowname (env, lp, rowname, rownamestore,
+    status = CPXgetrowname (DDSIP_env, DDSIP_lp, rowname, rownamestore,
                             rowstorespace, &rowsurplus_p, DDSIP_param->firstcon, DDSIP_param->firstcon + DDSIP_param->seccon - 1);
 
 
@@ -100,15 +100,15 @@ DDSIP_DetEqu ()
         return;
     }
     colstorespace = (DDSIP_param->firstvar + DDSIP_param->secvar) * 255;
-    status = CPXgetcolname (env, lp, colname, colnamestore,
+    status = CPXgetcolname (DDSIP_env, DDSIP_lp, colname, colnamestore,
                             colstorespace, &colsurplus_p, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
 
     /*____________________________________________________________________________________*/
-    status = CPXgetsense (env, lp, sense, DDSIP_param->firstcon, DDSIP_param->firstcon + DDSIP_param->seccon - 1);
+    status = CPXgetsense (DDSIP_env, DDSIP_lp, sense, DDSIP_param->firstcon, DDSIP_param->firstcon + DDSIP_param->seccon - 1);
     /*____________________________________________________________________________________*/
-    status = CPXgetrhs (env, lp, non_stoc_rhs, DDSIP_param->firstcon + DDSIP_param->stocrhs, DDSIP_param->firstcon + DDSIP_param->seccon - 1);
+    status = CPXgetrhs (DDSIP_env, DDSIP_lp, non_stoc_rhs, DDSIP_param->firstcon + DDSIP_param->stocrhs, DDSIP_param->firstcon + DDSIP_param->seccon - 1);
     /*____________________________________________________________________________________*/
-    status = CPXgetobj (env, lp, obj_coef, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, obj_coef, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
     /*____________________________________________________________________________________*/
     //copy rownames scenario many times, append scenario index
     //and enter sense and rhs
@@ -130,7 +130,7 @@ DDSIP_DetEqu ()
             else
                 det_equ_rhs[j] = non_stoc_rhs[j - DDSIP_param->stocrhs];
         }
-        status = CPXnewrows (env, det_equ, DDSIP_param->seccon, det_equ_rhs, sense, NULL, scen_spec_rowname);
+        status = CPXnewrows (DDSIP_env, det_equ, DDSIP_param->seccon, det_equ_rhs, sense, NULL, scen_spec_rowname);
         for (j = 0; j < DDSIP_param->seccon; j++)
             DDSIP_Free ((void **) &(scen_spec_rowname[j]));
     }
@@ -150,9 +150,9 @@ DDSIP_DetEqu ()
         return;
     }
 
-    status = CPXgetlb (env, det_equ, lb, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
-    status = CPXgetub (env, det_equ, ub, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
-    status = CPXgetctype (env, det_equ, vartype, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
+    status = CPXgetlb (DDSIP_env, det_equ, lb, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
+    status = CPXgetub (DDSIP_env, det_equ, ub, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
+    status = CPXgetctype (DDSIP_env, det_equ, vartype, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
     for (j = 0; j < DDSIP_param->secvar; j++)
     {
         vartype_sorted[j] = vartype[DDSIP_bb->secondindex[j]];
@@ -177,7 +177,7 @@ DDSIP_DetEqu ()
         }
 
         status =
-            CPXnewcols (env, det_equ, DDSIP_param->secvar, scaled_obj_coef,
+            CPXnewcols (DDSIP_env, det_equ, DDSIP_param->secvar, scaled_obj_coef,
                         lb_sorted, ub_sorted, vartype_sorted, scen_spec_colname);
         for (j = 0; j < DDSIP_param->secvar; j++)
             DDSIP_Free ((void **) &(scen_spec_colname[j]));
@@ -204,7 +204,7 @@ DDSIP_DetEqu ()
     {
         for (j = 0; j < DDSIP_param->firstvar; j++)
         {
-            if ((status = CPXgetcoef (env, det_equ, DDSIP_param->firstcon + i, colindex_sorted[j], &coef)))
+            if ((status = CPXgetcoef (DDSIP_env, det_equ, DDSIP_param->firstcon + i, colindex_sorted[j], &coef)))
             {
                 fprintf (stderr, " Build det. equivalent: Error retrieving coefficient of first-stage Variable %d.\n", j);
                 exit (1);
@@ -214,7 +214,7 @@ DDSIP_DetEqu ()
                 for (scen = 0; scen < DDSIP_param->scenarios; scen++)
                 {
                     status =
-                        CPXchgcoef (env, det_equ, DDSIP_param->firstcon + DDSIP_bb->seccon + scen * DDSIP_param->seccon + i, colindex_sorted[j], coef);
+                        CPXchgcoef (DDSIP_env, det_equ, DDSIP_param->firstcon + DDSIP_bb->seccon + scen * DDSIP_param->seccon + i, colindex_sorted[j], coef);
                     if (status)
                     {
                         fprintf (stderr, " Build det. equivalent: Error setting coefficient of first-stage Variable %d.\n", j);
@@ -225,7 +225,7 @@ DDSIP_DetEqu ()
         }
         for (j = DDSIP_param->firstvar; j < DDSIP_param->firstvar + DDSIP_param->secvar; j++)
         {
-            if ((status = CPXgetcoef (env, det_equ, DDSIP_param->firstcon + i, colindex_sorted[j], &coef)))
+            if ((status = CPXgetcoef (DDSIP_env, det_equ, DDSIP_param->firstcon + i, colindex_sorted[j], &coef)))
             {
                 fprintf (stderr,
                          " Build det. equivalent: Error retrieving coefficient of second-stage Variable %d.\n",
@@ -237,7 +237,7 @@ DDSIP_DetEqu ()
                 for (scen = 0; scen < DDSIP_param->scenarios; scen++)
                 {
                     status =
-                        CPXchgcoef (env, det_equ,
+                        CPXchgcoef (DDSIP_env, det_equ,
                                     DDSIP_param->firstcon + DDSIP_bb->seccon + scen * DDSIP_param->seccon + i, (scen + 1) * DDSIP_param->secvar + j, coef);
                 }
                 if (status)
@@ -261,11 +261,11 @@ DDSIP_DetEqu ()
 
     ///////delete original second stage rows & cols ////////////////////////////////////////////
 
-    status = CPXdelrows (env, det_equ, DDSIP_param->firstcon, DDSIP_param->firstcon + DDSIP_bb->seccon - 1);
+    status = CPXdelrows (DDSIP_env, det_equ, DDSIP_param->firstcon, DDSIP_param->firstcon + DDSIP_bb->seccon - 1);
     j = 0;
     for (i = 0; i < DDSIP_param->secvar; i++)
     {
-        status = CPXdelcols (env, det_equ, DDSIP_bb->secondindex[i] - j, DDSIP_bb->secondindex[i] - j);
+        status = CPXdelcols (DDSIP_env, det_equ, DDSIP_bb->secondindex[i] - j, DDSIP_bb->secondindex[i] - j);
         j++;
     }
 
@@ -289,11 +289,11 @@ DDSIP_DetEqu ()
             {
                 value[j] = DDSIP_data->matval[scen * DDSIP_param->stocmat + j];
             }
-            status = CPXchgcoeflist (env, det_equ, DDSIP_param->stocmat, DDSIP_data->matrow, matcol_sorted, value);
+            status = CPXchgcoeflist (DDSIP_env, det_equ, DDSIP_param->stocmat, DDSIP_data->matrow, matcol_sorted, value);
             if (status)
             {
                 char errmsg[1024];
-                CPXgeterrorstring (env, status, errmsg);
+                CPXgeterrorstring (DDSIP_env, status, errmsg);
                 fprintf (stderr, "in DetEqu: %s\n", errmsg);
             }
             for (j = 0; j < DDSIP_param->stocmat; j++)
@@ -336,11 +336,11 @@ DDSIP_DetEqu ()
                 else
                     value[j] += DDSIP_data->prob[scen] * DDSIP_data->cost[scen * DDSIP_param->stoccost + j];
             }
-            status = CPXchgobj (env, det_equ, DDSIP_param->stoccost, matcol_sorted, value);
+            status = CPXchgobj (DDSIP_env, det_equ, DDSIP_param->stoccost, matcol_sorted, value);
             if (status)
             {
                 char errmsg[1024];
-                CPXgeterrorstring (env, status, errmsg);
+                CPXgeterrorstring (DDSIP_env, status, errmsg);
                 fprintf (stderr, "in DetEqu: %s\n", errmsg);
             }
             for (j = 0; j < DDSIP_param->stoccost; j++)
@@ -355,12 +355,12 @@ DDSIP_DetEqu ()
     }
     ////////////////////////////////////////////////////////////////////////////////////////////
 
-    status = CPXwriteprob (env, det_equ, probname, NULL);
+    status = CPXwriteprob (DDSIP_env, det_equ, probname, NULL);
     if (status)
         fprintf (DDSIP_outfile, " *** Deterministic equivalent not written successfully, status = %d\n", status);
     else
         fprintf (DDSIP_outfile, " *** Deterministic equivalent written successfully\n");
-    status = CPXfreeprob (env, &det_equ);
+    status = CPXfreeprob (DDSIP_env, &det_equ);
 
     DDSIP_Free ((void **) &(sense));
     DDSIP_Free ((void **) &(vartype));

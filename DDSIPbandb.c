@@ -470,7 +470,7 @@ DDSIP_InitNewNodes (void)
     if (DDSIP_param->outlev > 2)
     {
         cnt = DDSIP_bb->firstindex[DDSIP_node[DDSIP_bb->nonode]->neoind];
-        status = CPXgetcolname (env, lp, DDSIP_bb->name_buffer, DDSIP_bb->n_buffer, DDSIP_bb->n_buffer_len, &i, cnt, cnt);
+        status = CPXgetcolname (DDSIP_env, DDSIP_lp, DDSIP_bb->name_buffer, DDSIP_bb->n_buffer, DDSIP_bb->n_buffer_len, &i, cnt, cnt);
         if (status)
             fprintf (stderr," Error when querying name of variable %d: %d\n",cnt,status);
         fprintf (DDSIP_bb->moreoutfile, "New nodes (no. of node, no. of variable branched on, lb, ub, name of var.)\n");
@@ -659,7 +659,7 @@ DDSIP_Bound (void)
     static int callcnt = 0, bestBound = 0;
     double * front_node_bound, rgap, factor, worstBound;
     callcnt++;
-    factor = (DDSIP_bb->bestvalue < 0.)? 1.-1.e-15 :  1.+1.e-15;
+    factor = (DDSIP_bb->bestvalue < 0.)? 1.-1.e-11 :  1.+1.e-11;
 
     if (DDSIP_param->outlev > 2)
     {
@@ -669,7 +669,7 @@ DDSIP_Bound (void)
     // Fathom nodes in front tree
     for (i = DDSIP_bb->nofront - 1; i >= 0; i--)
     {
-        if ((DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bestvalue*factor) || DDSIP_Equal (DDSIP_node[DDSIP_bb->front[i]]->bound, DDSIP_infty))
+        if ((DDSIP_bb->front[i] != DDSIP_bb->curnode) && ((DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bestvalue*factor + DDSIP_param->accuracy + DDSIP_bb->correct_bounding) || DDSIP_Equal (DDSIP_node[DDSIP_bb->front[i]]->bound, DDSIP_infty)))
         {
             // debug info
             if (DDSIP_param->outlev > 29)
@@ -681,6 +681,9 @@ DDSIP_Bound (void)
                         DDSIP_node[DDSIP_bb->front[i]]->bound- (DDSIP_bb->bestvalue*factor), DDSIP_param->accuracy);
                 fprintf (DDSIP_bb->moreoutfile, " Bounding: delete node %d, bound: %.16g, bestvalue: %.16g, previous bestbound: %.16g\n", DDSIP_bb->front[i],
                          DDSIP_node[DDSIP_bb->front[i]]->bound, DDSIP_bb->bestvalue, DDSIP_bb->bestbound);
+                fprintf (DDSIP_bb->moreoutfile, "                  node %d, bound - bestvalue = %.16g, bound - (bestvalue*factor) = %.16g, accuracy= %g\n", DDSIP_bb->front[i],
+                        DDSIP_node[DDSIP_bb->front[i]]->bound- DDSIP_bb->bestvalue,
+                        DDSIP_node[DDSIP_bb->front[i]]->bound- (DDSIP_bb->bestvalue*factor), DDSIP_param->accuracy);
             }
             // Free the node
             for (scen = 0; scen < DDSIP_param->scenarios; scen++)

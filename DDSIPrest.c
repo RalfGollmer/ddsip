@@ -38,7 +38,7 @@ DDSIP_RestoreBoundAndType (void)
 
     /*   if (DDSIP_bb->DDSIP_step==solve || DDSIP_bb->DDSIP_step==dual) */
     /* 	{ */
-    /* 	  status = CPXchgobj (env, lp, DDSIP_bb->firstvar, DDSIP_bb->firstindex, DDSIP_bb->cost); */
+    /* 	  status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_bb->firstvar, DDSIP_bb->firstindex, DDSIP_bb->cost); */
     /* 	  if ( status ) { */
     /* 		fprintf (stderr,"ERROR: Failed to update objective coefficients\n"); */
     /* 		return status; */
@@ -46,29 +46,29 @@ DDSIP_RestoreBoundAndType (void)
     /* 	} */
 
     // Restore original bounds
-    status = CPXchgbds (env, lp, DDSIP_bb->firstvar, DDSIP_bb->firstindex, DDSIP_bb->lbident, DDSIP_bb->lborg);
+    status = CPXchgbds (DDSIP_env, DDSIP_lp, DDSIP_bb->firstvar, DDSIP_bb->firstindex, DDSIP_bb->lbident, DDSIP_bb->lborg);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change lower bounds \n");
         return status;
     }
 
-    status = CPXchgbds (env, lp, DDSIP_bb->firstvar, DDSIP_bb->firstindex, DDSIP_bb->ubident, DDSIP_bb->uborg);
+    status = CPXchgbds (DDSIP_env, DDSIP_lp, DDSIP_bb->firstvar, DDSIP_bb->firstindex, DDSIP_bb->ubident, DDSIP_bb->uborg);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change upper bounds \n");
         return status;
     }
     // probtype=0 (LP)
-    if (!CPXgetprobtype (env, lp))
+    if (!CPXgetprobtype (DDSIP_env, DDSIP_lp))
     {
-        status = CPXchgprobtype (env, lp, CPXPROB_MILP);
+        status = CPXchgprobtype (DDSIP_env, DDSIP_lp, CPXPROB_MILP);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change problem type (Restore) \n");
             return status;
         }
-        status = CPXchgctype (env, lp, DDSIP_bb->secvar, DDSIP_bb->secondindex, DDSIP_bb->sectype);
+        status = CPXchgctype (DDSIP_env, DDSIP_lp, DDSIP_bb->secvar, DDSIP_bb->secondindex, DDSIP_bb->sectype);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change types of second-stage variables (Restore) \n");
@@ -78,7 +78,7 @@ DDSIP_RestoreBoundAndType (void)
     //Restore ctypes if solving was processed with relaxed first stage
     if (DDSIP_bb->DDSIP_step == solve && DDSIP_param->relax == 1)
     {
-        status = CPXchgctype (env, lp, DDSIP_bb->firstvar, DDSIP_bb->firstindex, DDSIP_bb->firsttype);
+        status = CPXchgctype (DDSIP_env, DDSIP_lp, DDSIP_bb->firstvar, DDSIP_bb->firstindex, DDSIP_bb->firsttype);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change types of first stage variables (Restore) \n");

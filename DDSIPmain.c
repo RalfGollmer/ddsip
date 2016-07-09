@@ -29,8 +29,8 @@
 #include <sys/resource.h>
 
 
-CPXENVptr    env = NULL;
-CPXLPptr     lp  = NULL;
+CPXENVptr    DDSIP_env = NULL;
+CPXLPptr     DDSIP_lp  = NULL;
 
 FILE      * DDSIP_outfile = NULL;
 
@@ -185,15 +185,15 @@ main (void)
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
 
     // Open cplex environment
-    env = CPXopenCPLEX (&status);
-    if (env == NULL)
+    DDSIP_env = CPXopenCPLEX (&status);
+    if (DDSIP_env == NULL)
     {
         fprintf (stderr, "ERROR: Failed to open cplex environment, CPLEX error code %d.\n",status);
         return status;
     }
     else
-        printf ("CPLEX version is %s\n", CPXversion (env));
-    fprintf (DDSIP_outfile, "CPLEX version is %s\n\n", CPXversion (env));
+        printf ("CPLEX version is %s\n", CPXversion (DDSIP_env));
+    fprintf (DDSIP_outfile, "CPLEX version is %s\n\n", CPXversion (DDSIP_env));
 
     DDSIP_param = (para_t *) DDSIP_Alloc (sizeof (para_t), 1, "param(Main)");
 
@@ -269,7 +269,7 @@ main (void)
         fprintf (DDSIP_bb->moreoutfile, " Total initialization time: %4.2f seconds.\n", DDSIP_GetCpuTime ());
 
     // at the start there is no solution
-    status = CPXsetintparam (env, CPX_PARAM_ADVIND, 0);
+    status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 0);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
@@ -342,7 +342,7 @@ main (void)
 
     // Print cplex log to debugfile
     if (DDSIP_param->outlev > 51)
-        if ((status = CPXsetlogfile (env, DDSIP_bb->moreoutfile)))
+        if ((status = CPXsetlogfile (DDSIP_env, DDSIP_bb->moreoutfile)))
             goto TERMINATE;
 
     // No of DDSIP iterations
@@ -540,21 +540,21 @@ TERMINATE:
     }
 
     // Free up the problem as allocated by CPXcreateprob, if necessary
-    if (lp != NULL)
+    if (DDSIP_lp != NULL)
     {
-        status = CPXfreeprob (env, &lp);
+        status = CPXfreeprob (DDSIP_env, &DDSIP_lp);
         if (status)
             printf ("ERROR: CPXfreeprob failed, error code %d\n", status);
     }
     // Free up the CPLEX environment, if necessary
-    if (env != NULL)
+    if (DDSIP_env != NULL)
     {
-        status = CPXcloseCPLEX (&env);
+        status = CPXcloseCPLEX (&DDSIP_env);
         if (status)
         {
             char errmsg[1024];
             fprintf (stderr, "ERROR: Failed to close CPLEX environment.\n");
-            CPXgeterrorstring (env, status, errmsg);
+            CPXgeterrorstring (DDSIP_env, status, errmsg);
             printf ("%s\n", errmsg);
         }
     }

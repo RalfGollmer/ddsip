@@ -147,7 +147,7 @@ DDSIP_NonAnt (void)
         {
             for (i = 0; i < DDSIP_bb->firstvar; i++)
             {
-                if (CPXgetcolname(env, lp, DDSIP_bb->name_buffer, DDSIP_bb->n_buffer, DDSIP_bb->n_buffer_len, &surplus, DDSIP_bb->firstindex[i], DDSIP_bb->firstindex[i]))
+                if (CPXgetcolname(DDSIP_env, DDSIP_lp, DDSIP_bb->name_buffer, DDSIP_bb->n_buffer, DDSIP_bb->n_buffer_len, &surplus, DDSIP_bb->firstindex[i], DDSIP_bb->firstindex[i]))
                 {
                     fprintf (stderr,"Error in querying columns name for index %d\n",DDSIP_bb->firstindex[i]);
                     exit (1);
@@ -502,7 +502,7 @@ DDSIP_DualOpt (void)
                     old_cpxtimelim = DDSIP_param->cpxdualwhat[cpu_hrs];
                     printf(" reset: old_timelim= %g, DDSIP_param->cpxdualwhich[%d]= %d, what= %g\n", old_cpxtimelim, cpu_hrs, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
                     DDSIP_param->cpxdualwhat[cpu_hrs] = 1.5*old_cpxtimelim;
-                    status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
+                    status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
                     if (status)
                     {
                         printf("Failed to reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
@@ -519,7 +519,7 @@ DDSIP_DualOpt (void)
                     old_cpxrelgap = DDSIP_param->cpxdualwhat[cpu_hrs];
                     printf(" reset: old_relgap = %g, DDSIP_param->cpxdualwhich[%d]= %d, what= %g\n", old_cpxtimelim, cpu_hrs, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
                     DDSIP_param->cpxdualwhat[cpu_hrs] = 0.10*old_cpxrelgap;
-                    status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
+                    status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
                     if (status)
                     {
                         printf("Failed to reset CPLEX relgap to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
@@ -539,7 +539,7 @@ DDSIP_DualOpt (void)
                     old_cpxtimelim2 = DDSIP_param->cpxdualwhat2[cpu_hrs];
 //printf(" reset: old_timelim2= %g, DDSIP_param->cpxdualwhich2[%d]= %d, what2= %g\n", old_cpxtimelim2, cpu_hrs, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
                     DDSIP_param->cpxdualwhat2[cpu_hrs] = 1.5*old_cpxtimelim2;
-                    status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                    status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
                     if (status)
                     {
                         printf("Failed to reset CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
@@ -556,7 +556,7 @@ DDSIP_DualOpt (void)
                     old_cpxrelgap2 = DDSIP_param->cpxdualwhat2[cpu_hrs];
 //printf(" reset: old_relgap2 = %g, DDSIP_param->cpxdualwhich2[%d]= %d, what2= %g\n", old_cpxtimelim2, cpu_hrs, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
                     DDSIP_param->cpxdualwhat2[cpu_hrs] = 0.10*old_cpxrelgap2;
-                    status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                    status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
                     if (status)
                     {
                         printf("Failed to reset CPLEX relgap 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
@@ -943,7 +943,7 @@ DDSIP_DualOpt (void)
                             {
                                 old_cpxtimelim = DDSIP_param->cpxdualwhat[cpu_hrs];
                                 DDSIP_param->cpxdualwhat[cpu_hrs] = 1.2*old_cpxtimelim;
-                                status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
                                 if (status)
                                 {
                                     printf("Failed to reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
@@ -959,7 +959,7 @@ DDSIP_DualOpt (void)
                             {
                                 old_cpxrelgap = DDSIP_param->cpxdualwhat[cpu_hrs];
                                 DDSIP_param->cpxdualwhat[cpu_hrs] = 0.20*old_cpxrelgap;
-                                status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
                                 if (status)
                                 {
                                     printf("Failed to reset CPLEX relgap to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
@@ -978,7 +978,7 @@ DDSIP_DualOpt (void)
                             {
                                 old_cpxtimelim2 = DDSIP_param->cpxdualwhat2[cpu_hrs];
                                 DDSIP_param->cpxdualwhat2[cpu_hrs] = 1.5*old_cpxtimelim2;
-                                status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                 if (status)
                                 {
                                     printf("Failed to reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
@@ -994,7 +994,7 @@ DDSIP_DualOpt (void)
                             {
                                 old_cpxrelgap2 = DDSIP_param->cpxdualwhat2[cpu_hrs];
                                 DDSIP_param->cpxdualwhat2[cpu_hrs] = 0.30*old_cpxrelgap2;
-                                status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                 if (status)
                                 {
                                     printf("Failed to reset CPLEX relgap to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
@@ -1023,7 +1023,7 @@ DDSIP_DualOpt (void)
                                 {
                                     old_cpxtimelim = DDSIP_param->cpxdualwhat[cpu_hrs];
                                     DDSIP_param->cpxdualwhat[cpu_hrs] = 1.2*old_cpxtimelim;
-                                    status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                    status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
                                     if (status)
                                     {
                                         printf("Failed to reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
@@ -1039,7 +1039,7 @@ DDSIP_DualOpt (void)
                                 {
                                     old_cpxrelgap = DDSIP_param->cpxdualwhat[cpu_hrs];
                                     DDSIP_param->cpxdualwhat[cpu_hrs] = 0.20*old_cpxrelgap;
-                                    status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                    status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
                                     if (status)
                                     {
                                         printf("Failed to reset CPLEX relgap to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
@@ -1058,7 +1058,7 @@ DDSIP_DualOpt (void)
                                 {
                                     old_cpxtimelim2 = DDSIP_param->cpxdualwhat2[cpu_hrs];
                                     DDSIP_param->cpxdualwhat2[cpu_hrs] = 1.5*old_cpxtimelim2;
-                                    status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                    status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                     if (status)
                                     {
                                         printf("Failed to reset CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
@@ -1074,7 +1074,7 @@ DDSIP_DualOpt (void)
                                 {
                                     old_cpxrelgap2 = DDSIP_param->cpxdualwhat2[cpu_hrs];
                                     DDSIP_param->cpxdualwhat2[cpu_hrs] = 0.30*old_cpxrelgap2;
-                                    status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                    status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                     if (status)
                                     {
                                         printf("Failed to reset CPLEX relgap 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
@@ -1221,7 +1221,7 @@ DDSIP_DualOpt (void)
                         if (DDSIP_param->cpxdualwhich[cpu_hrs] == CPX_PARAM_TILIM)
                         {
                             DDSIP_param->cpxdualwhat[cpu_hrs] = old_cpxtimelim;
-                            status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
+                            status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
                             if (status)
                             {
                                 printf("Failed to revert CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
@@ -1236,7 +1236,7 @@ DDSIP_DualOpt (void)
                         if (DDSIP_param->cpxdualwhich[cpu_hrs] == CPX_PARAM_EPGAP)
                         {
                             DDSIP_param->cpxdualwhat[cpu_hrs] = old_cpxrelgap;
-                            status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
+                            status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
                             if (status)
                             {
                                 printf("Failed to revert CPLEX relgap to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
@@ -1254,7 +1254,7 @@ DDSIP_DualOpt (void)
                         if (DDSIP_param->cpxdualwhich2[cpu_hrs] == CPX_PARAM_TILIM)
                         {
                             DDSIP_param->cpxdualwhat2[cpu_hrs] = old_cpxtimelim2;
-                            status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                            status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
                             if (status)
                             {
                                 printf("Failed to revert CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
@@ -1269,7 +1269,7 @@ DDSIP_DualOpt (void)
                         if (DDSIP_param->cpxdualwhich2[cpu_hrs] == CPX_PARAM_EPGAP)
                         {
                             DDSIP_param->cpxdualwhat2[cpu_hrs] = old_cpxrelgap2;
-                            status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                            status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
                             if (status)
                             {
                                 printf("Failed to revert CPLEX relgap 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
@@ -1447,7 +1447,7 @@ DDSIP_DualOpt (void)
                 if (DDSIP_param->cpxdualwhich[cpu_hrs] == CPX_PARAM_TILIM)
                 {
                     DDSIP_param->cpxdualwhat[cpu_hrs] = old_cpxtimelim;
-                    status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
+                    status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
                     if (status)
                     {
                         printf("Failed to revert CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
@@ -1462,7 +1462,7 @@ DDSIP_DualOpt (void)
                 if (DDSIP_param->cpxdualwhich[cpu_hrs] == CPX_PARAM_EPGAP)
                 {
                     DDSIP_param->cpxdualwhat[cpu_hrs] = old_cpxrelgap;
-                    status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
+                    status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
                     if (status)
                     {
                         printf("Failed to revert CPLEX relgap to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
@@ -1480,7 +1480,7 @@ DDSIP_DualOpt (void)
                 if (DDSIP_param->cpxdualwhich2[cpu_hrs] == CPX_PARAM_TILIM)
                 {
                     DDSIP_param->cpxdualwhat2[cpu_hrs] = old_cpxtimelim2;
-                    status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                    status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
                     if (status)
                     {
                         printf("Failed to revert CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
@@ -1495,7 +1495,7 @@ DDSIP_DualOpt (void)
                 if (DDSIP_param->cpxdualwhich2[cpu_hrs] == CPX_PARAM_EPGAP)
                 {
                     DDSIP_param->cpxdualwhat2[cpu_hrs] = old_cpxrelgap2;
-                    status = CPXsetdblparam (env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                    status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
                     if (status)
                     {
                         printf("Failed to revert CPLEX relgap 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);

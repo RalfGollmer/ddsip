@@ -55,7 +55,7 @@ OBJSWITHDIR = $(addprefix $(OBJDIR)/,$(OBJECTS))
 
 #Rules
 #Compile
-all: $(TARGET) $(HELP)
+all: $(TARGET)
 
 $(OBJDIR)/%.o: %.c ./include/DDSIP.h ./include/DDSIPconst.h 
 	@if [ ! -d $(OBJDIR) ]; then mkdir $(OBJDIR); fi

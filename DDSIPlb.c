@@ -505,6 +505,19 @@ DDSIP_GetBranchIndex (double *dispnorm)
         // for integers: make it end in .5
         DDSIP_node[DDSIP_bb->curnode]->branchval = floor (DDSIP_node[DDSIP_bb->curnode]->branchval + 1.e-6) + 0.5;
     }
+    else
+    {
+        // for continuous variables with bound difference small enough: take the middle of the bounds
+        for (k = 0; k< DDSIP_bb->curbdcnt; k++)
+        {
+            if (DDSIP_bb->curind[k] == DDSIP_node[DDSIP_bb->curnode]->branchind)
+            { 
+                if (DDSIP_bb->curub[k] - DDSIP_bb->curlb[k] < 1.e-7*(DDSIP_bb->curub[k] + DDSIP_bb->curlb[k]))
+                   DDSIP_node[DDSIP_bb->curnode]->branchval = 0.5 * (DDSIP_bb->curlb[k] + DDSIP_bb->curub[k]);
+            }
+            break;
+        }
+    }
     // Don't cut out the individual optimal solutions
     hlb = -DDSIP_infty;
     hub =  DDSIP_infty;
@@ -1887,6 +1900,30 @@ DDSIP_LowerBound (void)
                         // Calculate minimum and maximum of each component
                         minfirst[j] = DDSIP_Dmin ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j], minfirst[j]);
                         maxfirst[j] = DDSIP_Dmax ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j], maxfirst[j]);
+///////////////////
+// Check for violations of bounds by the CPLEX solution
+if (DDSIP_param->outlev)
+{
+  for (k = 0; k< DDSIP_bb->curbdcnt; k++)
+  {
+    if (DDSIP_bb->curind[k] == j)
+    { 
+      if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] < DDSIP_bb->curlb[k] && DDSIP_bb->curlb[k]-(DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] > 5.e-10)
+      {
+        if (DDSIP_param->outlev)
+          fprintf(DDSIP_bb->moreoutfile, "\nXXX WARNING: first-stage variable %d of solution to scenario %d with value %18.16g violates its lower bound %18.16g by %g\n\n",j,scen,(DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j], DDSIP_bb->curlb[k], DDSIP_bb->curlb[k]-(DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
+        fprintf(DDSIP_outfile, "XXX WARNING: first-stage variable %d of solution to scenario %d with value %18.16g violates its lower bound %18.16g by %g\n",j,scen,(DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j], DDSIP_bb->curlb[k], DDSIP_bb->curlb[k]-(DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
+      }
+      if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] > DDSIP_bb->curub[k] && (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]-DDSIP_bb->curub[k] > 5e-10)
+      {
+        if (DDSIP_param->outlev)
+          fprintf(DDSIP_bb->moreoutfile, "\nXXX WARNING: first-stage variable %d of solution to scenario %d with value %18.16g violates its upper bound %18.16g by %g\n\n",j,scen,(DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j], DDSIP_bb->curub[k], (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]-DDSIP_bb->curub[k]);
+        fprintf(DDSIP_outfile, "XXX WARNING: first-stage variable %d of solution to scenario %d with value %18.16g violates its upper bound %18.16g by %g\n",j,scen,(DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j], DDSIP_bb->curub[k], (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]-DDSIP_bb->curub[k]);
+      }
+    }
+  }
+}
+///////////////////
                     }
                     if (DDSIP_param->outlev>= DDSIP_first_stage_outlev)
                         fprintf (DDSIP_bb->moreoutfile, "\n");

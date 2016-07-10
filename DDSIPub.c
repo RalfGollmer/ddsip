@@ -422,9 +422,14 @@ DDSIP_UpperBound (void)
         if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
             values[j] = floor((DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j] + 0.5);
         else if ((DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j] > 0.)
-            values[j] =DDSIP_Dmax (DDSIP_bb->curlb[j],(1.0-we)*(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
+            values[j] =DDSIP_Dmax (DDSIP_bb->lborg[j],(1.0-we)*(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
         else
-            values[j] =DDSIP_Dmax (DDSIP_bb->curlb[j],(1.0+we)*(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
+            values[j] =DDSIP_Dmax (DDSIP_bb->lborg[j],(1.0+we)*(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
+        for (k = 0; k < DDSIP_bb->curbdcnt; k++)
+        {
+            if (DDSIP_bb->curind[k] == j)
+                values[j] = DDSIP_Dmax (values[j], DDSIP_bb->curlb[k]);
+        }
     }
     status = CPXchgbds (DDSIP_env, DDSIP_lp, fs, DDSIP_bb->firstindex, DDSIP_bb->lbident, values);
     if (status)
@@ -438,9 +443,14 @@ DDSIP_UpperBound (void)
         if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
             values[j] = floor((DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j] + 0.5);
         else if ((DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j] > 0.)
-            values[j] =DDSIP_Dmin(DDSIP_bb->curub[j],(1.0+we)*(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
+            values[j] =DDSIP_Dmin(DDSIP_bb->uborg[j],(1.0+we)*(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
         else
-            values[j] =DDSIP_Dmin(DDSIP_bb->curub[j],(1.0-we)*(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
+            values[j] =DDSIP_Dmin(DDSIP_bb->uborg[j],(1.0-we)*(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
+        for (k = 0; k < DDSIP_bb->curbdcnt; k++)
+        {
+            if (DDSIP_bb->curind[k] == j)
+                values[j] = DDSIP_Dmin (values[j], DDSIP_bb->curub[k]);
+        }
     }
     status = CPXchgbds (DDSIP_env, DDSIP_lp, fs, DDSIP_bb->firstindex, DDSIP_bb->ubident, values);
     if (status)

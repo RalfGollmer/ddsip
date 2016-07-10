@@ -232,7 +232,7 @@ DDSIP_InitNewNodes (void)
     // Correction needed ?
     if (branchval < DDSIP_node[DDSIP_bb->nonode]->neolb || branchval > DDSIP_node[DDSIP_bb->nonode + 1]->neoub)
     {
-        branchval = DDSIP_Dmax (DDSIP_Dmin (branchval, DDSIP_node[DDSIP_bb->nonode + 1]->neoub), DDSIP_node[DDSIP_bb->nonode]->neolb);
+        branchval = DDSIP_Dmax (DDSIP_Dmin (branchval, DDSIP_node[DDSIP_bb->nonode + 1]->neoub - 1.e-15), DDSIP_node[DDSIP_bb->nonode]->neolb + 1.e-15);
         if (DDSIP_param->outlev > 10)
             fprintf (DDSIP_bb->moreoutfile, "Correcting branchval (bandb): %f\n", branchval);
     }

@@ -2110,9 +2110,9 @@ DDSIP_LowerBound (void)
         {
             DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
             //
-            if (DDSIP_param->outlev > 29)
+            if (DDSIP_param->outlev > 9)
             {
-                fprintf(DDSIP_bb->moreoutfile," no violations in node %d , make it a leaf\n", DDSIP_bb->curnode);
+                fprintf(DDSIP_bb->moreoutfile,"\tno violations in node %d , make it a leaf\n", DDSIP_bb->curnode);
             }
             //
         }

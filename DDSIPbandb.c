@@ -591,7 +591,7 @@ DDSIP_SetBounds (void)
 }
 
 //==========================================================================
-// Function set the leaf indicator for the current node
+// Function to set the leaf indicator for the current node
 // This indicator is 1 if the current node is a front node of the complete enumeration tree
 int
 DDSIP_Leaf (void)

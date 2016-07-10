@@ -432,9 +432,6 @@ DDSIP_ReadWord (FILE * infile, char *string, int stringlength)
         }
     }
     string[i] = '\0';
-//////////////// Debug
-printf ("ReadWord: '%s'\n", string);
-//////////////// Debug
     return (i);
 }
 
@@ -1617,9 +1614,6 @@ DDSIP_ReadData ()
                         if (!strcmp(tmpdata, rowname[k]))
                         {
                             DDSIP_data->rhsind[j] = k;
-///////////////////////////
-printf(" stoch rhs %d in row %d: '%s'\n", j, k,  rowname[k]);
-///////////////////////////
                             break;
                         }
                     }
@@ -1789,9 +1783,6 @@ printf(" stoch rhs %d in row %d: '%s'\n", j, k,  rowname[k]);
         {
             for (j = 0; j < DDSIP_param->stoccost; j++)
             {
-///////////////////////////
-printf(" stoch cost names read: j = %d DDSIP_param->stoccost =  %d\n", j, DDSIP_param->stoccost);
-///////////////////////////
 
                 if((k = DDSIP_ReadWord (datafile, tmpdata, maxVarNameLength)))
                 {
@@ -1800,9 +1791,6 @@ printf(" stoch cost names read: j = %d DDSIP_param->stoccost =  %d\n", j, DDSIP_
                         if (!strcmp(tmpdata, colname[k]))
                         {
                             DDSIP_data->costind[j] = k;
-///////////////////////////
-printf(" stoch cost %d in variable %d: '%s'\n", j, k,  colname[k]);
-///////////////////////////
                             break;
                         }
                     }
@@ -1914,9 +1902,6 @@ printf(" stoch cost %d in variable %d: '%s'\n", j, k,  colname[k]);
                         if (!strcmp(tmpdata, rowname[k]))
                         {
                             DDSIP_data->matrow[j] = k;
-///////////////////////////
-printf(" stoch matrix %d in row %d: '%s'\n", j, k,  rowname[k]);
-///////////////////////////
                             break;
                         }
                     }
@@ -1940,9 +1925,6 @@ printf(" stoch matrix %d in row %d: '%s'\n", j, k,  rowname[k]);
                         if (!strcmp(tmpdata, colname[k]))
                         {
                             DDSIP_data->matcol[j] = k;
-///////////////////////////
-printf(" stoch matrix %d in variable %d: '%s'\n", j, k,  colname[k]);
-///////////////////////////
                             break;
                         }
                     }

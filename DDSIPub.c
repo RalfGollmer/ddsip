@@ -416,15 +416,15 @@ DDSIP_UpperBound (void)
     values = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar, "values(UpperBound)");
     // give some room for continuous first stage vars in order to avoid infeasibility due to rounding errs
     CPXgetdblparam (DDSIP_env,CPX_PARAM_EPRHS,&we);
-    we =  0.6 * DDSIP_Dmax (we,DDSIP_param->accuracy);
+    we =  0.1 * DDSIP_Dmax (we,DDSIP_param->accuracy);
     for(j=0; j<DDSIP_bb->firstvar; j++)
     {
         if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
-            values[j] =(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j];
+            values[j] = floor((DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j] + 0.5);
         else if ((DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j] > 0.)
-            values[j] =DDSIP_Dmax (DDSIP_bb->lborg[j],(1.0-we)*(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
+            values[j] =DDSIP_Dmax (DDSIP_bb->curlb[j],(1.0-we)*(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
         else
-            values[j] =DDSIP_Dmax (DDSIP_bb->lborg[j],(1.0+we)*(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
+            values[j] =DDSIP_Dmax (DDSIP_bb->curlb[j],(1.0+we)*(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
     }
     status = CPXchgbds (DDSIP_env, DDSIP_lp, fs, DDSIP_bb->firstindex, DDSIP_bb->lbident, values);
     if (status)
@@ -436,11 +436,11 @@ DDSIP_UpperBound (void)
     for(j=0; j<DDSIP_param->firstvar; j++)
     {
         if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
-            values[j] =(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j];
+            values[j] = floor((DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j] + 0.5);
         else if ((DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j] > 0.)
-            values[j] =DDSIP_Dmin(DDSIP_bb->uborg[j],(1.0+we)*(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
+            values[j] =DDSIP_Dmin(DDSIP_bb->curub[j],(1.0+we)*(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
         else
-            values[j] =DDSIP_Dmin(DDSIP_bb->uborg[j],(1.0-we)*(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
+            values[j] =DDSIP_Dmin(DDSIP_bb->curub[j],(1.0-we)*(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
     }
     status = CPXchgbds (DDSIP_env, DDSIP_lp, fs, DDSIP_bb->firstindex, DDSIP_bb->ubident, values);
     if (status)

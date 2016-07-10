@@ -415,7 +415,7 @@ NODELI&Int&0..&10000&The node limit for the branch-and-bound procedure. \medskip
 TIMELI&Dbl&0..&86400.&The total time limit in seconds (CPU-time) 
 including the time needed to solve the EEV problem. \medskip\\ 
 ABSOLU&Dbl&0..&0&The absolute duality gap.\medskip\\ 
-RELATI&Dbl&0..&1e-4&The relative duality gap.\\
+RELATI&Dbl&1e-10..&1e-4&The relative duality gap.\\
 EEVPRO&Int&0..1&0&If the parameter is 1, then solve the EEV-problem and report the VSS, cf. \cite{bir}.\medskip\\  
 %DETEQU&Int&0..1&0&If the parameter is 1, then produce a deterministic equivalent as det\_equ.lp.gz. Only for expectation based problems (and it takes quite a while).\\
 \hline
@@ -495,9 +495,9 @@ BOUSTR&Int&0..10&0&choose node with best bound as next node\\
 &&&10*& heuristic: among last four generated nodes choose node with best bound (unsolved nodes first) as long as its objective value does not exceed a threshold. Choose the best bound node otherwise and also every 25th node.\\
 PERIOD&Int&1..&32&for BOUSTRAT$>$0: determines the period of bounding steps with changing tolerances for ''sufficiently small''\\
 TOLSMA&Int&1..{\footnotesize PERIOD}&16&for BOUSTRAT$>$0: determines the number of steps in each period with a small tolerance\\[0.2em]
-ACCURA&Dbl&5e-16..1&1e-15& Accuracy -- real values are considered equal if the absolute value of their difference is less than accuracy\\[0.2em]
-EPSILO&Dbl&0..&1e-14&Specifies the gap between disjoint subdomains if continuous variables are branched.\\[0.2em]
-NULLDI&Dbl&0..&2e-14&Branch nodes only if their dispersion norm is greater than NULLDI.\\[0.2em]
+ACCURA&Dbl&1e-13..1&1e-12& Accuracy -- real values are considered equal if the absolute value of their difference is less than accuracy\\[0.2em]
+EPSILO&Dbl&1e.10..&1e-10&Specifies the gap between disjoint subdomains if continuous variables are branched.\\[0.2em]
+NULLDI&Dbl&5e-10..&5e-10&Branch nodes only if their dispersion norm is greater than NULLDI.\\[0.2em]
 KAPPA&Int&0..2&0*&No gathering of kappa values by CPLEX\\
 &Int&&1&sample gathering of kappa values by CPLEX and reporting\\
 &Int&&2&full gathering of kappa values by CPLEX and reporting\\[0.2em]

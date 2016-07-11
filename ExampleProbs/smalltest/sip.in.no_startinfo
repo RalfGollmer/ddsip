@@ -1,0 +1,83 @@
+BEGIN
+*
+* Specification of the two-stage stochastic program
+*
+FIRSTCON             1 * First stage constraints               
+FIRSTVAR             2 * First stage variables                 
+PREFIX             _1_ * Prefix for first stage vars
+SECCON               2 * Second stage constraints              
+SECVAR               2 * Second stage variables                
+STOCRHS              1 * Number of stochastic rhs elements     
+SCENARIOS            3 * Number of scenarios                   
+STOCCOST             2 * Number of stochastic cost coefficients
+STOCMAT              3 * Number of stochastic matrix entries   
+*
+* Relevant part for subproblems solved by CPLEX
+* For the setting of the CPLEX Parameters see CPLEX manual 
+*
+CPLEXBEGIN
+1035       0 * Output on screen indicator
+2008       0 * Absolute Gap
+2009     0.0 * Relative Gap
+1039    1200 * Time limit
+1016    1e-9 * simplex feasibility tolerance
+1014    1e-9 * simplex optimality tolerance
+2010   1e-20 * integrality tolerance
+2008       0 * Absolute gap
+2020       0 * Priority order
+2012       4 * MIP display level
+2053       2 * disjunctive cuts
+2040       2 * flow cover cuts
+CPLEXEND
+*
+* Parameters for Dual decomposition procedure (master)
+*
+MAXINHERIT          15
+
+OUTLEV               5 * Debugging
+OUTFIL               2 *
+STARTI               0 *
+NODELI	          1000 * Sipdual node limit
+TIMELIMIT       964000 * Sipdual time limit
+HEURISTIC            99 3 7 * Heuristics: Down, Up, Near, Common, Byaverage ...(12)
+ABSOLUTEGAP          0 * Absolute duality gap allowed in DD
+EEVPROB              1 *
+RELATIVEGAP      1e-12 * Relative duality gap allowed in DD
+BRADIRECTION        -1 * Branching direction in DD
+BRASTRATEGY          1 * Branching strategy in DD (1 = unsolved nodes first, 0 = best bound)
+EPSILON          1e-13 * Branch epsilon for cont. var.
+ACCURACY         5e-16 * Accuracy
+BOUSTRATEGY          1 * Bounding strategy in DD
+NULLDISP            -1 *
+RELAXF               0 *
+INTFIRST             0 * Branch first on integer
+
+HOTSTART             4 * use previous solution as integer starting info
+
+
+* Risk modelling
+*
+RISKMO               0 * Risk Model
+*BRAETA              1 *
+RISKALG              1 *
+WEIGHT               1 *   
+TARGET              54 * target if needed
+PROBLEV             .8 * probability level
+RISKBM        11000000 * big M in 
+
+
+*
+* Parameters specifying the use of CB
+*
+CBFREQ             0 * Conic Bundle in every ith node
+CBITLIM           20 * Descent iteration limit for conic bundle method
+CBTOTITLIM        50 * Total iteration limit for conic bundle method
+*CBPREC         1e-6 * Relative precision
+*CBBUNSIZE       225 * Bundle size
+*CBPRINT           0 *
+
+NONANT             1 * Non-anticipativity representation
+
+DETEQU             1 
+
+END

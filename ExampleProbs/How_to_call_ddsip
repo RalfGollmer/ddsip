@@ -1,0 +1,4 @@
+# The easiest way is to put the names of the files to be used into one file, fed into ddsip vie redirection.
+# Such file has the name 2sip in the subdirectories with the two example problems.
+
+DDSIP_126_x64 < 2sip

@@ -1,0 +1,120 @@
+BEGIN
+*
+* Specification of the two-stage stochastic program
+*
+FIRSTCON            16 * First stage constraints               
+FIRSTVAR            65 * First stage variables                 
+SECCON           10785 * Second stage constraints              
+SECVAR           11968 * Second stage variables                
+STOCRHS            384 * Number of stochastic rhs elements     
+*SCENARIOS           50 * Number of scenarios                   
+SCENARIOS          250 * Number of scenarios                   
+STOCCOST             0 * Number of stochastic cost coefficients
+STOCMAT              0 * Number of stochastic matrix entries   
+*
+*POSTFIX            _01 * suffix for first stage variables (standard: "01")
+PREFIX              F_ * prefix for first stage variables
+*
+* Relevant part for subproblems solved by CPLEX
+* For the setting of the CPLEX Parameters see CPLEX manual 
+*
+CPLEXBEGIN
+1035        0 * Output on screen indicator
+1067        1 * number of threads
+2008      0.0 * Absolute Gap
+2009    1e-16 * Relative Gap
+1039     1200 * Time limit
+2008        0 * Absolute gap
+2020        0 * Priority order
+2058        4 * MIP emphasis
+2042        1 * Probing level
+2064        0 * Repeat presolve (3= repeat with cuts, 1= without cuts)
+2040        1 * flow cover cuts
+2049        2 * Gomory cuts
+2052        2 * MIRcuts
+2053       -1 * disjunctive cuts
+2134       -1 * MCF cuts
+2012        0 * MIP display level
+2048    10000 * mip limits gomorycand
+2050       10 * mip limits gomorypass
+2059        3 * symmetry breaking
+CPLEXLB
+2058        0 * MIP emphasis
+2063        1 * Local branching
+2098        2 * Feasibility pump
+2002      0.2 * Backtracking tolerance
+1039      600 * Time limit
+2009    1e-05 * Relative Gap
+CPLEX2LB
+2058        3 * MIP emphasis
+2063        1 * Local branching
+1039      300 * Time limit
+2009    1e-08 * Relative Gap
+CPLEXUB
+2058        0 * MIP emphasis
+2063        1 * Local branching
+2098        2 * Feasibility pump
+2002      0.2 * Backtracking tolerance
+2009    1e-05 * Relative Gap
+1039      600 * Time limit
+CPLEX2UB
+2058        3 * MIP emphasis
+2063        1 * Local branching
+2009    1e-10 * Relative Gap
+1039      300 * Time limit
+CPLEXDUAL
+2058        0 * MIP emphasis
+2063        1 * Local branching
+2098        2 * Feasibility pump
+2002      0.2 * Backtracking tolerance
+1039      400 * Time limit
+2009    1e-04 * Relative Gap
+CPLEX2DUAL
+2058        3 * MIP emphasis
+2063        1 * Local branching
+1039      120 * Time limit
+2009    1e-06 * Relative Gap
+CPLEXEEV
+2058        4 * MIP emphasis
+2063        1 * Local branching
+2098        2 * Feasibility pump
+2002      0.2 * Backtracking tolerance
+1039      600 * Time limit
+2009    1e-08 * Relative Gap
+CPLEXEND
+*
+* Parameters for Dual decomposition procedure (master)
+*
+*
+MAXINHERIT         100 * maximal level of solution inheriting
+OUTLEV               7 * Debugging
+OUTFIL               1 *
+STARTI               0 *
+NODELI	        100000 * Sipdual node limit
+TIMELIMIT       964000 * Sipdual time limit
+*HEURISTIC            99  2 3 4 5 7 8 9 * Heuristics: Down, Up, Near, Common, Byaverage ...(12)
+*                                      99 indicates a list of heuristics to follow
+*                                      (used consecutively in each node)
+ABSOLUTEGAP          0 * Absolute duality gap allowed in DD
+RELATIVEGAP      1e-06 * Relative duality gap allowed in DD
+
+* Risk modelling
+*
+RISKMO               0 * Risk Model
+RISKALG              1 *
+WEIGHT               0 *   
+TARGET         6807895 * target if needed
+PROBLEV             .8 * probability level
+RISKBM        11000000 * big M in 
+
+
+*
+* Parameters specifying the use of CB
+*
+CBRITLIM          20 * Number of descent steps in the root node
+CBITLIM           15 * Number of descent steps in the other nodes
+
+NONANT             1 * Non-anticipativity representation
+DETEQU             0 * write deterministic equivalent
+END
+

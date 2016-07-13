@@ -156,7 +156,7 @@ DDSIP_Continue (int *noiter, int *boundstat)
             if (DDSIP_param->files)
             {
                 if ((outputfile = fopen (DDSIP_solfname, "w")) == NULL)
-                    fprintf (stderr, "*Warning: Failed to wright output to %s.\n", DDSIP_solfname);
+                    fprintf (stderr, "*Warning: Failed to write output to %s.\n", DDSIP_solfname);
                 else
                 {
                     char **colname = (char **) DDSIP_Alloc (sizeof (char *), DDSIP_bb->novar,

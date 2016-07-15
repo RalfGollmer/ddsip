@@ -199,10 +199,10 @@ DDSIP_FreeData ()
         DDSIP_Free ((void **) &(DDSIP_data->matcol));
         DDSIP_Free ((void **) &(DDSIP_data->matrow));
     }
+    DDSIP_Free ((void **) &(DDSIP_data->cost));
     if (DDSIP_param->stoccost)
     {
         DDSIP_Free ((void **) &(DDSIP_data->costind));
-        DDSIP_Free ((void **) &(DDSIP_data->cost));
     }
     if (DDSIP_param->cb)
     {

@@ -162,17 +162,19 @@ extern "C" {
         int   hot;
         // Priority order
         int   order;
-        // Number of first-stage variables
-        int   firstvar;
         // Pre- or Postfix of first-stage variables
         char * prefix;
         char * postfix;
+/////// these are now determined from the model file plus pre-/postfix, thus transferred to data
+        // Number of first-stage variables
+        //int   firstvar;
         // Number of second-stage variables
-        int   secvar;
+        //int   secvar;
         // Number of first-stage constraints
-        int   firstcon;
+        //int   firstcon;
         // Number of second-stage constraints
-        int   seccon;
+        //int   seccon;
+///////////////////////////////////////////////////////////////////////////
         // Write deterministic equivalent? (only expectation-based so far)
         int   write_detequ;
         // Number of variables for risk model
@@ -270,6 +272,18 @@ extern "C" {
     typedef struct
     {
 
+        // Number of variables in model
+        int novar;
+        // Number of constraints in model
+        int nocon;
+        // Number of first-stage variables
+        int   firstvar;
+        // Number of second-stage variables
+        int   secvar;
+        // Number of first-stage constraints
+        int   firstcon;
+        // Number of second-stage constraints
+        int   seccon;
         // Stochastic right-hand sides
         double *rhs;
         // Probabilities
@@ -334,6 +348,8 @@ extern "C" {
         int    curbdcnt;
         // Total number of integers (for warm starts)
         int    total_int;
+        // number of integers in first stage
+        int    first_int;
         // Depth of b+b-tree
         int    depth;
         // Number of nodes
@@ -644,6 +660,7 @@ extern "C" {
     int  DDSIP_ReadSpec(void);
     int  DDSIP_ReadCpxPara(FILE *);
     int  DDSIP_ReadModel(void);
+    int  DDSIP_ReadCPLEXOrder(void);
     int  DDSIP_ReadData(void);
 
 // Manage cplex parameter sets

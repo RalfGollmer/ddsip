@@ -38,12 +38,12 @@ int
 DDSIP_ExpExcess (void)
 {
     int i, status = 0;
-    int *rowlist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->novar + 1),
+    int *rowlist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_param->firstvar + DDSIP_param->secvar + 1),
                                         "rowlist(RiskModel)");
-    int *collist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->novar + 1),
+    int *collist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_param->firstvar + DDSIP_param->secvar + 1),
                                         "collist(RiskModel)");
     double *vallist = (double *) DDSIP_Alloc (sizeof (double),
-                      (DDSIP_data->novar + 1),
+                      (DDSIP_param->firstvar + DDSIP_param->secvar + 1),
                       "vallist (RiskModel)");
     double *rhs = (double *) DDSIP_Alloc (sizeof (double), 1, "rhs(RiskModel)");
     double *obj = (double *) DDSIP_Alloc (sizeof (double), 1, "obj(RiskModel)");
@@ -94,25 +94,25 @@ DDSIP_ExpExcess (void)
     DDSIP_Free ((void **) &(sense));
 
     // New coefficients: v_i >= c x+q y_i - target
-    status = CPXgetobj (DDSIP_env, DDSIP_lp, vallist, 0, DDSIP_data->novar - 1);
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, vallist, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get objective coefficients\n");
         return status;
     }
 
-    for (i = 0; i < DDSIP_data->novar; i++)
+    for (i = 0; i < DDSIP_param->firstvar + DDSIP_param->secvar; i++)
     {
-        rowlist[i] = DDSIP_data->nocon;
+        rowlist[i] = DDSIP_param->firstcon + DDSIP_param->seccon;
         collist[i] = i;
         vallist[i] = -vallist[i];
     }
 
-    rowlist[i] = DDSIP_data->nocon;
-    collist[i] = DDSIP_data->novar;
+    rowlist[i] = DDSIP_param->firstcon + DDSIP_param->seccon;
+    collist[i] = DDSIP_param->firstvar + DDSIP_param->secvar;
     vallist[i] = 1;
 
-    status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_data->novar + 1, rowlist, collist, vallist);
+    status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar + 1, rowlist, collist, vallist);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change coefficients for risk model (RiskModel) \n");
@@ -121,14 +121,14 @@ DDSIP_ExpExcess (void)
     // Minimize risk term, only
     if (DDSIP_param->riskmod < 0)
     {
-        for (i = 0; i < DDSIP_data->novar; i++)
+        for (i = 0; i < DDSIP_param->firstvar + DDSIP_param->secvar; i++)
         {
             vallist[i] = 0.0;
             collist[i] = i;
         }
 
         // Set objective function coefficients to 0
-        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_data->novar, collist, vallist);
+        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar, collist, vallist);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change objective coefficients (Risk model 3)\n");
@@ -206,29 +206,29 @@ DDSIP_ExcessProb (void)
     DDSIP_Free ((void **) &(sense));
 
     // New coefficients
-    rowlist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->novar + 1), "rowlist(RiskModel)");
-    collist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->novar + 1), "collist(RiskModel)");
-    vallist = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_data->novar + 1), "vallist(RiskModel)");
+    rowlist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_param->firstvar + DDSIP_param->secvar + 1), "rowlist(RiskModel)");
+    collist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_param->firstvar + DDSIP_param->secvar + 1), "collist(RiskModel)");
+    vallist = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_param->firstvar + DDSIP_param->secvar + 1), "vallist(RiskModel)");
 
     // Get objective function coefficients
-    status = CPXgetobj (DDSIP_env, DDSIP_lp, vallist, 0, DDSIP_data->novar - 1);
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, vallist, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get objective coefficients\n");
         return status;
     }
 
-    for (i = 0; i < DDSIP_data->novar; i++)
+    for (i = 0; i < DDSIP_param->firstvar + DDSIP_param->secvar; i++)
     {
-        rowlist[i] = DDSIP_data->nocon;
+        rowlist[i] = DDSIP_param->firstcon + DDSIP_param->seccon;
         collist[i] = i;
     }
 
-    rowlist[i] = DDSIP_data->nocon;
-    collist[i] = DDSIP_data->novar;
+    rowlist[i] = DDSIP_param->firstcon + DDSIP_param->seccon;
+    collist[i] = DDSIP_param->firstvar + DDSIP_param->secvar;
     vallist[i] = -DDSIP_param->riskM;
 
-    status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_data->novar + 1, rowlist, collist, vallist);
+    status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar + 1, rowlist, collist, vallist);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change coefficients for risk model (BbInit) \n");
@@ -237,14 +237,14 @@ DDSIP_ExcessProb (void)
     // Minimize risk term, only
     if (DDSIP_param->riskmod < 0)
     {
-        for (i = 0; i < DDSIP_data->novar; i++)
+        for (i = 0; i < DDSIP_param->firstvar + DDSIP_param->secvar; i++)
         {
             vallist[i] = 0.0;
             collist[i] = i;
         }
 
         // Set objective function coefficients to 0
-        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_data->novar, collist, vallist);
+        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar, collist, vallist);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change objective coefficients (Risk model 3)\n");
@@ -267,12 +267,12 @@ int
 DDSIP_SemDev (void)
 {
     int i, status = 0;
-    int *rowlist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->novar + 1),
+    int *rowlist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_param->firstvar + DDSIP_param->secvar + 1),
                                         "rowlist(SemDev)");
-    int *collist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->novar + 1),
+    int *collist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_param->firstvar + DDSIP_param->secvar + 1),
                                         "collist(SemDev)");
     double *vallist = (double *) DDSIP_Alloc (sizeof (double),
-                      (DDSIP_data->novar + 1),
+                      (DDSIP_param->firstvar + DDSIP_param->secvar + 1),
                       "vallist (SemDev)");
     double *rhs = (double *) DDSIP_Alloc (sizeof (double), 1, "rhs(SemDev)");
     double *obj = (double *) DDSIP_Alloc (sizeof (double), 1, "obj(SemDev)");
@@ -319,25 +319,25 @@ DDSIP_SemDev (void)
     DDSIP_Free ((void **) &(sense));
 
     // New coefficients: v_i >= c x+q y_i
-    status = CPXgetobj (DDSIP_env, DDSIP_lp, vallist, 0, DDSIP_data->novar - 1);
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, vallist, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get objective coefficients\n");
         return status;
     }
 
-    for (i = 0; i < DDSIP_data->novar; i++)
+    for (i = 0; i < DDSIP_param->firstvar + DDSIP_param->secvar; i++)
     {
-        rowlist[i] = DDSIP_data->nocon;
+        rowlist[i] = DDSIP_param->firstcon + DDSIP_param->seccon;
         collist[i] = i;
         vallist[i] = -vallist[i];
     }
 
-    rowlist[i] = DDSIP_data->nocon;
-    collist[i] = DDSIP_data->novar;
+    rowlist[i] = DDSIP_param->firstcon + DDSIP_param->seccon;
+    collist[i] = DDSIP_param->firstvar + DDSIP_param->secvar;
     vallist[i] = 1;
 
-    status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_data->novar + 1, rowlist, collist, vallist);
+    status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar + 1, rowlist, collist, vallist);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change coefficients for risk model (SemDev) \n");
@@ -345,10 +345,10 @@ DDSIP_SemDev (void)
     }
     // Change objective (1-riskweight) * EX + riskweight * E max(X,EX)
     // Note the vallist=-vallist above
-    for (i = 0; i < DDSIP_data->novar; i++)
+    for (i = 0; i < DDSIP_param->firstvar + DDSIP_param->secvar; i++)
         vallist[i] = (DDSIP_param->riskweight - 1) * vallist[i];
 
-    status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_data->novar, collist, vallist);
+    status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar, collist, vallist);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change objective coefficients (SemDev)\n");
@@ -380,7 +380,7 @@ DDSIP_SemDevChgBd (void)
         fprintf (DDSIP_bb->moreoutfile, "target[%d]=%f\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->target);
 
     // Last variable gets new bound
-    index[0] = DDSIP_data->novar;
+    index[0] = DDSIP_param->firstvar + DDSIP_param->secvar;
     value[0] = DDSIP_node[DDSIP_bb->curnode]->target;
     lu[0] = 'L';
 
@@ -407,7 +407,7 @@ DDSIP_SemDevGetNodeTarget (void)
     double *value = (double *) malloc (sizeof (double));
     char *lu = (char *) malloc (sizeof (char));
 
-    index[0] = DDSIP_data->novar;
+    index[0] = DDSIP_param->firstvar + DDSIP_param->secvar;
     value[0] = -DDSIP_infty;
     lu[0] = 'L';
 
@@ -666,30 +666,30 @@ DDSIP_WorstCase (void)
     DDSIP_Free ((void **) &(sense));
 
     // New coefficients
-    rowlist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->novar + 1), "rowlist(RiskModel)");
-    collist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->novar + 1), "collist(RiskModel)");
-    vallist = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_data->novar + 1), "vallist(RiskModel)");
+    rowlist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_param->firstvar + DDSIP_param->secvar + 1), "rowlist(RiskModel)");
+    collist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_param->firstvar + DDSIP_param->secvar + 1), "collist(RiskModel)");
+    vallist = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_param->firstvar + DDSIP_param->secvar + 1), "vallist(RiskModel)");
 
     // Get objective function coefficients
-    status = CPXgetobj (DDSIP_env, DDSIP_lp, vallist, 0, DDSIP_data->novar - 1);
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, vallist, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get objective coefficients\n");
         return status;
     }
 
-    for (i = 0; i < DDSIP_data->novar; i++)
+    for (i = 0; i < DDSIP_param->firstvar + DDSIP_param->secvar; i++)
     {
-        rowlist[i] = DDSIP_data->nocon;
+        rowlist[i] = DDSIP_param->firstcon + DDSIP_param->seccon;
         collist[i] = i;
         vallist[i] = -vallist[i];
     }
 
-    rowlist[i] = DDSIP_data->nocon;
-    collist[i] = DDSIP_data->novar;
+    rowlist[i] = DDSIP_param->firstcon + DDSIP_param->seccon;
+    collist[i] = DDSIP_param->firstvar + DDSIP_param->secvar;
     vallist[i] = 1;
 
-    status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_data->novar + 1, rowlist, collist, vallist);
+    status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar + 1, rowlist, collist, vallist);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change coefficients for risk model (BbInit) \n");
@@ -698,14 +698,14 @@ DDSIP_WorstCase (void)
     // Minimize risk term, only
     if (DDSIP_param->riskmod < 0)
     {
-        for (i = 0; i < DDSIP_data->novar; i++)
+        for (i = 0; i < DDSIP_param->firstvar + DDSIP_param->secvar; i++)
         {
             vallist[i] = 0.0;
             collist[i] = i;
         }
 
         // Set objective function coefficients to 0
-        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_data->novar, collist, vallist);
+        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar, collist, vallist);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change objective coefficients (Risk model 3)\n");
@@ -726,12 +726,12 @@ int
 DDSIP_TVaR (void)
 {
     int i, status = 0;
-    int *rowlist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->novar + 2),
+    int *rowlist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_param->firstvar + DDSIP_param->secvar + 2),
                                         "rowlist(RiskModel)");
-    int *collist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->novar + 2),
+    int *collist = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_param->firstvar + DDSIP_param->secvar + 2),
                                         "collist(RiskModel)");
     double *vallist = (double *) DDSIP_Alloc (sizeof (double),
-                      (DDSIP_data->novar + 2),
+                      (DDSIP_param->firstvar + DDSIP_param->secvar + 2),
                       "vallist (RiskModel)");
     double *rhs = (double *) DDSIP_Alloc (sizeof (double), 1, "rhs(RiskModel)");
     double *obj = (double *) DDSIP_Alloc (sizeof (double), 2, "obj(RiskModel)");
@@ -815,31 +815,31 @@ DDSIP_TVaR (void)
 
     // New coefficients: n + v_i - c x  - q y_i >= 0
     // Change objective sense and coefficients if problem is a maximization
-    status = CPXgetobj (DDSIP_env, DDSIP_lp, vallist, 0, DDSIP_data->novar - 1);
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, vallist, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get objective coefficients\n");
         return status;
     }
 
-    for (i = 0; i < DDSIP_data->novar; i++)
+    for (i = 0; i < DDSIP_param->firstvar + DDSIP_param->secvar; i++)
     {
-        rowlist[i] = DDSIP_data->nocon;
+        rowlist[i] = DDSIP_param->firstcon + DDSIP_param->seccon;
         collist[i] = i;
         vallist[i] = -vallist[i];
     }
 
     // Coefficient for n_aux_01
-    rowlist[i] = DDSIP_data->nocon;
-    collist[i] = DDSIP_data->novar;
+    rowlist[i] = DDSIP_param->firstcon + DDSIP_param->seccon;
+    collist[i] = DDSIP_param->firstvar + DDSIP_param->secvar;
     vallist[i++] = 1;
 
     // Coefficient for v_aux_02
-    rowlist[i] = DDSIP_data->nocon;
-    collist[i] = DDSIP_data->novar + 1;
+    rowlist[i] = DDSIP_param->firstcon + DDSIP_param->seccon;
+    collist[i] = DDSIP_param->firstvar + DDSIP_param->secvar + 1;
     vallist[i] = 1;
 
-    status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_data->novar + 2, rowlist, collist, vallist);
+    status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar + 2, rowlist, collist, vallist);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change coefficients for risk model (RiskModel) \n");
@@ -848,14 +848,14 @@ DDSIP_TVaR (void)
     // Minimize risk term, only
     if (DDSIP_param->riskmod < 0)
     {
-        for (i = 0; i < DDSIP_data->novar; i++)
+        for (i = 0; i < DDSIP_param->firstvar + DDSIP_param->secvar; i++)
         {
             vallist[i] = 0.0;
             collist[i] = i;
         }
 
         // Set objective function coefficients to 0
-        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_data->novar, collist, vallist);
+        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar, collist, vallist);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change objective coefficients (Risk model 3)\n");
@@ -1031,12 +1031,12 @@ DDSIP_DeleteRiskObj (void)
     collist = (int *) malloc (sizeof (int) * cnt);
     vallist = (double *) malloc (sizeof (double) * cnt);
 
-    collist[0] = DDSIP_bb->novar - 1;
+    collist[0] = DDSIP_bb->firstvar + DDSIP_bb->secvar - 1;
     vallist[0] = 0.0;
 
     if (abs (DDSIP_param->riskmod) == 5)
     {
-        collist[1] = DDSIP_bb->novar - 2;
+        collist[1] = DDSIP_bb->firstvar + DDSIP_bb->secvar - 2;
         vallist[1] = 0.0;
     }
 
@@ -1059,7 +1059,7 @@ DDSIP_DeleteRiskObj (void)
     //
     if (DDSIP_param->riskmod < 0 || DDSIP_param->riskmod == 3)
     {
-        cnt = DDSIP_data->novar;
+        cnt = DDSIP_param->firstvar + DDSIP_param->secvar;
         collist = (int *) malloc (sizeof (int) * cnt);
 
         for (i = 0; i < cnt; i++)
@@ -1097,7 +1097,7 @@ DDSIP_UndeleteRiskObj (void)
     collist = (int *) malloc (sizeof (int) * cnt);
     vallist = (double *) malloc (sizeof (double) * cnt);
 
-    collist[0] = DDSIP_bb->novar - 1;
+    collist[0] = DDSIP_bb->firstvar + DDSIP_bb->secvar - 1;
     if (DDSIP_param->riskmod > 0)
         vallist[0] = DDSIP_param->riskweight;
     else
@@ -1106,8 +1106,8 @@ DDSIP_UndeleteRiskObj (void)
     //TVaR
     if (abs (DDSIP_param->riskmod) == 5)
     {
-        collist[0] = DDSIP_bb->novar - 2;
-        collist[1] = DDSIP_bb->novar - 1;
+        collist[0] = DDSIP_bb->firstvar + DDSIP_bb->secvar - 2;
+        collist[1] = DDSIP_bb->firstvar + DDSIP_bb->secvar - 1;
         vallist[1] = DDSIP_param->riskweight / (1 - DDSIP_param->risklevel);
     }
 
@@ -1125,7 +1125,7 @@ DDSIP_UndeleteRiskObj (void)
     // Change objective (1-riskweight) * EX + riskweight * E max(X,EX) for absolute semideviation
     if (DDSIP_param->riskmod < 0 || DDSIP_param->riskmod == 3)
     {
-        cnt = DDSIP_data->novar;
+        cnt = DDSIP_param->firstvar + DDSIP_param->secvar;
         collist = (int *) malloc (sizeof (int) * cnt);
         vallist = (double *) malloc (sizeof (double) * cnt);
 

@@ -85,16 +85,16 @@ DDSIP_Contrib (double *mipx, int scen)
 {
     int j, status;
 
-    double *obj = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_bb->novar),
+    double *obj = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_bb->firstvar + DDSIP_bb->secvar),
                                           "obj (UB)");
-    status = CPXgetobj (DDSIP_env, DDSIP_lp, obj, 0, DDSIP_bb->novar - 1);
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, obj, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get objective coefficients\n");
         return status;
     }
 
-    for (j = 0; j < DDSIP_bb->novar; j++)
+    for (j = 0; j < DDSIP_bb->firstvar + DDSIP_bb->secvar; j++)
     {
         if (!scen)
             DDSIP_bb->objcontrib[j] = DDSIP_data->prob[scen] * obj[j] * mipx[j];
@@ -115,9 +115,9 @@ DDSIP_Contrib_LB (double *mipx, int scen)
     int j, status;
     double h;
 
-    double *obj = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_bb->novar),
+    double *obj = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_bb->firstvar + DDSIP_bb->secvar),
                                           "obj (UB)");
-    status = CPXgetobj (DDSIP_env, DDSIP_lp, obj, 0, DDSIP_bb->novar - 1);
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, obj, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get objective coefficients\n");
@@ -131,7 +131,8 @@ DDSIP_Contrib_LB (double *mipx, int scen)
         }
 
     (DDSIP_node[DDSIP_bb->curnode]->ref_scenobj)[scen] = 0.;
-    for (j = 0; j < DDSIP_bb->novar; j++)
+    //for (j = 0; j < DDSIP_bb->firstvar + DDSIP_param->secvar; j++)
+    for (j = 0; j < DDSIP_bb->firstvar + DDSIP_bb->secvar; j++)
     {
         h = obj[j] * mipx[j];
         if (!scen)
@@ -186,14 +187,14 @@ DDSIP_GetCpxSolution (int mipstatus, double *objval, double *bobjval, double *mi
         }
     }
 
-    status = CPXgetx (DDSIP_env, DDSIP_lp, mipx, 0, DDSIP_bb->novar - 1);
+    status = CPXgetx (DDSIP_env, DDSIP_lp, mipx, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to get solution (UBVal) \n");
         return status;
     }
     // Returns sometimes rubbish, don't know why..
-    for (j = 0; j < DDSIP_bb->novar; j++)
+    for (j = 0; j < DDSIP_bb->firstvar + DDSIP_bb->secvar; j++)
         if (DDSIP_Equal (mipx[j], 0.0))
             mipx[j] = 0.0;
 
@@ -327,7 +328,7 @@ DDSIP_UpperBound (void)
         DDSIP_bb->curnode = 0;
         if (DDSIP_bb->DDSIP_step == adv && abs(DDSIP_param->riskmod) == 4)
         {
-            (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[DDSIP_data->firstvar] = 1.e10;
+            (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[DDSIP_param->firstvar] = 1.e10;
         }
     }
 
@@ -357,7 +358,7 @@ DDSIP_UpperBound (void)
         fprintf (DDSIP_bb->moreoutfile, "\n");
     }
 
-    mipx = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_bb->novar), "mipx(UpperBound)");
+    mipx = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_bb->firstvar + DDSIP_bb->secvar), "mipx(UpperBound)");
     tmpsecsol = (double **) DDSIP_Alloc (sizeof (double *), DDSIP_bb->secvar, "tmpsecsol(UpperBound)");
     subsol = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "subsol(UpperBound)");
     //Tx = (double *) DDSIP_Alloc(sizeof(double), DDSIP_bb->firstcon + DDSIP_bb->seccon,"(UpperBound)");
@@ -398,10 +399,10 @@ DDSIP_UpperBound (void)
         fs = DDSIP_bb->firstvar;
 
     // Change objective to the original one
-    index = (int *) DDSIP_Alloc (sizeof (int), DDSIP_data->novar, "index,Newobj");
-    for (j = 0; j < DDSIP_data->novar; j++)
+    index = (int *) DDSIP_Alloc (sizeof (int), DDSIP_param->firstvar + DDSIP_param->secvar, "index,Newobj");
+    for (j = 0; j < DDSIP_param->firstvar + DDSIP_param->secvar; j++)
         index[j] = j;
-    status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_data->novar, index, DDSIP_data->cost + DDSIP_param->scenarios * DDSIP_param->stoccost);
+    status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_param->firstvar + DDSIP_param->secvar, index, DDSIP_data->cost + DDSIP_param->scenarios * DDSIP_param->stoccost);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change objective \n");
@@ -437,7 +438,7 @@ DDSIP_UpperBound (void)
         goto TERMINATE;
     }
     // Upper bounds
-    for(j=0; j<DDSIP_data->firstvar; j++)
+    for(j=0; j<DDSIP_param->firstvar; j++)
     {
         if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
             values[j] = floor((DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j] + 0.5);
@@ -896,12 +897,12 @@ DDSIP_UpperBound (void)
             char **colname;
             char *colstore;
 
-            colname = (char **) DDSIP_Alloc (sizeof (char *), (DDSIP_bb->novar), "colname(UpperBound)");
-            colstore = (char *) DDSIP_Alloc (sizeof (char), (DDSIP_bb->novar) * DDSIP_ln_varname, "colstore(UpperBound)");
+            colname = (char **) DDSIP_Alloc (sizeof (char *), (DDSIP_bb->firstvar + DDSIP_bb->secvar), "colname(UpperBound)");
+            colstore = (char *) DDSIP_Alloc (sizeof (char), (DDSIP_bb->firstvar + DDSIP_bb->secvar) * DDSIP_ln_varname, "colstore(UpperBound)");
 
             status =
                 CPXgetcolname (DDSIP_env, DDSIP_lp, colname, colstore,
-                               (DDSIP_bb->novar) * DDSIP_ln_varname, &j, 0, DDSIP_bb->novar - 1);
+                               (DDSIP_bb->firstvar + DDSIP_bb->secvar) * DDSIP_ln_varname, &j, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
             if (status)
             {
                 fprintf (stderr, "ERROR: Failed to get column names (UB)\n");
@@ -909,7 +910,7 @@ DDSIP_UpperBound (void)
             }
 
             fprintf (DDSIP_bb->moreoutfile, "\nObjective function composition:\n");
-            for (j = 0; j < DDSIP_bb->novar; j++)
+            for (j = 0; j < DDSIP_bb->firstvar + DDSIP_bb->secvar; j++)
                 if (fabs (DDSIP_bb->objcontrib[j]) > DDSIP_param->accuracy)
                     fprintf (DDSIP_bb->moreoutfile, "\t%s:  %.12g\n", colname[j], DDSIP_bb->objcontrib[j]);
 

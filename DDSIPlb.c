@@ -136,10 +136,10 @@ DDSIP_GetBranchIndex (double *dispnorm)
             }
             else
             {
-                if ((DDSIP_bb->bestvalue == DDSIP_infty && DDSIP_bb->curnode<DDSIP_data->firstvar*10))
+                if ((DDSIP_bb->bestvalue == DDSIP_infty && DDSIP_bb->curnode<DDSIP_param->firstvar*10))
                 {
                     h = -DDSIP_infty;
-                    for(i=0; i<DDSIP_data->firstvar; i++)
+                    for(i=0; i<DDSIP_param->firstvar; i++)
                     {
                         if (h < dispnorm[i])
                             h = dispnorm[i];

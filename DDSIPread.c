@@ -1063,10 +1063,10 @@ DDSIP_ReadSpec ()
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
     fprintf (DDSIP_outfile, "-TWO-STAGE STOCHASTIC PROGRAM\n\n");
 
-//    DDSIP_param->firstcon = floor (DDSIP_ReadDbl (specfile, "FIRSTC", " FIRST STAGE CONSTRAINTS", 0., 1, 0., DDSIP_bigint) + 0.1);
-//    DDSIP_param->firstvar = floor (DDSIP_ReadDbl (specfile, "FIRSTV", " FIRST STAGE VARIABLES", 1., 1, 1., DDSIP_bigint) + 0.1);
-//    DDSIP_param->seccon = floor (DDSIP_ReadDbl (specfile, "SECCON", " SECOND STAGE CONSTRAINTS", 0., 1, 0., DDSIP_bigint) + 0.1);
-//    DDSIP_param->secvar = floor (DDSIP_ReadDbl (specfile, "SECVAR", " SECOND STAGE VARIABLES", 1., 1, 0., DDSIP_bigint) + 0.1);
+    DDSIP_param->firstcon = floor (DDSIP_ReadDbl (specfile, "FIRSTC", " FIRST STAGE CONSTRAINTS", 0., 1, 0., DDSIP_bigint) + 0.1);
+    DDSIP_param->firstvar = floor (DDSIP_ReadDbl (specfile, "FIRSTV", " FIRST STAGE VARIABLES", 1., 1, 1., DDSIP_bigint) + 0.1);
+    DDSIP_param->seccon = floor (DDSIP_ReadDbl (specfile, "SECCON", " SECOND STAGE CONSTRAINTS", 0., 1, 0., DDSIP_bigint) + 0.1);
+    DDSIP_param->secvar = floor (DDSIP_ReadDbl (specfile, "SECVAR", " SECOND STAGE VARIABLES", 1., 1, 0., DDSIP_bigint) + 0.1);
     DDSIP_param->prefix = DDSIP_ReadString (specfile, "PREFIX", " PREFIX FOR FIRST STAGE VARIABLE NAMES");
     DDSIP_param->postfix = DDSIP_ReadString (specfile, "POSTFIX", " POSTFIX FOR FIRST STAGE VARIABLE NAMES");
 #ifdef EXPLICITPOSTFIX
@@ -1459,7 +1459,7 @@ DDSIP_ReadSpec ()
 }
 
 /*==========================================================================*/
-/* Function reads model data from model file */
+/* Function reads model data from model file and opens cplex environment */
 int
 DDSIP_ReadModel ()
 {
@@ -1513,11 +1513,24 @@ DDSIP_ReadModel ()
         return status;
     }
     fprintf (DDSIP_outfile, "\nMODEL READ FROM `%s': \n", fname);
-    DDSIP_bb->novar = DDSIP_data->novar = CPXgetnumcols (DDSIP_env, DDSIP_lp);
-    DDSIP_bb->nocon = DDSIP_data->nocon = CPXgetnumrows (DDSIP_env, DDSIP_lp);
-    printf ("\t\t No. of variables:  %d\n", DDSIP_data->novar);
-    printf ("\t\t No. of costraints: %d\n", DDSIP_data->nocon);
+    // Read order file if specified
+    if (DDSIP_param->cpxorder)
+    {
+        printf ("Enter file name with priority order for scenario problems:  ");
+        i = scanf ("%s", fname);
+        if (i == 0)
+        {
+            printf ("\nError: could not read priority order file name.\n");
+        }
+        printf ("\n\t Reading order from `%s'.\n", fname);
 
+        status = CPXreadcopyorder (DDSIP_env, DDSIP_lp, fname);
+        if (status)
+        {
+            printf ("ERROR: Failed to read priority order file.\n");
+            return status;
+        }
+    }
     // Write lp-file to check consistency
     if (DDSIP_param->files > 1)
     {
@@ -1535,33 +1548,6 @@ DDSIP_ReadModel ()
 
     return status;
 }
-
-/*==========================================================================*/
-/* Function reads CPLEX priority order from ord file */
-int
-DDSIP_ReadCPLEXOrder ()
-{
-    int i;
-    char *fname = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_fname, "fname (ReadModel)");
-    printf ("Enter file name with priority order for scenario problems:  ");
-    i = scanf ("%s", fname);
-    if (i == 0)
-    {
-        printf ("\nError: could not read priority order file name.\n");
-        i = -1;
-    }
-    printf ("\n\t Reading order from `%s'.\n", fname);
-
-    i = CPXreadcopyorder (DDSIP_env, DDSIP_lp, fname);
-    if (i)
-    {
-        printf ("ERROR: Failed to read priority order file.\n");
-    }
-    DDSIP_Free ((void **) &(fname));
-
-    return i;
-}
-//
 
 //==========================================================================
 // Function reads stochastic data from data files into structure 'data'
@@ -1585,12 +1571,12 @@ DDSIP_ReadData ()
     maxVarNameLength = DDSIP_Imin (128, DDSIP_max_str_ln);
 
     // get the column and row names of the problem
-    colname = (char **) malloc (sizeof(char *) * (DDSIP_data->novar));
-    colstore = (char *) malloc (sizeof(char) * (DDSIP_data->novar)*(maxVarNameLength+1));
-    rowname = (char **) malloc (sizeof(char *) * (DDSIP_data->nocon));
-    rowstore = (char *) malloc (sizeof(char) * (DDSIP_data->nocon)*(maxVarNameLength+1));
+    colname = (char **) malloc (sizeof(char *) * (DDSIP_param->firstvar + DDSIP_param->secvar));
+    colstore = (char *) malloc (sizeof(char) * (DDSIP_param->firstvar + DDSIP_param->secvar)*(maxVarNameLength+1));
+    rowname = (char **) malloc (sizeof(char *) * (DDSIP_param->firstcon + DDSIP_param->seccon));
+    rowstore = (char *) malloc (sizeof(char) * (DDSIP_param->firstcon + DDSIP_param->seccon)*(maxVarNameLength+1));
 
-    status = CPXgetcolname (DDSIP_env, DDSIP_lp, colname, colstore, (DDSIP_data->novar)*(maxVarNameLength+1), &k, 0, (DDSIP_data->novar)-1);
+    status = CPXgetcolname (DDSIP_env, DDSIP_lp, colname, colstore, (DDSIP_param->firstvar + DDSIP_param->secvar)*(maxVarNameLength+1), &k, 0, (DDSIP_param->firstvar + DDSIP_param->secvar)-1);
     if ( status )
     {
         fprintf (stderr, "XXX ERROR: Failed to get column names.\n");
@@ -1600,7 +1586,7 @@ DDSIP_ReadData ()
         exit (1);
     }
 
-    status = CPXgetrowname (DDSIP_env, DDSIP_lp, rowname, rowstore, (DDSIP_data->nocon)*(maxVarNameLength+1), &k, 0, (DDSIP_data->nocon)-1);
+    status = CPXgetrowname (DDSIP_env, DDSIP_lp, rowname, rowstore, (DDSIP_param->firstcon + DDSIP_param->seccon)*(maxVarNameLength+1), &k, 0, (DDSIP_param->firstcon + DDSIP_param->seccon)-1);
     if ( status )
     {
         fprintf (stderr, "XXX ERROR: Failed to get row names.\n");
@@ -1641,7 +1627,7 @@ DDSIP_ReadData ()
             {
                 if((k = DDSIP_ReadWord (datafile, tmpdata, maxVarNameLength)))
                 {
-                    for (k = 0; k < (DDSIP_data->nocon); k++)
+                    for (k = 0; k < (DDSIP_param->firstcon + DDSIP_param->seccon); k++)
                     {
                         if (!strcmp(tmpdata, rowname[k]))
                         {
@@ -1649,7 +1635,7 @@ DDSIP_ReadData ()
                             break;
                         }
                     }
-                    if (k ==  (DDSIP_data->nocon))
+                    if (k ==  (DDSIP_param->firstcon + DDSIP_param->seccon))
                     {
                         printf ("XXX ERROR: row name '%s' specified in the stochastic rhs data file not found in the problem.\n", tmpdata);
                         fprintf (DDSIP_outfile, "XXX ERROR: row name '%s' specified in the stochastic rhs data file not found in the problem.\n", tmpdata);
@@ -1791,6 +1777,9 @@ DDSIP_ReadData ()
         fclose (checkfile);
     }
     // data->cost contains: stoch. costs for all scenarios, followed by the original costs
+    DDSIP_data->cost =
+        (double *) DDSIP_Alloc (sizeof (double),
+                                DDSIP_param->scenarios * DDSIP_param->stoccost + DDSIP_param->firstvar + DDSIP_param->secvar, "cost (ReadData)");
     // Read stochastic costs if specified
     if (DDSIP_param->stoccost)
     {
@@ -1815,7 +1804,7 @@ DDSIP_ReadData ()
 
                 if((k = DDSIP_ReadWord (datafile, tmpdata, maxVarNameLength)))
                 {
-                    for (k = 0; k < (DDSIP_data->novar); k++)
+                    for (k = 0; k < (DDSIP_param->firstvar + DDSIP_param->secvar); k++)
                     {
                         if (!strcmp(tmpdata, colname[k]))
                         {
@@ -1823,7 +1812,7 @@ DDSIP_ReadData ()
                             break;
                         }
                     }
-                    if (k ==  (DDSIP_data->novar))
+                    if (k ==  (DDSIP_param->firstvar + DDSIP_param->secvar))
                     {
                         printf ("XXX ERROR: column name '%s' specified in the stochastic cost data file not found in the problem.\n", tmpdata);
                         fprintf (DDSIP_outfile, "XXX ERROR: rowumn name '%s' specified in the stochastic cost data file not found in the problem.\n", tmpdata);
@@ -1881,6 +1870,21 @@ DDSIP_ReadData ()
             fclose (checkfile);
         }
     }
+    // Store original objective coefficients
+    i = CPXgetnumcols (DDSIP_env, DDSIP_lp);
+    j = DDSIP_param->firstvar + DDSIP_param->secvar;
+    if (i < j)
+    {
+        printf ("XXX Error: number of variables of read problem is %d, less than the total of %d specified in specs.\n",
+                i, j);
+        return (i - j);
+    }
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, DDSIP_data->cost + DDSIP_param->scenarios * DDSIP_param->stoccost, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
+    if (status)
+    {
+        printf ("ERROR: Failed to get objective coefficients\n");
+        return status;
+    }
     // Read stochastic matrix entries if specified
     if (DDSIP_param->stocmat)
     {
@@ -1911,7 +1915,7 @@ DDSIP_ReadData ()
             {
                 if((k = DDSIP_ReadWord (datafile, tmpdata, maxVarNameLength)))
                 {
-                    for (k = 0; k < (DDSIP_data->nocon); k++)
+                    for (k = 0; k < (DDSIP_param->firstcon + DDSIP_param->seccon); k++)
                     {
                         if (!strcmp(tmpdata, rowname[k]))
                         {
@@ -1919,7 +1923,7 @@ DDSIP_ReadData ()
                             break;
                         }
                     }
-                    if (k ==  (DDSIP_data->nocon))
+                    if (k ==  (DDSIP_param->firstcon + DDSIP_param->seccon))
                     {
                         printf ("XXX ERROR: row name '%s' specified in the stochastic matrix data file not found in the problem.\n", tmpdata);
                         fprintf (DDSIP_outfile, "XXX ERROR: row name '%s' specified in the stochastic matrix data file not found in the problem.\n", tmpdata);
@@ -1934,7 +1938,7 @@ DDSIP_ReadData ()
                 }
                 if((k = DDSIP_ReadWord (datafile, tmpdata, maxVarNameLength)))
                 {
-                    for (k = 0; k < (DDSIP_data->novar); k++)
+                    for (k = 0; k < (DDSIP_param->firstvar + DDSIP_param->secvar); k++)
                     {
                         if (!strcmp(tmpdata, colname[k]))
                         {
@@ -1942,7 +1946,7 @@ DDSIP_ReadData ()
                             break;
                         }
                     }
-                    if (k ==  (DDSIP_data->novar))
+                    if (k ==  (DDSIP_param->firstvar + DDSIP_param->secvar))
                     {
                         printf ("XXX ERROR: column name '%s' specified in the stochastic matrix data file not found in the problem.\n", tmpdata);
                         fprintf (DDSIP_outfile, "XXX ERROR: rowumn name '%s' specified in the stochastic matrix data file not found in the problem.\n", tmpdata);
@@ -2010,7 +2014,7 @@ DDSIP_ReadData ()
     if (DDSIP_param->order)
     {
         int ind;
-        DDSIP_data->order = (int *) DDSIP_Alloc (sizeof (int), DDSIP_data->firstvar, "order(ReadData)");
+        DDSIP_data->order = (int *) DDSIP_Alloc (sizeof (int), DDSIP_param->firstvar, "order(ReadData)");
 
         printf ("Enter file name with priority order (master):  ");
         k = scanf ("%s", fname);
@@ -2023,15 +2027,15 @@ DDSIP_ReadData ()
 
         printf ("\n\t Reading priority order from `%s'.\n", fname);
 
-        for (i = 0; i < DDSIP_data->firstvar; i++)
+        for (i = 0; i < DDSIP_param->firstvar; i++)
         {
             DDSIP_data->order[i] = 1;
         }
-        for (i = 0; i < DDSIP_data->firstvar; i++)
+        for (i = 0; i < DDSIP_param->firstvar; i++)
         {
             if (fscanf (datafile, "%d", &ind) == EOF)
                 break;
-            if (ind < 0 || ind >= DDSIP_data->firstvar)
+            if (ind < 0 || ind >= DDSIP_param->firstvar)
             {
                 printf ("ERROR: Wrong DDSIP_index (%d) in priority order file.\n", ind);
                 return 1;
@@ -2047,7 +2051,7 @@ DDSIP_ReadData ()
             if ((checkfile = fopen (fname, "w")) == NULL)
                 printf ("*Warning: Failed to open '%s'\n.", fname);
 
-            for (i = 0; i < DDSIP_data->firstvar; i++)
+            for (i = 0; i < DDSIP_param->firstvar; i++)
                 fprintf (checkfile, "%d \t %d\n", i + 1, DDSIP_data->order[i]);
             fclose (checkfile);
         }
@@ -2104,7 +2108,7 @@ DDSIP_AdvStart (void)
         // This setting indicates that a solution has been provided
         DDSIP_param->advstart = 2;
         DDSIP_bb->adv_sol = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar, "DDSIP_bb->adv_sol(sipread)");
-        for (i = 0; i < DDSIP_data->firstvar; i++)
+        for (i = 0; i < DDSIP_param->firstvar; i++)
         {
             k = fscanf (advfile, "%lf", DDSIP_bb->adv_sol + i);
 //      fprintf (DDSIP_outfile, "  %14.8g", DDSIP_bb->adv_sol[i]);

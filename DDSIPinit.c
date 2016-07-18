@@ -30,7 +30,7 @@
 int DDSIP_SortScen (void);
 
 //==========================================================================
-// Function sets cplex parameters if different parameters have been used in UB
+// Function sets cplex parameters, different parameters could be used in LB, UB etc.
 int
 DDSIP_SetCpxPara (const int cnt, const int * isdbl, const int * which, const double * what)
 {
@@ -354,10 +354,10 @@ DDSIP_BbTypeInit (void)
 
     time (&DDSIP_bb->start_time);
     // New = Original
-    DDSIP_bb->firstvar = DDSIP_param->firstvar;
-    DDSIP_bb->secvar = DDSIP_param->secvar;
-    DDSIP_bb->firstcon = DDSIP_param->firstcon;
-    DDSIP_bb->seccon = DDSIP_param->seccon;
+    DDSIP_bb->firstvar = DDSIP_data->firstvar;
+    DDSIP_bb->secvar = DDSIP_data->secvar;
+    DDSIP_bb->firstcon = DDSIP_data->firstcon;
+    DDSIP_bb->seccon = DDSIP_data->seccon;
     DDSIP_bb->correct_bounding = 0.;
 
     // Change according to risk model
@@ -398,6 +398,9 @@ DDSIP_BbTypeInit (void)
     // Memory allocation for bb-type-members
     DDSIP_bb->solstat = (int *) DDSIP_Alloc (sizeof (int), DDSIP_param->scenarios, "solstat(BbTypeInit)");
     DDSIP_bb->firstindex = (int *) DDSIP_Alloc (sizeof (int), DDSIP_bb->firstvar, "firstindex(BbTypeInit)");
+/////////////////
+fprintf(DDSIP_outfile, "******************** allocated bb->firstindex = %p of length %d\n", DDSIP_bb->firstindex, DDSIP_bb->firstvar);
+/////////////////
     if (DDSIP_param->order)
         DDSIP_bb->order = (int *) DDSIP_Alloc (sizeof (int), DDSIP_bb->firstvar, "order(BbTypeInit)");
     DDSIP_bb->firsttype = (char *) DDSIP_Alloc (sizeof (char), DDSIP_bb->firstvar, "firsttype(BbTypeInit)");
@@ -540,14 +543,14 @@ DDSIP_BranchOrder (void)
     int i;
 
     // Copy provided data, decrease by 1
-    for (i = 0; i < DDSIP_param->firstvar; i++)
+    for (i = 0; i < DDSIP_data->firstvar; i++)
         DDSIP_bb->order[i] = DDSIP_data->order[i] - 1;
     // The original order information is not needed any more
     DDSIP_Free ((void **)&(DDSIP_data->order));
     // Some risk models introduce additional first-stage variables. Their branching order corresponds
     // to the parameter brancheta
-    if (DDSIP_bb->firstvar - DDSIP_param->firstvar)
-        DDSIP_bb->order[DDSIP_param->firstvar] = DDSIP_param->brancheta;
+    if (DDSIP_bb->firstvar - DDSIP_data->firstvar)
+        DDSIP_bb->order[DDSIP_data->firstvar] = DDSIP_param->brancheta;
 
     return 0;
 } // DDSIP_BranchOrder
@@ -558,17 +561,17 @@ int
 DDSIP_InitStages (void)
 {
     // Temporary variables
-    int status = 0, cnt, i, j, length;
+    int status = 0, cnt, i, j, length, ind;
     int seccnt;
 
-    int *firindex = (int *) DDSIP_Alloc (sizeof (int), DDSIP_bb->novar, "firindex(InitStages)");
-    int *secondindex = (int *) DDSIP_Alloc (sizeof (int), DDSIP_bb->novar, "secondindex(InitStages)");
+    int *firindex = (int *) DDSIP_Alloc (sizeof (int), DDSIP_data->novar, "firindex(InitStages)");
+    int *secondindex = (int *) DDSIP_Alloc (sizeof (int), DDSIP_data->novar, "secondindex(InitStages)");
 
-    char *ctype = (char *) DDSIP_Alloc (sizeof (char), DDSIP_bb->novar, "ctype(InitStages)");
-    char **colname = (char **) DDSIP_Alloc (sizeof (char *), DDSIP_bb->novar, "colname(InitStages)");
-    char *colstore = (char *) DDSIP_Alloc (sizeof (char), DDSIP_bb->novar * DDSIP_ln_varname,
+    char *ctype = (char *) DDSIP_Alloc (sizeof (char), DDSIP_data->novar, "ctype(InitStages)");
+    char **colname = (char **) DDSIP_Alloc (sizeof (char *), DDSIP_data->novar, "colname(InitStages)");
+    char *colstore = (char *) DDSIP_Alloc (sizeof (char), DDSIP_data->novar * DDSIP_ln_varname,
                                            "colstore(InitStages)");
-    double *cost = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->novar, "cost(Initstages)");
+    double *lb, *ub;
 
     //Prepare first- and second-stage variables
     // Get all variable names
@@ -604,6 +607,7 @@ DDSIP_InitStages (void)
     seccnt = 0;
     i = 0;
     DDSIP_bb->total_int = 0;
+    DDSIP_bb->first_int  = 0;
 
     if (DDSIP_param->prefix)
     {
@@ -618,9 +622,10 @@ DDSIP_InitStages (void)
             {
                 firindex[cnt] = i;
                 if ((ctype[i] == 'B') || (ctype[i] == 'I'))
+                {
                     DDSIP_bb->total_int++;
-                //              if ((ctype[i]=='B') || (ctype[i]=='I'))
-                //                      DDSIP_bb->firstint++;
+                    DDSIP_bb->first_int++;
+                }
                 cnt++;
             }
             else
@@ -648,9 +653,10 @@ DDSIP_InitStages (void)
             {
                 firindex[cnt] = i;
                 if ((ctype[i] == 'B') || (ctype[i] == 'I'))
+                {
                     DDSIP_bb->total_int++;
-                //              if ((ctype[i]=='B') || (ctype[i]=='I'))
-                //                      DDSIP_bb->firstint++;
+                    DDSIP_bb->first_int++;
+                }
                 cnt++;
             }
             else
@@ -664,26 +670,32 @@ DDSIP_InitStages (void)
             i++;
         }
     }
+    DDSIP_data->firstvar = cnt;
+    DDSIP_data->secvar   = DDSIP_data->novar - cnt;
 
     DDSIP_Free ((void **) &(colstore));
     DDSIP_Free ((void **) &(colname));
 
-    // Consistency of model and specification file
-    if (cnt != DDSIP_bb->firstvar)
+    // Initialize b&b variables
+    if ((status = DDSIP_BbInit ()))
     {
-        printf ("\nNumbers of first- and second-stage variables in specification file: ");
-        printf ("%d and %d\n", DDSIP_bb->firstvar, DDSIP_bb->secvar);
-        printf ("Numbers of first- and second-stage variables in model file: ");
-        printf ("%d and %d\n", cnt, DDSIP_bb->novar - cnt);
-        printf ("(Numbers include the variables of the risk model)\n");
-        return 121;
+        fprintf (stderr, "ERROR: Failed to initialize Bb data (InitStages), return code = %d\n", status);
+        return status;
     }
+    printf ("initialized Bb data (InitStages)\n");
 
     for (i = 0; i < DDSIP_bb->firstvar; i++)
     {
         DDSIP_bb->firstindex[i] = firindex[i];
         DDSIP_bb->firsttype[i] = ctype[DDSIP_bb->firstindex[i]];
     }
+/////////////////////////
+fprintf(DDSIP_outfile, "************ initialize %d entries of DDSIP_bb->firstindex:\n",DDSIP_bb->firstvar);
+    for (i = 0; i < DDSIP_bb->firstvar; i++)
+    {
+        fprintf(DDSIP_outfile, "%d:\t%d\n",i,DDSIP_bb->firstindex[i]);
+    }
+/////////////////////////
 
     for (i = 0; i < DDSIP_bb->secvar; i++)
     {
@@ -695,29 +707,55 @@ DDSIP_InitStages (void)
     DDSIP_Free ((void **) &(firindex));
     DDSIP_Free ((void **) &(ctype));
 
-    // Provisorisch
+
     DDSIP_bb->cost = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar, "DDSIP_bb->cost,InitStages");
 
-    status = CPXgetobj (DDSIP_env, DDSIP_lp, cost, 0, DDSIP_bb->novar - 1);
+    for (i = 0; i < DDSIP_bb->firstvar; i++)
+    {
+fprintf(DDSIP_outfile,"  DDSIP_bb->cost[%d] = DDSIP_data->cost[%d+%d] = %g\n", i, DDSIP_bb->firstindex[i], DDSIP_param->stoccost * DDSIP_param->scenarios, DDSIP_data->cost[DDSIP_bb->firstindex[i]+ DDSIP_param->stoccost * DDSIP_param->scenarios]);
+        DDSIP_bb->cost[i] = DDSIP_data->cost[DDSIP_bb->firstindex[i]+ DDSIP_param->stoccost * DDSIP_param->scenarios];
+    }
+
+    // Preserve lower and upper bounds on first stage variables
+    lb = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_bb->novar), "lb(AdvSolInit)");
+    ub = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_bb->novar), "ub(AdvSolInit)");
+    status = CPXgetlb (DDSIP_env, DDSIP_lp, lb, 0, DDSIP_bb->novar - 1);
     if (status)
     {
-        fprintf (stderr, "ERROR: Failed to get objective (InitStages)\n");
+        fprintf (stderr, "ERROR: Failed to get lower bounds \n");
         return status;
     }
 
-    for (i = 0; i < DDSIP_bb->firstvar; i++)
-        DDSIP_bb->cost[i] = cost[DDSIP_bb->firstindex[i]];
+    status = CPXgetub (DDSIP_env, DDSIP_lp, ub, 0, DDSIP_bb->novar - 1);
+    if (status)
+    {
+        fprintf (stderr, "ERROR: Failed to get upper bounds \n");
+        return status;
+    }
 
-    DDSIP_Free ((void **) &(cost));
-    /*   if (fabs(DDSIP_param->riskmod)==5) */
-    /* 	{ */
-    /* 	  for (i=0; i<DDSIP_bb->firstvar-1; i++) */
-    /* 		DDSIP_bb->cost[i]=data->cost[DDSIP_bb->firstindex[i]]; */
-    /* 	  DDSIP_bb->cost[DDSIP_bb->firstvar-1]=DDSIP_param->riskweight; */
-    /* 	} */
-    /*   else */
-    /* 	for (i=0; i<DDSIP_bb->firstvar; i++) */
-    /* 	  DDSIP_bb->cost[i]=data->cost[DDSIP_bb->firstindex[i]]; */
+    ind = 0;
+    for (i = 0; i < DDSIP_bb->firstvar; i++)
+    {
+        DDSIP_bb->lborg[i] = lb[DDSIP_bb->firstindex[i]];
+        DDSIP_bb->uborg[i] = ub[DDSIP_bb->firstindex[i]];
+
+        if (DDSIP_param->cb && !(DDSIP_bb->uborg[i] < DDSIP_infty))
+            ind++;
+    }
+
+    // Cplex does not tell us whether a problem is infeasible or unbounded.
+    // We treat both as infeasible. Unboundedness should be removed by imposing
+    // upper bounds on all variables
+    if (ind)
+    {
+        printf ("*Warning: Variable(s) unbounded. This may cause problems with dual method.\n");
+        fprintf (DDSIP_outfile, "*Warning: Variable(s) unbounded. This may cause problems with dual method.\n");
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "*Warning: Variable(s) unbounded. This may cause problems with dual method.\n");
+    }
+
+    DDSIP_Free ((void **) &(lb));
+    DDSIP_Free ((void **) &(ub));
 
     return status;
 } // DDSIP_InitStages
@@ -843,10 +881,7 @@ int
 DDSIP_BbInit (void)
 {
     // Temporary variables
-    int status = 0, i, ind;
-
-    double *lb;
-    double *ub;
+    int status = 0, i;
 
     printf ("Initializing branch-and-bound tree.\n");
 
@@ -854,31 +889,17 @@ DDSIP_BbInit (void)
         fprintf (DDSIP_bb->moreoutfile, "Initializing branch-and-bound tree.\n");
 
     // Print infos
-    // Check specifications for consistency
-    if (!(DDSIP_param->firstvar + DDSIP_param->secvar == CPXgetnumcols (DDSIP_env, DDSIP_lp)))
-    {
-        printf ("\nTotal no. of variables in specification file: ");
-        printf ("%d (%d,%d)\n", DDSIP_param->firstvar + DDSIP_param->secvar, DDSIP_param->firstvar, DDSIP_param->secvar);
-        printf ("Total no. of variables in model file: %d\n", CPXgetnumcols (DDSIP_env, DDSIP_lp));
-        return 121;
-    }
-    else if (!(DDSIP_param->firstcon + DDSIP_param->seccon == CPXgetnumrows (DDSIP_env, DDSIP_lp)))
-    {
-        printf ("\nTotal no. of constraints in specification file: ");
-        printf ("%d\n", DDSIP_param->firstcon + DDSIP_param->seccon);
-        printf ("Total no. of constraints in model file: %d\n", CPXgetnumrows (DDSIP_env, DDSIP_lp));
-        return 121;
-    }
-    else
-    {
-        printf ("\t\t No. of  first-stage variables: %d\n", DDSIP_param->firstvar);
-        printf ("\t\t No. of second-stage variables: %d\n", DDSIP_param->secvar);
-    }
+    printf ("\t\t Data from input model file:\n");
+    printf ("\t\t No. of              variables:   %6d\n", DDSIP_data->novar);
+    printf ("\t\t No. of  first-stage variables:   %6d, including %d integer ones\n", DDSIP_data->firstvar,  DDSIP_bb->first_int);
+    printf ("\t\t No. of second-stage variables:   %6d, including %d integer ones\n", DDSIP_data->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
+    printf ("\t\t No. of  first-stage constraints: %6d\n", DDSIP_data->firstcon);
+    printf ("\t\t No. of second-stage constraints: %6d\n", DDSIP_data->seccon);
 
     DDSIP_bb->adv_sol = NULL;
     if (CPXgetobjsen (DDSIP_env, DDSIP_lp) == CPX_MAX)
     {
-        DDSIP_bb->novar = DDSIP_param->firstvar + DDSIP_param->secvar;
+        DDSIP_bb->novar = DDSIP_data->novar;
         int *index = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_bb->novar), "index(BbInit)");
         double *value = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_bb->novar),"value(BbInit)");
 
@@ -894,7 +915,9 @@ DDSIP_BbInit (void)
         for (i = 0; i < DDSIP_bb->novar; i++)
         {
             if (value[i] != 0.0)
+            {
                 value[i] = -value[i];
+            }
             index[i] = i;
         }
 
@@ -906,7 +929,7 @@ DDSIP_BbInit (void)
         }
         // Change problem to minimization
         CPXchgobjsen (DDSIP_env, DDSIP_lp, CPX_MIN);
-        for (i = 0; i < DDSIP_param->firstvar + DDSIP_param->secvar + DDSIP_param->stoccost * DDSIP_param->scenarios; i++)
+        for (i = 0; i < DDSIP_data->novar + DDSIP_param->stoccost * DDSIP_param->scenarios; i++)
             if (DDSIP_data->cost[i] != 0.0)
                 DDSIP_data->cost[i] = -DDSIP_data->cost[i];
 
@@ -952,49 +975,7 @@ DDSIP_BbInit (void)
         }
     }
 
-    // Prepare first and second stage
-    status = DDSIP_InitStages ();
-    if (status)
-    {
-        fprintf (stderr, "ERROR: Failed to initialize stages (BbInit)\n");
-        return status;
-    }
 
-    // Preserve lower and upper bounds on first stage variables
-    lb = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_bb->novar), "lb(AdvSolInit)");
-    ub = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_bb->novar), "ub(AdvSolInit)");
-    status = CPXgetlb (DDSIP_env, DDSIP_lp, lb, 0, DDSIP_bb->novar - 1);
-    if (status)
-    {
-        fprintf (stderr, "ERROR: Failed to get lower bounds \n");
-        return status;
-    }
-
-    status = CPXgetub (DDSIP_env, DDSIP_lp, ub, 0, DDSIP_bb->novar - 1);
-    if (status)
-    {
-        fprintf (stderr, "ERROR: Failed to get upper bounds \n");
-        return status;
-    }
-
-    ind = 0;
-    for (i = 0; i < DDSIP_bb->firstvar; i++)
-    {
-        DDSIP_bb->lborg[i] = lb[DDSIP_bb->firstindex[i]];
-        DDSIP_bb->uborg[i] = ub[DDSIP_bb->firstindex[i]];
-
-        if (DDSIP_param->cb && !(DDSIP_bb->uborg[i] < DDSIP_infty))
-            ind++;
-    }
-
-    // Cplex does not tell us whether a problem is infeasible or unbounded.
-    // We treat both as infeasible. Unboundedness should be removed by imposing
-    // upper bounds on all variables
-    if (ind)
-        printf ("*Warning: Variable(s) unbounded. This may cause problems with dual method.\n");
-
-    DDSIP_Free ((void **) &(lb));
-    DDSIP_Free ((void **) &(ub));
 
     // Initialisation, no meaning
     (DDSIP_node[0])->neolb = DDSIP_bb->lborg[0];

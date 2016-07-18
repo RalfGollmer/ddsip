@@ -195,30 +195,32 @@ main (void)
         printf ("CPLEX version is %s\n", CPXversion (DDSIP_env));
     fprintf (DDSIP_outfile, "CPLEX version is %s\n\n", CPXversion (DDSIP_env));
 
+    // Allocate the structures to hold the information on the problem
     DDSIP_param = (para_t *) DDSIP_Alloc (sizeof (para_t), 1, "param(Main)");
-
-    // Read specification file
-    if ((status = DDSIP_ReadSpec ()))
-        goto TERMINATE;
+    DDSIP_bb    = (bb_t *)   DDSIP_Alloc (sizeof (bb_t),   1, "bb(Main)");
+    DDSIP_data  = (data_t *) DDSIP_Alloc (sizeof (data_t), 1, "data(Main)");
 
     // Read model (lp) file
     if ((status = DDSIP_ReadModel ()))
         goto TERMINATE;
 
-    // Set specified CPLEX parameters
-    if ((status = DDSIP_InitCpxPara ()))
+    // Read specification file
+    if ((status = DDSIP_ReadSpec ()))
         goto TERMINATE;
 
-    DDSIP_data = (data_t *) DDSIP_Alloc (sizeof (data_t), 1, "data(Main)");
-
-    // Read data file(s)
-    if ((status = DDSIP_ReadData ()))
+    // data->cost contains: stoch. costs for all scenarios, followed by the original costs
+    DDSIP_data->cost =
+        (double *) DDSIP_Alloc (sizeof (double),
+                                DDSIP_param->scenarios * DDSIP_param->stoccost + DDSIP_data->novar, "cost (ReadData)");
+    // Store original objective coefficients
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, DDSIP_data->cost + DDSIP_param->scenarios * DDSIP_param->stoccost, 0, DDSIP_data->novar - 1);
+    if (status)
+    {
+        printf ("ERROR: Failed to get objective coefficients\n");
         goto TERMINATE;
-
-    DDSIP_bb = (bb_t *) DDSIP_Alloc (sizeof (bb_t), 1, "bb(Main)");
+    }
 
     DDSIP_bb->moreoutfile = NULL;
-    DDSIP_bb->DDSIP_step =  solve;
     if (DDSIP_param->outlev)
     {
         // Open debug output file
@@ -250,9 +252,30 @@ main (void)
     DDSIP_node[0]->mipstatus = (int *) DDSIP_Alloc (sizeof (int), DDSIP_param->scenarios, "node[0]->mipstatus(Main)");
     DDSIP_node[0]->ref_scenobj = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "node[0]->ref_scenobj(Main)");
 
-    // Initialize b&b variables
-    if ((status = DDSIP_BbInit ()))
+    // Prepare first and second stage
+    if ((status = DDSIP_InitStages ()))
+    {
+        fprintf (stderr, "ERROR: Failed to initialize stages (BbInit)\n");
         goto TERMINATE;
+    }
+
+    // Set specified CPLEX parameters
+    if ((status = DDSIP_InitCpxPara ()))
+        goto TERMINATE;
+
+    // Read data file(s)
+    if ((status = DDSIP_ReadData ()))
+        goto TERMINATE;
+
+    // Read order file if specified
+    if (DDSIP_param->cpxorder)
+    {
+        if (DDSIP_ReadCPLEXOrder ())
+            goto TERMINATE;
+    }
+
+    DDSIP_bb->DDSIP_step =  solve;
+
 
 #ifdef CONIC_BUNDLE
     if (DDSIP_param->cb)
@@ -305,6 +328,14 @@ main (void)
         }
         fprintf (DDSIP_outfile, "-----------------------------------------------------------\n\n");
     }
+/////////////
+fprintf (DDSIP_outfile, "------------------------ data->cost -----------------------------------\n\n");
+for (status=0; status < DDSIP_data->novar + DDSIP_param->scenarios * DDSIP_param->stoccost; status++)
+  fprintf(DDSIP_outfile, "%d:\t%g\n", status, DDSIP_data->cost[status]);
+fprintf (DDSIP_outfile, "------------------------   bb->cost -----------------------------------\n\n");
+for (status=0; status < DDSIP_bb->firstvar; status++)
+  fprintf(DDSIP_outfile, "%d:\t%g\n", status, DDSIP_bb->cost[status]);
+/////////////
     // Solve EV and EEV if specified
     if (DDSIP_param->expected)
     {

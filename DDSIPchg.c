@@ -35,7 +35,25 @@ DDSIP_ChgBounds (void)
 
     int *index = (int *) DDSIP_Alloc (sizeof (int), DDSIP_bb->curbdcnt, "index(chgbounds)");
 
-//for (i=0; i<DDSIP_bb->curbdcnt; index[i]=DDSIP_bb->firstindex[DDSIP_bb->curind[i++]]);
+/////////////////////////////////
+    double * bounds_lb = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->novar, "bounds_lb(chgbounds)");
+    double * bounds_ub = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->novar, "bounds_ub(chgbounds)");
+    char * name = (char*) DDSIP_Alloc (sizeof(char), 512, "name");
+    char ** names = (char**) DDSIP_Alloc (sizeof(char*), 1, "names");
+    int surplus;
+    if(CPXgetlb(DDSIP_env, DDSIP_lp, bounds_lb, 0,  DDSIP_bb->novar-1)||
+       CPXgetub(DDSIP_env, DDSIP_lp, bounds_ub, 0,  DDSIP_bb->novar-1))
+    {
+        fprintf(stderr, " ******** ERROR querying bounds\n");
+        exit(1);
+    }
+    fprintf(DDSIP_outfile, "ChgBounds: Bounds before ChgBounds\n");
+    for (i = 0; i < DDSIP_bb->novar; i++)
+    {
+       CPXgetcolname(  DDSIP_env, DDSIP_lp, names, name, 512, &surplus, i, i);
+       fprintf(DDSIP_outfile, "%d: %20s [%g,%g]\n",i, names[0],bounds_lb[i], bounds_ub[i]);
+    }
+/////////////////////////////////
     for (i = 0; i < DDSIP_bb->curbdcnt; i++)
         index[i] = DDSIP_bb->firstindex[DDSIP_bb->curind[i]];
     if (DDSIP_param->outlev > 3)
@@ -67,6 +85,24 @@ DDSIP_ChgBounds (void)
     }
 
     DDSIP_Free ((void **) &(index));
+/////////////////////////////////
+    if(CPXgetlb(DDSIP_env, DDSIP_lp, bounds_lb, 0,  DDSIP_bb->novar-1)||
+       CPXgetub(DDSIP_env, DDSIP_lp, bounds_ub, 0,  DDSIP_bb->novar-1))
+    {
+        fprintf(stderr, " ******** ERROR querying bounds\n");
+        exit(1);
+    }
+    fprintf(DDSIP_outfile, "ChgBounds: Bounds after ChgBounds\n");
+    for (i = 0; i < DDSIP_bb->novar; i++)
+    {
+       CPXgetcolname(  DDSIP_env, DDSIP_lp, names, name, 512, &surplus, i, i);
+       fprintf(DDSIP_outfile, "%d: %20s [%g,%g]\n",i, names[0],bounds_lb[i], bounds_ub[i]);
+    }
+    DDSIP_Free ((void *) bounds_lb);
+    DDSIP_Free ((void *) bounds_ub);
+    DDSIP_Free ((void *) name);
+    DDSIP_Free ((void *) names);
+/////////////////////////////////
     return status;
 }
 

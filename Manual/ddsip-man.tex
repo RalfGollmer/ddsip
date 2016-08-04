@@ -50,7 +50,7 @@ Decomposition of Two-Stage Stochastic Programs with Mixed-Integer Recourse}
 \maketitle
 
 \section{Introduction}
- \texttt{ddsip} is a C-implementation of a number of scenario decomposition algorithms for two-stage
+Â \texttt{ddsip} is a C-implementation of a number of scenario decomposition algorithms for two-stage
 stochastic linear programs with mixed-integer recourse. It expects a MIP, stochastic LPs are not supported.\\
 The program is based on a previous Fortran~90-implementation
 of C.C. Car\o e. Main idea of the decomposition algorithms is the Lagrangian relaxation of the
@@ -560,7 +560,7 @@ next integer.\medskip\\
 \hline
 \end{tabular}
 \\[0.5em]Table 5:\quad Values of parameter HEURIS\\
-\end{center} %\caption{Heuristics, Values of HEURIS}  \label{T:HEU}
+\end{center} %\caption{Heuristics, Values of HEURIS} Â \label{T:HEU}
 %\end{table}
 %
 \setcounter{table}{4}
@@ -618,7 +618,7 @@ RISKMO&$1,-1$&Expected excess above target.\\[0.2em]
 \hline
 \end{tabular}
 \\[0.5em]{Table 7:\quad Risk models}
-\end{center} %\caption{Risk models}  \label{T:RMOD}
+\end{center} %\caption{Risk models} Â \label{T:RMOD}
 %\end{table}
 
 Positive values of RISKMO implement the model $\min_X \limits \E X + \alpha \R X$, negative ones
@@ -725,7 +725,8 @@ scenarioN& scenarioN&scenarioN \\
 
 In the right-hand side scenario file, the first number after the identifier is the scenario
 probability. For problems without stochastic right-hand sides, this file has to contain only the
-probabilities of the individual scenarios.\\
+probabilities of the individual scenarios (and does not contain the `Names' keyword, but does have the {\it sce} 
+keyword for each scenario followed on the next line by the probability).\\
 %In order to assign the stochastic right-hand sides to constraints, the constraints have to be
 %grouped in the model file, cf. Section~\ref{S:INP}. The constraint section begins with the 
 %first-stage constraints followed by the stochastic constraints ordered corresponding to the entries
@@ -862,7 +863,7 @@ a new best upper bound, in the output line for the node an asterisk is prepended
 \subsection{Output in the file {\it sip.out}}
 All output files will be placed in the subdirectory {\it sipout} of the current
 directory. This directory will be
-created if it does not exist. A further run of  \texttt{ddsip} overwrites the existing output
+created if it does not exist. A further run of Â \texttt{ddsip} overwrites the existing output
 files. The output on screen is also directed to the file {\it more.out} in case OUTLEV $>$ 51. In addition, this file
 contains the parameters read and some information on the solution:
 %

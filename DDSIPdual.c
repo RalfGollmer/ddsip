@@ -424,7 +424,7 @@ DDSIP_DualOpt (void)
         // idea: limit too big start weights - speed up or slow down?
 #define BigWeight 400.
         if (start_weight > BigWeight && (!DDSIP_param->riskmod ||start_weight > DDSIP_param->riskweight))
-            start_weight = (start_weight-BigWeight)*0.5  + BigWeight;
+            start_weight = DDSIP_Dmin((start_weight-BigWeight)*0.5  + BigWeight, 1.e4);
         if (DDSIP_param->riskmod == 4)
         {
             if (start_weight < DDSIP_param->riskweight*0.2)

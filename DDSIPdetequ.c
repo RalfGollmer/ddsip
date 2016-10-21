@@ -406,6 +406,7 @@ DDSIP_DetEqu ()
 
 FREE:
     DDSIP_Free ((void **) &(sense));
+    DDSIP_Free ((void **) &(sense_sorted));
     DDSIP_Free ((void **) &(vartype));
     DDSIP_Free ((void **) &(rowname));
     DDSIP_Free ((void **) &(rownamestore));
@@ -427,6 +428,14 @@ FREE:
     DDSIP_Free ((void **) &(rmatbeg));
     DDSIP_Free ((void **) &(rmatind));
     DDSIP_Free ((void **) &(rmatval));
+    DDSIP_Free ((void **) &(rmatbeg_stage));
+    DDSIP_Free ((void **) &(rmatind_stage));
+    DDSIP_Free ((void **) &(rmatval_stage));
     DDSIP_Free ((void **) &(rowindex));
+    if (ranged)
+    {
+        DDSIP_Free ((void **) &(rng));
+        DDSIP_Free ((void **) &(rng_sorted));
+    }
     return;
 }

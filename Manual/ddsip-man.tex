@@ -299,8 +299,8 @@ where the file {\it files2sip} may contain the lines displayed in Figure~\ref{F:
 \begin{figure}[ht]
 \begin{center}
 \framebox{\begin{tabular}{l}
-sip.in \\
-model.lp\\
+model.lp.gz\\
+ddsip.config \\
 model.ord\\
 rhs.sc\\
 cost.sc\\
@@ -310,6 +310,16 @@ start.in
 \end{tabular}}
 \end{center} \caption{Input file} \label{F:F2S}
 \end{figure}
+%
+\section{The model file}
+The model file contains the single-scenario model. Its format can be one of the formats readable by
+\texttt{CPLEX}, as e.g.\ the lp- or mps-format. The gzipped forms of these files (with extensions .lp.gz or .mps.gz)
+can be used for the sake of saving disk space. This is especially advisable in case OUTFILE is chosen greater than 2.\\
+The first-stage variables have to be identified by a prefix or a postfix appended to their names
+as specified in the specs file.\\
+The requirements on the ordering of the variables and constraints from earlier ddsip versions are now obsolete.\\
+The only requirement on the model file is that all first-stage variables are identified by a prefix or postfix appended to their names
+which is specified in the specs file.
 %
 \section{The specification file}
 Comments could be included anywhere in this file apart from the CPLEX parameter section.
@@ -324,11 +334,15 @@ A sample specification file is given in Appendix \ref{S:SAM}. %Figure~\ref{F:SPE
 \subsection{Parameters for the two-stage model}
 Hopefully, the identifiers in the first part of the file are self explaining. Otherwise, they should
 become clear when consulting the two-stage chapter of one of the standard text books on stochastic
-programming, see \cite{bir,kal,pre}. Some of the identifiers, as e.g. FIRSTVAR, are redundant. They
-serve to check consistency with the model file.
+programming, see \cite{bir,kal,pre}.
 
-Either a prefix or a postfix of the variable names for identifying the first-stage variables can be specified.
-The default behaviour is to expect a postfix of the form ''01'' in their names.
+The parameters FIRSTVAR, FIRSTCON, SECVAR, SECCON  used in the older DDSIP versions are now obsolete.
+These values and the corresponding indices of variables and constraints are now determined by the program
+using the prefix or postfix specified.
+
+Either a prefix or a postfix of the variable names for identifying the first-stage variables has to be specified.
+
+%The default behaviour is to expect a postfix of the form ''01'' in their names.
 
 
 %\begin{table}[ht]
@@ -336,10 +350,6 @@ The default behaviour is to expect a postfix of the form ''01'' in their names.
 \begin{tabular}{|llcp{6.9cm}|} 
 \hline
 Name&Type&\multicolumn{2}{l|}{Default/Description}\\ \hline
-FIRSTC    & Int &  0 & Number of First stage constraints               \\
-FIRSTV    & Int &  0 & Number of First stage variables                 \\
-SECCON    & Int &  0 & Number of Second stage constraints              \\
-SECVAR    & Int &  0 & Number of Second stage variables                \\[0.2em]
 POSTFIX   & String &  {\it none} & postfix for first-stage variables\\
 PREFIX    & String &  {\it none} & prefix for first-stage variables\\[0.2em]
 SCENAR    & Int &  0 & Number of scenarios                   \\[0.2em]
@@ -674,21 +684,6 @@ CBINCR &Int&0,1&1&Should the weight be increased after steps with too many null 
 \end{center} %\caption{\texttt{ConicBundle} parameters} \label{T:CB}
 %\end{table}
 %
-\section{The model file}
-The model file contains the single-scenario model. Its format can be one of the formats readable by
-\texttt{CPLEX}, as e.g.\ the lp- or mps-format. The gzipped forms of these files (with extensions .lp.gz or .mps.gz)
-can be used for the sake of saving disk space. This is especially advisable in case OUTFILE is chosen greater than 2.\\
-The first-stage variables and constraints have to be identified by a prefix or a postfix appended to their names
-as specified in the specs file.\\
-%Variables with stochastic cost coefficients have to be placed at the
-%beginning and according to the order in which the stochastic cost coefficients are provided in the
-%scenario file.\\
-%In the presence of stochastic right-hand sides, the constraints require a certain
-%order, too.\\ First-stage constraints (i.e. constraints with fixed coefficients and right-hand sides containing only first-stage variables) have to be followed by the constraints with stochastic right-hand sides.
-%The right-hand sides of those constraints (their number being specified by the parameter STOCRHS) are changed for each scenario to the values given in the corresponding scenario file in the same order as these constraints appear in the model file.\\
-%Second-stage constraints without stochastic right-hand sides have to be placed at the end.\\
-%The placing of first-stage constraints in the beginning is mandatory for the construction of the deterministic equivalent, too.
-%
 \section{The scenario files}
 Unfortunately, the program \texttt{ddsip} is not conform to the SMPS data format, yet. 
 But in contrast to the SMPS format due to the requirements for the variable and constraint names and the input format for the stochstic coefficients no specific ordering is required in the model file.
@@ -727,29 +722,12 @@ In the right-hand side scenario file, the first number after the identifier is t
 probability. For problems without stochastic right-hand sides, this file has to contain only the
 probabilities of the individual scenarios (and does not contain the `Names' keyword, but does have the {\it sce} 
 keyword for each scenario followed on the next line by the probability).\\
-%In order to assign the stochastic right-hand sides to constraints, the constraints have to be
-%grouped in the model file, cf. Section~\ref{S:INP}. The constraint section begins with the 
-%first-stage constraints followed by the stochastic constraints ordered corresponding to the entries
-%in the scenario file, and closes with the second-stage constraints without stochastic right-hand sides.
 
 In the cost coefficient scenario file the probability entries are left out. Otherwise the entries
 are the same as those in the right-hand side scenario file, cf. Figure~\ref{F:SCRHS}.
 The number of stochastic cost coefficients $c$ has to be specified in the
 specification file. 
-%The first $c$ variables occurring in the objective function
-%of the model file are assumed to have stochastic cost coefficients. 
 
-%The matrix scenario file requires additionally a row and column index for each
-%stochastic matrix coefficient, see Figure~\ref{F:SCRHS}. The identifier for this index is {\it pos}. If
-%$m$ is the number of stochastic matrix entries, the $(2*i-1)$-th number ($1 \le i \le m$)
-%following {\it pos} is treated as row index and the $(2*i)$-th number as column index of the $i$-th entry
-%of the individual scenarios.
-
-%Indices start with 0 for the first column/row.
-%To facilitate the identification of the indices, a simple program {\tt ddsiphelp} is included in the sources, which reads
-%a model file and produces a gzipped text file with a list of indices and names of rows and columns, named {\tt rows+cols.gz},
-%and optionally an lp-file of the model.
-%
 \section{Optional files}
 \subsection{Start information file} \label{S:START}
 Start information can be provided as displayed in Figure~\ref{F:START}.
@@ -780,8 +758,9 @@ The user has to care for the consistency of the data.
 If indicated by setting the CPLEX parameter CPX\_PARAM\_MIPORDIND, the name of a CPLEX branching order file to be used for the scenario
 problems has to be specified following the name of the model file (named model.ord in Figure~2). Its format is described in the CPLEX manual.
 
+{\it not functional by now, function is still to be adapted to the usage of names!}\\
 If the parameter PORDER is set, a file with branching order information for the master problem has to be given (named order.dat in Figure~2).
-The file has two columns whereby the first one contains {\bf indices} (starting with 0 as in the output of {\tt siphelp}) of first-stage variables and
+The file has two columns whereby the first one contains {\bf names} of first-stage variables and
 the second one integer values. High values lead to early branching. 
 
 \section{Output} \label{S:OUT}

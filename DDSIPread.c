@@ -23,6 +23,8 @@
     along with DDSIP; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+#define EXPLICITPOSTFIX
+
 #include <DDSIP.h>
 #include <DDSIPconst.h>
 #include <math.h>
@@ -1099,12 +1101,7 @@ DDSIP_ReadSpec ()
     }
 #endif
 
-#ifndef NEOS
-    DDSIP_param->scenarios = floor (DDSIP_ReadDbl (specfile, "SCENAR", " SCENARIOS", 1., 1, 1., DDSIP_bigint) + 0.1);
-#else
-    // for NEOS server: impossible to use DDSIP for just one scenario
     DDSIP_param->scenarios = floor ( DDSIP_ReadDbl(specfile,"SCENAR"," SCENARIOS",2.,1,2.,DDSIP_bigint) + 0.1);
-#endif
 
     DDSIP_param->stocrhs = floor (DDSIP_ReadDbl (specfile, "STOCRH", " STOCHASTIC RHS", 0., 1, 0., DDSIP_bigint) + 0.1);
     DDSIP_param->stoccost = floor (DDSIP_ReadDbl (specfile, "STOCCO", " STOCHASTIC COST COEFFICIENTS", 0., 1, 0., DDSIP_bigint) + 0.1);
@@ -1124,7 +1121,7 @@ DDSIP_ReadSpec ()
     DDSIP_param->outlev    = floor (DDSIP_ReadDbl (specfile, "OUTLEV", " OUTPUT LEVEL", 0., 1, 0.,100.) + 0.1);
     DDSIP_param->files     = floor (DDSIP_ReadDbl (specfile, "OUTFIL", " OUTPUT FILES LEVEL", 1., 1, 0., 6.) + 0.1);
     DDSIP_param->logfreq   = floor (DDSIP_ReadDbl (specfile, "LOGFRE", " LOG FREQUENCY", 1., 1, 0., DDSIP_bigint) + 0.1);
-    DDSIP_param->nodelim   = floor (DDSIP_ReadDbl (specfile, "NODELI", " NODE LIMIT", 10000., 1, 1., DDSIP_bigint) + 0.1);
+    DDSIP_param->nodelim   = floor (DDSIP_ReadDbl (specfile, "NODELI", " NODE LIMIT", 2147483646., 1, 1., DDSIP_bigint) + 0.1);
     // uncomment for default timelimit: 24h
     //DDSIP_param->timelim   = DDSIP_ReadDbl (specfile, "TIMELI", " TIME LIMIT", 86400., 0, 0., DDSIP_infty);
     // default timelimit: 14 days

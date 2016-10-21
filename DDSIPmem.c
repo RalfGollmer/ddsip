@@ -273,7 +273,9 @@ DDSIP_FreeBb ()
         DDSIP_Free ((void **) &(DDSIP_bb->curub));
         DDSIP_Free ((void **) &(DDSIP_bb->curlb));
         DDSIP_Free ((void **) &(DDSIP_bb->firstindex));
+        DDSIP_Free ((void **) &(DDSIP_bb->firstindex_reverse));
         DDSIP_Free ((void **) &(DDSIP_bb->secondindex));
+        DDSIP_Free ((void **) &(DDSIP_bb->secondindex_reverse));
         DDSIP_Free ((void **) &(DDSIP_bb->firsttype));
         DDSIP_Free ((void **) &(DDSIP_bb->sectype));
         DDSIP_Free ((void **) &(DDSIP_bb->objcontrib));

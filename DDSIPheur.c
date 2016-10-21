@@ -550,7 +550,7 @@ DDSIP_Heuristics (int *comb)
             if ((DDSIP_bb->lborg[i] - DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i])/(fabs(DDSIP_bb->lborg[i])+ 1.) > DDSIP_param->accuracy)
             {
                 // in the root node the lower bound for the additional variable for worst case costs was updated
-                if (DDSIP_bb->curnode || !(i == DDSIP_param->firstvar && (abs(DDSIP_param->riskmod) != 4 || abs(DDSIP_param->riskmod) != 5)))
+                if (DDSIP_bb->curnode || !(i == DDSIP_data->firstvar && (abs(DDSIP_param->riskmod) != 4 || abs(DDSIP_param->riskmod) != 5)))
                 {
                     printf ("low suggestion for variable %d: sug=%14.8f lb=%14.8f, difference=%lg\n",i,(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->lborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->lborg[i]);
                     if (DDSIP_param->outlev)

@@ -1308,6 +1308,7 @@ DDSIP_DualOpt (void)
                 DDSIP_Print2 ("termination status: cutoff.", "\n", 0, 0);
                 DDSIP_bb->skip = 2;
                 DDSIP_bb->cutoff++;
+                DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
             }
             else if (!DDSIP_bb->violations)
                 DDSIP_Print2 ("termination status: optimal.", "\n", 0, 0);

@@ -458,7 +458,7 @@ DDSIP_InitNewNodes (void)
             DDSIP_Free ((void **) &(((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]));
         }
     }
-    if (DDSIP_param->outlev > 9)
+    if (DDSIP_param->outlev > 4)
     {
         fprintf (DDSIP_bb->moreoutfile,"**node %d inherited %d solutions from node %d\n",
                  DDSIP_bb->nonode, (DDSIP_node[DDSIP_bb->nonode])->numInheritedSols, DDSIP_bb->curnode);
@@ -669,7 +669,7 @@ DDSIP_Bound (void)
     // Fathom nodes in front tree
     for (i = DDSIP_bb->nofront - 1; i >= 0; i--)
     {
-        if ((DDSIP_bb->front[i] != DDSIP_bb->curnode) && ((DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bestvalue*factor + DDSIP_param->accuracy + DDSIP_bb->correct_bounding) || DDSIP_Equal (DDSIP_node[DDSIP_bb->front[i]]->bound, DDSIP_infty)))
+        if (((DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bestvalue*factor + DDSIP_param->accuracy + DDSIP_bb->correct_bounding) || DDSIP_Equal (DDSIP_node[DDSIP_bb->front[i]]->bound, DDSIP_infty)))
         {
             // debug info
             if (DDSIP_param->outlev > 29)

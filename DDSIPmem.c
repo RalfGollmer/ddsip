@@ -146,7 +146,7 @@ DDSIP_FreeFrontNodes ()
             for (scen = 0; scen < DDSIP_param->scenarios; scen++)
             {
                 if (((DDSIP_node[DDSIP_bb->front[i]])->first_sol)[scen]
-                        && (cnt = (((DDSIP_node[DDSIP_bb->front[i]])->first_sol)[scen])[DDSIP_param->firstvar] - 1))
+                        && (cnt = (((DDSIP_node[DDSIP_bb->front[i]])->first_sol)[scen])[DDSIP_data->firstvar] - 1))
                     for (j = scen + 1; cnt && j < DDSIP_param->scenarios; j++)
                     {
                         if (((DDSIP_node[DDSIP_bb->front[i]])->first_sol)[j]
@@ -302,6 +302,10 @@ DDSIP_FreeBb ()
         DDSIP_Free ((void **) &(DDSIP_bb->scen_order));
         DDSIP_Free ((void **) &(DDSIP_bb->n_buffer));
         DDSIP_Free ((void **) &(DDSIP_bb->front_nodes_sorted));
+        DDSIP_Free ((void **) &(DDSIP_bb->firstrowind));
+        DDSIP_Free ((void **) &(DDSIP_bb->secondrowind));
+        DDSIP_Free ((void **) &(DDSIP_bb->firstrowind_reverse));
+        DDSIP_Free ((void **) &(DDSIP_bb->secondrowind_reverse));
     }
     if (DDSIP_bb->moreoutfile != NULL)
     {

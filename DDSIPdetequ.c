@@ -30,258 +30,344 @@ DDSIP_DetEqu ()
 {
     CPXLPptr det_equ;
 
-    int status, scen, i, j, k;
+    int status, scen, i, j, k, nzcnt_row, ranged = 0;
     char probname[] = "sipout/det_equ.lp.gz";
-    double *obj_coef;
-    double *scaled_obj_coef;
-    char *sense;
-    char **scen_spec_rowname;
-    char **scen_spec_colname;
-    char **rowname, *rownamestore;
-    char **colname, *colnamestore;
-    int rowstorespace, rowsurplus_p;
-    int colstorespace, colsurplus_p;
-    char *string1, *string2;
-    double coef;
-    double *lb, *lb_sorted;
-    double *ub, *ub_sorted;
-    char *vartype, *vartype_sorted;
-    int *colindex_sorted, *colindex_revers, *matcol_sorted;
-    double *value;
+    double *obj_coef = NULL;
+    double *scaled_obj_coef = NULL;
+    char *sense = NULL, *sense_sorted = NULL;
+    char **scen_spec_rowname = NULL;
+    char **scen_spec_colname = NULL;
+    char **rowname = NULL, *rownamestore = NULL;
+    char **colname = NULL, *colnamestore = NULL;
+    int rowstorespace, rowsurplus;
+    int colstorespace, colsurplus;
+    char *string1 = NULL, *string2 = NULL;
+    double *lb = NULL, *lb_sorted = NULL;
+    double *ub = NULL, *ub_sorted = NULL;
+    double *rng = NULL, *rng_sorted = NULL;
+    char *vartype = NULL, *vartype_sorted = NULL;
+    int *colindex_sorted = NULL, *colindex_revers = NULL;
+    double *value = NULL;
     double *det_equ_rhs = NULL;
-    double *non_stoc_rhs = NULL;
-    if (DDSIP_param->seccon)
-        det_equ_rhs = (double *) DDSIP_Alloc(sizeof(double),DDSIP_param->seccon,"det_equ_rhs(DetEqu)");
+    double *base_rhs = NULL;
+    int nzcnt=0, *rmatbeg=NULL, *rmatind=NULL, *rmatbeg_stage=NULL, *rmatind_stage=NULL, *rowindex=NULL;
+    double *rmatval=NULL, *rmatval_stage=NULL;
+    if (DDSIP_data->seccon)
+        det_equ_rhs = (double *) DDSIP_Alloc(sizeof(double),DDSIP_data->seccon,"det_equ_rhs(DetEqu)");
     else
     {
-        fprintf (stderr,"XXX ERROR: no second stage contraints, got DDSIP_param->seccon=%d.\n",DDSIP_param->seccon);
-        exit (1);
+        fprintf (stderr,"XXX ERROR: no second stage contraints, got DDSIP_data->seccon=%d.\n",DDSIP_data->seccon);
+        return;
     }
-    if (DDSIP_param->seccon - DDSIP_param->stocrhs>0)
-        non_stoc_rhs = (double *) DDSIP_Alloc(sizeof(double),DDSIP_param->seccon - DDSIP_param->stocrhs,"non_stoc_rhs(DetEqu)");
 
     fprintf (stderr,
-             "\nBuilding deterministic equivalent. This may take some time.\nWorks only for expectation-based model so far.\n");
+             "\nBuilding deterministic equivalent. This may take some time.\nWorks only for expectation model so far (no risk measure).\n");
+             //"\nBuilding deterministic equivalent. This may take some time.\nWorks only for expectation-based model so far.\n");
 
-    if (!(sense = (char *) calloc (DDSIP_param->seccon, sizeof (char))))
+    colstorespace = DDSIP_data->novar * 255;
+    rowstorespace = DDSIP_data->nocon * 255;
+    if (!(sense = (char *) DDSIP_Alloc (sizeof (char), DDSIP_data->nocon, "sense(DetEqu)")) ||
+        !(sense_sorted = (char *) DDSIP_Alloc (sizeof (char), DDSIP_Imax(DDSIP_data->firstcon,DDSIP_data->seccon), "sense_sorted(DetEqu)")) ||
+        !(base_rhs = (double *) DDSIP_Alloc(sizeof(double),DDSIP_data->nocon,"base_rhs(DetEqu)")) ||
+        !(obj_coef = (double *) DDSIP_Alloc (sizeof (double), DDSIP_data->novar,"base_rhs(DetEqu)")) ||
+        !(scaled_obj_coef = (double *) DDSIP_Alloc (sizeof (double), DDSIP_Imax(DDSIP_data->firstvar, DDSIP_data->secvar), "base_rhs(DetEqu)")) ||
+        !(colname = (char **) DDSIP_Alloc (sizeof (char *), DDSIP_data->novar,"base_rhs(DetEqu)")) ||
+        !(scen_spec_colname = (char **) DDSIP_Alloc (sizeof (char *), DDSIP_Imax(DDSIP_data->firstvar,DDSIP_data->secvar), "scen_spec_colname(DetEqu)")) ||
+        !(colnamestore = (char *) DDSIP_Alloc (sizeof (char), colstorespace, "colnamestore(DetEqu)")) ||
+        !(rowname = (char **) DDSIP_Alloc (sizeof (char *), DDSIP_data->nocon, "rowname(DetrEqu)")) ||
+        !(scen_spec_rowname = (char **) DDSIP_Alloc (sizeof (char *), DDSIP_Imax(DDSIP_data->firstcon,DDSIP_data->seccon), "scen_spec_rowname(DetEqu)")) ||
+        !(rownamestore = (char *) DDSIP_Alloc (sizeof (char), rowstorespace, "rownamestore(DetEqu)")) ||
+        !(lb = (double *) DDSIP_Alloc (sizeof (double), DDSIP_data->novar, "lb(DetEqu)")) ||
+        !(lb_sorted = (double *) DDSIP_Alloc (sizeof (double), DDSIP_Imax(DDSIP_data->firstvar,DDSIP_data->secvar), "lb_sorted(DetEqu)")) ||
+        !(ub = (double *) DDSIP_Alloc (sizeof (double), DDSIP_data->novar, "ub(DetEqu)")) ||
+        !(ub_sorted = (double *) DDSIP_Alloc (sizeof (double), DDSIP_Imax(DDSIP_data->firstvar,DDSIP_data->secvar), "ub_sorted(DetEqu)")) ||
+        !(vartype = (char *) DDSIP_Alloc (sizeof (char), DDSIP_data->novar, "vartype(DetEqu)")) ||
+        !(vartype_sorted = (char *) DDSIP_Alloc (sizeof (double), DDSIP_Imax(DDSIP_data->firstvar,DDSIP_data->secvar), "vartype_sorted(DetEqu)")) ||
+        !(colindex_sorted = (int *) DDSIP_Alloc (sizeof (int), DDSIP_data->novar, "colindex_sorted(DetEqu)")) ||
+        !(rowindex = (int *) DDSIP_Alloc (sizeof (int), DDSIP_Imax(DDSIP_data->firstcon, DDSIP_data->seccon), "rowindex(DetEqu)")))
     {
         fprintf (stderr, "Not enough memory for building deterministic equivalent\n");
-        return;
+        goto FREE;
     }
 
-    if (!(obj_coef = (double *) calloc (DDSIP_param->firstvar + DDSIP_param->secvar, sizeof (double))) ||
-            !(scaled_obj_coef = (double *) calloc (DDSIP_bb->secvar, sizeof (double))))
+    // get problem data
+    /*____________________________________________________________________________________*/
+    if((status = CPXgetcolname (DDSIP_env, DDSIP_lp, colname, colnamestore,
+                            colstorespace, &colsurplus, 0, DDSIP_data->novar - 1)) ||
+       (status = CPXgetrowname (DDSIP_env, DDSIP_lp, rowname, rownamestore,
+                            rowstorespace, &rowsurplus, 0, DDSIP_data->nocon - 1)) ||
+       (status = CPXgetsense (DDSIP_env, DDSIP_lp, sense, 0, DDSIP_data->nocon - 1)) ||
+       (status = CPXgetrhs (DDSIP_env, DDSIP_lp, base_rhs, 0, DDSIP_data->nocon - 1)) ||
+       (status = CPXgetobj (DDSIP_env, DDSIP_lp, obj_coef, 0, DDSIP_data->novar - 1)) ||
+       (status = CPXgetlb (DDSIP_env, DDSIP_lp, lb, 0, DDSIP_data->novar - 1)) ||
+       (status = CPXgetub (DDSIP_env, DDSIP_lp, ub, 0, DDSIP_data->novar - 1)) ||
+       (status = CPXgetctype (DDSIP_env, DDSIP_lp, vartype, 0, DDSIP_data->novar - 1)))
     {
-        fprintf (stderr, "Not enough memory for building deterministic equivalent\n");
-        return;
+        fprintf (stderr, "Coud not get problem data, returned %d\n", status);
+        goto FREE;
     }
-
-
-    det_equ = CPXcloneprob (DDSIP_env, DDSIP_lp, &status);
-    CPXchgprobname (DDSIP_env, det_equ, probname);
-
-    if (!(rowname = (char **) calloc (DDSIP_param->seccon, sizeof (char *)))
-            || !(scen_spec_rowname = (char **) calloc (DDSIP_param->seccon, sizeof (char *)))
-            || !(rownamestore = (char *) calloc (DDSIP_param->seccon * 255, sizeof (char))))
+    // check whether there are ranged rows
+    for (j=0; j<DDSIP_data->nocon; j++)
     {
-        fprintf (stderr, "Not enough memory for building deterministic equivalent\n");
-        return;
-    }
-    rowstorespace = DDSIP_param->seccon * 255;
-    status = CPXgetrowname (DDSIP_env, DDSIP_lp, rowname, rownamestore,
-                            rowstorespace, &rowsurplus_p, DDSIP_param->firstcon, DDSIP_param->firstcon + DDSIP_param->seccon - 1);
-
-
-    if (!(colname = (char **) calloc (DDSIP_param->firstvar + DDSIP_param->secvar, sizeof (char *)))
-            || !(scen_spec_colname = (char **) calloc (DDSIP_param->secvar, sizeof (char *)))
-            || !(colnamestore = (char *) calloc (DDSIP_param->secvar * 255, sizeof (char))))
-    {
-        fprintf (stderr, "Not enough memory for building deterministic equivalent\n");
-        return;
-    }
-    colstorespace = (DDSIP_param->firstvar + DDSIP_param->secvar) * 255;
-    status = CPXgetcolname (DDSIP_env, DDSIP_lp, colname, colnamestore,
-                            colstorespace, &colsurplus_p, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
-
-    /*____________________________________________________________________________________*/
-    status = CPXgetsense (DDSIP_env, DDSIP_lp, sense, DDSIP_param->firstcon, DDSIP_param->firstcon + DDSIP_param->seccon - 1);
-    /*____________________________________________________________________________________*/
-    status = CPXgetrhs (DDSIP_env, DDSIP_lp, non_stoc_rhs, DDSIP_param->firstcon + DDSIP_param->stocrhs, DDSIP_param->firstcon + DDSIP_param->seccon - 1);
-    /*____________________________________________________________________________________*/
-    status = CPXgetobj (DDSIP_env, DDSIP_lp, obj_coef, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
-    /*____________________________________________________________________________________*/
-    //copy rownames scenario many times, append scenario index
-    //and enter sense and rhs
-    for (scen = 0; scen < DDSIP_param->scenarios; scen++)
-    {
-        for (j = 0; j < DDSIP_param->seccon; j++)
+        if (sense[j] == 'R')
         {
-            if (!(string2 = (char *) calloc (1, 255 * sizeof (char))))
-            {
-                fprintf (stderr, "Not enough memory for building deterministic equivalent\n");
-                return;
-            }
-            string1 = rowname[j];
-            sprintf (string2, "%sSC%.3d", string1, scen);
-            scen_spec_rowname[j] = string2;
-
-            if (j < DDSIP_param->stocrhs)
-                det_equ_rhs[j] = DDSIP_data->rhs[DDSIP_param->stocrhs * scen + j];
-            else
-                det_equ_rhs[j] = non_stoc_rhs[j - DDSIP_param->stocrhs];
+            ranged = 1;
+	    break;
         }
-        status = CPXnewrows (DDSIP_env, det_equ, DDSIP_param->seccon, det_equ_rhs, sense, NULL, scen_spec_rowname);
-        for (j = 0; j < DDSIP_param->seccon; j++)
-            DDSIP_Free ((void **) &(scen_spec_rowname[j]));
-    }
-
-    //copy colnames scenario many times, append scenario index
-    //and enter into constraint matrix
-    if (!(lb = (double *) calloc (DDSIP_param->firstvar + DDSIP_param->secvar, sizeof (double)))
-            || !(lb_sorted = (double *) calloc (DDSIP_param->secvar, sizeof (double)))
-            || !(ub = (double *) calloc (DDSIP_param->firstvar + DDSIP_param->secvar, sizeof (double)))
-            || !(ub_sorted = (double *) calloc (DDSIP_param->secvar, sizeof (double)))
-            || !(vartype = (char *) calloc (DDSIP_param->firstvar + DDSIP_param->secvar, sizeof (char)))
-            || !(vartype_sorted = (char *) calloc (DDSIP_param->secvar, sizeof (double)))
-            || !(colindex_revers = (int *) calloc (DDSIP_param->firstvar + DDSIP_param->secvar, sizeof (int)))
-            || !(colindex_sorted = (int *) calloc (DDSIP_param->firstvar + DDSIP_param->secvar, sizeof (int))))
+    } 
+    if (ranged)
     {
-        fprintf (stderr, "Not enough memory for building deterministic equivalent\n");
-        return;
+        if (!(rng = (double *) DDSIP_Alloc (sizeof (double), DDSIP_data->nocon, "rng(DetEqu)")) ||
+            !(rng_sorted = (double *) DDSIP_Alloc (sizeof (double), DDSIP_Imax(DDSIP_data->firstcon,DDSIP_data->seccon), "rng_sorted(DetEqu)")))
+        {
+            fprintf (stderr, "Not enough memory for building deterministic equivalent\n");
+            goto FREE;
+        }
+        if ((status = CPXgetrngval (DDSIP_env, DDSIP_lp, rng, 0, DDSIP_data->nocon-1)))
+        {
+            fprintf (stderr, "Coud not get problem ranges, returned %d\n", status);
+            goto FREE;
+        }
     }
+    /*____________________________________________________________________________________*/
 
-    status = CPXgetlb (DDSIP_env, det_equ, lb, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
-    status = CPXgetub (DDSIP_env, det_equ, ub, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
-    status = CPXgetctype (DDSIP_env, det_equ, vartype, 0, DDSIP_param->firstvar + DDSIP_param->secvar - 1);
-    for (j = 0; j < DDSIP_param->secvar; j++)
+    // create empty problem
+    det_equ = CPXcreateprob (DDSIP_env, &status, probname);
+    if (status)
+    {
+        fprintf (stderr, "CPXcreateprob returned %d\n", status);
+        goto FREE;
+    }
+    // add (original) first-stage variables
+    for (j = 0; j < DDSIP_data->firstvar; j++)
+    {
+        vartype_sorted[j]   = vartype[DDSIP_bb->firstindex[j]];
+        lb_sorted[j]        = lb[DDSIP_bb->firstindex[j]];
+        ub_sorted[j]        = ub[DDSIP_bb->firstindex[j]];
+        scaled_obj_coef[j]  = obj_coef[DDSIP_bb->firstindex[j]];
+        scen_spec_colname[j]= colname[DDSIP_bb->firstindex[j]];
+    }
+    if ((status = CPXnewcols (DDSIP_env, det_equ, DDSIP_data->firstvar, scaled_obj_coef,
+                        lb_sorted, ub_sorted, vartype_sorted, scen_spec_colname)))
+    {
+        fprintf (stderr, "CPXnewcols returned %d for first-stage variables\n", status);
+        goto FREE;
+    }
+    // add (original) second-stage variables for all scenarios
+    for (j = 0; j < DDSIP_data->secvar; j++)
     {
         vartype_sorted[j] = vartype[DDSIP_bb->secondindex[j]];
-        lb_sorted[j] = lb[DDSIP_bb->secondindex[j]];
-        ub_sorted[j] = ub[DDSIP_bb->secondindex[j]];
+        lb_sorted[j]      = lb[DDSIP_bb->secondindex[j]];
+        ub_sorted[j]      = ub[DDSIP_bb->secondindex[j]];
     }
-
-
     for (scen = 0; scen < DDSIP_param->scenarios; scen++)
     {
-        for (j = 0; j < DDSIP_param->secvar; j++)
+        for (j = 0; j < DDSIP_data->secvar; j++)
         {
             if (!(string2 = (char *) calloc (1, 255 * sizeof (char))))
             {
                 fprintf (stderr, "Not enough memory for building deterministic equivalent\n");
-                return;
+                goto FREE;
             }
+            // append scenario index to colname
             string1 = colname[DDSIP_bb->secondindex[j]];
-            sprintf (string2, "%sSC%.3d", string1, scen);
+            sprintf (string2, "%sSC%.3d", string1, scen+1);
             scen_spec_colname[j] = string2;
             scaled_obj_coef[j] = DDSIP_data->prob[scen] * obj_coef[DDSIP_bb->secondindex[j]];
         }
-
-        status =
-            CPXnewcols (DDSIP_env, det_equ, DDSIP_param->secvar, scaled_obj_coef,
-                        lb_sorted, ub_sorted, vartype_sorted, scen_spec_colname);
-        for (j = 0; j < DDSIP_param->secvar; j++)
+        if ((status = CPXnewcols (DDSIP_env, det_equ, DDSIP_data->secvar, scaled_obj_coef,
+                        lb_sorted, ub_sorted, vartype_sorted, scen_spec_colname)))
+        {
+            fprintf (stderr, "CPXnewcols returned %d for second-stage variables of scenario %d\n", status, scen+1);
+            goto FREE;
+        }
+        for (j = 0; j < DDSIP_data->secvar; j++)
             DDSIP_Free ((void **) &(scen_spec_colname[j]));
-
     }
-
-    /////////////////////////////////////////////////
-    for (j = 0; j < DDSIP_param->firstvar; j++)
+    ///////enter stochastic cost coefficients //////////////////////////////////////////////////
+    if (DDSIP_param->stoccost)
     {
-        colindex_sorted[j] = DDSIP_bb->firstindex[j];
-    }
-    for (j = 0; j < DDSIP_param->secvar; j++)
-    {
-        colindex_sorted[DDSIP_param->firstvar + j] = DDSIP_bb->secondindex[j];
-    }
-    for (j = 0; j < DDSIP_param->firstvar + DDSIP_param->secvar; j++)
-    {
-        colindex_revers[colindex_sorted[j]] = j;
-    }
-
-    k = DDSIP_param->seccon / 60;
-    printf ("\n0%%                                                         100%%\n");
-    for (i = 0; i < DDSIP_param->seccon; i++)
-    {
-        for (j = 0; j < DDSIP_param->firstvar; j++)
+        for (j = 0; j < DDSIP_param->stoccost; j++)
         {
-            if ((status = CPXgetcoef (DDSIP_env, det_equ, DDSIP_param->firstcon + i, colindex_sorted[j], &coef)))
+            obj_coef[j] = 0.0;
+            if ((colindex_sorted[j] = DDSIP_bb->firstindex_reverse[DDSIP_data->costind[j]]))
+                 colindex_sorted[j] = DDSIP_data->firstvar + DDSIP_bb->secondindex_reverse[DDSIP_data->costind[j]];
+        }
+        for (scen = 0; scen < DDSIP_param->scenarios; scen++)
+        {
+            for (j = 0; j < DDSIP_param->stoccost; j++)
             {
-                fprintf (stderr, " Build det. equivalent: Error retrieving coefficient of first-stage Variable %d.\n", j);
-                exit (1);
+                if (colindex_sorted[j] >= DDSIP_data->firstvar)
+                    obj_coef[j] = DDSIP_data->prob[scen] * DDSIP_data->cost[scen * DDSIP_param->stoccost + j];
+                else
+                    obj_coef[j] += DDSIP_data->prob[scen] * DDSIP_data->cost[scen * DDSIP_param->stoccost + j];
             }
-            if (coef)
+            status = CPXchgobj (DDSIP_env, det_equ, DDSIP_param->stoccost, colindex_sorted, obj_coef);
+            if (status)
             {
-                for (scen = 0; scen < DDSIP_param->scenarios; scen++)
-                {
-                    status =
-                        CPXchgcoef (DDSIP_env, det_equ, DDSIP_param->firstcon + DDSIP_bb->seccon + scen * DDSIP_param->seccon + i, colindex_sorted[j], coef);
-                    if (status)
-                    {
-                        fprintf (stderr, " Build det. equivalent: Error setting coefficient of first-stage Variable %d.\n", j);
-                        exit (1);
-                    }
-                }
+                char errmsg[1024];
+                CPXgeterrorstring (DDSIP_env, status, errmsg);
+                fprintf (stderr, "in DetEqu: %s\n", errmsg);
+            }
+            for (j = 0; j < DDSIP_param->stoccost; j++)
+            {
+                if (colindex_sorted[j] >= DDSIP_data->firstvar)
+                    colindex_sorted[j] += DDSIP_data->secvar;
             }
         }
-        for (j = DDSIP_param->firstvar; j < DDSIP_param->firstvar + DDSIP_param->secvar; j++)
-        {
-            if ((status = CPXgetcoef (DDSIP_env, det_equ, DDSIP_param->firstcon + i, colindex_sorted[j], &coef)))
-            {
-                fprintf (stderr,
-                         " Build det. equivalent: Error retrieving coefficient of second-stage Variable %d.\n",
-                         j - DDSIP_param->firstvar);
-                exit (1);
-            }
-            if (coef)
-            {
-                for (scen = 0; scen < DDSIP_param->scenarios; scen++)
-                {
-                    status =
-                        CPXchgcoef (DDSIP_env, det_equ,
-                                    DDSIP_param->firstcon + DDSIP_bb->seccon + scen * DDSIP_param->seccon + i, (scen + 1) * DDSIP_param->secvar + j, coef);
-                }
-                if (status)
-                {
-                    fprintf (stderr,
-                             " Build det. equivalent: Error setting coefficient of second-stage Variable %d.\n",
-                             j - DDSIP_param->firstvar);
-                    exit (1);
-                }
-            }
-        }
-        if (!k)
-        {
-            for (j = 0; j <= 60 / DDSIP_param->seccon; j++)
-                printf ("#");
-        }
-        else if (i % k == k - 1)
-            printf ("#");
     }
-    printf ("\n\n");
-
-    ///////delete original second stage rows & cols ////////////////////////////////////////////
-
-    status = CPXdelrows (DDSIP_env, det_equ, DDSIP_param->firstcon, DDSIP_param->firstcon + DDSIP_bb->seccon - 1);
-    j = 0;
-    for (i = 0; i < DDSIP_param->secvar; i++)
+    //
+    // free arrays needeed only for columns
+    DDSIP_Free ((void **) &(vartype));
+    DDSIP_Free ((void **) &(colname));
+    DDSIP_Free ((void **) &(colnamestore));
+    DDSIP_Free ((void **) &(lb));
+    DDSIP_Free ((void **) &(ub));
+    DDSIP_Free ((void **) &(vartype_sorted));
+    DDSIP_Free ((void **) &(lb_sorted));
+    DDSIP_Free ((void **) &(ub_sorted));
+    DDSIP_Free ((void **) &(obj_coef));
+    DDSIP_Free ((void **) &(scaled_obj_coef));
+    //
+    // get problem matrix coefficients
+    // query the length needed for storage of coefficients
+    CPXgetrows(DDSIP_env, DDSIP_lp, &nzcnt, rmatbeg, rmatind, rmatval, 0, &rowsurplus, 0, DDSIP_data->nocon-1);
+    nzcnt = -rowsurplus;
+    if (!(rmatbeg = (int *) DDSIP_Alloc (sizeof (int), DDSIP_data->nocon, "rmatbeg(DetEqu)")) ||
+        !(rmatind = (int *) DDSIP_Alloc (sizeof (int), DDSIP_Imax(nzcnt, DDSIP_param->stocmat), "rmatind(DetEqu)")) ||
+        !(rmatval = (double *) DDSIP_Alloc (sizeof (double), nzcnt, "rmatval(DetEqu)")))
     {
-        status = CPXdelcols (DDSIP_env, det_equ, DDSIP_bb->secondindex[i] - j, DDSIP_bb->secondindex[i] - j);
-        j++;
+        fprintf (stderr, "Not enough memory for building deterministic equivalent\n");
+        goto FREE;
+    }
+    CPXgetrows(DDSIP_env, DDSIP_lp, &nzcnt, rmatbeg, rmatind, rmatval, nzcnt, &rowsurplus, 0, DDSIP_data->nocon-1);
+
+    printf(" got %d elements of the matrix\n", nzcnt);
+
+    if (!(rmatbeg_stage = (int *) DDSIP_Alloc (sizeof (int), DDSIP_Imax(DDSIP_data->firstcon, DDSIP_data->seccon), "rmatbeg_stage(DetEqu)")) ||
+        !(rmatind_stage = (int *) DDSIP_Alloc (sizeof (int), nzcnt + DDSIP_param->stocmat, "rmatind_stage(DetEqu)")) ||
+        !(rmatval_stage = (double *) DDSIP_Alloc (sizeof (double), nzcnt + DDSIP_param->stocmat, "rmatval_stage(DetEqu)")))
+    {
+        fprintf (stderr, "Not enough memory for building deterministic equivalent\n");
+        goto FREE;
+    }
+
+    // add first-stage constraints
+    k = 0;
+    for (j = 0; j < DDSIP_data->firstcon; j++)
+    {
+        sense_sorted[j] = sense[DDSIP_bb->firstrowind[j]];
+        det_equ_rhs[j] = base_rhs[DDSIP_bb->firstrowind[j]];
+        scen_spec_rowname[j] = rowname[DDSIP_bb->firstrowind[j]];
+	rmatbeg_stage[j] = k;
+	if (DDSIP_bb->firstrowind[j] == DDSIP_data->nocon -1)
+            nzcnt_row = nzcnt - rmatbeg[DDSIP_data->nocon -1];
+        else
+            nzcnt_row = rmatbeg[DDSIP_bb->firstrowind[j]+1] - rmatbeg[DDSIP_bb->firstrowind[j]];
+	for (i = 0; i < nzcnt_row; i++)
+        {
+            rmatind_stage[k + i] = DDSIP_bb->firstindex_reverse[rmatind[rmatbeg[DDSIP_bb->firstrowind[j]] + i]];
+            rmatval_stage[k + i] = rmatval[rmatbeg[DDSIP_bb->firstrowind[j]] + i];
+//fprintf(stderr,"first-stage row %d: koeff %d in col %d -> rmatind[%d]= %d, value %g (an Stelle %d+%d)\n", j, i, rmatind_stage[k + i],rmatbeg[DDSIP_bb->firstrowind[j]] + i, rmatind[rmatbeg[DDSIP_bb->firstrowind[j]] + i],   rmatval_stage[k + i], k, i);
+        }
+	k += nzcnt_row;
+    }
+    if ((status = CPXaddrows(DDSIP_env, det_equ, 0, DDSIP_data->firstcon, k, det_equ_rhs, sense_sorted, rmatbeg_stage, rmatind_stage, rmatval_stage, NULL, scen_spec_rowname)))
+    {
+        fprintf (stderr, "CPXaddrows returned %d for first-stage constraints\n", status);
+        goto FREE;
+    }
+    if (ranged)
+    {
+        for (j = 0; j < DDSIP_data->firstcon; j++)
+        {
+            rng_sorted[j] = rng[DDSIP_bb->firstrowind[j]];
+            rowindex[j]   = j;
+        }
+        if((status = CPXchgrngval(DDSIP_env, det_equ, DDSIP_data->firstcon, rowindex, rng_sorted)))
+        {
+            fprintf (stderr, "CPXchgrngval returned %d for first-stage constraints\n", status);
+            goto FREE;
+        }
+    }
+
+    // add second-stage constraints
+    for (scen = 0; scen < DDSIP_param->scenarios; scen++)
+    {
+        k = 0;
+        for (j = 0; j < DDSIP_data->seccon; j++)
+        {
+            sense_sorted[j] = sense[DDSIP_bb->secondrowind[j]];
+            det_equ_rhs[j] = base_rhs[DDSIP_bb->secondrowind[j]];
+            if (!(string2 = (char *) calloc (1, 255 * sizeof (char))))
+            {
+                fprintf (stderr, "Not enough memory for building deterministic equivalent\n");
+                goto FREE;
+            }
+            // append scenario index to colname
+            string1 = rowname[DDSIP_bb->secondrowind[j]];
+            sprintf (string2, "%sSC%.3d", string1, scen+1);
+            scen_spec_rowname[j] = string2;
+            rmatbeg_stage[j] = k;
+            if (DDSIP_bb->secondrowind[j] == DDSIP_data->nocon -1)
+                nzcnt_row = nzcnt - rmatbeg[DDSIP_data->nocon -1];
+            else
+            {
+                nzcnt_row = rmatbeg[DDSIP_bb->secondrowind[j]+1] - rmatbeg[DDSIP_bb->secondrowind[j]];
+
+            }
+            for (i = 0; i < nzcnt_row; i++)
+            {
+                if (DDSIP_bb->firstindex_reverse[rmatind[rmatbeg[DDSIP_bb->secondrowind[j]] + i]] < 0)
+                    rmatind_stage[k + i] = DDSIP_data->firstvar + scen*DDSIP_data->secvar + DDSIP_bb->secondindex_reverse[rmatind[rmatbeg[DDSIP_bb->secondrowind[j]] + i]];
+                else
+                    rmatind_stage[k + i] = DDSIP_bb->firstindex_reverse[rmatind[rmatbeg[DDSIP_bb->secondrowind[j]] + i]];
+                rmatval_stage[k + i] = rmatval[rmatbeg[DDSIP_bb->secondrowind[j]] + i];
+            }
+            k += nzcnt_row;
+        }
+        ///////enter stochastic rhs entries//////////////////////////////////////////////////////
+        for (j=0; j< DDSIP_param->stocrhs; j++)
+        {
+            det_equ_rhs[DDSIP_bb->secondrowind_reverse[DDSIP_data->rhsind[j]]] = DDSIP_data->rhs[scen * DDSIP_param->stocrhs + j];
+        }
+
+        if ((status = CPXaddrows(DDSIP_env, det_equ, 0, DDSIP_data->seccon, k, det_equ_rhs, sense_sorted, rmatbeg_stage, rmatind_stage, rmatval_stage, NULL, scen_spec_rowname)))
+        {
+            fprintf (stderr, "CPXaddrows returned %d for second-stage constraints scenario %d\n", status, scen+1);
+            goto FREE;
+        }
+        for (j = 0; j < DDSIP_data->seccon; j++)
+            DDSIP_Free ((void **) &(scen_spec_rowname[j]));
+        if (ranged)
+        {
+            for (j = 0; j < DDSIP_data->seccon; j++)
+            {
+                rng_sorted[j] = rng[DDSIP_bb->secondrowind[j]];
+                rowindex[j]   = DDSIP_data->firstcon + scen * DDSIP_data->seccon + j;
+            }
+            if ((status = CPXchgrngval(DDSIP_env, det_equ, DDSIP_data->seccon, rowindex, rng_sorted)))
+            {
+                fprintf (stderr, "CPXchgrngval returned %d for first-stage constraints\n", status);
+                goto FREE;
+            }
+        }
     }
 
     ///////enter stochastic matrix entries//////////////////////////////////////////////////////
     if (DDSIP_param->stocmat)
     {
 
-        if (!(value = (double *) calloc (DDSIP_param->stocmat, sizeof (double)))
-                || !(matcol_sorted = (int *) calloc (DDSIP_param->stocmat, sizeof (int))))
+        if (!(value = (double *) calloc (DDSIP_param->stocmat, sizeof (double))))
         {
             fprintf (stderr, "Not enough memory for building deterministic equivalent\n");
-            return;
+            goto FREE;
         }
         for (j = 0; j < DDSIP_param->stocmat; j++)
         {
-            matcol_sorted[j] = colindex_revers[DDSIP_data->matcol[j]];
+            if ((colindex_sorted[j] = DDSIP_bb->firstindex_reverse[DDSIP_data->matcol[j]]))
+                 colindex_sorted[j] = DDSIP_data->firstvar + DDSIP_bb->secondindex_reverse[DDSIP_data->matcol[j]];
+            rmatind[j] = DDSIP_data->firstcon + DDSIP_bb->secondrowind_reverse[DDSIP_data->matrow[j]];
         }
         for (scen = 0; scen < DDSIP_param->scenarios; scen++)
         {
@@ -289,71 +375,27 @@ DDSIP_DetEqu ()
             {
                 value[j] = DDSIP_data->matval[scen * DDSIP_param->stocmat + j];
             }
-            status = CPXchgcoeflist (DDSIP_env, det_equ, DDSIP_param->stocmat, DDSIP_data->matrow, matcol_sorted, value);
+///////////////////////////
+//fprintf(stderr,"matrix scen %d:\n",scen+1);
+//for (j = 0; j < DDSIP_param->stocmat; j++)
+//fprintf(stderr,"  row %d col %d : %g\n",rmatind[j],colindex_sorted[j],value[j]);
+///////////////////////////
+            status = CPXchgcoeflist (DDSIP_env, det_equ, DDSIP_param->stocmat, rmatind, colindex_sorted, value);
             if (status)
             {
                 char errmsg[1024];
                 CPXgeterrorstring (DDSIP_env, status, errmsg);
-                fprintf (stderr, "in DetEqu: %s\n", errmsg);
+                fprintf (stderr, "in DetEqu chgcoeflist returned %d: %s\n", status, errmsg);
             }
             for (j = 0; j < DDSIP_param->stocmat; j++)
             {
-                DDSIP_data->matrow[j] += DDSIP_param->seccon;
-                if (matcol_sorted[j] >= DDSIP_param->firstvar)
-                    matcol_sorted[j] += DDSIP_param->secvar;
+                rmatind[j] += DDSIP_data->seccon;
+                if (colindex_sorted[j] >= DDSIP_data->firstvar)
+                    colindex_sorted[j] += DDSIP_data->secvar;
             }
         }
         DDSIP_Free ((void **) &(value));
-        DDSIP_Free ((void **) &(matcol_sorted));
-        //set matrow to the old values
-        for (j = 0; j < DDSIP_param->stocmat; j++)
-        {
-            DDSIP_data->matrow[j] -= DDSIP_param->scenarios * DDSIP_param->seccon;
-        }
-
     }
-    ///////enter stochastic cost coefficients //////////////////////////////////////////////////
-    if (DDSIP_param->stoccost)
-    {
-
-        if (!(value = (double *) calloc (DDSIP_param->stoccost, sizeof (double)))
-                || !(matcol_sorted = (int *) calloc (DDSIP_param->stoccost, sizeof (int))))
-        {
-            fprintf (stderr, "Not enough memory for building deterministic equivalent\n");
-            return;
-        }
-        for (j = 0; j < DDSIP_param->stoccost; j++)
-        {
-            value[j] = 0.0;
-            matcol_sorted[j] = colindex_revers[DDSIP_data->costind[j]];
-        }
-        for (scen = 0; scen < DDSIP_param->scenarios; scen++)
-        {
-            for (j = 0; j < DDSIP_param->stoccost; j++)
-            {
-                if (matcol_sorted[j] >= DDSIP_param->firstvar)
-                    value[j] = DDSIP_data->prob[scen] * DDSIP_data->cost[scen * DDSIP_param->stoccost + j];
-                else
-                    value[j] += DDSIP_data->prob[scen] * DDSIP_data->cost[scen * DDSIP_param->stoccost + j];
-            }
-            status = CPXchgobj (DDSIP_env, det_equ, DDSIP_param->stoccost, matcol_sorted, value);
-            if (status)
-            {
-                char errmsg[1024];
-                CPXgeterrorstring (DDSIP_env, status, errmsg);
-                fprintf (stderr, "in DetEqu: %s\n", errmsg);
-            }
-            for (j = 0; j < DDSIP_param->stoccost; j++)
-            {
-                if (matcol_sorted[j] >= DDSIP_param->firstvar)
-                    matcol_sorted[j] += DDSIP_param->secvar;
-            }
-        }
-        DDSIP_Free ((void **) &(value));
-        DDSIP_Free ((void **) &(matcol_sorted));
-
-    }
-    ////////////////////////////////////////////////////////////////////////////////////////////
 
     status = CPXwriteprob (DDSIP_env, det_equ, probname, NULL);
     if (status)
@@ -362,6 +404,7 @@ DDSIP_DetEqu ()
         fprintf (DDSIP_outfile, " *** Deterministic equivalent written successfully\n");
     status = CPXfreeprob (DDSIP_env, &det_equ);
 
+FREE:
     DDSIP_Free ((void **) &(sense));
     DDSIP_Free ((void **) &(vartype));
     DDSIP_Free ((void **) &(rowname));
@@ -369,7 +412,7 @@ DDSIP_DetEqu ()
     DDSIP_Free ((void **) &(colname));
     DDSIP_Free ((void **) &(colnamestore));
     DDSIP_Free ((void **) &(det_equ_rhs));
-    DDSIP_Free ((void **) &(non_stoc_rhs));
+    DDSIP_Free ((void **) &(base_rhs));
     DDSIP_Free ((void **) &(lb));
     DDSIP_Free ((void **) &(ub));
     DDSIP_Free ((void **) &(vartype_sorted));
@@ -381,5 +424,9 @@ DDSIP_DetEqu ()
     DDSIP_Free ((void **) &(colindex_revers));
     DDSIP_Free ((void **) &(scen_spec_rowname));
     DDSIP_Free ((void **) &(scen_spec_colname));
+    DDSIP_Free ((void **) &(rmatbeg));
+    DDSIP_Free ((void **) &(rmatind));
+    DDSIP_Free ((void **) &(rmatval));
+    DDSIP_Free ((void **) &(rowindex));
     return;
 }

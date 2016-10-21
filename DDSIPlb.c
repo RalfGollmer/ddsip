@@ -136,10 +136,10 @@ DDSIP_GetBranchIndex (double *dispnorm)
             }
             else
             {
-                if ((DDSIP_bb->bestvalue == DDSIP_infty && DDSIP_bb->curnode<DDSIP_param->firstvar*10))
+                if ((DDSIP_bb->bestvalue == DDSIP_infty && DDSIP_bb->curnode<DDSIP_data->firstvar*10))
                 {
                     h = -DDSIP_infty;
-                    for(i=0; i<DDSIP_param->firstvar; i++)
+                    for(i=0; i<DDSIP_data->firstvar; i++)
                     {
                         if (h < dispnorm[i])
                             h = dispnorm[i];
@@ -497,26 +497,19 @@ DDSIP_GetBranchIndex (double *dispnorm)
                 hlb = DDSIP_Dmin (hlb, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j][DDSIP_node[DDSIP_bb->curnode]->branchind]);
                 hub = DDSIP_Dmax (hub, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j][DDSIP_node[DDSIP_bb->curnode]->branchind]);
             }
-            DDSIP_node[DDSIP_bb->curnode]->branchval = 0.25*DDSIP_node[DDSIP_bb->curnode]->branchval + 0.375* (hlb+hub);
+            if (DDSIP_node[DDSIP_bb->curnode]->dispnorm < 1e-4)
+            {
+                // for continuous variables with difference small enough: take the middle of the values
+                DDSIP_node[DDSIP_bb->curnode]->branchval = 0.5 * (hlb + hub);
+            }
+            else
+                DDSIP_node[DDSIP_bb->curnode]->branchval = 0.25 * DDSIP_node[DDSIP_bb->curnode]->branchval + 0.375 * (hlb+hub);
         }
     }
     if (DDSIP_bb->firsttype[DDSIP_node[DDSIP_bb->curnode]->branchind] == 'B' || DDSIP_bb->firsttype[DDSIP_node[DDSIP_bb->curnode]->branchind] == 'I' || DDSIP_bb->firsttype[DDSIP_node[DDSIP_bb->curnode]->branchind] == 'N')
     {
         // for integers: make it end in .5
         DDSIP_node[DDSIP_bb->curnode]->branchval = floor (DDSIP_node[DDSIP_bb->curnode]->branchval + 1.e-6) + 0.5;
-    }
-    else
-    {
-        // for continuous variables with bound difference small enough: take the middle of the bounds
-        for (k = 0; k< DDSIP_bb->curbdcnt; k++)
-        {
-            if (DDSIP_bb->curind[k] == DDSIP_node[DDSIP_bb->curnode]->branchind)
-            { 
-                if (DDSIP_bb->curub[k] - DDSIP_bb->curlb[k] < 1.e-7*(DDSIP_bb->curub[k] + DDSIP_bb->curlb[k]))
-                   DDSIP_node[DDSIP_bb->curnode]->branchval = 0.5 * (DDSIP_bb->curlb[k] + DDSIP_bb->curub[k]);
-            }
-            break;
-        }
     }
     // Don't cut out the individual optimal solutions
     hlb = -DDSIP_infty;
@@ -1029,7 +1022,7 @@ DDSIP_LowerBoundWriteLp (int scen)
         }
         if (CPXgetnummipstarts(DDSIP_env,DDSIP_lp))
         {
-            sprintf (fname, "%s/lb_sc%d_n%d_gc%d%s", DDSIP_outdir, scen + 1, DDSIP_bb->curnode, DDSIP_bb->lboutcnt-1, ".mst");
+            sprintf (fname, "%s/lb_sc%d_n%d_gc%d%s", DDSIP_outdir, scen + 1, DDSIP_bb->curnode, DDSIP_bb->lboutcnt-1, ".mst.gz");
             status = CPXwritemipstarts(DDSIP_env,DDSIP_lp,fname,0, CPXgetnummipstarts(DDSIP_env,DDSIP_lp)-1);
             if (status)
             {
@@ -1404,9 +1397,9 @@ DDSIP_LowerBound (void)
                     if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
                     {
                         j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
-                        printf ("      LB: after 1st optimization: mipgap %% %-12lg %5d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
+                        printf ("      LB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
                         if (DDSIP_param->outlev)
-                            fprintf (DDSIP_bb->moreoutfile,"      LB: after 1st optimization: mipgap %% %-12lg %5d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
+                            fprintf (DDSIP_bb->moreoutfile,"      LB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
                     }
                     if (DDSIP_param->watchkappa)
                     {
@@ -1488,9 +1481,9 @@ DDSIP_LowerBound (void)
                                 {
                                     j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
                                     time_end = DDSIP_GetCpuTime ();
-                                    printf ("      LB: after 2nd optimization: mipgap %% %-12lg %5d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
+                                    printf ("      LB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
                                     if (DDSIP_param->outlev)
-                                        fprintf (DDSIP_bb->moreoutfile,"      LB: after 2nd optimization: mipgap %% %-12lg %5d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
+                                        fprintf (DDSIP_bb->moreoutfile,"      LB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
                                 }
                             }
                         }
@@ -2477,9 +2470,9 @@ if (DDSIP_param->outlev)
                                             if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
                                             {
                                                 j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
-                                                printf ("      LB: after 1st optimization: mipgap %% %-12lg %5d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
+                                                printf ("      LB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
                                                 if (DDSIP_param->outlev)
-                                                    fprintf (DDSIP_bb->moreoutfile,"      LB: after 1st optimization: mipgap %% %-12lg %5d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
+                                                    fprintf (DDSIP_bb->moreoutfile,"      LB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
                                             }
                                             if (DDSIP_param->watchkappa)
                                             {
@@ -2574,9 +2567,9 @@ if (DDSIP_param->outlev)
                                                         {
                                                             j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
                                                             time_end = DDSIP_GetCpuTime ();
-                                                            printf ("      LB: after 2nd optimization: mipgap %% %-12lg %5d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
+                                                            printf ("      LB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
                                                             if (DDSIP_param->outlev)
-                                                                fprintf (DDSIP_bb->moreoutfile,"      LB: after 2nd optimization: mipgap %% %-12lg %5d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
+                                                                fprintf (DDSIP_bb->moreoutfile,"      LB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
                                                         }
                                                     }
                                                 }
@@ -3185,9 +3178,9 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                     if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
                     {
                         j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
-                        printf ("      CBLB: after 1st optimization: mipgap %% %-12lg %5d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
+                        printf ("      CBLB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
                         if (DDSIP_param->outlev)
-                            fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 1st optimization: mipgap %% %-12lg %5d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
+                            fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
                     }
                     if (DDSIP_param->watchkappa)
                     {
@@ -3287,9 +3280,9 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                                 {
                                     j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
                                     time_end = DDSIP_GetCpuTime ();
-                                    printf ("      CBLB: after 2nd optimization: mipgap %% %-12lg %5d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
+                                    printf ("      CBLB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
                                     if (DDSIP_param->outlev)
-                                        fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 2nd optimization: mipgap %% %-12lg %5d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
+                                        fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
                                 }
                             }
                         }

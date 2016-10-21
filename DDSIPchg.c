@@ -35,7 +35,6 @@ DDSIP_ChgBounds (void)
 
     int *index = (int *) DDSIP_Alloc (sizeof (int), DDSIP_bb->curbdcnt, "index(chgbounds)");
 
-//for (i=0; i<DDSIP_bb->curbdcnt; index[i]=DDSIP_bb->firstindex[DDSIP_bb->curind[i++]]);
     for (i = 0; i < DDSIP_bb->curbdcnt; i++)
         index[i] = DDSIP_bb->firstindex[DDSIP_bb->curind[i]];
     if (DDSIP_param->outlev > 3)

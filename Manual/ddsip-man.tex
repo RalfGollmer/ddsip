@@ -923,51 +923,46 @@ files to facilitate reproduction of the error.
 
 \begin{appendix}
 
-\section{Sample specs file} \label{S:SAM}
+\section{Sample specs files} \label{S:SAM}
 %~\vspace{2ex}
 \begin{center}
 %\begin{supertabular}{lrl}
 \framebox{
 \begin{tabular}{lrl}
+BEGIN&&\\
 \multicolumn{3}{l}{* Parameters to specify the two-stage model}\medskip\\
-FIRSTCON &             9 & * First stage constraints     \\          
-FIRSTVAR &            30 & * First stage variables      \\           
-SECCON   &          280 & * Second stage constraints   \\           
-SECVAR   &          326 & * Second stage variables   \\             
+PREFIX & S1\_ &  * Prefix of the names of first-stage variables\\
 STOCRHS  &           70 & * Number of stochastic rhs elements  \\   
 SCENARIOS &           5 & * Number of scenarios  \medskip  \\               
 STOCCOST  &           0 & * Number of stochastic cost coefficients\\
-&&* ({stoch. obj. doesn't work in combination with risk!})\\
+&&* ({stoch. obj. doesn't work together with risk!})\\
 STOCMAT   &           0 & * Number of stochastic matrix entries  \medskip \\
 \multicolumn{3}{l}{* Parameters for dual decomposition procedure}\medskip\\
 OUTLEVEL    &            5 & * Print info to {\it more.out}\\
-OUTFILES    &            1 & * Print files (models and output)\\
-STARTINFO      &          0 & * Use start solution/bound\\
-PREPRO        &       0 & * Sort scenarios\\
 NODELIM  	 &       90 & * \texttt{ddsip} node limit\\
-TIMELIM      &      800 & * \texttt{ddsip} time limit  \\
-HEURISTIC      &   99 3 4 & * Heuristic to produce a feasible solution\\
+TIMELIM      &      900 & * \texttt{ddsip} time limit in seconds  \\
+HEURISTIC      &   99 3 4 & * Heuristics to produce a feasible solution\\
 EEVPROB    &         1 & * Solve EEV, cf. \cite{bir} \\
 ABSOLUTE     &        0 & * Absolute duality gap \\
 RELATIVE      &   0.001 & * Relative duality gap \medskip\\
-PORDER      &          0 & * Use branching priority order\\
 BRADIR         &     -1 & * Branching direction  \\
 BRASTRAT        &     0 & * Branching strategy  \\
-BOUSTRAT        &     1 & * Bounding strategy  \\
-EPSILON         &   1e-4& * Epsilon used for branching on real variables\\
+BOUSTRAT        &     0 & * Bounding strategy  \\
+EPSILON         &   1e-9& * Epsilon used for branching on real variables\\
 RELAXL	          &   1 & * Relaxation level (1= relax first-stage variables\\&&* in scenario problems)\\
 LOGFREQ            &  1 & * Output log frequency\\
 INTFIRST       &      1 & * Branching on integers first\\
-ACCURACY       &     1e-8& * Accuracy used to compare real values\\
-NULLDISP        &     0 & * Tolerance level for null-dispersion\\&&* (used together with ACCURACY!)\\
+ACCURACY       &     1e-12& * Accuracy used to compare real values\\
+NULLDISP        &     1e-12 & * Tolerance level for null-dispersion\\&&* (used together with ACCURACY!)\\
 QUANTILES      &    10 &* Number of Quantiles\\\medskip\\
 \multicolumn{3}{l}{* Risk model}\medskip\\
 RISKMOD   &             1 & * Risk model\\
 TARGET    &        1e+3 & * Target for target measures\\
 WEIGHT   &         1e+0 & * Weight of the risk term\medskip\\
 RISKBM   &         1e+4 & * Big M used in modeling risk models 2 and 5\\
-BRAETA   &            0 & * Branch on auxiliary variable eta (models 4 and 5)?\\
+BRAETA   &            0 & * Branch on auxiliary variable eta?\\&& * (risk models 4 and 5)\\
 \end{tabular}}
+\\
 \framebox{
 \begin{tabular}{lrl}
 \multicolumn{3}{l}{* CPLEX Parameters (See CPLEX manual \cite{cp})}\medskip\\
@@ -1002,20 +997,70 @@ BRAETA   &            0 & * Branch on auxiliary variable eta (models 4 and 5)?\\
 1035       &        0 & * Output on screen indicator for Lagrangian dual\\
 \multicolumn{3}{l}{CPLEXEND}\medskip\\
 \multicolumn{3}{l}{*  Parameters specifying the use of \texttt{ConicBundle}}\medskip\\
-CBFREQ &           1000 &* Conic Bundle in every i-th node\\
-CBITLIM&             20 &* Limit for number of descent steps in Conic Bundle\\
-CBTOTIT&           1000 &* Limit for total number of CB iterations (incl. nullsteps)\\
+CBFREQ &          -1000 &* Conic Bundle in every i-th node\\
+CBITLIM&             20 &* Limit for number of descent steps in CB\\
+CBTOTIT&           1000 &* Limit for total number of CB iterations\\&& * (incl. null steps)\\
 NONANT       &        2 &* Nonanticipativity representation\\
 CBPRINT&              1 &* Output level of Conic Bundle\\
 CBBUNS&              200&* Maximal bundle size\\
-CBMAXS&               10&* Maximal number of subgradients\\
-CBWEIGHT&             5.&* Conic Bundle initial weight\\
+CBWEIGHT&             1.&* Conic Bundle initial weight\\
+END&&\\
 \end{tabular}}
 %}
 \vspace{2ex}
 
-Specification file
+Specification file 1
 \end{center} 
+\newpage
+Another example using mostly default parameter settings:
+\begin{center}
+\framebox{
+\begin{tabular}{lrl}
+BEGIN  &&\\
+POSTFIX &\_FIRSTSTAGE &\\
+SCENAR &10 &\\
+STOCRHS& 1000 &\\
+STOCCOST& 0 &\\
+STOCMAT& 31 &\\
+& &\\
+CPLEXBEGIN &\\
+1067 & 1 & * number of threads\\
+1035 & 0 & * Output on screen indicator\\
+2008 & 0.0 &   * Absolute Gap\\
+2009 & 1.e-8 & * Relative Gap\\
+1039 & 1200 & * Time limit\\
+1016 & 1e-9 & * simplex feasibility tolerance\\
+1014 & 1e-9 & * simplex optimality tolerance\\
+1065 & 40000 & * Memory for working storage\\
+2010 & 1e-20 & * integrality tolerance\\
+2008 & 0 & * Absolute gap\\
+2020 & 0 & * Priority order\\
+2053 & 2 & * disjunctive cuts\\
+2040 & 2 & * flow cover cuts\\
+2049 & 1 & * Gomory cuts\\
+2052 & 2 & * MIRcuts\\
+2064 & 0 & * repeat presolve\\
+CPLEXDUAL\\
+2009 & 1.e-1 & * Relative Gap\\
+2058 &     0 & * MIP emphasis\\
+2098 &     2 & * feasibility pump\\
+2031 &     3 & * Heuristic frequency\\
+CPLEX2DUAL\\
+2009 & 1.e-7 & * Relative Gap\\
+2058 &     4 & * MIP emphasis\\
+CPLEXEND\\
+&&\\
+OUTLEVEL &5 & * Print info to more.out\\
+&&\\
+TIMELIMI &  345600 & * Time limit 96h\\
+CBITLIM       & 15 & * Number of CB descent steps\\
+              &    & * {\small (default in root node: CBITLIM+10)}\\
+RELATIVEGAP & 1e-5 & * Relative duality gap\\
+&&\\
+END&&\\
+\end{tabular}}
+\end{center}
+\vspace{2ex}
 \end{appendix}
 
 

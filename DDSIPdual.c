@@ -674,10 +674,10 @@ DDSIP_DualOpt (void)
     if (DDSIP_param->outlev)
     {
         DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
-        fprintf (DDSIP_outfile, "\n   --------- Dual:  Descent    Total  Objective        Weight        Bound                              CPU Time");
-        printf ("\n   --------- Dual:  Descent    Total  Objective        Weight        Bound                              CPU Time");
-        fprintf (DDSIP_outfile,"\n  |                       0        1  %-16.12g %-11.6g   %-16.12g%20dh %02d:%05.2f\n", obj, start_weight, DDSIP_node[DDSIP_bb->curnode]->bound, cpu_hrs,cpu_mins,cpu_secs);
-        printf ("\n  |                       0        1  %-16.12g %-11.6g   %-16.12g%20dh %02d:%05.2f\n", obj, start_weight, DDSIP_node[DDSIP_bb->curnode]->bound, cpu_hrs,cpu_mins,cpu_secs);
+        fprintf (DDSIP_outfile, "\n   --------- Dual:  Descent    Total  Objective        Weight        Bound                                CPU Time");
+        printf ("\n   --------- Dual:  Descent    Total  Objective        Weight        Bound                                CPU Time");
+        fprintf (DDSIP_outfile,"\n  |                       0        1  %-16.12g %-11.6g   %-18.14g%20dh %02d:%05.2f\n", obj, start_weight, DDSIP_node[DDSIP_bb->curnode]->bound, cpu_hrs,cpu_mins,cpu_secs);
+        printf ("\n  |                       0        1  %-16.12g %-11.6g   %-18.14g%20dh %02d:%05.2f\n", obj, start_weight, DDSIP_node[DDSIP_bb->curnode]->bound, cpu_hrs,cpu_mins,cpu_secs);
     }
 
     if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*1.e-15)
@@ -1108,7 +1108,7 @@ DDSIP_DualOpt (void)
                     {
                         many_iters = 0;
                         repeated_increase += 4 - DDSIP_bb->dualitcnt + last_dualitcnt;
-                        if (DDSIP_param->cb_reduceWeight && next_weight > 5.e-5)
+                        if ((abs(DDSIP_param->riskmod) <= 3 && DDSIP_param->cb_reduceWeight && next_weight > 5.e-5) || (abs(DDSIP_param->riskmod) > 3 && DDSIP_param->cb_reduceWeight && next_weight > 1.e-4))
                         {
                             if (repeated_increase > 2)
                             {

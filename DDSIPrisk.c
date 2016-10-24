@@ -164,7 +164,7 @@ DDSIP_ExcessProb (void)
     char **colname = (char **) DDSIP_Alloc (sizeof (char *), 1, "colname(RiskModel)");
     char *colstore = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_varname, "colstore(RiskModel)");
 
-    // Add #scenarios binary variables to the problem
+    // Add binary variable to the problem
     if (DDSIP_param->riskmod > 0)
         obj[0] = DDSIP_param->riskweight;
     else
@@ -607,7 +607,7 @@ DDSIP_WorstCase (void)
     char **colname = (char **) DDSIP_Alloc (sizeof (char *), 1, "colname(RiskModel)");
     char *colstore = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_varname, "colstore(RiskModel)");
 
-    // Add variable
+    // Add one first-stage variable
     if (DDSIP_param->riskmod > 0)
         obj[0] = DDSIP_param->riskweight;
     else
@@ -743,12 +743,12 @@ DDSIP_TVaR (void)
     char *colstore = (char *) DDSIP_Alloc (sizeof (char), 2 * DDSIP_ln_varname,
                                            "colstore (RiskModel)");
 
-    // Add 2 variables to the problem
+    // Add 2 variables to the problem - one first-strage, one second-stage
     // Lower bound: target
     if (DDSIP_param->riskmod > 0)
         obj[0] = DDSIP_param->riskweight;
     else
-        obj[0] = 1;
+        obj[0] = 1.;
     lb[0] = -DDSIP_param->riskM;
     ub[0] = DDSIP_param->riskM;
     ctype[0] = 'C';
@@ -760,7 +760,7 @@ DDSIP_TVaR (void)
             fprintf (stderr," *** ERROR: The prefix for the first stage variables has to have a positive length.\n");
             exit (1);
         }
-        sprintf (colname[0], "%sDDSIP_n_aux01",DDSIP_param->prefix);
+        sprintf (colname[0], "%s_DDSIP_n_aux01",DDSIP_param->prefix);
     }
     else
     {
@@ -769,7 +769,7 @@ DDSIP_TVaR (void)
             fprintf (stderr," *** ERROR: The postfix for the first stage variables has to have a positive length.\n");
             exit (1);
         }
-        sprintf (colname[0], "DDSIPn_aux01_%s",DDSIP_param->postfix);
+        sprintf (colname[0], "DDSIP_n_aux01_%s",DDSIP_param->postfix);
     }
 
     if (!(1 - DDSIP_param->risklevel > DDSIP_param->accuracy))
@@ -873,7 +873,7 @@ DDSIP_TVaR (void)
 
 //==========================================================================
 // Implementation of the lower bound models for the risk measures
-// Monotonuous risk measures allow for another lower bound model:
+// Monotone risk measures allow for another lower bound model:
 int
 DDSIP_RiskModel (void)
 {

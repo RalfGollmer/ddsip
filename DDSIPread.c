@@ -1208,8 +1208,8 @@ DDSIP_ReadSpec ()
         if (DDSIP_param->write_detequ)
         {
             fprintf (DDSIP_outfile,
-                     "--- Warning: Building deterministic equivalent not implemented for risk optimization not implemented.\n");
-            printf ("--- Warning: Building deterministic equivalent not implemented for risk optimization.\n");
+                     "--- Warning: Building deterministic equivalent not implemented for risk optimization, disabling option.\n");
+            printf ("--- Warning: Building deterministic equivalent not implemented for risk optimization, disabling option.\n");
             DDSIP_param->write_detequ = 0;
         }
         if (DDSIP_param->stoccost)

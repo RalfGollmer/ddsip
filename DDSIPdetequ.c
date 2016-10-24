@@ -52,6 +52,8 @@ DDSIP_DetEqu ()
     double *base_rhs = NULL;
     int nzcnt=0, *rmatbeg=NULL, *rmatind=NULL, *rmatbeg_stage=NULL, *rmatind_stage=NULL, *rowindex=NULL;
     double *rmatval=NULL, *rmatval_stage=NULL;
+    double time_start, time_end;
+    time_start = DDSIP_GetCpuTime ();
     if (DDSIP_data->seccon)
         det_equ_rhs = (double *) DDSIP_Alloc(sizeof(double),DDSIP_data->seccon,"det_equ_rhs(DetEqu)");
     else
@@ -396,13 +398,17 @@ DDSIP_DetEqu ()
         }
         DDSIP_Free ((void **) &(value));
     }
+    time_end = DDSIP_GetCpuTime ();
+    fprintf (DDSIP_outfile, " %6.2f sec  for building deterministic equivalent\n",time_end-time_start);
 
     status = CPXwriteprob (DDSIP_env, det_equ, probname, NULL);
     if (status)
         fprintf (DDSIP_outfile, " *** Deterministic equivalent not written successfully, status = %d\n", status);
     else
-        fprintf (DDSIP_outfile, " *** Deterministic equivalent written successfully\n");
+        fprintf (DDSIP_outfile, " *** Deterministic equivalent %s written successfully\n", probname);
     status = CPXfreeprob (DDSIP_env, &det_equ);
+    time_start = DDSIP_GetCpuTime ();
+    fprintf (DDSIP_outfile, " %6.2f sec  for writing deterministic equivalent\n",time_start-time_end);
 
 FREE:
     DDSIP_Free ((void **) &(sense));

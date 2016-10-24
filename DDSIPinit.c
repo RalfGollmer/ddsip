@@ -394,6 +394,21 @@ DDSIP_BbTypeInit (void)
 
     DDSIP_bb->novar = DDSIP_bb->firstvar + DDSIP_bb->secvar;
     DDSIP_bb->nocon = DDSIP_bb->firstcon + DDSIP_bb->seccon;
+    /////
+    if(DDSIP_param->riskmod)
+    {
+        printf ("with risk model\n");
+        printf ("\t\t No. of              variables:   %6d\n", DDSIP_bb->novar);
+        printf ("\t\t No. of  first-stage variables:   %6d  (%d generals, %d binaries, %d continuous)\n", DDSIP_bb->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_bb->firstvar - DDSIP_bb->first_int);
+        printf ("\t\t No. of second-stage variables:   %6d  (%d integers)\n", DDSIP_bb->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
+        fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
+        fprintf (DDSIP_outfile, "with risk model\n");
+        fprintf (DDSIP_outfile, "\t\t No. of              variables:   %6d\n", DDSIP_bb->novar);
+        fprintf (DDSIP_outfile, "\t\t No. of  first-stage variables:   %6d  (%d generals, %d binaries, %d continuous)\n", DDSIP_bb->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_bb->firstvar - DDSIP_bb->first_int);
+        fprintf (DDSIP_outfile, "\t\t No. of second-stage variables:   %6d  (%d integers)\n", DDSIP_bb->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
+        fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
+    }
+    /////
 
     // Memory allocation for bb-type-members
     DDSIP_bb->solstat = (int *) DDSIP_Alloc (sizeof (int), DDSIP_param->scenarios, "solstat(BbTypeInit)");
@@ -401,9 +416,6 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->firstindex_reverse = (int *) DDSIP_Alloc (sizeof (int), DDSIP_bb->novar, "firstindex(BbTypeInit)");
     DDSIP_bb->secondindex = (int *) DDSIP_Alloc (sizeof (int), DDSIP_bb->secvar, "secondindex(BbTypeInit)");
     DDSIP_bb->secondindex_reverse = (int *) DDSIP_Alloc (sizeof (int), DDSIP_bb->novar, "secondindex(BbTypeInit)");
-/////////////////
-//fprintf(DDSIP_outfile, "******************** allocated bb->firstindex = %p of length %d\n", DDSIP_bb->firstindex, DDSIP_bb->firstvar);
-/////////////////
     if (DDSIP_param->order)
         DDSIP_bb->order = (int *) DDSIP_Alloc (sizeof (int), DDSIP_bb->firstvar, "order(BbTypeInit)");
     DDSIP_bb->firsttype = (char *) DDSIP_Alloc (sizeof (char), DDSIP_bb->firstvar, "firsttype(BbTypeInit)");
@@ -566,10 +578,10 @@ DDSIP_InitStages (void)
     int status = 0, cnt, i, j, length, ind;
     int seccnt;
 
-    int *firindex = (int *) DDSIP_Alloc (sizeof (int), DDSIP_data->novar, "firindex(InitStages)");
-    int *secondindex = (int *) DDSIP_Alloc (sizeof (int), DDSIP_data->novar, "secondindex(InitStages)");
+    int *firindex = (int *) DDSIP_Alloc (sizeof (int), DDSIP_data->novar+1, "firindex(InitStages)");
+    int *secondindex = (int *) DDSIP_Alloc (sizeof (int), DDSIP_data->novar+1, "secondindex(InitStages)");
 
-    char *ctype = (char *) DDSIP_Alloc (sizeof (char), DDSIP_data->novar, "ctype(InitStages)");
+    char *ctype = (char *) DDSIP_Alloc (sizeof (char), DDSIP_data->novar+2, "ctype(InitStages)");
     char **colname = (char **) DDSIP_Alloc (sizeof (char *), DDSIP_data->novar, "colname(InitStages)");
     char *colstore = (char *) DDSIP_Alloc (sizeof (char), DDSIP_data->novar * DDSIP_ln_varname,
                                            "colstore(InitStages)");
@@ -677,6 +689,31 @@ DDSIP_InitStages (void)
     }
     DDSIP_data->firstvar = cnt;
     DDSIP_data->secvar   = DDSIP_data->novar - cnt;
+    if (abs(DDSIP_param->riskmod) == 4)
+    {
+        firindex[cnt]             = DDSIP_data->novar;
+        ctype[DDSIP_data->novar]  = 'C';
+    }
+    else if (abs(DDSIP_param->riskmod) == 5)
+    {
+        firindex[cnt]             = DDSIP_data->novar;
+        secondindex[seccnt]       = DDSIP_data->novar+1;
+        ctype[DDSIP_data->novar]  = 'C';
+        ctype[DDSIP_data->novar+1]= 'C';
+    }
+    else if (DDSIP_param->riskmod)
+    {
+        if (abs(DDSIP_param->riskmod) == 1)
+        {
+            secondindex[seccnt]      = DDSIP_data->novar;
+            ctype[DDSIP_data->novar] = 'B';
+        }
+        else
+        {
+            secondindex[seccnt]      = DDSIP_data->novar;
+            ctype[DDSIP_data->novar] = 'C';
+        }
+    }
 
     DDSIP_Free ((void **) &(colstore));
     DDSIP_Free ((void **) &(colname));
@@ -696,13 +733,6 @@ DDSIP_InitStages (void)
         DDSIP_bb->secondindex_reverse[firindex[i]] = -1;
         DDSIP_bb->firsttype[i] = ctype[DDSIP_bb->firstindex[i]];
     }
-/////////////////////////
-//fprintf(DDSIP_outfile, "************ initialize %d entries of DDSIP_bb->firstindex:\n",DDSIP_bb->firstvar);
-//for (i = 0; i < DDSIP_bb->firstvar; i++)
-//{
-//fprintf(DDSIP_outfile, "%d:\t%d\n",i,DDSIP_bb->firstindex[i]);
-//}
-/////////////////////////
 
     for (i = 0; i < DDSIP_bb->secvar; i++)
     {
@@ -719,9 +749,16 @@ DDSIP_InitStages (void)
 
     DDSIP_bb->cost = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar, "DDSIP_bb->cost,InitStages");
 
-    for (i = 0; i < DDSIP_bb->firstvar; i++)
+    for (i = 0; i < DDSIP_data->firstvar; i++)
     {
         DDSIP_bb->cost[i] = DDSIP_data->cost[DDSIP_bb->firstindex[i]+ DDSIP_param->stoccost * DDSIP_param->scenarios];
+    }
+    if (abs(DDSIP_param->riskmod) == 4 || abs(DDSIP_param->riskmod) == 5)
+    {
+        if (DDSIP_param->riskmod > 0)
+            DDSIP_bb->cost[DDSIP_data->firstvar] = DDSIP_param->riskweight;
+        else
+            DDSIP_bb->cost[DDSIP_data->firstvar] = 1.;
     }
 
     // Preserve lower and upper bounds on first stage variables
@@ -765,12 +802,6 @@ DDSIP_InitStages (void)
     DDSIP_Free ((void **) &(lb));
     DDSIP_Free ((void **) &(ub));
 
-
-    fprintf (DDSIP_outfile, "-----------------------------------------------------------\n\n");
-    fprintf (DDSIP_outfile, " No. of  first-stage  variables:  %10d  (%d binaries, %d generals, %d continuous)\n", DDSIP_data->firstvar, DDSIP_bb->first_bin, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_data->firstvar - DDSIP_bb->first_int);
-    fprintf (DDSIP_outfile, " No. of second-stage variables:   %10d\n\n", DDSIP_data->secvar);
-
-
     return status;
 } // DDSIP_InitStages
 
@@ -781,10 +812,12 @@ DDSIP_DetectStageRows (void)
 {
     // Now find out, which constraints are in the first stage
     int i, j, k, status = 0, nonzeros, surplus;
-    int *RowSecondStage = (int *) DDSIP_Alloc (sizeof (int), DDSIP_data->nocon, "RowSecondStage(InitStages)");
+    int *RowSecondStage = (int *) DDSIP_Alloc (sizeof (int), DDSIP_data->nocon+1, "RowSecondStage(InitStages)");
     int *rmatbeg = (int *) DDSIP_Alloc (sizeof (int), 1, "rmatbeg(InitStages)");
     int *rmatind = (int *) DDSIP_Alloc (sizeof (int), DDSIP_data->novar, "rmatind(InitStages)");
-    double *rmatval = (double *) DDSIP_Alloc (sizeof (double), DDSIP_data->novar, "rmatval(InitStages)");
+    double *rmatval = (double *) DDSIP_Alloc (sizeof (double), DDSIP_data->novar+2, "rmatval(InitStages)");
+    double time_start, time_end;
+    time_start = DDSIP_GetCpuTime ();
     // first, all rows containing stochastic rhs or matrix entries are second stage
     for (i = 0; i < DDSIP_param->stocrhs; i++)
     {
@@ -828,12 +861,24 @@ DDSIP_DetectStageRows (void)
             DDSIP_data->firstcon++;
         }
     }
-    DDSIP_bb->firstrowind = (int *) DDSIP_Alloc(sizeof (int), DDSIP_data->firstcon, "secondrowind(DDSIP_DetectStageRows)");
-    DDSIP_bb->secondrowind = (int *) DDSIP_Alloc(sizeof (int), DDSIP_data->seccon, "firstrowind(DDSIP_DetectStageRows)");
-    DDSIP_bb->firstrowind_reverse = (int *) DDSIP_Alloc(sizeof (int), DDSIP_data->nocon, "secondrowind(DDSIP_DetectStageRows)");
-    DDSIP_bb->secondrowind_reverse = (int *) DDSIP_Alloc(sizeof (int), DDSIP_data->nocon, "firstrowind(DDSIP_DetectStageRows)");
+
+    DDSIP_bb->firstcon = DDSIP_data->firstcon;
+    DDSIP_bb->seccon = DDSIP_data->seccon;
+
+    // Change according to risk model
+    if (DDSIP_param->riskmod)
+    {
+        DDSIP_bb->seccon++;
+        RowSecondStage[DDSIP_data->nocon] = 1;
+    }
+    DDSIP_bb->nocon = DDSIP_bb->firstcon + DDSIP_bb->seccon;
+
+    DDSIP_bb->firstrowind = (int *) DDSIP_Alloc(sizeof (int), DDSIP_bb->firstcon, "secondrowind(DDSIP_DetectStageRows)");
+    DDSIP_bb->secondrowind = (int *) DDSIP_Alloc(sizeof (int), DDSIP_bb->seccon, "firstrowind(DDSIP_DetectStageRows)");
+    DDSIP_bb->firstrowind_reverse = (int *) DDSIP_Alloc(sizeof (int), DDSIP_bb->nocon, "secondrowind(DDSIP_DetectStageRows)");
+    DDSIP_bb->secondrowind_reverse = (int *) DDSIP_Alloc(sizeof (int), DDSIP_bb->nocon, "firstrowind(DDSIP_DetectStageRows)");
     j = k = 0;
-    for (i = 0; i < DDSIP_data->nocon; i++)
+    for (i = 0; i < DDSIP_bb->nocon; i++)
     {
         if (RowSecondStage[i])
         {
@@ -862,10 +907,19 @@ DDSIP_DetectStageRows (void)
         }
         printf ("\n");
     }
+    time_end = DDSIP_GetCpuTime ();
 
-    fprintf (DDSIP_outfile, "-----------------------------------------------------------\n\n");
-    fprintf (DDSIP_outfile, " No. of  first-stage constraints:  %10d\n", DDSIP_data->firstcon);
-    fprintf (DDSIP_outfile, " No. of second-stage constraints:  %10d\n\n", DDSIP_data->seccon);
+    fprintf (DDSIP_outfile, "%6.2f sec  for detection of stages for constraints\n-----------------------------------------------------------\n",time_end-time_start);
+    fprintf (DDSIP_outfile, "in input model file:\n");
+    fprintf (DDSIP_outfile, "\t\tNo. of              constraints:  %10d\n", DDSIP_data->nocon);
+    fprintf (DDSIP_outfile, "\t\tNo. of  first-stage constraints:  %10d\n", DDSIP_data->firstcon);
+    fprintf (DDSIP_outfile, "\t\tNo. of second-stage constraints:  %10d\n", DDSIP_data->seccon);
+    if (DDSIP_param->riskmod)
+    {
+        fprintf (DDSIP_outfile, "with risk model: \n");
+        fprintf (DDSIP_outfile, "\t\tNo. of              constraints:  %10d\n", DDSIP_bb->nocon);
+        fprintf (DDSIP_outfile, "\t\tNo. of second-stage constraints:  %10d\n", DDSIP_bb->seccon);
+    }
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
     DDSIP_Free ((void **) &(RowSecondStage));
     DDSIP_Free ((void **) &(rmatbeg));
@@ -1005,10 +1059,13 @@ DDSIP_BbInit (void)
     // Print infos
     printf ("\t\t Data from input model file:\n");
     printf ("\t\t No. of              variables:   %6d\n", DDSIP_data->novar);
-    printf ("\t\t No. of  first-stage variables:   %6d, including %d generals, %d binaries\n", DDSIP_data->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin);
-    printf ("\t\t No. of second-stage variables:   %6d, including %d integer ones\n", DDSIP_data->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
-//   printf ("\t\t No. of  first-stage constraints: %6d\n", DDSIP_data->firstcon);
-//   printf ("\t\t No. of second-stage constraints: %6d\n", DDSIP_data->seccon);
+    printf ("\t\t No. of  first-stage variables:   %6d  (%d generals, %d binaries, %d continuous)\n", DDSIP_data->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_data->firstvar - DDSIP_bb->first_int);
+    printf ("\t\t No. of second-stage variables:   %6d  (%d integers)\n", DDSIP_data->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
+    fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
+    fprintf (DDSIP_outfile, "in input model file:\n");
+    fprintf (DDSIP_outfile, "\t\t No. of              variables:   %6d\n", DDSIP_data->novar);
+    fprintf (DDSIP_outfile, "\t\t No. of  first-stage variables:   %6d  (%d generals, %d binaries, %d continuous)\n", DDSIP_data->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_data->firstvar - DDSIP_bb->first_int);
+    fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
 
     DDSIP_bb->adv_sol = NULL;
     if (CPXgetobjsen (DDSIP_env, DDSIP_lp) == CPX_MAX)

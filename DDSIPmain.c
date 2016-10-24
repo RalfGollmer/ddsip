@@ -54,7 +54,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2016-10-21 for CPLEX 12.6.3 (including DetectionOfStages)";
+const char DDSIP_version[] = "2016-10-24 (for CPLEX 12.6.3)";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -208,6 +208,10 @@ main (void)
     if ((status = DDSIP_ReadSpec ()))
         goto TERMINATE;
 
+    // Set specified CPLEX parameters
+    if ((status = DDSIP_InitCpxPara ()))
+        goto TERMINATE;
+
     // data->cost contains: stoch. costs for all scenarios, followed by the original costs
     DDSIP_data->cost =
         (double *) DDSIP_Alloc (sizeof (double),
@@ -255,13 +259,9 @@ main (void)
     // Prepare first and second stage variables
     if ((status = DDSIP_InitStages ()))
     {
-        fprintf (stderr, "ERROR: Failed to initialize stages (BbInit)\n");
+        fprintf (stderr, "ERROR: Failed to initialize stages\n");
         goto TERMINATE;
     }
-
-    // Set specified CPLEX parameters
-    if ((status = DDSIP_InitCpxPara ()))
-        goto TERMINATE;
 
     // Read data file(s)
     if ((status = DDSIP_ReadData ()))
@@ -274,7 +274,7 @@ main (void)
             goto TERMINATE;
     }
 
-    // Prepare first and second stage variables
+    // Detect first and second stage constraints
     if ((status = DDSIP_DetectStageRows ()))
     {
         fprintf (stderr, "ERROR: Failed detection of row stages (BbInit)\n");

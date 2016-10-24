@@ -100,9 +100,9 @@ DDSIP_GetBranchIndex (double *dispnorm)
         else if (DDSIP_param->brancheta && abs(DDSIP_param->riskmod) == 5)
         {
                 // do branch in first nodes on additional variable for TVaR
-            if (((DDSIP_bb->curnode<32) && (dispnorm[DDSIP_bb->firstvar - 1] > DDSIP_Dmax(0.99,0.05*(DDSIP_bb->uborg[DDSIP_bb->firstvar - 1] - DDSIP_bb->lborg[DDSIP_bb->firstvar - 1])))) ||
-                // and again at levels 10,20 etc.
-                (!(DDSIP_node[DDSIP_bb->curnode]->depth%10) && (dispnorm[DDSIP_bb->firstvar - 1] > DDSIP_Dmax(0.99,0.001*(DDSIP_bb->uborg[DDSIP_bb->firstvar - 1] - DDSIP_bb->lborg[DDSIP_bb->firstvar - 1])))))
+            if (((DDSIP_bb->curnode<32) && (dispnorm[DDSIP_bb->firstvar - 1] > DDSIP_Dmax(0.99,0.04*(DDSIP_bb->uborg[DDSIP_bb->firstvar - 1] - DDSIP_bb->lborg[DDSIP_bb->firstvar - 1])))) ||
+                // and again at levels 10,11,20,21 etc.
+                (((DDSIP_node[DDSIP_bb->curnode]->depth%10) < 2) && (dispnorm[DDSIP_bb->firstvar - 1] > DDSIP_Dmax(0.99,0.001*(DDSIP_bb->uborg[DDSIP_bb->firstvar - 1] - DDSIP_bb->lborg[DDSIP_bb->firstvar - 1])))))
             {
                 DDSIP_node[DDSIP_bb->curnode]->branchind = DDSIP_bb->firstvar - 1;
                 hub = DDSIP_bb->uborg[DDSIP_node[DDSIP_bb->curnode]->branchind];

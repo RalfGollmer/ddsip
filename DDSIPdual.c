@@ -1288,10 +1288,10 @@ DDSIP_DualOpt (void)
             if (DDSIP_param->outlev)
             {
                 DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
-                printf ("  | %23d  %7d  %-16.12g %-11.6g   %-16.12g%20dh %02d:%05.2f\n",
+                printf ("  | %23d  %7d  %-16.12g %-11.6g   %-18.14g%20dh %02d:%05.2f\n",
                         DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, obj, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, cpu_hrs,cpu_mins,cpu_secs);
                 fprintf (DDSIP_outfile,
-                         "  | %23d  %7d  %-16.12g %-11.6g   %-16.12g%20dh %02d:%05.2f\n",
+                         "  | %23d  %7d  %-16.12g %-11.6g   %-18.14g%20dh %02d:%05.2f\n",
                          DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, obj, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, cpu_hrs,cpu_mins,cpu_secs);
 
             }

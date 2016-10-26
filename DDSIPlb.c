@@ -128,8 +128,8 @@ DDSIP_GetBranchIndex (double *dispnorm)
                 }
                 h = DDSIP_Dmax (h, hlb);
                 hbranch = DDSIP_Dmin (hbranch + 0.1, hub);
-                DDSIP_node[DDSIP_bb->curnode]->branchval = 0.5 * (h + hbranch);
-                //DDSIP_node[DDSIP_bb->curnode]->branchval = 0.48 * h + 0.52 * hbranch;
+                //DDSIP_node[DDSIP_bb->curnode]->branchval = 0.5 * (h + hbranch);
+                DDSIP_node[DDSIP_bb->curnode]->branchval = 0.48 * h + 0.52 * hbranch;
                 maxdiff = mindiff = 0;
                 if (DDSIP_param->outlev)
                     fprintf (DDSIP_bb->moreoutfile,"-- forcing branch on aux. variable: node %d, depth %d, branchval=%.16g, (min= %.16g, max= %.16g)\n",DDSIP_bb->curnode,DDSIP_node[DDSIP_bb->curnode]->depth,DDSIP_node[DDSIP_bb->curnode]->branchval,h,hbranch);

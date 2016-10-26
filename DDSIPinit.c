@@ -398,14 +398,14 @@ DDSIP_BbTypeInit (void)
     if(DDSIP_param->riskmod)
     {
         printf ("with risk model\n");
-        printf ("\t\t No. of              variables:   %6d\n", DDSIP_bb->novar);
-        printf ("\t\t No. of  first-stage variables:   %6d  (%d generals, %d binaries, %d continuous)\n", DDSIP_bb->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_bb->firstvar - DDSIP_bb->first_int);
-        printf ("\t\t No. of second-stage variables:   %6d  (%d integers)\n", DDSIP_bb->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
+        printf ("\t\t No. of              variables:    %6d\n", DDSIP_bb->novar);
+        printf ("\t\t No. of  first-stage variables:    %6d  (%d generals, %d binaries, %d continuous)\n", DDSIP_bb->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_bb->firstvar - DDSIP_bb->first_int);
+        printf ("\t\t No. of second-stage variables:    %6d  (%d integers)\n", DDSIP_bb->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
         fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
         fprintf (DDSIP_outfile, "with risk model\n");
-        fprintf (DDSIP_outfile, "\t\t No. of              variables:   %6d\n", DDSIP_bb->novar);
-        fprintf (DDSIP_outfile, "\t\t No. of  first-stage variables:   %6d  (%d generals, %d binaries, %d continuous)\n", DDSIP_bb->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_bb->firstvar - DDSIP_bb->first_int);
-        fprintf (DDSIP_outfile, "\t\t No. of second-stage variables:   %6d  (%d integers)\n", DDSIP_bb->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
+        fprintf (DDSIP_outfile, "\t\t No. of              variables:    %6d\n", DDSIP_bb->novar);
+        fprintf (DDSIP_outfile, "\t\t No. of  first-stage variables:    %6d  (%d generals, %d binaries, %d continuous)\n", DDSIP_bb->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_bb->firstvar - DDSIP_bb->first_int);
+        fprintf (DDSIP_outfile, "\t\t No. of second-stage variables:    %6d  (%d integers)\n", DDSIP_bb->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
         fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
     }
     /////
@@ -909,7 +909,7 @@ DDSIP_DetectStageRows (void)
     }
     time_end = DDSIP_GetCpuTime ();
 
-    fprintf (DDSIP_outfile, "%6.2f sec  for detection of stages for constraints\n-----------------------------------------------------------\n",time_end-time_start);
+    fprintf (DDSIP_outfile, "%6.2f sec  for detection of stages for constraints\n------------------------------------------------------------\n",time_end-time_start);
     fprintf (DDSIP_outfile, "in input model file:\n");
     fprintf (DDSIP_outfile, "\t\tNo. of              constraints:  %10d\n", DDSIP_data->nocon);
     fprintf (DDSIP_outfile, "\t\tNo. of  first-stage constraints:  %10d\n", DDSIP_data->firstcon);
@@ -920,7 +920,7 @@ DDSIP_DetectStageRows (void)
         fprintf (DDSIP_outfile, "\t\tNo. of              constraints:  %10d\n", DDSIP_bb->nocon);
         fprintf (DDSIP_outfile, "\t\tNo. of second-stage constraints:  %10d\n", DDSIP_bb->seccon);
     }
-    fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
+    fprintf (DDSIP_outfile, "------------------------------------------------------------\n");
     DDSIP_Free ((void **) &(RowSecondStage));
     DDSIP_Free ((void **) &(rmatbeg));
     DDSIP_Free ((void **) &(rmatind));
@@ -976,7 +976,7 @@ DDSIP_AdvSolInit (void)
             DDSIP_bb->beg[0] = 0;
             for(j=0; j<2*DDSIP_param->scenarios; j++)
             {
-                DDSIP_bb->Names[j] = (char *) DDSIP_Alloc (sizeof (char), 21, "Names(LowerBound)");
+                DDSIP_bb->Names[j] = (char *) DDSIP_Alloc (sizeof (char), 24, "Names(LowerBound)");
             }
         }
     }
@@ -1058,14 +1058,15 @@ DDSIP_BbInit (void)
 
     // Print infos
     printf ("\t\t Data from input model file:\n");
-    printf ("\t\t No. of              variables:   %6d\n", DDSIP_data->novar);
-    printf ("\t\t No. of  first-stage variables:   %6d  (%d generals, %d binaries, %d continuous)\n", DDSIP_data->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_data->firstvar - DDSIP_bb->first_int);
-    printf ("\t\t No. of second-stage variables:   %6d  (%d integers)\n", DDSIP_data->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
-    fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
+    printf ("\t\t No. of              variables:     %6d\n", DDSIP_data->novar);
+    printf ("\t\t No. of  first-stage variables:     %6d  (%d generals, %d binaries, %d continuous)\n", DDSIP_data->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_data->firstvar - DDSIP_bb->first_int);
+    printf ("\t\t No. of second-stage variables:     %6d  (%d integers)\n", DDSIP_data->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
+    fprintf (DDSIP_outfile, "------------------------------------------------------------\n");
     fprintf (DDSIP_outfile, "in input model file:\n");
-    fprintf (DDSIP_outfile, "\t\t No. of              variables:   %6d\n", DDSIP_data->novar);
-    fprintf (DDSIP_outfile, "\t\t No. of  first-stage variables:   %6d  (%d generals, %d binaries, %d continuous)\n", DDSIP_data->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_data->firstvar - DDSIP_bb->first_int);
-    fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
+    fprintf (DDSIP_outfile, "\t\t No. of              variables:     %6d\n", DDSIP_data->novar);
+    fprintf (DDSIP_outfile, "\t\t No. of  first-stage variables:     %6d  (%d generals, %d binaries, %d continuous)\n", DDSIP_data->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_data->firstvar - DDSIP_bb->first_int);
+    fprintf (DDSIP_outfile, "\t\t No. of second-stage variables:     %6d  (%d integers)\n", DDSIP_data->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
+    fprintf (DDSIP_outfile, "------------------------------------------------------------\n");
 
     DDSIP_bb->adv_sol = NULL;
     if (CPXgetobjsen (DDSIP_env, DDSIP_lp) == CPX_MAX)

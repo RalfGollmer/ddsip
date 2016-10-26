@@ -1200,6 +1200,12 @@ DDSIP_ReadSpec ()
     // A negative parameter riskmod means: LowerBound the risk model  DDSIP_min (R)
     // riskmod=0 means: LowerBound the expected value model  DDSIP_min (E) (default)
     DDSIP_param->riskmod = floor (DDSIP_ReadDbl (specfile, "RISKMO", " RISK MODEL", 0., 1, -DDSIP_maxrisk, DDSIP_maxrisk) + 0.1);
+    if (DDSIP_param->riskmod < 0)
+    {
+        printf (" pure risk models are disabled for now, exiting.\n");
+        fprintf (DDSIP_outfile, " pure risk models are disabled for now, exiting.\n");
+        exit(1);
+    }
 
     if (DDSIP_param->riskmod)
     {
@@ -1348,7 +1354,6 @@ DDSIP_ReadSpec ()
 
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
     DDSIP_param->cb = 0;
-    DDSIP_param->prematureStop = 1;
 #ifdef CONIC_BUNDLE
     //conic bundle part
     tmp = (DDSIP_param->riskalg == 1 || DDSIP_param->scalarization) ? 0 : -16;
@@ -1435,8 +1440,12 @@ DDSIP_ReadSpec ()
     DDSIP_param->cb = 0;
     DDSIP_param->prematureStop = 1;
 #endif
+
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
-    DDSIP_param->prematureStop=floor (DDSIP_ReadDbl (specfile, "PREMAT", " PREMATURE STOP in UpperBound", DDSIP_param->prematureStop, 1, 0., 1.) + 0.1);
+    if (DDSIP_param->riskmod < 0)
+        DDSIP_param->prematureStop = 0;
+    else
+        DDSIP_param->prematureStop=floor (DDSIP_ReadDbl (specfile, "PREMAT", " PREMATURE STOP in UpperBound", DDSIP_param->prematureStop, 1, 0., 1.) + 0.1);
     if (DDSIP_param->prematureStop && DDSIP_param->cb)
     {
         printf ("\n XXX CAUTION XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n XXX Usaging premature stop in UpperBound on the basis of lower bounds together with Conic Bundle.\n XXX Maybe with some problems this could falsely diagnose inferiority of heuristic proposals.\n XXX If unsure whether this is the case with your problem, disable by setting 'PREMATURE  0'\n XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n");

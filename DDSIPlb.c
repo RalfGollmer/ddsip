@@ -100,9 +100,9 @@ DDSIP_GetBranchIndex (double *dispnorm)
         else if (DDSIP_param->brancheta && abs(DDSIP_param->riskmod) == 5)
         {
                 // do branch in first nodes on additional variable for TVaR
-            if (((DDSIP_bb->curnode<32) && (dispnorm[DDSIP_bb->firstvar - 1] > DDSIP_Dmax(0.99,0.04*(DDSIP_bb->uborg[DDSIP_bb->firstvar - 1] - DDSIP_bb->lborg[DDSIP_bb->firstvar - 1])))) ||
-                // and again at levels 10,11,20,21 etc.
-                (((DDSIP_node[DDSIP_bb->curnode]->depth%10) < 2) && (dispnorm[DDSIP_bb->firstvar - 1] > DDSIP_Dmax(0.99,0.001*(DDSIP_bb->uborg[DDSIP_bb->firstvar - 1] - DDSIP_bb->lborg[DDSIP_bb->firstvar - 1])))))
+            if (((DDSIP_bb->curnode<32) && (dispnorm[DDSIP_bb->firstvar - 1] > DDSIP_Dmax(0.99,0.01*(DDSIP_bb->uborg[DDSIP_bb->firstvar - 1] - DDSIP_bb->lborg[DDSIP_bb->firstvar - 1])))) ||
+                // and again at levels 8, 10,11,20,21 etc.
+                ((((DDSIP_node[DDSIP_bb->curnode]->depth > 6 && DDSIP_node[DDSIP_bb->curnode]->depth < 9) || (DDSIP_node[DDSIP_bb->curnode]->depth%10) < 2)) && (dispnorm[DDSIP_bb->firstvar - 1] > DDSIP_Dmax(0.05,0.0001*(DDSIP_bb->uborg[DDSIP_bb->firstvar - 1] - DDSIP_bb->lborg[DDSIP_bb->firstvar - 1])))))
             {
                 DDSIP_node[DDSIP_bb->curnode]->branchind = DDSIP_bb->firstvar - 1;
                 hub = DDSIP_bb->uborg[DDSIP_node[DDSIP_bb->curnode]->branchind];
@@ -128,7 +128,8 @@ DDSIP_GetBranchIndex (double *dispnorm)
                 }
                 h = DDSIP_Dmax (h, hlb);
                 hbranch = DDSIP_Dmin (hbranch + 0.1, hub);
-                DDSIP_node[DDSIP_bb->curnode]->branchval = 0.5* (h+hbranch);
+                DDSIP_node[DDSIP_bb->curnode]->branchval = 0.5 * (h + hbranch);
+                //DDSIP_node[DDSIP_bb->curnode]->branchval = 0.48 * h + 0.52 * hbranch;
                 maxdiff = mindiff = 0;
                 if (DDSIP_param->outlev)
                     fprintf (DDSIP_bb->moreoutfile,"-- forcing branch on aux. variable: node %d, depth %d, branchval=%.16g, (min= %.16g, max= %.16g)\n",DDSIP_bb->curnode,DDSIP_node[DDSIP_bb->curnode]->depth,DDSIP_node[DDSIP_bb->curnode]->branchval,h,hbranch);
@@ -708,7 +709,7 @@ DDSIP_Warm (int iscen)
             // Copy solutions from father node to the problem (see initialization of subbound and solut)
             for(j=0; j<DDSIP_param->scenarios; j++)
             {
-                sprintf (DDSIP_bb->Names[added],"Father_%d",j+1);
+                sprintf (DDSIP_bb->Names[added],"Father_s_%d",j+1);
                 for(k=0; k<DDSIP_bb->total_int; k++)
                 {
                     DDSIP_bb->values[added*DDSIP_bb->total_int+k] = DDSIP_node[DDSIP_bb->curnode]->solut[j*DDSIP_bb->total_int + k];
@@ -823,7 +824,7 @@ DDSIP_Warm (int iscen)
                     return status;
                 }
                 else if (DDSIP_param->outlev > 90)
-                    fprintf (DDSIP_bb->moreoutfile, "  Copied mip start info %s of previous scenario (Warm)\n", DDSIP_bb->Names[j]);
+                    fprintf (DDSIP_bb->moreoutfile, "  Copied mip start info %s (Warm)\n", DDSIP_bb->Names[j]);
             }
         }
         // ADVIND must be 2 when using supplied start values
@@ -884,7 +885,7 @@ DDSIP_Warm (int iscen)
                     return status;
                 }
                 else if (DDSIP_param->outlev > 90)
-                    fprintf (DDSIP_bb->moreoutfile, "  Copied mip start info %s of previous scenario (Warm)\n", DDSIP_bb->Names[j]);
+                    fprintf (DDSIP_bb->moreoutfile, "  Copied mip start info %s (Warm)\n", DDSIP_bb->Names[j]);
             }
             if (status)
             {
@@ -2310,23 +2311,12 @@ if (DDSIP_param->outlev)
                 else
                 {
                     DDSIP_bb->heurval = tmpbestvalue;
-                    if (DDSIP_param->riskmod > 0)
-                    {
-                        DDSIP_bb->curexp = 0.0;
-                        for (j = 0; j < DDSIP_param->scenarios; j++)
-                            DDSIP_bb->curexp += DDSIP_data->prob[j] * (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j];
-                        // Calculate risk objective
-                        DDSIP_RiskObjective (DDSIP_node[DDSIP_bb->curnode]->ref_scenobj);
-                        if (DDSIP_param->riskmod > 0)
-                            tmpbestvalue = DDSIP_bb->curexp + DDSIP_param->riskweight * DDSIP_bb->currisk;
-                        else
-                            tmpbestvalue = DDSIP_bb->currisk;
-                    }
 
 
                     if (abs(DDSIP_param->riskmod) < 6 && DDSIP_param->riskalg != 1)
                     {
                         DDSIP_bb->heurval = DDSIP_Dmin (tmpbestvalue, DDSIP_bb->heurval);
+
                     }
                     else
                         DDSIP_bb->heurval = tmpbestvalue;
@@ -2392,7 +2382,6 @@ if (DDSIP_param->outlev)
                 if ((!DDSIP_param->riskmod || (DDSIP_param->riskmod && !DDSIP_param->riskalg)) && !DDSIP_param->cb)
                     DDSIP_bb->skip = -1;
                 // Update if better solution was found
-                //        if (tmpbestvalue < DDSIP_bb->bestvalue)
                 if (DDSIP_bb->heurval < DDSIP_bb->bestvalue)
                 {
                     if (DDSIP_bb->skip == -1)
@@ -2877,40 +2866,17 @@ if (DDSIP_param->outlev)
                                     DDSIP_bb->secstage[j][k] = tmpsecsol[j + DDSIP_bb->secvar * k];
                             for (j = 0; j < DDSIP_param->scenarios; j++)
                                 DDSIP_bb->subsol[j] = (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j];
-                            DDSIP_bb->bestvalue = tmpbestvalue;
-                            DDSIP_bb->feasbound = tmpfeasbound;
-                            if (!DDSIP_param->riskmod)
-                            {
-                                DDSIP_bb->bestexp = DDSIP_bb->bestvalue;
-                            }
-                            else if (DDSIP_param->riskmod < 0)
-                            {
-                                DDSIP_bb->bestrisk = DDSIP_bb->bestvalue;
-                            }
-                            // We store all risk measures
-                            if (DDSIP_param->riskmod)
-                                for (j = 0; j < DDSIP_maxrisk; j++)
-                                    DDSIP_bb->bestriskval[j] = DDSIP_bb->curriskval[j];
-                            for (j = 0; j < DDSIP_bb->firstvar; j++)
-                                DDSIP_bb->bestsol[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[0][j];
-                            if (DDSIP_param->outlev)
-                                fprintf (DDSIP_bb->moreoutfile, "\t(Current best bound)\n");
-                            for (j = 0; j < DDSIP_bb->secvar; j++)
-                                for (k = 0; k < DDSIP_param->scenarios; k++)
-                                    DDSIP_bb->secstage[j][k] = tmpsecsol[j + DDSIP_bb->secvar * k];
-                            for (j = 0; j < DDSIP_param->scenarios; j++)
-                                DDSIP_bb->subsol[j] = (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j];
                             // heuristics will all produce the (identical) first stage solution in this point - skip upper bound
-                            DDSIP_bb->skip=1;
+                            DDSIP_bb->skip = 4;
                         }
                     }
 
                 }
             }
-            //if all scenario solutions were inherited we would get the same heuristics again, thus we can skip upper bound
+            //if all scenario solutions were inherited (should not happen) we would get the same heuristics again, thus we can skip upper bound
             if (!probs_solved)
             {
-                DDSIP_bb->skip=1;
+                DDSIP_bb->skip = 1;
                 if (DDSIP_param->outlev)
                     fprintf (DDSIP_bb->moreoutfile, "\tLower bound of node %d = %.16g, skipping upper bound, skip=%d\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound,DDSIP_bb->skip);
             }

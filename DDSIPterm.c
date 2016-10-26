@@ -345,9 +345,9 @@ DDSIP_Continue (int *noiter, int *boundstat)
                 double rgap;
 
                 if (fabs (DDSIP_bb->bestvalue) > DDSIP_param->accuracy)
-                    rgap = fabs ((DDSIP_bb->bestvalue - DDSIP_bb->bestbound) / DDSIP_bb->bestvalue);
+                    rgap = ((DDSIP_bb->bestvalue - DDSIP_bb->bestbound) / DDSIP_bb->bestvalue);
                 else
-                    rgap = fabs ((DDSIP_bb->bestvalue - DDSIP_bb->bestbound) / (DDSIP_bb->bestvalue + DDSIP_param->accuracy));
+                    rgap = ((DDSIP_bb->bestvalue - DDSIP_bb->bestbound) / (DDSIP_bb->bestvalue + DDSIP_param->accuracy));
 
                 rgap = DDSIP_Dmin (1, rgap);
 

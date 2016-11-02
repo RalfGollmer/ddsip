@@ -1063,9 +1063,9 @@ DDSIP_BbInit (void)
     printf ("\t\t No. of second-stage variables:     %6d  (%d integers)\n", DDSIP_data->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
     fprintf (DDSIP_outfile, "------------------------------------------------------------\n");
     fprintf (DDSIP_outfile, "in input model file:\n");
-    fprintf (DDSIP_outfile, "\t\t No. of              variables:     %6d\n", DDSIP_data->novar);
-    fprintf (DDSIP_outfile, "\t\t No. of  first-stage variables:     %6d  (%d generals, %d binaries, %d continuous)\n", DDSIP_data->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_data->firstvar - DDSIP_bb->first_int);
-    fprintf (DDSIP_outfile, "\t\t No. of second-stage variables:     %6d  (%d integers)\n", DDSIP_data->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
+    fprintf (DDSIP_outfile, "\t\tNo. of              variables:    %10d\n", DDSIP_data->novar);
+    fprintf (DDSIP_outfile, "\t\tNo. of  first-stage variables:    %10d  (%d generals, %d binaries, %d continuous)\n", DDSIP_data->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_data->firstvar - DDSIP_bb->first_int);
+    fprintf (DDSIP_outfile, "\t\tNo. of second-stage variables:    %10d  (%d integers)\n", DDSIP_data->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
     fprintf (DDSIP_outfile, "------------------------------------------------------------\n");
 
     DDSIP_bb->adv_sol = NULL;

@@ -1131,6 +1131,10 @@ DDSIP_ReadSpec ()
     DDSIP_param->expected  = floor (DDSIP_ReadDbl (specfile, "EEVPRO", " EXPECTED VALUE PROBLEM", 0., 1, 0., 1.) + 0.1);
     // Write deterministic DDSIP_equivalent (only expectation-based case so far)
     DDSIP_param->write_detequ = floor (DDSIP_ReadDbl (specfile, "DETEQU", " WRITE DETERMINISTIC EQUIVALENT", 0., 1, 0., 1.) + 0.1);
+    if (DDSIP_param->write_detequ)
+        DDSIP_param->deteqType = floor (DDSIP_ReadDbl (specfile, "DETEQT", " DETERMINISTIC EQUIVALENT TYPE", 0., 1, 0., 1.) + 0.1);
+    else
+        DDSIP_param->deteqType = 0;
 
     DDSIP_param->order     = floor (DDSIP_ReadDbl (specfile, "PORDER", " PRIORITY ORDER", 0., 1, 0., 1.) + 0.1);
     DDSIP_param->advstart  = floor (DDSIP_ReadDbl (specfile, "STARTI", " INITIAL SOLUTION/BOUND", 0., 1, 0., 1.) + 0.1);

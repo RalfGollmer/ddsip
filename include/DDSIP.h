@@ -177,6 +177,7 @@ extern "C" {
 ///////////////////////////////////////////////////////////////////////////
         // Write deterministic equivalent? (only expectation-based so far)
         int   write_detequ;
+        int   deteqType;
         // Number of variables for risk model
         int   riskvar;
         // Number of scenarios

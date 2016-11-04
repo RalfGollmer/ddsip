@@ -1,6 +1,6 @@
 # ddsip
-Dual Decomposition in Stochastic Integer Programming
+Dual Decomposition in Stochastic Mixed-Integer Linear Programming
 
 C implementation using IBM ILOG CPLEX and ConicBundle by C. Helmberg
 
-For a description see included manual ddsip-man.pdf
+For a description see the included manual ddsip-man.pdf (above)

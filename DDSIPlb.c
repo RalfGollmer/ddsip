@@ -1097,7 +1097,7 @@ DDSIP_LowerBound (void)
     }
 
     // CPLEX parameters
-    if (DDSIP_param->cpxnolb && DDSIP_bb->DDSIP_step == solve)
+    if (DDSIP_bb->DDSIP_step == solve)
     {
         status = DDSIP_SetCpxPara (DDSIP_param->cpxnolb, DDSIP_param->cpxlbisdbl, DDSIP_param->cpxlbwhich, DDSIP_param->cpxlbwhat);
         if (status)
@@ -2976,17 +2976,14 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     }
 
     // CPLEX parameters
-    if (DDSIP_param->cpxnodual)
+    status = DDSIP_SetCpxPara (DDSIP_param->cpxnodual, DDSIP_param->cpxdualisdbl, DDSIP_param->cpxdualwhich, DDSIP_param->cpxdualwhat);
+    if (status)
     {
-        status = DDSIP_SetCpxPara (DDSIP_param->cpxnodual, DDSIP_param->cpxdualisdbl, DDSIP_param->cpxdualwhich, DDSIP_param->cpxdualwhat);
-        if (status)
-        {
-            fprintf (stderr, "ERROR: Failed to set CPLEX parameters (CBLowerBound) \n");
-            fprintf (DDSIP_outfile, "ERROR: Failed to set CPLEX parameters (CBLowerBound) \n");
-            if (DDSIP_param->outlev)
-                fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to set CPLEX parameters (CBLowerBound) \n");
-            goto TERMINATE;
-        }
+        fprintf (stderr, "ERROR: Failed to set CPLEX parameters (CBLowerBound) \n");
+        fprintf (DDSIP_outfile, "ERROR: Failed to set CPLEX parameters (CBLowerBound) \n");
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to set CPLEX parameters (CBLowerBound) \n");
+        goto TERMINATE;
     }
 
     // assure that CPLEX relative gap is less or equal the relprec requested by ConicBundle

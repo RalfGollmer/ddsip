@@ -382,14 +382,11 @@ DDSIP_UpperBound (void)
         fprintf (DDSIP_bb->moreoutfile, "Evaluating first-stage solution (Upper bounds):\n");
     }
 
-    if (DDSIP_param->cpxnoub)
+    status = DDSIP_SetCpxPara (DDSIP_param->cpxnoub, DDSIP_param->cpxubisdbl, DDSIP_param->cpxubwhich, DDSIP_param->cpxubwhat);
+    if (status)
     {
-        status = DDSIP_SetCpxPara (DDSIP_param->cpxnoub, DDSIP_param->cpxubisdbl, DDSIP_param->cpxubwhich, DDSIP_param->cpxubwhat);
-        if (status)
-        {
-            fprintf (stderr, "ERROR: Failed to set CPLEX parameters (UB) \n");
-            goto TERMINATE;
-        }
+        fprintf (stderr, "ERROR: Failed to set CPLEX parameters (UB) \n");
+        goto TERMINATE;
     }
     if (!DDSIP_param->scalarization)
     {

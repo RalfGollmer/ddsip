@@ -946,7 +946,7 @@ DDSIP_AdvSolInit (void)
         return status;
     }
     // Fill DDSIP_bb->intind with indices of all integer variables
-    DDSIP_bb->intind = (int *) DDSIP_Alloc (sizeof (int), DDSIP_bb->total_int, "intind(AdvSolInit)");
+    DDSIP_bb->intind = (int *) DDSIP_Alloc (sizeof (int), DDSIP_bb->total_int + 1, "intind(AdvSolInit)");
     j = 0;
     for (i = 0; i < DDSIP_bb->novar; i++)
         if ((ctype[i] == 'B') || (ctype[i] == 'I') || (ctype[i] == 'N'))
@@ -1050,6 +1050,13 @@ DDSIP_BbInit (void)
 {
     // Temporary variables
     int status = 0, i;
+    double *obj_coef = (double *) DDSIP_Alloc (sizeof (double), DDSIP_data->novar,"DDSIP_data->obj_coef(BbInit)");
+    if (!obj_coef)
+    {
+        fprintf (stderr, "ERROR: Failed to allocate memory for objective coefficients\n");
+        return status;
+    }
+    DDSIP_data->obj_coef = obj_coef;
 
     printf ("Initializing branch-and-bound tree.\n");
 
@@ -1068,33 +1075,32 @@ DDSIP_BbInit (void)
     fprintf (DDSIP_outfile, "\t\tNo. of second-stage variables:    %10d  (%d integers)\n", DDSIP_data->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
     fprintf (DDSIP_outfile, "------------------------------------------------------------\n");
 
+    status = CPXgetobj (DDSIP_env, DDSIP_lp, DDSIP_data->obj_coef, 0, DDSIP_data->novar - 1);
+    if (status)
+    {
+        fprintf (stderr, "ERROR: Failed to get objective coefficients\n");
+        return status;
+    }
+
     DDSIP_bb->adv_sol = NULL;
     if (CPXgetobjsen (DDSIP_env, DDSIP_lp) == CPX_MAX)
     {
         DDSIP_bb->novar = DDSIP_data->novar;
         int *index = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_bb->novar), "index(BbInit)");
-        double *value = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_bb->novar),"value(BbInit)");
 
         DDSIP_bb->maximization = 1;
         printf ("Maximization becomes minimization (objective=-1*objective).\n");
 
-        status = CPXgetobj (DDSIP_env, DDSIP_lp, value, 0, DDSIP_bb->novar - 1);
-        if (status)
-        {
-            fprintf (stderr, "ERROR: Failed to get objective coefficients\n");
-            return status;
-        }
-
         for (i = 0; i < DDSIP_bb->novar; i++)
         {
-            if (value[i] != 0.0)
+            if (DDSIP_data->obj_coef[i] != 0.0)
             {
-                value[i] = -value[i];
+                DDSIP_data->obj_coef[i] = -DDSIP_data->obj_coef[i];
             }
             index[i] = i;
         }
 
-        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_bb->novar, index, value);
+        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_bb->novar, index, DDSIP_data->obj_coef);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change obj coefficients\n");
@@ -1107,7 +1113,6 @@ DDSIP_BbInit (void)
                 DDSIP_data->cost[i] = -DDSIP_data->cost[i];
 
         DDSIP_Free ((void **) &(index));
-        DDSIP_Free ((void **) &(value));
     }
     else
         DDSIP_bb->maximization= 0;

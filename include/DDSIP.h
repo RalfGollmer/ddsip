@@ -292,6 +292,8 @@ extern "C" {
         double *matval;
         // Stochastic cost coefficients
         double *cost;
+        // objective coefficients of input model
+        double *obj_coef;
 
         // Row indices for stochastic rhs coefficients
         int    *rhsind;

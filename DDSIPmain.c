@@ -306,6 +306,24 @@ main (void)
         return status;
     }
 
+#ifndef NEOS
+    // Write deterministic equivalent (only expectation-based cases)
+    if (DDSIP_param->write_detequ)
+        DDSIP_DetEqu ();
+#endif
+    if (DDSIP_param->riskmod < 0)
+    {
+        printf (" pure risk models are disabled for now, exiting.\n");
+        fprintf (DDSIP_outfile, " pure risk models are disabled for now, exiting.\n");
+        goto TERMINATE;
+    }
+    if (DDSIP_param->stoccost && DDSIP_param->riskmod)
+    {
+        fprintf (DDSIP_outfile, "XXX Error: Risk optimization not implemented for stochastic cost coefficients.\n");
+        printf ("XXX Error: Risk optimization not implemented for stochastic cost coefficients.\n");
+        goto TERMINATE;
+    }
+
     // Read advanced starting info
     if (DDSIP_param->advstart)
     {
@@ -382,11 +400,6 @@ main (void)
     // comb tells in case of a combined heuristic, which one to apply (3 = RoundNear)
     comb = 3;
 
-#ifndef NEOS
-    // Write deterministic equivalent (only expectation-based case so far)
-    if (DDSIP_param->write_detequ)
-        DDSIP_DetEqu ();
-#endif
 
     printf ("Starting branch-and-bound algorithm.\n");
     fprintf (DDSIP_outfile, "----------------------------------------------------------------------------------------\n");

@@ -1204,30 +1204,18 @@ DDSIP_ReadSpec ()
     // A negative parameter riskmod means: LowerBound the risk model  DDSIP_min (R)
     // riskmod=0 means: LowerBound the expected value model  DDSIP_min (E) (default)
     DDSIP_param->riskmod = floor (DDSIP_ReadDbl (specfile, "RISKMO", " RISK MODEL", 0., 1, -DDSIP_maxrisk, DDSIP_maxrisk) + 0.1);
-    if (DDSIP_param->riskmod < 0)
-    {
-        printf (" pure risk models are disabled for now, exiting.\n");
-        fprintf (DDSIP_outfile, " pure risk models are disabled for now, exiting.\n");
-        exit(1);
-    }
 
     if (DDSIP_param->riskmod)
     {
         fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
         fprintf (DDSIP_outfile, "-RISK MODEL\n\n");
-        if (DDSIP_param->write_detequ)
-        {
-            fprintf (DDSIP_outfile,
-                     "--- Warning: Building deterministic equivalent not implemented for risk optimization, disabling option.\n");
-            printf ("--- Warning: Building deterministic equivalent not implemented for risk optimization, disabling option.\n");
-            DDSIP_param->write_detequ = 0;
-        }
-        if (DDSIP_param->stoccost)
-        {
-            fprintf (DDSIP_outfile, "XXX Error: Risk optimization not implemented for stochastic cost coefficients.\n");
-            printf ("XXX Error: Risk optimization not implemented for stochastic cost coefficients.\n");
-            exit (1);
-        }
+//        if (DDSIP_param->write_detequ && !(abs(DDSIP_param->riskmod) < 3 || abs(DDSIP_param->riskmod) == 4))
+//        {
+//            fprintf (DDSIP_outfile,
+//                     "--- Warning: Building deterministic equivalent not implemented for this type of risk optimization, disabling option.\n");
+//            printf ("--- Warning: Building deterministic equivalent not implemented for this type of risk optimization, disabling option.\n");
+//            DDSIP_param->write_detequ = 0;
+//        }
     }
     // Absolute semideviation models is not lsc .....
     if (DDSIP_param->riskmod == -3)

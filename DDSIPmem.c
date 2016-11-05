@@ -213,6 +213,7 @@ DDSIP_FreeData ()
     }
 
     DDSIP_Free ((void **) &(DDSIP_data->prob));
+    DDSIP_Free ((void **) &(DDSIP_data->obj_coef));
 }
 
 //==========================================================================

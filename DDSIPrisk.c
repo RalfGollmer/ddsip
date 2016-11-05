@@ -58,9 +58,9 @@ DDSIP_ExpExcess (void)
     if (DDSIP_param->riskmod > 0)
         obj[0] = DDSIP_param->riskweight;
     else
-        obj[0] = 1;
+        obj[0] = 1.;
 
-    lb[0] = 0;			//DDSIP_param->risktarget;
+    lb[0] = 0.;			//DDSIP_param->risktarget;
     ub[0] = DDSIP_infty;
     ctype[0] = 'C';
     colname[0] = & (colstore[0]);
@@ -110,7 +110,7 @@ DDSIP_ExpExcess (void)
 
     rowlist[i] = DDSIP_data->nocon;
     collist[i] = DDSIP_data->novar;
-    vallist[i] = 1;
+    vallist[i] = 1.;
 
     status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_data->novar + 1, rowlist, collist, vallist);
     if (status)
@@ -168,9 +168,9 @@ DDSIP_ExcessProb (void)
     if (DDSIP_param->riskmod > 0)
         obj[0] = DDSIP_param->riskweight;
     else
-        obj[0] = 1;
-    lb[0] = 0;
-    ub[0] = 1;
+        obj[0] = 1.;
+    lb[0] = 0.;
+    ub[0] = 1.;
     ctype[0] = 'B';
     colname[0] = & (colstore[0]);
     sprintf (colname[0], "DDSIP_u02");
@@ -335,7 +335,7 @@ DDSIP_SemDev (void)
 
     rowlist[i] = DDSIP_data->nocon;
     collist[i] = DDSIP_data->novar;
-    vallist[i] = 1;
+    vallist[i] = 1.;
 
     status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_data->novar + 1, rowlist, collist, vallist);
     if (status)
@@ -611,7 +611,7 @@ DDSIP_WorstCase (void)
     if (DDSIP_param->riskmod > 0)
         obj[0] = DDSIP_param->riskweight;
     else
-        obj[0] = 1;
+        obj[0] = 1.;
 
     lb[0] = -DDSIP_param->riskM;
     ub[0] = DDSIP_param->riskM;
@@ -653,7 +653,7 @@ DDSIP_WorstCase (void)
     rhs = (double *) DDSIP_Alloc (sizeof (double), 1, "rhs(RiskModel)");
     sense = (char *) DDSIP_Alloc (sizeof (char), 1, "sense(RiskModel)");
 
-    rhs[0] = 0;
+    rhs[0] = 0.;
     sense[0] = 'G';
 
     status = CPXnewrows (DDSIP_env, DDSIP_lp, 1, rhs, sense, NULL, NULL);
@@ -687,7 +687,7 @@ DDSIP_WorstCase (void)
 
     rowlist[i] = DDSIP_data->nocon;
     collist[i] = DDSIP_data->novar;
-    vallist[i] = 1;
+    vallist[i] = 1.;
 
     status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_data->novar + 1, rowlist, collist, vallist);
     if (status)
@@ -780,7 +780,7 @@ DDSIP_TVaR (void)
     else
         obj[1] = 1 / (1 - DDSIP_param->risklevel);
 
-    lb[1] = 0;
+    lb[1] = 0.;
     ub[1] = DDSIP_infty;
     ctype[1] = 'C';
     colname[1] = & (colstore[DDSIP_ln_varname]);
@@ -832,12 +832,12 @@ DDSIP_TVaR (void)
     // Coefficient for n_aux_01
     rowlist[i] = DDSIP_data->nocon;
     collist[i] = DDSIP_data->novar;
-    vallist[i++] = 1;
+    vallist[i++] = 1.;
 
     // Coefficient for v_aux_02
     rowlist[i] = DDSIP_data->nocon;
     collist[i] = DDSIP_data->novar + 1;
-    vallist[i] = 1;
+    vallist[i] = 1.;
 
     status = CPXchgcoeflist (DDSIP_env, DDSIP_lp, DDSIP_data->novar + 2, rowlist, collist, vallist);
     if (status)
@@ -1101,7 +1101,7 @@ DDSIP_UndeleteRiskObj (void)
     if (DDSIP_param->riskmod > 0)
         vallist[0] = DDSIP_param->riskweight;
     else
-        vallist[0] = 1;
+        vallist[0] = 1.;
 
     //TVaR
     if (abs (DDSIP_param->riskmod) == 5)

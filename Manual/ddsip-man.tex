@@ -427,7 +427,8 @@ including the time needed to solve the EEV problem. \medskip\\
 ABSOLU&Dbl&0..&0&The absolute duality gap.\medskip\\ 
 RELATI&Dbl&1e-10..&1e-4&The relative duality gap.\\
 EEVPRO&Int&0..1&0&If the parameter is 1, then solve the EEV-problem and report the VSS, cf. \cite{bir}.\medskip\\  
-%DETEQU&Int&0..1&0&If the parameter is 1, then produce a deterministic equivalent as det\_equ.lp.gz. Only for expectation based problems (and it takes quite a while).\\
+DETEQU&Int&0..1&0&If the parameter is 1, then write a \\&&&&deterministic equivalent to\\&&&& sipout/det\_equ.lp.gz\\&&&& Only for expectation-based risk\\&&&& models 0, 1, 2, 4.\\
+DETEQT&Int&0..1&0&Determines the form of the obj. of\\&&&& the deterministic equivalent.\\
 \hline
 \end{tabular}\\[0.5em]
 {Table 2:\quad Output and termination parameters}

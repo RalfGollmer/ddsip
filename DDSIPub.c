@@ -319,7 +319,7 @@ DDSIP_UpperBound (void)
     int wall_hrs, wall_mins,cpu_hrs, cpu_mins;
 
     double tmpbestvalue = 0., tmpfeasbound = 0., rest_bound, tmprisk = 0., tmprisk4 = -DDSIP_infty, tmpprob = 0.;
-    double bobjval, objval, fs, time_start, time_end, time_lap, wall_secs, cpu_secs;
+    double bobjval, objval, fs, time_start, time_end, time_lap, wall_secs, cpu_secs, gap, meanGap;
 
     double *mipx, *values;
     double **tmpsecsol;
@@ -526,7 +526,7 @@ DDSIP_UpperBound (void)
     }
 
     // UpperBound single-scenario problems
-    tmpprob = tmpbestvalue = 0.;
+    meanGap = tmpprob = tmpbestvalue = 0.;
     for (iscen = 0; iscen < DDSIP_param->scenarios; iscen++)
     {
         scen=DDSIP_bb->scen_order[iscen];
@@ -697,11 +697,13 @@ DDSIP_UpperBound (void)
                     status = DDSIP_GetCpxSolution (mipstatus, &objval, &bobjval, mipx);
                     if (status)
                         objval = DDSIP_infty;
+                    gap = 100.0*(objval-bobjval)/(fabs(objval)+1e-4);
+                    meanGap += DDSIP_data->prob[scen] * gap;
                     if (DDSIP_param->outlev)
                     {
                         fprintf (DDSIP_bb->moreoutfile,
                                  "%4d Scenario %4.0d:  Best=%-18.14g\tBound=%-18.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
-                                 iscen + 1, scen + 1, objval, bobjval, 100.0*(objval-bobjval)/(fabs(objval)+1e-4), mipstatus,
+                                 iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
                                  wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
                         fprintf (DDSIP_bb->moreoutfile,
                                  "Lower bound for suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the rest of scenarios: %.16g)\n", iscen + 1,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk +rest_bound);
@@ -937,7 +939,7 @@ DDSIP_UpperBound (void)
     {
         if (DDSIP_param->riskmod)
             fprintf (DDSIP_bb->moreoutfile, "\tQ_E = %.10g \t Q_R = %.10g\n", DDSIP_bb->curexp, DDSIP_bb->currisk);
-        fprintf (DDSIP_bb->moreoutfile, "\tNew suggested upper bound = %.16g\n", tmpbestvalue);
+        fprintf (DDSIP_bb->moreoutfile, "\tNew suggested upper bound = %.16g    \t(mean MIP gap: %g%%)\n", tmpbestvalue, meanGap);
 
         if (DDSIP_param->outlev > 30)
         {

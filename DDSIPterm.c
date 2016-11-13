@@ -287,7 +287,7 @@ DDSIP_Continue (int *noiter, int *boundstat)
         fprintf (DDSIP_outfile, "max.mean gap UB  %g%%\n", DDSIP_bb->meanGapUB);
         if (DDSIP_param->cb)
             fprintf (DDSIP_outfile, "max.mean gap CB  %g%%\n", DDSIP_bb->meanGapCBLB);
-        fprintf (DDSIP_outfile, "\n", DDSIP_bb->meanGapUB);
+        fprintf (DDSIP_outfile, "\n");
 
         // Risk Model
         if (DDSIP_param->riskmod && feas)

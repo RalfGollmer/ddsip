@@ -939,7 +939,7 @@ DDSIP_UpperBound (void)
     {
         if (DDSIP_param->riskmod)
             fprintf (DDSIP_bb->moreoutfile, "\tQ_E = %.10g \t Q_R = %.10g\n", DDSIP_bb->curexp, DDSIP_bb->currisk);
-        fprintf (DDSIP_bb->moreoutfile, "\tNew suggested upper bound = %.16g    \t(mean MIP gap: %g%%)\n", tmpbestvalue, meanGap);
+        fprintf (DDSIP_bb->moreoutfile, "\tNew suggested upper bound = %.16g      \t(mean MIP gap: %g%%)\n", tmpbestvalue, meanGap);
 
         if (DDSIP_param->outlev > 30)
         {

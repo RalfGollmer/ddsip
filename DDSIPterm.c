@@ -102,7 +102,7 @@ DDSIP_Continue (int *noiter, int *boundstat)
     // Front is empty
     else if (*boundstat == 2)
     {
-        sprintf (message, "\nThe whole branching tree was backtracked.\n");
+        sprintf (message, "\nThe whole branching tree was backtracked. Probably due do MIP gaps (see below) the required gap could not be reached.\n");
         solstat = 5;
     }
     // Maximal dispersion norm of front nodes is zero
@@ -283,6 +283,11 @@ DDSIP_Continue (int *noiter, int *boundstat)
         fprintf (DDSIP_outfile, "Upper bounds     %6d\t ", DDSIP_bb->neobjcnt);
         fprintf (DDSIP_outfile, "Tree depth       %6d\n", DDSIP_bb->depth);
         fprintf (DDSIP_outfile, "Nodes            %6d\n\n", DDSIP_bb->nonode);
+        fprintf (DDSIP_outfile, "max.mean gap LB  %g%%\n", DDSIP_bb->meanGapLB);
+        fprintf (DDSIP_outfile, "max.mean gap UB  %g%%\n", DDSIP_bb->meanGapUB);
+        if (DDSIP_param->cb)
+            fprintf (DDSIP_outfile, "max.mean gap CB  %g%%\n", DDSIP_bb->meanGapCBLB);
+        fprintf (DDSIP_outfile, "\n", DDSIP_bb->meanGapUB);
 
         // Risk Model
         if (DDSIP_param->riskmod && feas)

@@ -520,6 +520,8 @@ extern "C" {
         double correct_bounding;
         // set to 1 when the original is maximization
         int maximization;
+        // the maximal mean MIP gaps in lb and ub
+        double meanGapLB,  meanGapCBLB, meanGapUB;
     } bb_t;
 
     typedef struct

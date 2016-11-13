@@ -545,6 +545,7 @@ DDSIP_BbTypeInit (void)
     }
     DDSIP_bb->front_nodes_sorted = (int *) DDSIP_Alloc (sizeof (int), 1, "DDSIP_bb->front_nodes_sorted(BbInit)");
     DDSIP_bb->front_nodes_sorted[0] = 0;
+    DDSIP_bb->meanGapLB = DDSIP_bb->meanGapCBLB = DDSIP_bb->meanGapUB = 0.;
 
     return status;
 } // DDSIP_BbTypeInit

@@ -2192,6 +2192,7 @@ if (DDSIP_param->outlev)
         }
         DDSIP_node[DDSIP_bb->curnode]->dispnorm = maxdispersion;
         DDSIP_node[DDSIP_bb->curnode]->violations = DDSIP_bb->violations;
+        DDSIP_bb->meanGapLB = DDSIP_Dmax(DDSIP_bb->meanGapLB, meanGap);
 
         // More debugging information
         if (DDSIP_param->outlev)
@@ -4079,6 +4080,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         }
     }
     DDSIP_bb->dualObjVal =  DDSIP_Dmax(-(*objective_val), DDSIP_bb->dualObjVal);
+    DDSIP_bb->meanGapCBLB = DDSIP_Dmax(DDSIP_bb->meanGapCBLB, meanGap);
     // More debugging information
     if (DDSIP_param->outlev)
     {

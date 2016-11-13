@@ -933,6 +933,7 @@ DDSIP_UpperBound (void)
 
     /*    DDSIP_bb->phiofTxph[DDSIP_bb->neobjcnt-1] = tmpbestvalue; */
     /*    free (Tx); */
+    DDSIP_bb->meanGapUB = DDSIP_Dmax(DDSIP_bb->meanGapUB, meanGap);
 
     // Debugging information
     if (DDSIP_param->outlev)

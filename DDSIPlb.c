@@ -2205,7 +2205,7 @@ if (DDSIP_param->outlev)
                 if (DDSIP_param->outlev > 7)
                 {
                     printf ("\tNumber of violations of nonanticipativity of first-stage variables:  %d, max: %g\n", DDSIP_bb->violations, maxdispersion);
-                    printf ("\tLower bound of node %d = %.16g       \t(upper bound = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
+                    printf ("\tLower bound of node %d = %.16g          \t(upper bound = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
                             DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestvalue, meanGap);
                 }
             }
@@ -2217,11 +2217,11 @@ if (DDSIP_param->outlev)
                 if (DDSIP_param->outlev > 7)
                 {
                     printf ("\tNumber of violations of nonanticipativity of first-stage variables:  %d\n", DDSIP_bb->violations);
-                    printf ("\tLower bound of node %d = %.16g       \t(upper bound = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
+                    printf ("\tLower bound of node %d = %.16g          \t(upper bound = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
                             DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestvalue, meanGap);
                 }
             }
-            fprintf (DDSIP_bb->moreoutfile, "\tLower bound of node %d = %.16g       \t(upper bound = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
+            fprintf (DDSIP_bb->moreoutfile, "\tLower bound of node %d = %.16g          \t(upper bound = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
                                            DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestvalue, meanGap);
         }
 
@@ -4094,7 +4094,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 printf ("\tNumber of violations of nonanticipativity of first-stage variables:  %d, max: %g\n", DDSIP_bb->violations, maxdispersion);
                 printf ("\tLower bound of node %-10d           = \t%.16g)\n",
                                         DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound);
-                printf ("\tCurrent dual objective value             = \t%.16g       \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
+                printf ("\tCurrent dual objective value             = \t%.16g          \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
             }
         }
         else
@@ -4107,13 +4107,13 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 printf ("\tNumber of violations of nonanticipativity of first-stage variables:  %d\n", DDSIP_bb->violations);
                 printf ("\tLower bound of node %-10d           = \t%.16g\n",
                                         DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound);
-                printf ("\tCurrent dual objective value             = \t%.16g       \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
+                printf ("\tCurrent dual objective value             = \t%.16g          \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
                 printf ("\tBest dual objective value in descent step= \t%.16g\n", DDSIP_bb->dualObjVal);
             }
         }
         fprintf (DDSIP_bb->moreoutfile, "\tLower bound of node %-10d           = \t%.16g\n",
                                         DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound);
-        fprintf (DDSIP_bb->moreoutfile, "\tCurrent dual objective value             = \t%.16g       \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
+        fprintf (DDSIP_bb->moreoutfile, "\tCurrent dual objective value             = \t%.16g          \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
         fprintf (DDSIP_bb->moreoutfile, "\tBest dual objective value in descent step= \t%.16g\n", DDSIP_bb->dualObjVal);
     }
 

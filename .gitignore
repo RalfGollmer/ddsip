@@ -27,7 +27,16 @@
 *.i*86
 *.x86_64
 *.hex
+DDSIP_12*
 
 # Debug files
 *.dSYM/
 *.su
+
+# Makefile - is normally a link to one of the makefile.*
+Makefile
+
+#remains of pdflatex of Manual
+Manual/ddsip-man.aux
+Manual/ddsip-man.log
+Manual/ddsip-man.pdf

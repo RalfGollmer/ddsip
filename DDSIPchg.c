@@ -29,7 +29,7 @@
 /*==========================================================================
   Function changes bounds according to current node of b&b tree */
 int
-DDSIP_ChgBounds (void)
+DDSIP_ChgBounds (int print)
 {
     int i, j, status;
 
@@ -37,7 +37,7 @@ DDSIP_ChgBounds (void)
 
     for (i = 0; i < DDSIP_bb->curbdcnt; i++)
         index[i] = DDSIP_bb->firstindex[DDSIP_bb->curind[i]];
-    if (DDSIP_param->outlev > 3)
+    if (print && DDSIP_param->outlev > 3)
     {
         if (DDSIP_bb->curbdcnt)
             fprintf (DDSIP_bb->moreoutfile, "New bounds\n nr  variable_nr      .    lb                ub   variable_name\n");

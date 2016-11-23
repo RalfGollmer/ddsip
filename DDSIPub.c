@@ -314,7 +314,7 @@ int
 DDSIP_UpperBound (void)
 {
     int status, scen, iscen, mipstatus = 0;
-    int j, k;
+    int j, k, prematureStop = 0;
     int *index;
     int wall_hrs, wall_mins,cpu_hrs, cpu_mins;
 
@@ -708,6 +708,7 @@ DDSIP_UpperBound (void)
                         fprintf (DDSIP_bb->moreoutfile,
                                  "Lower bound for suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the rest of scenarios: %.16g)\n", iscen + 1,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk +rest_bound);
                     }
+                    prematureStop = 1;
                     goto TERMINATE;
                 }
             }
@@ -845,6 +846,8 @@ DDSIP_UpperBound (void)
 
         subsol[scen] = objval;
 
+        gap = 100.0*(objval-bobjval)/(fabs(objval)+1e-4);
+        meanGap += DDSIP_data->prob[scen] * gap;
         // Debugging information
         if (DDSIP_param->outlev)
         {
@@ -855,12 +858,12 @@ DDSIP_UpperBound (void)
             DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
             fprintf (DDSIP_bb->moreoutfile,
                      "%4d Scenario %4.0d:  Best=%-18.14g\tBound=%-18.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
-                     iscen + 1, scen + 1, objval, bobjval, 100.0*(objval-bobjval)/(fabs(objval)+1e-4), mipstatus,
+                     iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
                      wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
             if (DDSIP_param->outlev>7)
             {
                 printf ("%4d Scenario %4.0d:  Best=%-18.14g\tBound=%-18.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
-                        iscen + 1, scen + 1, objval, bobjval, 100.0* (objval-bobjval)/(fabs(objval)+1e-4), mipstatus,
+                        iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
                         wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
                 if (DDSIP_param->cpxscr)
                     printf ("\n");
@@ -931,8 +934,6 @@ DDSIP_UpperBound (void)
 
     DDSIP_bb->heurval = DDSIP_Dmin (tmpbestvalue, DDSIP_bb->heurval);
 
-    /*    DDSIP_bb->phiofTxph[DDSIP_bb->neobjcnt-1] = tmpbestvalue; */
-    /*    free (Tx); */
     DDSIP_bb->meanGapUB = DDSIP_Dmax(DDSIP_bb->meanGapUB, meanGap);
 
     // Debugging information
@@ -1048,9 +1049,13 @@ TERMINATE:
     status = DDSIP_RestoreBoundAndType ();
     if (status)
     {
-        fprintf (stderr, "ERROR: Failed to restore bounds \n");
-        return status;
+        fprintf (stderr, "ERROR: Failed to restore bounds\n");
     }
-
+    if (!prematureStop && (DDSIP_bb->nofront == 1) && (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap))
+    {
+        // specified gap is reached, further heuristics not necessary
+        status = 100000;
+        fprintf (stderr, "specified gap was reached.\n");
+    }
     return status;
 }

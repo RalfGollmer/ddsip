@@ -54,7 +54,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2016-10-24 (for CPLEX 12.6.3)";
+const char DDSIP_version[] = "2016-11-23 (for CPLEX 12.6.3)";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -123,9 +123,10 @@ main (void)
     printf ("################################\n##########  ");
     printf ("D D S I P -- Dual Decomposition In Stochastic Integer Programming");
     printf ("  #########\n");
-    printf ("##########  Version:     %s                           #########\n", DDSIP_version);
+    printf ("##########  Version:     %s                         #########\n", DDSIP_version);
     printf ("For copyright, license agreements, help, comments, requests, ... ");
     printf ("see\n\thttp://www.uni-duisburg-essen.de/~hn215go/ddsip.shtml\n");
+    printf ("\thttp://www.www.github.com/RalfGollmer/ddsip\n");
     /*    printf ("  Copyright (C) to University of Duisburg-Essen \n\n"); */
     /*    printf("  This program is free software; you can redistribute it and/or\n"); */
     /*    printf ("  modify it under the terms of the GNU General Public License\n"); */
@@ -342,7 +343,7 @@ main (void)
             for (i = 0; i < (DDSIP_bb->firstvar); i++)
                 (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] = DDSIP_bb->adv_sol[i];
             (DDSIP_bb->sug[DDSIP_param->nodelim + 2])->next = NULL;
-            if ((status = DDSIP_UpperBound ()))
+            if ((status = DDSIP_UpperBound ()) && status < 100000)
                 goto TERMINATE;
         }
         // Only weak consistency check:
@@ -372,7 +373,7 @@ main (void)
                 (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] = DDSIP_bb->adv_sol[i];
             DDSIP_bb->sug[DDSIP_param->nodelim + 2]->next = NULL;
             //              DDSIP_bb->DDSIP_step=neobj;
-            if ((status = DDSIP_UpperBound ()))
+            if ((status = DDSIP_UpperBound ()) && status < 100000)
                 goto TERMINATE;
         }
 
@@ -450,7 +451,7 @@ main (void)
         if (!DDSIP_bb->skip)
         {
             DDSIP_bb->DDSIP_step = neobj;
-            // Initialize, heurval contains the current heuristic solution
+            // Initialize, heurval contains the obj. value of the current heuristic solution
             DDSIP_bb->heurval = DDSIP_infty;
             tmpbestheur = DDSIP_infty;
             heur_skip = DDSIP_bigint;
@@ -465,29 +466,37 @@ main (void)
                     // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
                     if (DDSIP_bb->skip != -4 && DDSIP_bb->sug[DDSIP_param->nodelim + 2])
                     {
-                        if (DDSIP_UpperBound ())
+                        if ((status = DDSIP_UpperBound ()) && status < 100000)
+                        {
                             goto TERMINATE;
+                        }
                         if (DDSIP_bb->skip < heur_skip)
                             heur_skip = DDSIP_bb->skip;
                         if (DDSIP_bb->heurval < tmpbestheur)
                             tmpbestheur = DDSIP_bb->heurval;
+                        if (status == 100000)
+                        {
+                            DDSIP_bb->skip = -5;
+                            if (DDSIP_param->interrupt_heur > 0)
+                                break;
+                        }
                     }
                     else
                         DDSIP_bb->skip = DDSIP_bigint;
                 }
-                if (DDSIP_bb->heurSuccess || DDSIP_bb->curnode < 11 || DDSIP_bb->noiter%250 > 247)
-//            heur_12 = 0;
-//          if(heur_12 < 2)
+                if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || DDSIP_bb->curnode < 11 || DDSIP_bb->noiter%250 > 247))
                 {
                     DDSIP_param->heuristic = 12;
                     if (DDSIP_Heuristics (&comb))
                         goto TERMINATE;
                     // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-                    if (DDSIP_bb->skip != -4 && DDSIP_bb->sug[DDSIP_param->nodelim + 2])
+                    if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
                     {
                         heur_12 ++;
-                        if (DDSIP_UpperBound ())
+                        if ((status = DDSIP_UpperBound ()) && status < 100000)
+                        {
                             goto TERMINATE;
+                        }
                         if (DDSIP_bb->skip < heur_skip)
                             heur_skip = DDSIP_bb->skip;
                         if (DDSIP_bb->heurval < tmpbestheur)
@@ -510,12 +519,21 @@ main (void)
                     // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
                     if (DDSIP_bb->skip != -4 && DDSIP_bb->sug[DDSIP_param->nodelim + 2])
                     {
-                        if (DDSIP_UpperBound ())
-                            goto TERMINATE;
+                        if ((status = DDSIP_UpperBound ()))
+                        {
+                            if (status < 100000)
+                                goto TERMINATE;
+                        }
                         if (DDSIP_bb->skip < heur_skip)
                             heur_skip = DDSIP_bb->skip;
                         if (DDSIP_bb->heurval < tmpbestheur)
                             tmpbestheur = DDSIP_bb->heurval;
+                        if (status == 100000)
+                        {
+                            DDSIP_bb->skip = -5;
+                            if (DDSIP_param->interrupt_heur > 0)
+                                break;
+                        }
                     }
                     else
                         DDSIP_bb->skip = DDSIP_bigint;
@@ -529,8 +547,13 @@ main (void)
                 if (DDSIP_Heuristics (&comb))
                     goto TERMINATE;
                 // Evaluate the proposed first-stage solution
-                if (DDSIP_UpperBound ())
-                    goto TERMINATE;
+                if ((status = DDSIP_UpperBound ()))
+                {
+                    if (status < 100000)
+                        goto TERMINATE;
+                    else
+                        DDSIP_bb->skip = DDSIP_bigint;
+                }
             }
         }
 
@@ -541,7 +564,7 @@ main (void)
             DDSIP_PrintState (DDSIP_bb->noiter);
 
 
-        // DDSIP_bb->skip indicate that UpperBound has been skip
+        // DDSIP_bb->skip indicates that UpperBound calls have been skipped
         // DDSIP_bb->heurval contains the objective value of the heuristic solution
         // Reset to initial values
         DDSIP_bb->heurval = DDSIP_infty;

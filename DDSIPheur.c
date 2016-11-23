@@ -365,8 +365,17 @@ DDSIP_All (void)
 
         if ((status = DDSIP_UpperBound ()))
         {
-            fprintf (stderr, "ERROR: Failed to perform UpperBound (All)\n");
-            return status;
+            if (status < 100000)
+            {
+                fprintf (stderr, "ERROR: Failed to perform UpperBound (All)\n");
+                return status;
+            }
+            else if (DDSIP_param->interrupt_heur)
+            {
+                if (DDSIP_param->outlev)
+                    fprintf (DDSIP_bb->moreoutfile, "\nGap reached, no further heuristics necessary.\n");
+                break;
+            }
         }
     }
 
@@ -542,9 +551,13 @@ DDSIP_Heuristics (int *comb)
         {
             if ((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i] - DDSIP_bb->uborg[i])/(fabs(DDSIP_bb->uborg[i])+ 1.) > DDSIP_param->accuracy)
             {
-                printf ("high suggestion for variable %d: sug=%20.18f ub=%20.18f, difference=%lg\n",i,(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->uborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->uborg[i]);
+                printf ("   high suggestion for variable %d: sug=%20.18f ub=%20.18f, difference=%lg\n",i,
+                        (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->uborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->uborg[i]);
                 if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile,"high suggestion for variable %d: sug=%20.18f ub=%20.18f, difference=%lg\n",i,(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->uborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->uborg[i]);
+                {
+                    fprintf (DDSIP_bb->moreoutfile,"   high suggestion for variable %d: sug=%20.18f ub=%20.18f, difference=%lg\n",i,
+                             (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->uborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->uborg[i]);
+                }
                 DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i] = DDSIP_bb->uborg[i];
             }
             if ((DDSIP_bb->lborg[i] - DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i])/(fabs(DDSIP_bb->lborg[i])+ 1.) > DDSIP_param->accuracy)
@@ -552,9 +565,13 @@ DDSIP_Heuristics (int *comb)
                 // in the root node the lower bound for the additional variable for worst case costs was updated
                 if (DDSIP_bb->curnode || !(i == DDSIP_data->firstvar && (abs(DDSIP_param->riskmod) != 4 || abs(DDSIP_param->riskmod) != 5)))
                 {
-                    printf ("low suggestion for variable %d: sug=%14.8f lb=%14.8f, difference=%lg\n",i,(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->lborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->lborg[i]);
+                    printf ("   low suggestion for variable %d: sug=%14.8f lb=%14.8f, difference=%lg\n",i,
+                            (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->lborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->lborg[i]);
                     if (DDSIP_param->outlev)
-                        fprintf (DDSIP_bb->moreoutfile,"low suggestion for variable %d: sug=%14.8f lb=%14.8f, difference=%lg\n",i,(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->lborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->lborg[i]);
+                    {
+                        fprintf (DDSIP_bb->moreoutfile,"   low suggestion for variable %d: sug=%14.8f lb=%14.8f, difference=%lg\n",i,
+                                 (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->lborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->lborg[i]);
+                    }
                 }
                 (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] = DDSIP_bb->lborg[i];
             }

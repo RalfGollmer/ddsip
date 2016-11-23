@@ -267,6 +267,10 @@ extern "C" {
         int period;
         // number of steps with small rgap for BOUSTRAT 1,2,3,4
         int rgapsmall;
+        // interrupt heuristics loop?
+        // set to 1 if heuristics should be interrupted as soon as the gap is reached
+        // set to -1 if heuristic 12 should be left out or interrupted as soon as the gap is reached
+        int interrupt_heur;
     } para_t;
 
     typedef struct
@@ -522,6 +526,8 @@ extern "C" {
         int maximization;
         // the maximal mean MIP gaps in lb and ub
         double meanGapLB,  meanGapCBLB, meanGapUB;
+        // store info whether best bound search is to be used for the next node
+        int bestBound;
     } bb_t;
 
     typedef struct
@@ -709,7 +715,7 @@ extern "C" {
 
 // B&B
     int  DDSIP_GetBranchIndex (double *);
-    int  DDSIP_ChgBounds(void);
+    int  DDSIP_ChgBounds(int);
     int  DDSIP_ChgProb(int);
     int  DDSIP_LowerBound(void);
     int  DDSIP_Heuristics(int *);

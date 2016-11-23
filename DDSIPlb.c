@@ -1159,7 +1159,7 @@ DDSIP_LowerBound (void)
     // Change bounds according to node in bb tree
     if (DDSIP_bb->curbdcnt)
     {
-        status = DDSIP_ChgBounds ();
+        status = DDSIP_ChgBounds (1);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change problem \n");
@@ -2152,6 +2152,16 @@ if (DDSIP_param->outlev)
     }
     else
     {
+        if ((DDSIP_node[DDSIP_bb->curnode]->bound + 0.008*meanGap * fabs(DDSIP_node[DDSIP_bb->curnode]->bound)) > DDSIP_bb->bestvalue)
+        {
+            printf("          WARNING: node %d is possibly not cut off just due to the MIP gaps. mean MIP gap = %g%%, upper bound= %16.12g\n", DDSIP_bb->curnode, meanGap, tmpbestvalue);
+            fprintf(DDSIP_outfile, "          WARNING: node %d is possibly not cut off just due to the MIP gaps. mean MIP gap = %g%%, upper bound= %16.12g\n",
+                                   DDSIP_bb->curnode, meanGap, tmpbestvalue);
+            if (DDSIP_param->outlev)
+                fprintf(DDSIP_bb->moreoutfile, "          WARNING: node %d is possibly not cut off just due to the MIP gaps. mean MIP gap = %g%%, upper bound= %16.12g\n",
+                                               DDSIP_bb->curnode, meanGap, tmpbestvalue);
+            DDSIP_bb->bestBound = 1;
+        }
         // Count number of differences within first stage solution in current node
         // DDSIP_bb->violations=k means differences in k components
         if (DDSIP_param->outlev > 34)
@@ -2356,8 +2366,8 @@ if (DDSIP_param->outlev)
                     {
                         char **colname;
                         char *colstore;
-                        colname = (char **) DDSIP_Alloc (sizeof (char *), (DDSIP_bb->firstvar + DDSIP_bb->secvar), "colname(UpperBound)");
-                        colstore = (char *) DDSIP_Alloc (sizeof (char), (DDSIP_bb->firstvar + DDSIP_bb->secvar) * DDSIP_ln_varname, "colstore(UpperBound)");
+                        colname = (char **) DDSIP_Alloc (sizeof (char *), (DDSIP_bb->firstvar + DDSIP_bb->secvar), "colname(LowerBound)");
+                        colstore = (char *) DDSIP_Alloc (sizeof (char), (DDSIP_bb->firstvar + DDSIP_bb->secvar) * DDSIP_ln_varname, "colstore(LowerBound)");
                         status =
                             CPXgetcolname (DDSIP_env, DDSIP_lp, colname, colstore,
                                            (DDSIP_bb->firstvar + DDSIP_bb->secvar) * DDSIP_ln_varname, &j, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
@@ -3045,7 +3055,10 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     // Change bounds according to node in bb tree
     if (DDSIP_bb->curbdcnt)
     {
-        status = DDSIP_ChgBounds ();
+        if (!(DDSIP_bb->dualitcnt))
+            status = DDSIP_ChgBounds (1);
+        else
+            status = DDSIP_ChgBounds (0);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change problem \n");

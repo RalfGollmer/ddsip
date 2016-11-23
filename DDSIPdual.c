@@ -620,24 +620,33 @@ DDSIP_DualOpt (void)
                     // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
                     if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
                     {
-                        if (!DDSIP_UpperBound ())
+                        if (!(status = DDSIP_UpperBound ()) || status == 100000)
                         {
                             if (DDSIP_bb->heurval < tmpbestheur)
                                 tmpbestheur = DDSIP_bb->heurval;
+                        }
+                        if (status == 100000)
+                        {
+                            DDSIP_bb->skip = -5;
+                            if (DDSIP_param->interrupt_heur > 0)
+                                break;
                         }
                     }
                 }
             }
             DDSIP_param->heuristic = 12;
-            if (!DDSIP_Heuristics (&comb))
+            if (!(DDSIP_param->interrupt_heur && (DDSIP_bb->skip == -5)))
             {
-                // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-                if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
+                if (!DDSIP_Heuristics (&comb))
                 {
-                    if (!DDSIP_UpperBound ())
+                    // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
+                    if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
                     {
-                        if (DDSIP_bb->heurval < tmpbestheur)
-                            tmpbestheur = DDSIP_bb->heurval;
+                        if (!DDSIP_UpperBound ())
+                        {
+                            if (DDSIP_bb->heurval < tmpbestheur)
+                                tmpbestheur = DDSIP_bb->heurval;
+                        }
                     }
                 }
             }
@@ -652,10 +661,16 @@ DDSIP_DualOpt (void)
                 if (!DDSIP_Heuristics (&comb))
                 {
                     // Evaluate the proposed first-stage solution
-                    if (!DDSIP_UpperBound ())
+                    if (!(status = DDSIP_UpperBound ()) || status == 100000)
                     {
                         if (DDSIP_bb->heurval < tmpbestheur)
                             tmpbestheur = DDSIP_bb->heurval;
+                    }
+                    if (status == 100000)
+                    {
+                        DDSIP_bb->skip = -5;
+                        if (DDSIP_param->interrupt_heur > 0)
+                            break;
                     }
                 }
             }
@@ -666,7 +681,15 @@ DDSIP_DualOpt (void)
         {
             if (!DDSIP_Heuristics (&comb))
                 // Evaluate the proposed first-stage solution
-                DDSIP_UpperBound ();
+                if (!(status = DDSIP_UpperBound ()) || status == 100000)
+                {
+                    if (DDSIP_bb->heurval < tmpbestheur)
+                        tmpbestheur = DDSIP_bb->heurval;
+                }
+                if (status == 100000)
+                {
+                    DDSIP_bb->skip = -5;
+                }
         }
         DDSIP_bb->DDSIP_step = dual;
     }
@@ -690,6 +713,13 @@ DDSIP_DualOpt (void)
                 DDSIP_Print2 ("   --------- termination status: optimal.", "\n", 0, 0);
         }
     }
+    else if ((DDSIP_bb->nofront == 1) && (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap))
+    {
+        if (DDSIP_param->outlev)
+        {
+            DDSIP_Print2 ("   --------- termination status: gap reached.", "\n", 0, 0);
+        }
+    }
     else
     {
         noIncreaseCounter = 0;
@@ -699,6 +729,10 @@ DDSIP_DualOpt (void)
                     || (!DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt < DDSIP_param->cbrootitlim))
                 && DDSIP_bb->dualitcnt < DDSIP_param->cbtotalitlim && !(obj > DDSIP_bb->bestvalue - DDSIP_param->accuracy) && noIncreaseCounter < 9)
         {
+            if ((DDSIP_bb->nofront == 1) && (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap))
+            {
+                break;
+            }
             DDSIP_bb->dualdescitcnt++;
             if (DDSIP_bb->dualdescitcnt <= 1)
                 DDSIP_bb->dualObjVal = -DDSIP_infty;
@@ -1312,6 +1346,13 @@ DDSIP_DualOpt (void)
             }
             else if (!DDSIP_bb->violations)
                 DDSIP_Print2 ("termination status: optimal.", "\n", 0, 0);
+            else if ((DDSIP_bb->nofront == 1) && (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap))
+            {
+                if (DDSIP_param->outlev)
+                {
+                    DDSIP_Print2 ("termination status: gap reached.", "\n", 0, 0);
+                }
+            }
             else if (!i_scen)
             {
                 if (DDSIP_bb->curnode && (DDSIP_bb->dualdescitcnt >= DDSIP_param->cbitlim ||  (DDSIP_bb->curnode < DDSIP_param->cbBreakIters && DDSIP_bb->dualdescitcnt >= (DDSIP_param->cbitlim+1)/2)))

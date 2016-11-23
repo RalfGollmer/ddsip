@@ -1151,9 +1151,10 @@ DDSIP_ReadSpec ()
     DDSIP_param->intfirst    = floor (DDSIP_ReadDbl (specfile, "INTFIR", " BRANCH INTEGER FIRST", 1., 1, 0., 1.) + 0.1);
     DDSIP_param->boundstrat  = floor (DDSIP_ReadDbl (specfile, "BOUSTR", " BOUNDING STRATEGY", 10., 1, 0., 10.) + 0.1);
     if (DDSIP_param->boundstrat == 10)
-        DDSIP_param->bestboundfreq= floor(DDSIP_ReadDbl (specfile, "BESTFR", " BEST BOUND FREQUENCY", 2.*DDSIP_param->scenarios, 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->bestboundfreq= floor(DDSIP_ReadDbl (specfile, "BESTFR", " BEST BOUND FREQUENCY", DDSIP_Dmin(30., 2.*DDSIP_param->scenarios), 1, 0., DDSIP_bigint) + 0.1);
     else
-        DDSIP_param->bestboundfreq= 100;
+        DDSIP_param->bestboundfreq= 80;
+        //DDSIP_param->bestboundfreq= 100;
     DDSIP_param->period = floor (DDSIP_ReadDbl (specfile, "PERIOD", " HEUR PERIOD ITERS", 32., 1, 1., 10000.) + 0.1);
     DDSIP_param->rgapsmall = floor (DDSIP_ReadDbl (specfile, "TOLSMA", " HEUR SMALL RGAP ITERS", 16., 1, 1., 1.*DDSIP_param->period) + 0.1);
 
@@ -1168,6 +1169,7 @@ DDSIP_ReadSpec ()
     DDSIP_param->maxinherit = floor (DDSIP_ReadDbl (specfile, "MAXINH", " MAX. LEVEL OF INHERITANCE", 5., 1, 0., 100000.) + 0.1);
 
     DDSIP_param->heuristic_vector = NULL;
+    DDSIP_param->heuristic_auto = 0;
     if ((DDSIP_param->heuristic = floor (DDSIP_ReadDbl (specfile, "HEURIS", " HEURISTIC", 100., 1, 0., 100.) + 0.1)) == 99)
     {
         DDSIP_param->heuristic_vector =
@@ -1177,9 +1179,9 @@ DDSIP_ReadSpec ()
             fprintf (DDSIP_outfile, "      missing list of heuristics to be used, resetting to 3.\n");
             DDSIP_param->heuristic = 3;
         }
+        DDSIP_param->interrupt_heur = floor (DDSIP_ReadDbl (specfile, "INTHEU", " INTERRUPT HEURISTIC LOOP", 0., 1, -1., 1.) + 0.1);
     }
-    DDSIP_param->heuristic_auto = 0;
-    if (DDSIP_param->heuristic == 100)
+    else if (DDSIP_param->heuristic == 100)
     {
         DDSIP_param->heuristic_vector = (double *) DDSIP_Alloc (sizeof (double), 12, "values(DDSIP_ReadDblVec)");
         DDSIP_param->heuristic_vector[0] = 100.;
@@ -1193,6 +1195,11 @@ DDSIP_ReadSpec ()
         //DDSIP_param->heuristic = 99;
         DDSIP_param->heuristic_num = 11;
         DDSIP_param->heuristic_auto = 1;
+        DDSIP_param->interrupt_heur = floor (DDSIP_ReadDbl (specfile, "INTHEU", " INTERRUPT HEURISTIC LOOP", -1., 1, -1., 1.) + 0.1);
+    }
+    else
+    {
+        DDSIP_param->interrupt_heur = 0;
     }
     //DDSIP_param->prepro = floor (DDSIP_ReadDbl (specfile, "PREPRO", " PREPROCESSING", 0., 1, 0., 3.) + 0.1);
     DDSIP_param->prepro = 0;

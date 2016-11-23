@@ -162,7 +162,7 @@ DDSIP_PrintState (int noiter)
     }
     else
     {
-        if (DDSIP_bb->skip >= 100)
+        if (DDSIP_bb->skip >= 100 && DDSIP_bb->skip < 100000)
         {
             // Print the number of the scenario which caused the stop
             printf ("         %4d-stop", DDSIP_bb->skip - 100 + 1);

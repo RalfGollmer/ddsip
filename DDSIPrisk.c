@@ -427,7 +427,7 @@ DDSIP_SemDevGetNodeTarget (void)
 
     if (DDSIP_bb->curbdcnt)
     {
-        status = DDSIP_ChgBounds ();
+        status = DDSIP_ChgBounds (1);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change problem \n");

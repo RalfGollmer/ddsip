@@ -1,7 +1,6 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
 	Copyright to:      University of Duisburg-Essen
     Language:          C
-    Last modification: 06.02.2016
 	Description:
 	LowerBound expected value problem (EV), i.e. the deterministic problem
 	with the expected value of the scenarios.

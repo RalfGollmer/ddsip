@@ -1,7 +1,6 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
 	Copyright to:      University of Duisburg-Essen
     Language:          C
-    Last modification: 24.08.2016
 
 	Description:
     This file contains the main procedure of DDSIP --
@@ -54,7 +53,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2016-11-23 (for CPLEX 12.6.3)";
+const char DDSIP_version[] = "2016-11-28 (for CPLEX 12.6.3)";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";

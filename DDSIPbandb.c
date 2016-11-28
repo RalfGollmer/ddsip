@@ -1,7 +1,6 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
 	Copyright to:      University of Duisburg-Essen
     Language:          C
-    Last modification: 06.02.2016
 	Description:
 	The main procedures in this file are called `Bound' and `Branch'.
 	The first one is invoked to delete nodes in the branch-and-bound tree

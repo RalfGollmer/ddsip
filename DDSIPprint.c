@@ -1,7 +1,6 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
 	Copyright to:      University of Duisburg-Essen
    Language:          C
-   Last modification: 06.02.2016
 
 	Description:
 	This procedure prints a line of output when invoked.

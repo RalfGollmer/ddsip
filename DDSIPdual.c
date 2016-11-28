@@ -1,7 +1,6 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
 	Copyright to:      University of Duisburg-Essen
     Language:          C
-    Last modification: 16.04.2016
 	Description:
 	This file contains the implementation of the dual method, i.e. all
 	functions required by ConicBundle of C. Helmberg.
@@ -223,11 +222,21 @@ DDSIP_DualUpdate (void *function_key, double *dual, double relprec,
         fprintf(DDSIP_bb->moreoutfile, "\n");
     }
     // LowerBound scenario problems
-    if ((status = DDSIP_CBLowerBound (objective_value, relprec)) > 1)
+    if ((status = DDSIP_CBLowerBound (objective_value, relprec)) > 1 || status == -111)
     {
         printf ("Failed to solve scenario problems: status = %d .\n", status);
         *new_subg = 0;
-        return status;
+        if (status != -111)
+            return status;
+        else
+        {
+            printf ("Probably due to unbounded variables. Trying smaller stepsize = higher weight.\n");
+            if (DDSIP_param->outlev)
+                fprintf (DDSIP_bb->moreoutfile, "Probably due to unbounded variables. Trying smaller stepsize = higher weight.\n");
+            DDSIP_bb->newTry++;
+            *new_subg = 0;
+            return -111;
+        }
     }
 
     DDSIP_bb->dualitcnt++;
@@ -773,10 +782,11 @@ DDSIP_DualOpt (void)
                 }
             }
             DDSIP_bb->dualObjVal = -DDSIP_infty;
+
             /* Make a descent step */
             /* status = cb_do_descent_step (p); */
-            //int maxsteps = 10; /* DLW Dec 2014 - limit the number of null steps in order to avoid loops of reevaluations */
-            cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->dualdescitcnt==1?5:0)); /* DLW Dec 2014 */
+            // /* DLW Dec 2014 - limit the number of null steps in order to avoid loops of reevaluations */
+NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->dualdescitcnt==1?5:0)); /* DLW Dec 2014 */
             // update dual solution
             cb_get_center (p,DDSIP_node[DDSIP_bb->curnode]->dual);
             DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual] = cb_get_last_weight(p);
@@ -794,261 +804,203 @@ DDSIP_DualOpt (void)
             }
             else if (cb_status)
             {
-                printf ("cb_do_descent_step returned %d\n", cb_status);
-                if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile, "cb_do_descent_step returned %d\n", cb_status);
-                cb_status = cb_termination_code(p);
-                printf ("cb_termination_code returned %d\n", cb_status);
-                if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile, "cb_termination_code returned %d\n", cb_status);
-                cb_destruct_problem (&p);
-                // Reset first stage solutions to the ones that gave the best bound
-                for (j = 0; j < DDSIP_param->scenarios; j++)
+                if (!DDSIP_bb->newTry || DDSIP_bb->newTry > 5)
                 {
-                    if (DDSIP_bb->bestfirst[j].first_sol)
+                    printf ("cb_do_descent_step returned %d\n", cb_status);
+                    if (DDSIP_param->outlev)
+                        fprintf (DDSIP_bb->moreoutfile, "cb_do_descent_step returned %d\n", cb_status);
+                    cb_status = cb_termination_code(p);
+                    printf ("cb_termination_code returned %d\n", cb_status);
+                    if (DDSIP_param->outlev)
+                        fprintf (DDSIP_bb->moreoutfile, "cb_termination_code returned %d\n", cb_status);
+                    cb_destruct_problem (&p);
+                    // Reset first stage solutions to the ones that gave the best bound
+                    for (j = 0; j < DDSIP_param->scenarios; j++)
                     {
-                        if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])
+                        if (DDSIP_bb->bestfirst[j].first_sol)
                         {
-                            if ((cnt = (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])[DDSIP_bb->firstvar] - 1))
-                                for (i_scen = j + 1; cnt && i_scen < DDSIP_param->scenarios; i_scen++)
-                                {
-                                    if ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]) == (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i_scen]))
+                            if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])
+                            {
+                                if ((cnt = (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])[DDSIP_bb->firstvar] - 1))
+                                    for (i_scen = j + 1; cnt && i_scen < DDSIP_param->scenarios; i_scen++)
                                     {
-                                        ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i_scen] = NULL;
-                                        cnt--;
+                                        if ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]) == (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i_scen]))
+                                        {
+                                            ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i_scen] = NULL;
+                                            cnt--;
+                                        }
                                     }
-                                }
-                            DDSIP_Free ((void **) &(((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]));
+                                DDSIP_Free ((void **) &(((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]));
+                            }
+                            DDSIP_node[DDSIP_bb->curnode]->first_sol[j]   = (DDSIP_bb->bestfirst[j]).first_sol;
+                            (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j] = (DDSIP_bb->bestfirst[j]).cursubsol;
+                            (DDSIP_node[DDSIP_bb->curnode]->subbound)[j]  = (DDSIP_bb->bestfirst[j]).subbound;
+                            DDSIP_bb->bestfirst[j].first_sol = NULL;
                         }
-                        DDSIP_node[DDSIP_bb->curnode]->first_sol[j]   = (DDSIP_bb->bestfirst[j]).first_sol;
-                        (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j] = (DDSIP_bb->bestfirst[j]).cursubsol;
-                        (DDSIP_node[DDSIP_bb->curnode]->subbound)[j]  = (DDSIP_bb->bestfirst[j]).subbound;
-                        DDSIP_bb->bestfirst[j].first_sol = NULL;
                     }
+                    DDSIP_Free ((void **) &(minfirst));
+                    DDSIP_Free ((void **) &(maxfirst));
+                    DDSIP_Free ((void **) &(center_point));
+                    return 101;
                 }
-                DDSIP_Free ((void **) &(minfirst));
-                DDSIP_Free ((void **) &(maxfirst));
-                DDSIP_Free ((void **) &(center_point));
-                return 101;
             }
 
-            if ((cb_status = cb_termination_code(p)))
+            if (DDSIP_bb->newTry)
             {
-                printf ("cb_termination_code: %d\n", cb_status);
+                // increase weight
+                //last_weight = next_weight = 1.e4 * cb_get_last_weight (p);
+                last_weight = next_weight = DDSIP_Dmax(1.e-2 * fabs(DDSIP_node[DDSIP_bb->curnode]->bound), 1e4 * cb_get_last_weight (p));
+                cb_set_next_weight (p, next_weight);
+                DDSIP_bb->dualitcnt--;
                 if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile, "cb_termination_code: %d\n", cb_status);
+                    fprintf (DDSIP_bb->moreoutfile,"########### increased next weight to %g\n", next_weight);
+                goto NEXT_TRY;
             }
-            /* Get solution information */
-            // obj = -cb_get_objval (p);
-            // take the best obj value in case the descent step was interrupted by maxsteps or other cause
-            obj = DDSIP_bb->dualObjVal;
-            next_weight = cb_get_last_weight (p);
-            // if the step did not increase the bound, increase the weight
-            if (!DDSIP_param->cb_inherit || DDSIP_bb->dualdescitcnt > 1|| (DDSIP_bb->dualdescitcnt == 1 && DDSIP_bb->dualitcnt < 4))
+            else
             {
-                if (obj <= old_obj /*- 1.e-14*fabs(old_obj)*/)
+                if ((cb_status = cb_termination_code(p)))
                 {
-                    repeated_increase = 0;
-                    noIncreaseCounter++;
-                    many_iters +=2;
-/////////
-                    if (DDSIP_param->outlev > 10)
+                    printf ("cb_termination_code: %d\n", cb_status);
+                    if (DDSIP_param->outlev)
+                        fprintf (DDSIP_bb->moreoutfile, "cb_termination_code: %d\n", cb_status);
+                }
+                /* Get solution information */
+                // obj = -cb_get_objval (p);
+                // take the best obj value in case the descent step was interrupted by maxsteps or other cause
+                obj = DDSIP_bb->dualObjVal;
+                next_weight = cb_get_last_weight (p);
+                // if the step did not increase the bound, increase the weight
+                if (!DDSIP_param->cb_inherit || DDSIP_bb->dualdescitcnt > 1|| (DDSIP_bb->dualdescitcnt == 1 && DDSIP_bb->dualitcnt < 4))
+                {
+                    if (obj <= old_obj /*- 1.e-14*fabs(old_obj)*/)
                     {
-                        fprintf (DDSIP_bb->moreoutfile,"§§§§§§§§§§§§§§§ dualdescitcnt = %d, noIncreaseCounter= %d, last_weight= %g, current weight= %g, dualitcnt= %d §§§§§§§§§§§§§§§\n",DDSIP_bb->dualdescitcnt, noIncreaseCounter, last_weight, next_weight, DDSIP_bb->dualitcnt);
-                    }
+                        repeated_increase = 0;
+                        noIncreaseCounter++;
+                        many_iters +=2;
 /////////
-                    if (DDSIP_param->cb_increaseWeight)
-                    {
-                        if (noIncreaseCounter == 1)
+                        if (DDSIP_param->outlev > 10)
                         {
-                            if (next_weight < 1.1*last_weight)
+                            fprintf (DDSIP_bb->moreoutfile,"§§§§§§§§§§§§§§§ dualdescitcnt = %d, noIncreaseCounter= %d, last_weight= %g, current weight= %g, dualitcnt= %d §§§§§§§§§§§§§§§\n",DDSIP_bb->dualdescitcnt, noIncreaseCounter, last_weight, next_weight, DDSIP_bb->dualitcnt);
+                        }
+/////////
+                        if (DDSIP_param->cb_increaseWeight)
+                        {
+                            if (noIncreaseCounter == 1)
+                            {
+                                if (next_weight < 1.1*last_weight)
+                                {
+                                    last_weight = next_weight;
+                                    if (abs(DDSIP_param->riskmod) == 4)
+                                        next_weight = 4.0*last_weight;
+                                    else if (abs(DDSIP_param->riskmod) == 5)
+                                        next_weight = 1.8*last_weight;
+                                    else
+                                    {
+                                        if (many_iters < 5)
+                                            next_weight = 1.3*last_weight;
+                                        else
+                                            next_weight = 4.0*last_weight;
+                                    }
+                                    if (DDSIP_bb->dualdescitcnt == 1)
+                                        next_weight = 1. + 10.*next_weight;
+                                    cb_set_next_weight (p, next_weight);
+                                    repeated_increase = -1;
+                                    if (DDSIP_param->outlev)
+                                        fprintf (DDSIP_bb->moreoutfile,"####### §§§ increased next weight to %g\n", next_weight);
+                                }
+                            }
+                            else if (noIncreaseCounter > 1)
                             {
                                 last_weight = next_weight;
-                                if (abs(DDSIP_param->riskmod) == 4)
-                                    next_weight = 4.0*last_weight;
-                                else if (abs(DDSIP_param->riskmod) == 5)
-                                    next_weight = 1.8*last_weight;
-                                else
+                                if (noIncreaseCounter > 3)
                                 {
-                                    if (many_iters < 5)
-                                        next_weight = 1.3*last_weight;
-                                    else
-                                        next_weight = 4.0*last_weight;
-                                }
-                                if (DDSIP_bb->dualdescitcnt == 1)
-                                    next_weight = 1. + 10.*next_weight;
-                                cb_set_next_weight (p, next_weight);
-                                repeated_increase = -1;
-                                if (DDSIP_param->outlev)
-                                    fprintf (DDSIP_bb->moreoutfile,"####### §§§ increased next weight to %g\n", next_weight);
-                            }
-                        }
-                        else if (noIncreaseCounter > 1)
-                        {
-                            last_weight = next_weight;
-                            if (noIncreaseCounter > 3)
-                            {
-                                if (last_weight > 2000.)
-                                {
-                                    next_weight = 0.002*last_weight;
-                                }
-                                else
-                                {
-                                    next_weight = 100.*last_weight;
-                                }
-                                noIncreaseCounter = 1;
-                            }
-                            else if (last_weight < 50.)
-                            {
-                                if (DDSIP_bb->dualdescitcnt < 3 && DDSIP_bb->dualitcnt > DDSIP_bb->dualdescitcnt*DDSIP_param->cb_maxsteps + 3)
-                                {
-                                    if (last_weight < 2.)
+                                    if (last_weight > 2000.)
                                     {
-                                        next_weight = 1. + 20.*last_weight;
-                                        if(DDSIP_param->outlev > 10)
-                                            fprintf(DDSIP_bb->moreoutfile, "  next_weight=  1. + %g * %g = %g\n", 20., last_weight, next_weight);
+                                        next_weight = 0.002*last_weight;
                                     }
                                     else
+                                    {
+                                        next_weight = 100.*last_weight;
+                                    }
+                                    noIncreaseCounter = 1;
+                                }
+                                else if (last_weight < 50.)
+                                {
+                                    if (DDSIP_bb->dualdescitcnt < 3 && DDSIP_bb->dualitcnt > DDSIP_bb->dualdescitcnt*DDSIP_param->cb_maxsteps + 3)
+                                    {
+                                        if (last_weight < 2.)
+                                        {
+                                            next_weight = 1. + 20.*last_weight;
+                                            if(DDSIP_param->outlev > 10)
+                                                fprintf(DDSIP_bb->moreoutfile, "  next_weight=  1. + %g * %g = %g\n", 20., last_weight, next_weight);
+                                        }
+                                        else
+                                        {
+                                            next_weight = 10.*last_weight;
+                                            if(DDSIP_param->outlev > 10)
+                                                fprintf(DDSIP_bb->moreoutfile, "  next_weight= %g * %g = %g\n", 10., last_weight, next_weight);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        cpu_secs=(old_obj - obj)/(fabs(old_obj)+1e-6);
+                                        if(DDSIP_param->outlev > 10)
+                                            fprintf(DDSIP_bb->moreoutfile, " relative decrease = %-16.12g",cpu_secs);
+                                        if (cpu_secs < 6e-4)
+                                        {
+                                            next_weight = (1.3+1e3*cpu_secs)*last_weight;
+                                            if(DDSIP_param->outlev > 10)
+                                                fprintf(DDSIP_bb->moreoutfile, "  next_weight= %g * %g = %g\n", 1.3+1e3*cpu_secs, last_weight, next_weight);
+                                        }
+                                        else
+                                        {
+                                            next_weight = 4.0*last_weight;
+                                            if(DDSIP_param->outlev > 10)
+                                                fprintf(DDSIP_bb->moreoutfile, "  next_weight= %g * %g = %g\n", 4., last_weight, next_weight);
+                                        }
+                                    }
+                                    repeated_increase = -1;
+                                }
+                                else
+                                {
+                                    if (DDSIP_bb->dualdescitcnt == 2 && DDSIP_bb->dualitcnt > DDSIP_bb->dualdescitcnt*DDSIP_param->cb_maxsteps + 3)
                                     {
                                         next_weight = 10.*last_weight;
                                         if(DDSIP_param->outlev > 10)
                                             fprintf(DDSIP_bb->moreoutfile, "  next_weight= %g * %g = %g\n", 10., last_weight, next_weight);
                                     }
-                                }
-                                else
-                                {
-                                    cpu_secs=(old_obj - obj)/(fabs(old_obj)+1e-6);
-                                    if(DDSIP_param->outlev > 10)
-                                        fprintf(DDSIP_bb->moreoutfile, " relative decrease = %-16.12g",cpu_secs);
-                                    if (cpu_secs < 6e-4)
+                                    else if (last_weight < 1.e4)
                                     {
-                                        next_weight = (1.3+1e3*cpu_secs)*last_weight;
-                                        if(DDSIP_param->outlev > 10)
-                                            fprintf(DDSIP_bb->moreoutfile, "  next_weight= %g * %g = %g\n", 1.3+1e3*cpu_secs, last_weight, next_weight);
+                                        if (many_iters < 4)
+                                            next_weight = 4.0*last_weight;
+                                        else
+                                            next_weight = 8.0*last_weight;
                                     }
                                     else
-                                    {
-                                        next_weight = 4.0*last_weight;
-                                        if(DDSIP_param->outlev > 10)
-                                            fprintf(DDSIP_bb->moreoutfile, "  next_weight= %g * %g = %g\n", 4., last_weight, next_weight);
-                                    }
+                                        next_weight = 1.2*last_weight;
                                 }
-                                repeated_increase = -1;
-                            }
-                            else
-                            {
-                                if (last_weight < 1.e4)
+                                cb_set_next_weight (p, next_weight);
+                                /////////
+                                if (DDSIP_param->outlev)
                                 {
-                                    if (many_iters < 4)
-                                        next_weight = 4.0*last_weight;
-                                    else
-                                        next_weight = 8.0*last_weight;
+                                    fprintf (DDSIP_bb->moreoutfile,"####### §§§ increased next weight to %g\n", next_weight);
                                 }
-                                else
-                                    next_weight = 1.2*last_weight;
+                                /////////
+                                if (DDSIP_bb->dualdescitcnt == 1)
+                                    old_obj = obj;
                             }
-                            cb_set_next_weight (p, next_weight);
-                            /////////
-                            if (DDSIP_param->outlev)
-                            {
-                                fprintf (DDSIP_bb->moreoutfile,"####### §§§ increased next weight to %g\n", next_weight);
-                            }
-                            /////////
-                            if (DDSIP_bb->dualdescitcnt == 1)
-                                old_obj = obj;
                         }
-                    }
 //
-                    if (DDSIP_param->outlev)
-                    {
-                        fprintf (DDSIP_bb->moreoutfile, " descent step %d: obj=%g, bound=%g, test for worse bound: %d\n", DDSIP_bb->dualdescitcnt, obj, DDSIP_node[DDSIP_bb->curnode]->bound,  (obj < DDSIP_node[DDSIP_bb->curnode]->bound - 1.e-4*fabs(DDSIP_node[DDSIP_bb->curnode]->bound)));
-                    }
-//
-                    if (DDSIP_param->cb_changetol && !limits_reset && (obj < DDSIP_node[DDSIP_bb->curnode]->bound - 1.e-4*fabs(DDSIP_node[DDSIP_bb->curnode]->bound)))
-                    {
-                        // the branched problems produced a bound worse than already known - reset temporarily cplex tolerance and time limit
-                        limits_reset = 2;
-                        printf(" reset CPLEX relgap and/or time limit.\n");
                         if (DDSIP_param->outlev)
-                            fprintf(DDSIP_bb->moreoutfile, " reset CPLEX relgap and/or time limit.\n");
-                        for (cpu_hrs=0; cpu_hrs < DDSIP_param->cpxnodual; cpu_hrs++)
                         {
-                            if (DDSIP_param->cpxdualwhich[cpu_hrs] == CPX_PARAM_TILIM)
-                            {
-                                old_cpxtimelim = DDSIP_param->cpxdualwhat[cpu_hrs];
-                                DDSIP_param->cpxdualwhat[cpu_hrs] = 1.2*old_cpxtimelim;
-                                status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
-                                if (status)
-                                {
-                                    printf("Failed to reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
-                                }
-                                else
-                                {
-                                    printf("temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
-                                    if (DDSIP_param->outlev)
-                                        fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
-                                }
-                            }
-                            if (DDSIP_param->cpxdualwhich[cpu_hrs] == CPX_PARAM_EPGAP)
-                            {
-                                old_cpxrelgap = DDSIP_param->cpxdualwhat[cpu_hrs];
-                                DDSIP_param->cpxdualwhat[cpu_hrs] = 0.20*old_cpxrelgap;
-                                status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
-                                if (status)
-                                {
-                                    printf("Failed to reset CPLEX relgap to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
-                                }
-                                else
-                                {
-                                    printf("temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
-                                    if (DDSIP_param->outlev)
-                                        fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
-                                }
-                            }
+                            fprintf (DDSIP_bb->moreoutfile, " descent step %d: obj=%g, bound=%g, test for worse bound: %d\n", DDSIP_bb->dualdescitcnt, obj, DDSIP_node[DDSIP_bb->curnode]->bound,  (obj < DDSIP_node[DDSIP_bb->curnode]->bound - 1.e-4*fabs(DDSIP_node[DDSIP_bb->curnode]->bound)));
                         }
-                        for (cpu_hrs=0; cpu_hrs < DDSIP_param->cpxnodual2; cpu_hrs++)
+//
+                        if (DDSIP_param->cb_changetol && !limits_reset && (obj < DDSIP_node[DDSIP_bb->curnode]->bound - 1.e-4*fabs(DDSIP_node[DDSIP_bb->curnode]->bound)))
                         {
-                            if (DDSIP_param->cpxdualwhich2[cpu_hrs] == CPX_PARAM_TILIM)
-                            {
-                                old_cpxtimelim2 = DDSIP_param->cpxdualwhat2[cpu_hrs];
-                                DDSIP_param->cpxdualwhat2[cpu_hrs] = 1.5*old_cpxtimelim2;
-                                status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
-                                if (status)
-                                {
-                                    printf("Failed to reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
-                                }
-                                else
-                                {
-                                    printf("temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
-                                    if (DDSIP_param->outlev)
-                                        fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
-                                }
-                            }
-                            if (DDSIP_param->cpxdualwhich2[cpu_hrs] == CPX_PARAM_EPGAP)
-                            {
-                                old_cpxrelgap2 = DDSIP_param->cpxdualwhat2[cpu_hrs];
-                                DDSIP_param->cpxdualwhat2[cpu_hrs] = 0.30*old_cpxrelgap2;
-                                status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
-                                if (status)
-                                {
-                                    printf("Failed to reset CPLEX relgap to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
-                                }
-                                else
-                                {
-                                    printf("temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
-                                    if (DDSIP_param->outlev)
-                                        fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
-                                }
-                            }
-                        } // end for
-                    }
-                    if (!cb_status && !limits_reset && (noIncreaseCounter > 1 || (obj < DDSIP_node[DDSIP_bb->curnode]->bound - 1.e-4*fabs(DDSIP_node[DDSIP_bb->curnode]->bound))))
-                    {
-                        limits_reset = 1;
-                        if (DDSIP_param->cb_changetol)
-                        {
-                            // the branched problems produced a worse bound than known - reset temporarily cplex tolerance and time limit
-                            printf("reset CPLEX relgap and/or time limit.\n");
+                            // the branched problems produced a bound worse than already known - reset temporarily cplex tolerance and time limit
+                            limits_reset = 2;
+                            printf(" reset CPLEX relgap and/or time limit.\n");
                             if (DDSIP_param->outlev)
                                 fprintf(DDSIP_bb->moreoutfile, " reset CPLEX relgap and/or time limit.\n");
                             for (cpu_hrs=0; cpu_hrs < DDSIP_param->cpxnodual; cpu_hrs++)
@@ -1085,7 +1037,7 @@ DDSIP_DualOpt (void)
                                             fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                                     }
                                 }
-                            } // end for
+                            }
                             for (cpu_hrs=0; cpu_hrs < DDSIP_param->cpxnodual2; cpu_hrs++)
                             {
                                 if (DDSIP_param->cpxdualwhich2[cpu_hrs] == CPX_PARAM_TILIM)
@@ -1095,13 +1047,13 @@ DDSIP_DualOpt (void)
                                     status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                     if (status)
                                     {
-                                        printf("Failed to reset CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                        printf("Failed to reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                     }
                                     else
                                     {
-                                        printf("temporarily reset CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                        printf("temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                         if (DDSIP_param->outlev)
-                                            fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                            fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                     }
                                 }
                                 if (DDSIP_param->cpxdualwhich2[cpu_hrs] == CPX_PARAM_EPGAP)
@@ -1111,134 +1063,244 @@ DDSIP_DualOpt (void)
                                     status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                     if (status)
                                     {
-                                        printf("Failed to reset CPLEX relgap 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                        printf("Failed to reset CPLEX relgap to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                     }
                                     else
                                     {
-                                        printf("temporarily reset CPLEX relgap tolerance 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                        printf("temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                         if (DDSIP_param->outlev)
-                                            fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX relgap tolerance 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                            fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                     }
                                 }
                             } // end for
                         }
+                        if (!cb_status && !limits_reset && (noIncreaseCounter > 1 || (obj < DDSIP_node[DDSIP_bb->curnode]->bound - 1.e-4*fabs(DDSIP_node[DDSIP_bb->curnode]->bound))))
+                        {
+                            limits_reset = 1;
+                            if (DDSIP_param->cb_changetol)
+                            {
+                                // the branched problems produced a worse bound than known - reset temporarily cplex tolerance and time limit
+                                printf("reset CPLEX relgap and/or time limit.\n");
+                                if (DDSIP_param->outlev)
+                                    fprintf(DDSIP_bb->moreoutfile, " reset CPLEX relgap and/or time limit.\n");
+                                for (cpu_hrs=0; cpu_hrs < DDSIP_param->cpxnodual; cpu_hrs++)
+                                {
+                                    if (DDSIP_param->cpxdualwhich[cpu_hrs] == CPX_PARAM_TILIM)
+                                    {
+                                        old_cpxtimelim = DDSIP_param->cpxdualwhat[cpu_hrs];
+                                        DDSIP_param->cpxdualwhat[cpu_hrs] = 1.2*old_cpxtimelim;
+                                        status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                        if (status)
+                                        {
+                                            printf("Failed to reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                        }
+                                        else
+                                        {
+                                            printf("temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                            if (DDSIP_param->outlev)
+                                                fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                        }
+                                    }
+                                    if (DDSIP_param->cpxdualwhich[cpu_hrs] == CPX_PARAM_EPGAP)
+                                    {
+                                        old_cpxrelgap = DDSIP_param->cpxdualwhat[cpu_hrs];
+                                        DDSIP_param->cpxdualwhat[cpu_hrs] = 0.20*old_cpxrelgap;
+                                        status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                        if (status)
+                                        {
+                                            printf("Failed to reset CPLEX relgap to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                        }
+                                        else
+                                        {
+                                            printf("temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                            if (DDSIP_param->outlev)
+                                                fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                        }
+                                    }
+                                } // end for
+                                for (cpu_hrs=0; cpu_hrs < DDSIP_param->cpxnodual2; cpu_hrs++)
+                                {
+                                    if (DDSIP_param->cpxdualwhich2[cpu_hrs] == CPX_PARAM_TILIM)
+                                    {
+                                        old_cpxtimelim2 = DDSIP_param->cpxdualwhat2[cpu_hrs];
+                                        DDSIP_param->cpxdualwhat2[cpu_hrs] = 1.5*old_cpxtimelim2;
+                                        status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                        if (status)
+                                        {
+                                            printf("Failed to reset CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                        }
+                                        else
+                                        {
+                                            printf("temporarily reset CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                            if (DDSIP_param->outlev)
+                                                fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                        }
+                                    }
+                                    if (DDSIP_param->cpxdualwhich2[cpu_hrs] == CPX_PARAM_EPGAP)
+                                    {
+                                        old_cpxrelgap2 = DDSIP_param->cpxdualwhat2[cpu_hrs];
+                                        DDSIP_param->cpxdualwhat2[cpu_hrs] = 0.30*old_cpxrelgap2;
+                                        status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich2[cpu_hrs], DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                        if (status)
+                                        {
+                                            printf("Failed to reset CPLEX relgap 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                        }
+                                        else
+                                        {
+                                            printf("temporarily reset CPLEX relgap tolerance 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                            if (DDSIP_param->outlev)
+                                                fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX relgap tolerance 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                        }
+                                    }
+                                } // end for
+                            }
+                        }
+//
+                        if(DDSIP_param->outlev > 20)
+                            fprintf(DDSIP_bb->moreoutfile, " obj -  old_obj = %-16.12g - %-16.12g = %-10.6g, \tnoIncreaseCounter= %d, last_weight= %g, next_weight= %g\n",obj, old_obj, obj - old_obj, noIncreaseCounter, last_weight, next_weight);
+//
+                        // the evaluation in bestdual might have increased the bound
+                        obj = DDSIP_bb->dualObjVal;
                     }
+                    else
+                    {
+                        noIncreaseCounter = 0;
+                        next_weight = cb_get_last_weight (p);
+///////////     ///////////
+                        if (DDSIP_param->outlev > 10)
+                            fprintf(DDSIP_bb->moreoutfile,"############### iters in descent step: %d,  repeated increase up to now: %d, last_weight - next_weight= %g ##################\n", DDSIP_bb->dualitcnt - last_dualitcnt,repeated_increase,  last_weight - next_weight);
+/////////
+                        if (DDSIP_bb->dualitcnt - last_dualitcnt < 4 && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight)
+                        {
+                            many_iters = 0;
+                            repeated_increase += 4 - DDSIP_bb->dualitcnt + last_dualitcnt;
+                            if ((abs(DDSIP_param->riskmod) <= 3 && DDSIP_param->cb_reduceWeight && next_weight > 5.e-5) || (abs(DDSIP_param->riskmod) > 3 && DDSIP_param->cb_reduceWeight && next_weight > 1.e-4))
+                            {
+                                if (repeated_increase > 2)
+                                {
+                                    if (weight_decreases > 1)
+                                    {
+                                        reduction_factor = 0.75*reduction_factor + 0.025;
+                                        weight_decreases = 1;
+///////////     ///////////
+                                        if (DDSIP_param->outlev > 10)
+                                            fprintf(DDSIP_bb->moreoutfile,"############### repeated increase= %d, reduction factor decreased to %g ##################\n",repeated_increase, reduction_factor);
+///////////     ///////////
+                                    }
+                                    else
+                                        weight_decreases++;
+                                    last_weight = next_weight;
+                                    next_weight = last_weight * reduction_factor;
+                                    cb_set_next_weight (p, next_weight);
+///////////     ///////////
+                                    if (DDSIP_param->outlev > 10)
+                                        fprintf(DDSIP_bb->moreoutfile,"############### reduced next weight to %g,  repeated increase= %d ##################\n",next_weight,repeated_increase);
+///////////     ///////////
+                                    //repeated_increase = 1;
+                                    repeated_increase = 0;
+                                }
+                            }
+                        }
+                        else if (DDSIP_param->cb_increaseWeight && DDSIP_bb->dualitcnt - last_dualitcnt == 4 &&  many_iters && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight)
+                        {
+                            next_weight = last_weight * 1.02;
+                            cb_set_next_weight (p, next_weight);
+///////////     ///////////
+                            if (DDSIP_param->outlev > 10)
+                                fprintf(DDSIP_bb->moreoutfile,"############### increased next weight to %g,  many_iters = %d ##################\n",next_weight,many_iters);
+///////////     ///////////
+                        }
+                        else if (DDSIP_param->cb_increaseWeight && DDSIP_bb->dualdescitcnt > 1 && last_weight*10. >= next_weight)
+                        {
+                            if ((j = DDSIP_bb->dualitcnt - last_dualitcnt) > 4)
+                            {
+                                repeated_increase = 0;
+                                if (j > 5)
+                                {
+                                    repeated_increase = -1;
+                                    many_iters++;
+                                    if (weight_decreases)
+                                    {
+                                        reduction_factor = 0.7*reduction_factor + 0.27;
+                                        weight_decreases = 0;
+///////////     ///////////
+                                        if (DDSIP_param->outlev > 10)
+                                            fprintf(DDSIP_bb->moreoutfile,"############### repeated increase= %d, reduction factor increased to %g ##################\n",repeated_increase, reduction_factor);
+///////////     ///////////
+                                    }
+                                    if (j > 6)
+                                    {
+                                        repeated_increase = -2;
+                                        if (j > 9)
+                                        {
+                                            if (next_weight < 1.10*last_weight)
+                                            {
+                                                last_weight = next_weight;
+                                                if (last_weight > 1.)
+                                                    next_weight = last_weight * 1.05;
+                                                else if (last_weight > 1e-2)
+                                                    next_weight = last_weight * 1.20;
+                                                else
+                                                    next_weight = last_weight * 2.50;
+                                                cb_set_next_weight (p, next_weight);
+///////////     ///////////
+                                                if (DDSIP_param->outlev > 10)
+                                                    fprintf(DDSIP_bb->moreoutfile,"############### increased next weight to %g,  repeated increase= %d ##################\n",next_weight,repeated_increase);
+///////////     ///////////
+                                            }
+                                            many_iters++;
+                                        }
+                                        else if(many_iters)
+                                        {
+                                            next_weight = last_weight * 1.02;
+                                            cb_set_next_weight (p, next_weight);
+///////////     ///////////
+                                            if (DDSIP_param->outlev > 10)
+                                                fprintf(DDSIP_bb->moreoutfile,"############### increased next weight to %g,  many_iters = %d ##################\n",next_weight,many_iters);
+///////////     ///////////
+                                         }
+                                    }
+                                }
+                                else if (DDSIP_param->cb_increaseWeight && many_iters > 1 && many_iters < 5)
+                                {
+                                    if (last_weight < 1e5)
+                                        next_weight = last_weight * 1.01;
+                                    else
+                                        next_weight = last_weight * 1.005;
+                                    cb_set_next_weight (p, next_weight);
+///////////     ///////////
+                                            if (DDSIP_param->outlev > 10)
+                                                fprintf(DDSIP_bb->moreoutfile,"############### increased next weight to %g,  many_iters = %d ##################\n",next_weight,many_iters);
+///////////     ///////////
+                                }
+                            }
+                            if (DDSIP_param->cb_increaseWeight && many_iters > 4)
+                            {
+                                next_weight = next_weight * 1.15;
+                                cb_set_next_weight (p, next_weight);
+///////////     ///////////
+                                if (DDSIP_param->outlev > 10)
+                                    fprintf(DDSIP_bb->moreoutfile,"############### many_iters=%d-> too many iters, increased next weight to %g,  repeated increase= %d ##################\n",many_iters,next_weight,repeated_increase);
+///////////     ///////////
+                                many_iters = 0;
+                            }
+                        }
+///////////     ///////////
+                        if (DDSIP_param->outlev > 10)
+                            fprintf(DDSIP_bb->moreoutfile,"############### repeated_increase= %d  many_iters= %d    reduction_factor= %g ##################\n",repeated_increase,many_iters, reduction_factor);
+///////////     ///////////
 //
-                    if(DDSIP_param->outlev > 20)
-                        fprintf(DDSIP_bb->moreoutfile, " obj -  old_obj = %-16.12g - %-16.12g = %-10.6g, \tnoIncreaseCounter= %d, last_weight= %g, next_weight= %g\n",obj, old_obj, obj - old_obj, noIncreaseCounter, last_weight, next_weight);
+                        if(DDSIP_param->outlev > 10)
+                            fprintf(DDSIP_bb->moreoutfile, " obj -  old_obj = %-16.12g - %-16.12g = %-10.6g, \tnoIncreaseCounter= %d, last_weight= %g, next_weight= %g\n",obj, old_obj, obj - old_obj, noIncreaseCounter, last_weight, next_weight);
 //
-                    // the evaluation in bestdual might have increased the bound
-                    obj = DDSIP_bb->dualObjVal;
+                        old_obj = obj;
+
+                    }
                 }
                 else
                 {
-                    noIncreaseCounter = 0;
-                    next_weight = cb_get_last_weight (p);
-///////////////////////
-                    if (DDSIP_param->outlev > 10)
-                        fprintf(DDSIP_bb->moreoutfile,"############### iters in descent step: %d,  repeated increase up to now: %d, last_weight - next_weight= %g ##################\n", DDSIP_bb->dualitcnt - last_dualitcnt,repeated_increase,  last_weight - next_weight);
-/////////
-                    if (DDSIP_bb->dualitcnt - last_dualitcnt < 4 && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight)
-                    {
-                        many_iters = 0;
-                        repeated_increase += 4 - DDSIP_bb->dualitcnt + last_dualitcnt;
-                        if ((abs(DDSIP_param->riskmod) <= 3 && DDSIP_param->cb_reduceWeight && next_weight > 5.e-5) || (abs(DDSIP_param->riskmod) > 3 && DDSIP_param->cb_reduceWeight && next_weight > 1.e-4))
-                        {
-                            if (repeated_increase > 2)
-                            {
-                                if (weight_decreases > 1)
-                                {
-                                    reduction_factor = 0.75*reduction_factor + 0.025;
-                                    weight_decreases = 1;
-///////////////////////
-                                    if (DDSIP_param->outlev > 10)
-                                        fprintf(DDSIP_bb->moreoutfile,"############### repeated increase= %d, reduction factor decreased to %g ##################\n",repeated_increase, reduction_factor);
-///////////////////////
-                                }
-                                else
-                                    weight_decreases++;
-                                last_weight = next_weight;
-                                next_weight = last_weight * reduction_factor;
-                                cb_set_next_weight (p, next_weight);
-///////////////////////
-                                if (DDSIP_param->outlev > 10)
-                                    fprintf(DDSIP_bb->moreoutfile,"############### reduced next weight to %g,  repeated increase= %d ##################\n",next_weight,repeated_increase);
-///////////////////////
-                                //repeated_increase = 1;
-                                repeated_increase = 0;
-                            }
-                        }
-                    }
-                    else if (DDSIP_param->cb_increaseWeight && DDSIP_bb->dualdescitcnt > 1 && last_weight*10. >= next_weight)
-                    {
-                        if ((j = DDSIP_bb->dualitcnt - last_dualitcnt) > 4)
-                        {
-                            repeated_increase = 0;
-                            if (j > 5)
-                            {
-                                repeated_increase = -1;
-                                many_iters++;
-                                if (weight_decreases)
-                                {
-                                    reduction_factor = 0.7*reduction_factor + 0.27;
-                                    weight_decreases = 0;
-///////////////////////
-                                    if (DDSIP_param->outlev > 10)
-                                        fprintf(DDSIP_bb->moreoutfile,"############### repeated increase= %d, reduction factor increased to %g ##################\n",repeated_increase, reduction_factor);
-///////////////////////
-                                }
-                                if (j > 6)
-                                {
-                                    repeated_increase = -2;
-                                    if (j > 9)
-                                    {
-                                        if (next_weight < 1.10*last_weight)
-                                        {
-                                            last_weight = next_weight;
-                                            if (last_weight > 1.)
-                                                next_weight = last_weight * 1.05;
-                                            else if (last_weight > 1e-2)
-                                                next_weight = last_weight * 1.20;
-                                            else
-                                                next_weight = last_weight * 2.50;
-                                            cb_set_next_weight (p, next_weight);
-///////////////////////
-                                            if (DDSIP_param->outlev > 10)
-                                                fprintf(DDSIP_bb->moreoutfile,"############### increased next weight to %g,  repeated increase= %d ##################\n",next_weight,repeated_increase);
-///////////////////////
-                                        }
-                                        many_iters++;
-                                    }
-                                }
-                            }
-                        }
-                        //if (DDSIP_param->cb_reduceWeight && many_iters > 4)
-                        if (many_iters > 4)
-                        {
-                            next_weight = next_weight * 1.15;
-                            cb_set_next_weight (p, next_weight);
-///////////////////////
-                            if (DDSIP_param->outlev > 10)
-                                fprintf(DDSIP_bb->moreoutfile,"############### many_iters=%d-> too many iters, increased next weight to %g,  repeated increase= %d ##################\n",many_iters,next_weight,repeated_increase);
-///////////////////////
-                            many_iters = 0;
-                        }
-                    }
-///////////////////////
-                    if (DDSIP_param->outlev > 10)
-                        fprintf(DDSIP_bb->moreoutfile,"############### repeated_increase= %d  many_iters= %d    reduction_factor= %g ##################\n",repeated_increase,many_iters, reduction_factor);
-///////////////////////
-//
-                    if(DDSIP_param->outlev > 10)
-                        fprintf(DDSIP_bb->moreoutfile, " obj -  old_obj = %-16.12g - %-16.12g = %-10.6g, \tnoIncreaseCounter= %d, last_weight= %g, next_weight= %g\n",obj, old_obj, obj - old_obj, noIncreaseCounter, last_weight, next_weight);
-//
-                    old_obj = obj;
-
+                    old_obj = DDSIP_bb->dualObjVal;
                 }
-            }
-            else
-            {
-                old_obj = DDSIP_bb->dualObjVal;
             }
 
             last_weight = cb_get_last_weight (p);

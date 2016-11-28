@@ -1,7 +1,6 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
 	Copyright to:      University of Duisburg-Essen
     Language:          C
-    Last modification: 12.03.2016
 	Description:
 	Initializations: Set cplex parameters, bbtype, advanced solution, sort scenarios
 
@@ -546,6 +545,7 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->front_nodes_sorted = (int *) DDSIP_Alloc (sizeof (int), 1, "DDSIP_bb->front_nodes_sorted(BbInit)");
     DDSIP_bb->front_nodes_sorted[0] = 0;
     DDSIP_bb->meanGapLB = DDSIP_bb->meanGapCBLB = DDSIP_bb->meanGapUB = 0.;
+    DDSIP_bb->bestBound = DDSIP_bb->newTry = 0;
 
     return status;
 } // DDSIP_BbTypeInit

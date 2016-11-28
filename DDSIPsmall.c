@@ -1,7 +1,6 @@
 /*  Authors:            Andreas M"arkert, Ralf Gollmer
 	Copyright to:      University of Duisburg-Essen
     Language:          C
-    Last modification: 06.02.2016
 	Description:
 	A few small functions for signal handling, cpu time, minimum, maximum,
 	feasibility test, and error handling w.r.t. cplex errors

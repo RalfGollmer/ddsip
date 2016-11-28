@@ -1,7 +1,6 @@
 /*  Authors:            Andreas M"arkert, Ralf Gollmer
 	Copyright to:      University of Duisburg-Essen
     Language:          C
-    Last modification: 12.03.2016
 	Description: ,
 	This file contains the implementation of the different heuristics to
 	get a suggestion for an upper bound.
@@ -38,10 +37,11 @@ void DDSIP_LargeValue (void);
 void DDSIP_MinSum (void);
 void DDSIP_MaxSum (void);
 int  DDSIP_All (void);
+void DDSIP_BoundConsistent (void);
 
 
 //==========================================================================
-// Rounding the average of integer components down
+// Rounding the average of integer components down  Heur. 1
 void
 DDSIP_RoundDown (double *average)
 {
@@ -56,7 +56,7 @@ DDSIP_RoundDown (double *average)
 }
 
 //==========================================================================
-// Rounding the average of integer components up
+// Rounding the average of integer components up  Heur. 2
 void
 DDSIP_RoundUp (double *average)
 {
@@ -71,7 +71,7 @@ DDSIP_RoundUp (double *average)
 }
 
 //==========================================================================
-// Rounding the average of integer components to nearest integer
+// Rounding the average of integer components to nearest integer  Heur. 3
 void
 DDSIP_RoundNear (double *average)
 {
@@ -88,7 +88,7 @@ DDSIP_RoundNear (double *average)
 }
 
 //==========================================================================
-// Most frequent scenario solution
+// Most frequent scenario solution  Heur. 4
 void
 DDSIP_Frequent (void)
 {
@@ -98,13 +98,15 @@ DDSIP_Frequent (void)
         if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][DDSIP_bb->firstvar] > (DDSIP_node[DDSIP_bb->curnode]->first_sol)[k][DDSIP_bb->firstvar])
             k = i;
 
+    if(DDSIP_param->outlev)
+        fprintf (DDSIP_bb->moreoutfile, "(scen %d)", k+1);
     for (j = 0; j < DDSIP_bb->firstvar; j++)
         (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[k][j];
 }
 
 
 //==========================================================================
-// Most probable scenario solution
+// Most probable scenario solution  Heur. 5
 void
 DDSIP_Probable (void)
 {
@@ -131,13 +133,15 @@ DDSIP_Probable (void)
         prob[k] += DDSIP_data->prob[i];
     }
     // determine the solution with maximal probability
-    k = 0;
-    for (i = 1; i < DDSIP_param->scenarios; i++)
+    k = DDSIP_param->scenarios - 1;
+    for (i = DDSIP_param->scenarios - 2; i >= 0; i--)
     {
         if (prob[i] > prob[k])
             k = i;
     }
 
+    if(DDSIP_param->outlev)
+        fprintf (DDSIP_bb->moreoutfile, "(scen %d)", k+1);
     for (j = 0; j < DDSIP_bb->firstvar; j++)
         (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[k][j];
     DDSIP_Free((void **) &prob);
@@ -145,7 +149,7 @@ DDSIP_Probable (void)
 
 
 //==========================================================================
-// Scenario solution closest to average
+// Scenario solution closest to average  Heur. 6
 void
 DDSIP_CloseToAverage (double *average)
 {
@@ -165,12 +169,14 @@ DDSIP_CloseToAverage (double *average)
             minind = i;
         }
     }
+    if(DDSIP_param->outlev)
+        fprintf (DDSIP_bb->moreoutfile, "(scen %d)", minind+1);
     for (j = 0; j < DDSIP_bb->firstvar; j++)
         (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[minind][j];
 }
 
 //==========================================================================
-// Scenario solution with smallest objective value
+// Scenario solution with smallest objective value Heur. 7
 void
 DDSIP_SmallValue (void)
 {
@@ -183,12 +189,14 @@ DDSIP_SmallValue (void)
             tmp = (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j];
             i = j;
         }
+    if(DDSIP_param->outlev)
+        fprintf (DDSIP_bb->moreoutfile, "(scen %d)", i+1);
     for (j = 0; j < DDSIP_bb->firstvar; j++)
         (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][j];
 }
 
 //==========================================================================
-// Senario solution with largest objective value
+// Scenario solution with largest objective value Heur. 8
 void
 DDSIP_LargeValue (void)
 {
@@ -201,12 +209,14 @@ DDSIP_LargeValue (void)
             tmp = (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j];
             i = j;
         }
+    if(DDSIP_param->outlev)
+        fprintf (DDSIP_bb->moreoutfile, "(scen %d)", i+1);
     for (j = 0; j < DDSIP_bb->firstvar; j++)
         (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][j];
 }
 
 //==========================================================================
-// Senario solution with minimal sum of first-stage variables (originally to suit for EPS problem)
+// Senario solution with minimal sum of first-stage variables  Heur. 9
 void
 DDSIP_MinSum (void)
 {
@@ -235,12 +245,14 @@ DDSIP_MinSum (void)
             }
         }
     }
+    if(DDSIP_param->outlev)
+        fprintf (DDSIP_bb->moreoutfile, "(scen %d)", minind+1);
     for (i = 0; i < DDSIP_bb->firstvar; i++)
         (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[minind][i];
 }
 
 //==========================================================================
-// Senario solution with maximal sum of first-stage variables (originally to suit for EPS problem)
+// Senario solution with maximal sum of first-stage variables  Heur. 10
 void
 DDSIP_MaxSum (void)
 {
@@ -269,12 +281,14 @@ DDSIP_MaxSum (void)
             }
         }
     }
+    if(DDSIP_param->outlev)
+        fprintf (DDSIP_bb->moreoutfile, "(scen %d)", maxind+1);
     for (i = 0; i < DDSIP_bb->firstvar; i++)
         (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[maxind][i];
 }
 
 //==========================================================================
-// All suggests successively all scenario problem solutions
+// All suggests successively all scenario problem solutions  Heur. 12
 int
 DDSIP_All (void)
 {
@@ -351,6 +365,8 @@ DDSIP_All (void)
                 if (DDSIP_bb->firsttype[ii] == 'B' || DDSIP_bb->firsttype[ii] == 'I' || DDSIP_bb->firsttype[ii] == 'N')
                     (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[ii] = floor (((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[ii] + 0.5));
 
+        // Consistent?
+        DDSIP_BoundConsistent ();
 
         // In case of worst-case risk measure change value of aux var to worst_case_lb for heuristics
         if (abs(DDSIP_param->riskmod) == 4 && !DDSIP_bb->skip && !DDSIP_param->riskalg && !DDSIP_param->scalarization)
@@ -547,35 +563,7 @@ DDSIP_Heuristics (int *comb)
                     (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] = floor (((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] + .5));
                 }
         // Consistent ?
-        for (i = 0; i < DDSIP_bb->firstvar; i++)
-        {
-            if ((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i] - DDSIP_bb->uborg[i])/(fabs(DDSIP_bb->uborg[i])+ 1.) > DDSIP_param->accuracy)
-            {
-                printf ("   high suggestion for variable %d: sug=%20.18f ub=%20.18f, difference=%lg\n",i,
-                        (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->uborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->uborg[i]);
-                if (DDSIP_param->outlev)
-                {
-                    fprintf (DDSIP_bb->moreoutfile,"   high suggestion for variable %d: sug=%20.18f ub=%20.18f, difference=%lg\n",i,
-                             (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->uborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->uborg[i]);
-                }
-                DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i] = DDSIP_bb->uborg[i];
-            }
-            if ((DDSIP_bb->lborg[i] - DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i])/(fabs(DDSIP_bb->lborg[i])+ 1.) > DDSIP_param->accuracy)
-            {
-                // in the root node the lower bound for the additional variable for worst case costs was updated
-                if (DDSIP_bb->curnode || !(i == DDSIP_data->firstvar && (abs(DDSIP_param->riskmod) != 4 || abs(DDSIP_param->riskmod) != 5)))
-                {
-                    printf ("   low suggestion for variable %d: sug=%14.8f lb=%14.8f, difference=%lg\n",i,
-                            (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->lborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->lborg[i]);
-                    if (DDSIP_param->outlev)
-                    {
-                        fprintf (DDSIP_bb->moreoutfile,"   low suggestion for variable %d: sug=%14.8f lb=%14.8f, difference=%lg\n",i,
-                                 (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->lborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->lborg[i]);
-                    }
-                }
-                (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] = DDSIP_bb->lborg[i];
-            }
-        }
+        DDSIP_BoundConsistent ();
 
     }
     // In case of worst-case risk measure change value of aux var to worst_case_lb for heuristics
@@ -590,4 +578,42 @@ DDSIP_Heuristics (int *comb)
     }
 
     return 0;
-}
+} // end DDSIP_Heuristics
+
+// Function checks for consistency of the suggestion with bounds and corrects errors
+void
+DDSIP_BoundConsistent (void)
+{
+int i;
+    for (i = 0; i < DDSIP_bb->firstvar; i++)
+    {
+        if (((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i] - DDSIP_bb->uborg[i])/(fabs(DDSIP_bb->uborg[i])+ 1.)) > DDSIP_param->accuracy)
+        {
+            printf ("   high suggestion for variable %d: sug=%20.18f ub=%20.18f, difference=%lg\n",i,
+                    (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->uborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->uborg[i]);
+            if (DDSIP_param->outlev &&
+                (((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i] - DDSIP_bb->uborg[i])/(fabs(DDSIP_bb->uborg[i])+ 1.e+2)) > DDSIP_param->accuracy))
+            {
+                fprintf (DDSIP_bb->moreoutfile,"   high suggestion for variable %d: sug=%20.18f ub=%20.18f, difference=%lg\n",i,
+                         (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->uborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->uborg[i]);
+            }
+            DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i] = DDSIP_bb->uborg[i];
+        }
+        if (((DDSIP_bb->lborg[i] - DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i])/(fabs(DDSIP_bb->lborg[i])+ 1.)) > DDSIP_param->accuracy)
+        {
+            // in the root node the lower bound for the additional variable for worst case costs was updated
+            if (DDSIP_bb->curnode || !(i == DDSIP_data->firstvar && (abs(DDSIP_param->riskmod) != 4 || abs(DDSIP_param->riskmod) != 5)))
+            {
+                printf ("   low suggestion for variable %d: sug=%16.8g lb=%16.8g, difference=%lg\n",i,
+                        (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->lborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->lborg[i]);
+                if (DDSIP_param->outlev &&
+                    (((DDSIP_bb->lborg[i] - DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i])/(fabs(DDSIP_bb->lborg[i])+ 1.e+2)) > DDSIP_param->accuracy))
+                {
+                    fprintf (DDSIP_bb->moreoutfile,"   low suggestion for variable %d: sug=%16.10g lb=%16.10g, difference=%lg\n",i,
+                             (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->lborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->lborg[i]);
+                }
+            }
+            (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] = DDSIP_bb->lborg[i];
+        }
+    }
+} // end DDSIP_BoundConsistent

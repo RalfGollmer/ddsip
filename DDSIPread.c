@@ -1,7 +1,6 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
     Copyright to:      University of Duisburg-Essen
    Language:          C
-   Last modification: 06.02.2016
     Description:
     Functions to read a double number, the specification file, the model files,
     the scenario files and an advanced solution.

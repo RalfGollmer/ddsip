@@ -1,7 +1,6 @@
 /*  Authors:            Andreas M"arkert, Ralf Gollmer
 	Copyright to:      University of Duisburg-Essen
     Language:          C
-   Last modification: 12.03.2016
 
 	Description:
 	This file contains procedures to manage the memory use of the program.

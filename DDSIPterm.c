@@ -1,7 +1,6 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
 	Copyright to:      University of Duisburg-Essen
     Language:          C
-    Last modification: 12.03.2016
 	Description:
 	Here we check all termination criteria and perform a postprocessing
 	if one criterion is fulfilled.

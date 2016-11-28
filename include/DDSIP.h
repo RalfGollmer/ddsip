@@ -528,6 +528,8 @@ extern "C" {
         double meanGapLB,  meanGapCBLB, meanGapUB;
         // store info whether best bound search is to be used for the next node
         int bestBound;
+        // info whether a next try with higher weight should be done
+        int newTry;
     } bb_t;
 
     typedef struct

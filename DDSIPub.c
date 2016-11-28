@@ -1,7 +1,6 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
     Copyright to:      University of Duisburg-Essen
 Language:          C
-Last modification: 16.04.2016
 License:
 This file is part of DDSIP.
 Description:
@@ -706,7 +705,7 @@ DDSIP_UpperBound (void)
                                  iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
                                  wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
                         fprintf (DDSIP_bb->moreoutfile,
-                                 "Lower bound for suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the rest of scenarios: %.16g)\n", iscen + 1,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk +rest_bound);
+                                 "Lower bound for suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk +rest_bound);
                     }
                     prematureStop = 1;
                     goto TERMINATE;
@@ -883,9 +882,9 @@ DDSIP_UpperBound (void)
             if (DDSIP_param->outlev)
             {
                 printf (
-                    "Suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the rest of scenarios: %.16g)\n", iscen + 1,tmpbestvalue,tmpbestvalue+rest_bound);
+                    "Suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue,tmpbestvalue+rest_bound);
                 fprintf (DDSIP_bb->moreoutfile,
-                         "Suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the rest of scenarios: %.16g)\n", iscen + 1,tmpbestvalue,tmpbestvalue+rest_bound);
+                         "Suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue,tmpbestvalue+rest_bound);
             }
             goto TERMINATE;
         }

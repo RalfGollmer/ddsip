@@ -1,7 +1,6 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
     Copyright:         University of Duisburg-Essen
     Language:          C
-    Last modification: 06.02.2016
 	Description:
 	This file contains an auxiliary program for DDSIP.
         It's sole purpose is to read the model file and to write a list of variables

@@ -1,7 +1,6 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
 	Copyright to:      University of Duisburg-Essen
     Language:          C
-    Last modification: 06.02.2016
 	Description:
 	The procedure in this file builds a deterministic equivalent and writes
         the lp.gz file via CPLEX calls -- This is implemented only for

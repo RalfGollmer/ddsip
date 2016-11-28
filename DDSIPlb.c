@@ -1,7 +1,6 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
     Copyright to:      University of Duisburg-Essen
     Language:          C
-    Last modification: 16.04.2016
 
     Description:
     This file contains the evaluation of the nodes in the
@@ -1265,7 +1264,8 @@ DDSIP_LowerBound (void)
             {
                 for (i_scen = 0; i_scen < scen; i_scen++)
                 {
-                    if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i_scen] ==  (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen])
+                    // if the solutions have the same address, they were equal
+                    if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i_scen] == (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen])
                         break;
                 }
                 if (i_scen < scen)
@@ -3371,16 +3371,22 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             }
             else if (DDSIP_Infeasible (mipstatus))
             {
-                DDSIP_node[DDSIP_bb->curnode]->bound = DDSIP_infty;
                 DDSIP_bb->skip = 1;
                 DDSIP_bb->solstat[scen] = 0;
                 status = mipstatus;
-                if (DDSIP_bb->dualitcnt)
+                printf ("ERROR: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
+                fprintf (DDSIP_outfile, "ERROR: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
+                if (DDSIP_param->outlev)
+                    fprintf (DDSIP_bb->moreoutfile, "ERROR: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
+                if (DDSIP_bb->dualitcnt && DDSIP_bb->newTry < 6)
                 {
-                    printf ("ERROR: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
-                    fprintf (DDSIP_outfile, "ERROR: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
-                    if (DDSIP_param->outlev)
-                        fprintf (DDSIP_bb->moreoutfile, "ERROR: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
+                    DDSIP_bb->newTry++;
+                    status = -111;
+                }
+                else
+                {
+                    DDSIP_bb->newTry = 0;
+                    DDSIP_node[DDSIP_bb->curnode]->bound = DDSIP_infty;
                 }
                 goto TERMINATE;
             }
@@ -4133,12 +4139,14 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
 TERMINATE:
 
     // Only if no errors, yet.
-    if (!status)
+    if (!status || status == -111)
     {
-        status = DDSIP_RestoreBoundAndType ();
-        if (status)
+        relax = DDSIP_RestoreBoundAndType ();
+        if (relax)
             fprintf (stderr, "ERROR: Failed to restore bounds \n");
     }
+    if (!status)
+        DDSIP_bb->newTry = 0;
 
     DDSIP_Free ((void **) &(indices));
     DDSIP_Free ((void **) &(mipx));

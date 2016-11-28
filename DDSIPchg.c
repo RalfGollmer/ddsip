@@ -1,7 +1,6 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
 	Copyright to:      University of Duisburg-Essen
     Language:          C
-    Last modification: 06.02.2016
 	Description:
 	The procedures in this file are used to modify the problem according to
 	the current scenarios during the branch-and-bound algorithm.

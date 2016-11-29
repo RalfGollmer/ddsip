@@ -1,11 +1,10 @@
 # Makefile for gnumake on linux
 # Set OS type
 OSTYPE		:=	$(shell uname -s | tr '[A-Z]' '[a-z]')
-# for CPLEX 11.2
-#CPLEX     =/usr/local/ILOG/cplex112
-#LINUXVAR  = x86-64_debian4.0_4.1
-# for CPLEX 12.6
-CPLEX    = /opt/ibm/ILOG/CPLEX_Enterprise_Server1263/CPLEX_Studio/cplex
+# Adapt the following lines defining the paths to CPLEX and ConicBundle according to your installation
+# for CPLEX 12.6.3
+#CPLEX    = /opt/ibm/ILOG/CPLEX_Enterprise_Server1263/CPLEX_Studio/cplex
+CPLEX    = /opt/ibm/ILOG/CPLEX_Studio1263/cplex
 LINUXVAR = x86-64_linux
 CB       = ../ConicBundle
 

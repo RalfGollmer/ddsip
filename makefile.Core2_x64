@@ -2,7 +2,9 @@
 # Set OS type
 OSTYPE		:=	$(shell uname -s | tr '[A-Z]' '[a-z]')
 # Adapt the following lines defining the paths to CPLEX and ConicBundle according to your installation
-CPLEX    = /opt/ibm/ILOG/CPLEX_Enterprise_Server1263/CPLEX_Studio/cplex
+# for CPLEX 12.6.3
+#CPLEX    = /opt/ibm/ILOG/CPLEX_Enterprise_Server1263/CPLEX_Studio/cplex
+CPLEX    = /opt/ibm/ILOG/CPLEX_Studio1263/cplex
 LINUXVAR = x86-64_linux
 CB       = ../ConicBundle
 
@@ -54,11 +56,8 @@ OBJSWITHDIR = $(addprefix $(OBJDIR)/,$(OBJECTS))
 #Compile
 all: $(TARGET)
 
-#$(OBJDIR)/%.o: %.c ./include/DDSIP.h ./include/DDSIPconst.h 
-#	@if [ ! -d $(OBJDIR) ]; then mkdir $(OBJDIR); fi
-#	$(CC) $($(OSTYPE).CFLAGS) $(CDIRS) -c $< -o $@
-
 $(OBJDIR)/%.o: %.c ./include/DDSIP.h ./include/DDSIPconst.h 
+	@if [ ! -d $(OBJDIR) ]; then mkdir $(OBJDIR); fi
 	$(CC) $($(OSTYPE).CFLAGS) $(CDIRS) -c $< -o $@
 
 #Link

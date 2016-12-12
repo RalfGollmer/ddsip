@@ -825,6 +825,59 @@ DDSIP_UpperBound (void)
             for(j = iscen; j>0; j--)
                 DDSIP_bb->scen_order[j] = DDSIP_bb->scen_order[j-1];
             DDSIP_bb->scen_order[0] = k;
+#ifdef ADDCUTS
+            //if all first-stage variables are binary ones, we can add an inequality, cutting off this point
+            if (DDSIP_param->addCuts && DDSIP_data->firstvar == DDSIP_bb->first_bin)
+            {
+                int *rmatbeg = (int *) DDSIP_Alloc (sizeof (int*), 1, "rmatbeg(UpperBound)");
+                int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->firstvar + 1), "rmatind(UpperBound)");
+                double *rmatval = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_data->firstvar + 1), "rmatval (UpperBound)");
+                double *rhs = (double *) DDSIP_Alloc (sizeof (double), 1, "rhs(UpperBound)");
+                char *sense = (char *) DDSIP_Alloc (sizeof (char), 1, "sense(UpperBound)");
+                char **rowname = (char **) DDSIP_Alloc (sizeof (char *), 1, "colname(UpperBound)");
+                char *rowstore = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_varname, "colstore(UpperBound)");
+                DDSIP_bb->cutCntr++;
+                if (DDSIP_param->outlev)
+                    fprintf (DDSIP_bb->moreoutfile," ############ inserting cut no. %d ############\n", DDSIP_bb->cutCntr);
+                printf (" ############ inserting cut no. %d ############\n", DDSIP_bb->cutCntr);
+                rowname[0] = rowstore;
+                sprintf (rowstore, "DDSIPcut%d",DDSIP_bb->cutCntr);
+                rhs[0] = 1.;
+                sense[0] = 'G';
+                rmatbeg[0] = 0;
+                for (k = 0; k < DDSIP_data->firstvar; k++)
+                {
+                    rmatind[k] = DDSIP_bb->firstindex[k];
+                    if (floor((DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[k] + 0.5))
+                    {
+                        rmatval[k] = -1.;
+                        rhs[0] -= 1.;
+                    }
+                    else
+                    {
+                        rmatval[k] = 1.;
+                    }
+                }
+                if ((status = CPXaddrows(DDSIP_env, DDSIP_lp, 0, 1, DDSIP_data->firstvar, rhs, sense, rmatbeg, rmatind, rmatval, NULL, rowname)))
+                {
+                    fprintf (stderr, "ERROR: Failed to add cut inequality (UpperBound), status=%d \n",status);
+                    if (DDSIP_param->outlev)
+                        fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to add cut inequality (UpperBound) \n");
+                }
+                else
+                {
+                    fprintf (stderr, "added cut inequality %s\n", rowstore);
+                    DDSIP_bb->cutAdded = 1;
+                }
+                DDSIP_Free ((void *) &rmatbeg);
+                DDSIP_Free ((void *) &rmatind);
+                DDSIP_Free ((void *) &rmatval);
+                DDSIP_Free ((void *) &rhs);
+                DDSIP_Free ((void *) &sense);
+                DDSIP_Free ((void *) &rowname);
+                DDSIP_Free ((void *) &rowstore);
+            }
+#endif
             goto TERMINATE;
         }
         // Get solution
@@ -971,6 +1024,8 @@ DDSIP_UpperBound (void)
     // Update if better solution was found
     if (tmpbestvalue < DDSIP_bb->bestvalue)
     {
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "\t(Current best bound, improvement %16.12g, %g%%)\n",DDSIP_bb->bestvalue-tmpbestvalue,1e+2*(DDSIP_bb->bestvalue-tmpbestvalue)/(fabs(DDSIP_bb->bestvalue) + 1.e-16));
         DDSIP_bb->bestvalue = tmpbestvalue;
         DDSIP_bb->feasbound = tmpfeasbound;
         DDSIP_bb->bestrisk = DDSIP_bb->currisk;
@@ -984,8 +1039,6 @@ DDSIP_UpperBound (void)
         for (j = 0; j < DDSIP_bb->firstvar; j++)
             DDSIP_bb->bestsol[j] = ((DDSIP_bb->sug[DDSIP_bb->curnode])->firstval)[j];
 
-        if (DDSIP_param->outlev)
-            fprintf (DDSIP_bb->moreoutfile, "\t(Current best bound)\n");
         if (tmpbestvalue < DDSIP_node[DDSIP_bb->curnode]->bound)
         {
             // something's wrong with the accuracy of solutions - the heuristic gave a better value than the lower bound in the same node!

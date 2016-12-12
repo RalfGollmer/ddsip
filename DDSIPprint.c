@@ -112,8 +112,8 @@ DDSIP_PrintState (int noiter)
     {
         printf ("\n   Node   Nodes    Left  Objective         Heuristic");
         fprintf (DDSIP_outfile, "\n   Node   Nodes    Left  Objective         Heuristic");
-        printf ("         Best Value        Bound             Viol./Dispersion        Gap   Wall Time    CPU Time   Father Depth\n");
-        fprintf (DDSIP_outfile, "         Best Value        Bound             Viol./Dispersion        Gap   Wall Time    CPU Time   Father Depth\n");
+        printf ("         Best Value        Bound             Viol./Dispersion         Gap   Wall Time    CPU Time   Father Depth\n");
+        fprintf (DDSIP_outfile, "         Best Value        Bound             Viol./Dispersion         Gap   Wall Time    CPU Time   Father Depth\n");
     }
 
     if (!DDSIP_bb->violations && fabs(DDSIP_bb->bestvalue - DDSIP_node[DDSIP_bb->curnode]->bound)/(fabs(DDSIP_bb->bestvalue) + 3.e-16) < 5.e-16)
@@ -223,8 +223,8 @@ DDSIP_PrintState (int noiter)
 
     if (DDSIP_bb->bestvalue < DDSIP_infty && fabs (DDSIP_bb->bestbound) < DDSIP_infty)
     {
-        printf (" %9.4g%%", rgap);
-        fprintf (DDSIP_outfile, " %9.4g%%", rgap);
+        printf (" %10.4g%%", rgap);
+        fprintf (DDSIP_outfile, " %10.4g%%", rgap);
     }
     else
     {
@@ -283,8 +283,8 @@ DDSIP_PrintStateUB (int heur)
         fprintf (DDSIP_outfile, "                  ");
     }
 
-    printf ("                                               ");
-    fprintf (DDSIP_outfile,"                                               ");
+    printf ("                                                ");
+    fprintf (DDSIP_outfile,"                                                ");
 
     DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
     time (&DDSIP_bb->cur_time);

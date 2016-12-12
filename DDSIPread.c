@@ -1202,6 +1202,9 @@ DDSIP_ReadSpec ()
     }
     //DDSIP_param->prepro = floor (DDSIP_ReadDbl (specfile, "PREPRO", " PREPROCESSING", 0., 1, 0., 3.) + 0.1);
     DDSIP_param->prepro = 0;
+#ifdef ADDCUTS
+    DDSIP_param->addCuts = floor (DDSIP_ReadDbl (specfile, "ADDCUT", " ADD CUTS", 0., 1, 0., 1.) + 0.1);
+#endif
     fprintf (DDSIP_outfile, "\n");
 
 

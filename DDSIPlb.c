@@ -388,7 +388,10 @@ DDSIP_GetBranchIndex (double *dispnorm)
             }
             diff = abs (below-above);
             dist = DDSIP_Dmin (dist_below,dist_above) + 5e-1*(dist_below+dist_above);
-            if (!((abs(DDSIP_param->riskmod) == 4) && (index[j] == DDSIP_bb->firstvar - 1)) && ((DDSIP_param->equalbranch == 1) || (!DDSIP_param->equalbranch && ((DDSIP_bb->curnode < 11) || ((DDSIP_bb->curnode > 25) && (DDSIP_bb->curnode%10 >= 6))))))
+            if (!((abs(DDSIP_param->riskmod) == 4) && (index[j] == DDSIP_bb->firstvar - 1)) &&
+                ((DDSIP_param->equalbranch == 1) || (!DDSIP_param->equalbranch && (
+                  /*DDSIP_bb->bestBound ||*/
+                 (DDSIP_bb->curnode < 11) || ((DDSIP_bb->curnode > 25) && (DDSIP_bb->curnode%10 >= 6))))))
             {
                 if ((diff < mindiff && dist > 0.8*maxdist) || (diff <= mindiff && dispnorm[index[j]] > dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind] && dist > 0.9*maxdist) || (diff < mindiff+3 && dispnorm[index[j]] > factor*dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind] && dist > maxdist + 1e-1))
                 {
@@ -1874,7 +1877,7 @@ DDSIP_LowerBound (void)
                     (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][DDSIP_bb->firstvar + 1] = 0.0;
                     //first_sol[DDSIP_bb->firstvar+2] is the number of the node where the solution was computed
                     (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][DDSIP_bb->firstvar + 2] = DDSIP_bb->curnode;
-                    if (DDSIP_param->outlev >= DDSIP_first_stage_outlev)
+                    if (DDSIP_param->outlev >= DDSIP_first_stage_outlev && i_scen >= scen)
                         fprintf (DDSIP_bb->moreoutfile, "    First-stage solution:\n");
                     for (j = 0; j < DDSIP_bb->firstvar; j++)
                     {
@@ -1884,7 +1887,7 @@ DDSIP_LowerBound (void)
                         else
                             (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] = mipx[DDSIP_bb->firstindex[j]];
                         // Print something
-                        if (DDSIP_param->outlev > DDSIP_first_stage_outlev && i_scen >= scen)
+                        if (DDSIP_param->outlev >= DDSIP_first_stage_outlev && i_scen >= scen)
                         {
                             fprintf (DDSIP_bb->moreoutfile," %18.14g,", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
                             if (!((j + 1) % 5))
@@ -2152,7 +2155,7 @@ if (DDSIP_param->outlev)
     }
     else
     {
-        if ((DDSIP_node[DDSIP_bb->curnode]->bound + 0.008*meanGap * fabs(DDSIP_node[DDSIP_bb->curnode]->bound)) > DDSIP_bb->bestvalue)
+        if ((DDSIP_node[DDSIP_bb->curnode]->bound <  DDSIP_bb->bestvalue + DDSIP_param->accuracy) && ((DDSIP_node[DDSIP_bb->curnode]->bound + 0.008*meanGap * fabs(DDSIP_node[DDSIP_bb->curnode]->bound)) > DDSIP_bb->bestvalue + DDSIP_param->accuracy))
         {
             printf("          WARNING: node %d is possibly not cut off just due to the MIP gaps. mean MIP gap = %g%%, upper bound= %16.12g\n", DDSIP_bb->curnode, meanGap, tmpbestvalue);
             fprintf(DDSIP_outfile, "          WARNING: node %d is possibly not cut off just due to the MIP gaps. mean MIP gap = %g%%, upper bound= %16.12g\n",
@@ -3339,10 +3342,10 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             // We handle some errors separately (blatant infeasible, error in scenario problem)
             if (DDSIP_Error (optstatus))
             {
-                fprintf (stderr, "ERROR: Failed to optimize problem for scenario %d.(CBLowerBound), status = %d\n", scen + 1,
+                fprintf (stderr, "WARNING: Failed to optimize problem for scenario %d.(CBLowerBound), status = %d\n", scen + 1,
                          optstatus);
                 if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to optimize problem for scenario %d.(CBLowerBound) status=%d\n",
+                    fprintf (DDSIP_bb->moreoutfile, "WARNING: Failed to optimize problem for scenario %d.(CBLowerBound) status=%d\n",
                              scen + 1, optstatus);
                 if (optstatus == CPXERR_SUBPROB_SOLVE)
                 {
@@ -3374,11 +3377,10 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 DDSIP_bb->skip = 1;
                 DDSIP_bb->solstat[scen] = 0;
                 status = mipstatus;
-                printf ("ERROR: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
-                fprintf (DDSIP_outfile, "ERROR: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
+                printf ("WARNING: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
                 if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile, "ERROR: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
-                if (DDSIP_bb->dualitcnt && DDSIP_bb->newTry < 6)
+                    fprintf (DDSIP_bb->moreoutfile, "WARNING: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
+                if ((DDSIP_bb->dualitcnt && DDSIP_bb->newTry < 6) || (!DDSIP_bb->dualitcnt && DDSIP_bb->newTry < 3))
                 {
                     DDSIP_bb->newTry++;
                     status = -111;
@@ -3778,7 +3780,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         if (DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] < 0.)
             DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] = 0.1;
         if (DDSIP_param->outlev > 10)
-            fprintf (DDSIP_bb->moreoutfile,"bestdual updated in desc. it. %d  (weight %g)\n", DDSIP_bb->dualdescitcnt, DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual]);
+            fprintf (DDSIP_bb->moreoutfile," +++-> bestdual updated in desc. it. %d  (weight %g)\n", DDSIP_bb->dualdescitcnt, DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual]);
         // Set lower bound for the node
         DDSIP_node[DDSIP_bb->curnode]->bound = tmpbestbound;
         // Free previous first stage in best point

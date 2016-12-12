@@ -398,12 +398,12 @@ DDSIP_BbTypeInit (void)
     {
         printf ("with risk model\n");
         printf ("\t\t No. of              variables:    %6d\n", DDSIP_bb->novar);
-        printf ("\t\t No. of  first-stage variables:    %6d  (%d generals, %d binaries, %d continuous)\n", DDSIP_bb->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_bb->firstvar - DDSIP_bb->first_int);
+        printf ("\t\t No. of  first-stage variables:    %6d  (%d generals, %d binary, %d continuous)\n", DDSIP_bb->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_bb->firstvar - DDSIP_bb->first_int);
         printf ("\t\t No. of second-stage variables:    %6d  (%d integers)\n", DDSIP_bb->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
         fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
         fprintf (DDSIP_outfile, "with risk model\n");
         fprintf (DDSIP_outfile, "\t\t No. of              variables:    %6d\n", DDSIP_bb->novar);
-        fprintf (DDSIP_outfile, "\t\t No. of  first-stage variables:    %6d  (%d generals, %d binaries, %d continuous)\n", DDSIP_bb->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_bb->firstvar - DDSIP_bb->first_int);
+        fprintf (DDSIP_outfile, "\t\t No. of  first-stage variables:    %6d  (%d generals, %d binary, %d continuous)\n", DDSIP_bb->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_bb->firstvar - DDSIP_bb->first_int);
         fprintf (DDSIP_outfile, "\t\t No. of second-stage variables:    %6d  (%d integers)\n", DDSIP_bb->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
         fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
     }
@@ -545,7 +545,7 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->front_nodes_sorted = (int *) DDSIP_Alloc (sizeof (int), 1, "DDSIP_bb->front_nodes_sorted(BbInit)");
     DDSIP_bb->front_nodes_sorted[0] = 0;
     DDSIP_bb->meanGapLB = DDSIP_bb->meanGapCBLB = DDSIP_bb->meanGapUB = 0.;
-    DDSIP_bb->bestBound = DDSIP_bb->newTry = 0;
+    DDSIP_bb->bestBound = DDSIP_bb->newTry = DDSIP_bb->cutCntr = DDSIP_bb->cutAdded = 0;
 
     return status;
 } // DDSIP_BbTypeInit
@@ -645,6 +645,11 @@ DDSIP_InitStages (void)
                         DDSIP_bb->first_bin++;
                 }
                 cnt++;
+                // Debug output of names of first-stage variables
+                if (DDSIP_param->outlev > 30)
+                {
+                    printf("first-stage variable %3d:  %c  %s\n", cnt, ctype[i], colname[i]);
+                }
             }
             else
             {
@@ -674,8 +679,15 @@ DDSIP_InitStages (void)
                 {
                     DDSIP_bb->total_int++;
                     DDSIP_bb->first_int++;
+                    if (ctype[i] == 'B')
+                        DDSIP_bb->first_bin++;
                 }
                 cnt++;
+                // Debug output of names of first-stage variables
+                if (DDSIP_param->outlev > 30)
+                {
+                    printf("first-stage variable %3d:  %c  %s\n", cnt, ctype[i], colname[i]);
+                }
             }
             else
             {
@@ -794,10 +806,10 @@ DDSIP_InitStages (void)
     // upper bounds on all variables
     if (ind)
     {
-        printf ("*Warning: Variable(s) unbounded. This may cause problems with dual method.\n");
-        fprintf (DDSIP_outfile, "*Warning: Variable(s) unbounded. This may cause problems with dual method.\n");
+        printf ("*Warning: Variable(s) unbounded. This may cause problems with dual method (unboundedness of scenario problems due to Lagrangean term).\n");
+        fprintf (DDSIP_outfile, "*Warning: Variable(s) unbounded. This may cause problems with dual method (unboundedness of scenario problems due to Lagrangean term).\n");
         if (DDSIP_param->outlev)
-            fprintf (DDSIP_bb->moreoutfile, "*Warning: Variable(s) unbounded. This may cause problems with dual method.\n");
+            fprintf (DDSIP_bb->moreoutfile, "*Warning: Variable(s) unbounded. This may cause problems with dual method (unboundedness of scenario problems due to Lagrangean term).\n");
     }
 
     DDSIP_Free ((void **) &(lb));
@@ -896,12 +908,11 @@ DDSIP_DetectStageRows (void)
             k++;
         }
     }
-    if (DDSIP_param->outlev > 4)
+    if (DDSIP_param->outlev > 30)
     {
-        printf("First-stage constraints:");
+        printf("First-stage constraint indices:");
         for (i = 0; i < DDSIP_data->firstcon; i++)
         {
-            
             if (!(i%10))
                 printf ("\n");
             printf(" %6d,",DDSIP_bb->firstrowind[i]);
@@ -1067,14 +1078,19 @@ DDSIP_BbInit (void)
     // Print infos
     printf ("\t\t Data from input model file:\n");
     printf ("\t\t No. of              variables:     %6d\n", DDSIP_data->novar);
-    printf ("\t\t No. of  first-stage variables:     %6d  (%d generals, %d binaries, %d continuous)\n", DDSIP_data->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_data->firstvar - DDSIP_bb->first_int);
+    printf ("\t\t No. of  first-stage variables:     %6d  (%d generals, %d binary, %d continuous)\n", DDSIP_data->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_data->firstvar - DDSIP_bb->first_int);
     printf ("\t\t No. of second-stage variables:     %6d  (%d integers)\n", DDSIP_data->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
     fprintf (DDSIP_outfile, "------------------------------------------------------------\n");
     fprintf (DDSIP_outfile, "in input model file:\n");
     fprintf (DDSIP_outfile, "\t\tNo. of              variables:    %10d\n", DDSIP_data->novar);
-    fprintf (DDSIP_outfile, "\t\tNo. of  first-stage variables:    %10d  (%d generals, %d binaries, %d continuous)\n", DDSIP_data->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_data->firstvar - DDSIP_bb->first_int);
+    fprintf (DDSIP_outfile, "\t\tNo. of  first-stage variables:    %10d  (%d generals, %d binary, %d continuous)\n", DDSIP_data->firstvar, DDSIP_bb->first_int - DDSIP_bb->first_bin, DDSIP_bb->first_bin, DDSIP_data->firstvar - DDSIP_bb->first_int);
     fprintf (DDSIP_outfile, "\t\tNo. of second-stage variables:    %10d  (%d integers)\n", DDSIP_data->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
     fprintf (DDSIP_outfile, "------------------------------------------------------------\n");
+
+#ifdef ADDCUTS
+    if (DDSIP_param->addCuts && (DDSIP_bb->first_int > DDSIP_bb->first_bin))
+        DDSIP_param->addCuts = 0;
+#endif
 
     status = CPXgetobj (DDSIP_env, DDSIP_lp, DDSIP_data->obj_coef, 0, DDSIP_data->novar - 1);
     if (status)

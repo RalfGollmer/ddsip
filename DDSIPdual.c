@@ -221,7 +221,9 @@ DDSIP_DualUpdate (void *function_key, double *dual, double relprec,
         }
         fprintf(DDSIP_bb->moreoutfile, "\n");
     }
+    i = 0;
     // LowerBound scenario problems
+ONCE_AGAIN:
     if ((status = DDSIP_CBLowerBound (objective_value, relprec)) > 1 || status == -111)
     {
         printf ("Failed to solve scenario problems: status = %d .\n", status);
@@ -230,12 +232,29 @@ DDSIP_DualUpdate (void *function_key, double *dual, double relprec,
             return status;
         else
         {
-            printf ("Probably due to unbounded variables. Trying smaller stepsize = higher weight.\n");
-            if (DDSIP_param->outlev)
-                fprintf (DDSIP_bb->moreoutfile, "Probably due to unbounded variables. Trying smaller stepsize = higher weight.\n");
-            DDSIP_bb->newTry++;
-            *new_subg = 0;
-            return -111;
+            if (i)
+            {
+                *new_subg = 0;
+                return -1;
+            }
+            if (!i && DDSIP_bb->dualitcnt<2 && DDSIP_bb->curnode > 0)
+            {
+                printf ("Possibly due to unbounded variables. Trying zero Lagrangean multipliers.\n");
+                if (DDSIP_param->outlev)
+                    fprintf (DDSIP_bb->moreoutfile, "Possibly due to unbounded variables. Trying zero Lagrangean multipliers.\n");
+                memset (DDSIP_node[DDSIP_bb->curnode]->dual, 0, sizeof (double) * DDSIP_bb->dimdual);
+                i = 1;
+                goto ONCE_AGAIN;
+            }
+            else
+            {
+                printf ("Possibly due to unbounded variables. Trying smaller stepsize = higher weight.\n");
+                if (DDSIP_param->outlev)
+                    fprintf (DDSIP_bb->moreoutfile, "Possibly due to unbounded variables. Trying smaller stepsize = higher weight.\n");
+                DDSIP_bb->newTry++;
+                *new_subg = 0;
+                return -111;
+            }
         }
     }
 
@@ -354,7 +373,7 @@ DDSIP_DualOpt (void)
     double *center_point = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual,
                            "center_point(DualOpt)");
     double obj, old_obj, start_weight;
-    int    cpu_hrs, cpu_mins, limits_reset, last_dualitcnt = 1, repeated_increase = 1, weight_decreases = 0, many_iters = 0;
+    int    cpu_hrs, cpu_mins, limits_reset, last_dualitcnt = 1, repeated_increase = 1, weight_decreases = 0, many_iters = 0, cycleCnt  = 0;
     double cpu_secs;
     double old_cpxrelgap = 1.e-16, old_cpxtimelim = 1000000., old_cpxrelgap2 = 1.e-16, old_cpxtimelim2 = 1000000., last_weight, next_weight, reduction_factor = 0.5;
 
@@ -431,9 +450,10 @@ DDSIP_DualOpt (void)
     {
         start_weight = DDSIP_param->cbfactor*DDSIP_param->cbweight + (1. - DDSIP_param->cbfactor)*DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual];
         // idea: limit too big start weights - speed up or slow down?
-#define BigWeight 400.
-        if (start_weight > BigWeight && (!DDSIP_param->riskmod ||start_weight > DDSIP_param->riskweight))
-            start_weight = DDSIP_Dmin((start_weight-BigWeight)*0.5  + BigWeight, 1.e4);
+        //       cpu_secs is used for the limit
+        cpu_secs = 2e-2 * fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 10.;
+        if (start_weight > cpu_secs && (!DDSIP_param->riskmod ||start_weight > DDSIP_param->riskweight))
+            start_weight = DDSIP_Dmin((start_weight-cpu_secs)*0.5  + cpu_secs, fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 1.);
         if (DDSIP_param->riskmod == 4)
         {
             if (start_weight < DDSIP_param->riskweight*0.2)
@@ -736,7 +756,7 @@ DDSIP_DualOpt (void)
         while (!cb_termination_code (p) && (DDSIP_GetCpuTime () < DDSIP_param->timelim)
                 && ((DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt < DDSIP_param->cbitlim && (DDSIP_bb->curnode >= DDSIP_param->cbBreakIters || DDSIP_bb->dualdescitcnt < (DDSIP_param->cbitlim+1)/2))
                     || (!DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt < DDSIP_param->cbrootitlim))
-                && DDSIP_bb->dualitcnt < DDSIP_param->cbtotalitlim && !(obj > DDSIP_bb->bestvalue - DDSIP_param->accuracy) && noIncreaseCounter < 9)
+                && DDSIP_bb->dualitcnt < DDSIP_param->cbtotalitlim && !(obj > DDSIP_bb->bestvalue - DDSIP_param->accuracy) && cycleCnt < 2)
         {
             if ((DDSIP_bb->nofront == 1) && (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap))
             {
@@ -848,10 +868,8 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
             if (DDSIP_bb->newTry)
             {
                 // increase weight
-                //last_weight = next_weight = 1.e4 * cb_get_last_weight (p);
-                last_weight = next_weight = DDSIP_Dmax(1.e-2 * fabs(DDSIP_node[DDSIP_bb->curnode]->bound), 1e4 * cb_get_last_weight (p));
+                last_weight = next_weight = DDSIP_Dmax(1.5e-2 * fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 100., 5e+3 * cb_get_last_weight (p));
                 cb_set_next_weight (p, next_weight);
-                DDSIP_bb->dualitcnt--;
                 if (DDSIP_param->outlev)
                     fprintf (DDSIP_bb->moreoutfile,"########### increased next weight to %g\n", next_weight);
                 goto NEXT_TRY;
@@ -870,7 +888,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                 obj = DDSIP_bb->dualObjVal;
                 next_weight = cb_get_last_weight (p);
                 // if the step did not increase the bound, increase the weight
-                if (!DDSIP_param->cb_inherit || DDSIP_bb->dualdescitcnt > 1|| (DDSIP_bb->dualdescitcnt == 1 && DDSIP_bb->dualitcnt < 4))
+                if (!DDSIP_param->cb_inherit || DDSIP_bb->dualdescitcnt > 1|| (DDSIP_bb->dualdescitcnt == 1 && DDSIP_bb->dualitcnt < 5))
                 {
                     if (obj <= old_obj /*- 1.e-14*fabs(old_obj)*/)
                     {
@@ -912,9 +930,9 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                             else if (noIncreaseCounter > 1)
                             {
                                 last_weight = next_weight;
-                                if (noIncreaseCounter > 3)
+                                if (noIncreaseCounter > 4)
                                 {
-                                    if (last_weight > 2000.)
+                                    if (last_weight > 20000.)
                                     {
                                         next_weight = 0.002*last_weight;
                                     }
@@ -923,6 +941,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                         next_weight = 100.*last_weight;
                                     }
                                     noIncreaseCounter = 1;
+                                    cycleCnt++;
                                 }
                                 else if (last_weight < 50.)
                                 {
@@ -1165,12 +1184,13 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                     else
                     {
                         noIncreaseCounter = 0;
+                        cycleCnt = 0;
                         next_weight = cb_get_last_weight (p);
 ///////////     ///////////
                         if (DDSIP_param->outlev > 10)
                             fprintf(DDSIP_bb->moreoutfile,"############### iters in descent step: %d,  repeated increase up to now: %d, last_weight - next_weight= %g ##################\n", DDSIP_bb->dualitcnt - last_dualitcnt,repeated_increase,  last_weight - next_weight);
 /////////
-                        if (DDSIP_bb->dualitcnt - last_dualitcnt < 4 && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight)
+                        if ((DDSIP_bb->dualitcnt - last_dualitcnt < 4 ) && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight)
                         {
                             many_iters = 0;
                             repeated_increase += 4 - DDSIP_bb->dualitcnt + last_dualitcnt;
@@ -1201,13 +1221,15 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                 }
                             }
                         }
-                        else if (DDSIP_param->cb_increaseWeight && DDSIP_bb->dualitcnt - last_dualitcnt == 4 &&  many_iters && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight)
+                        else if ((DDSIP_bb->dualitcnt - last_dualitcnt < 10 && DDSIP_bb->dualdescitcnt == 1) && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight)
                         {
-                            next_weight = last_weight * 1.02;
+                            last_weight = next_weight;
+                            next_weight = last_weight * reduction_factor;
                             cb_set_next_weight (p, next_weight);
+                            weight_decreases++;
 ///////////     ///////////
                             if (DDSIP_param->outlev > 10)
-                                fprintf(DDSIP_bb->moreoutfile,"############### increased next weight to %g,  many_iters = %d ##################\n",next_weight,many_iters);
+                                fprintf(DDSIP_bb->moreoutfile,"############### reduced next weight to %g,  repeated increase= %d ##################\n",next_weight,repeated_increase);
 ///////////     ///////////
                         }
                         else if (DDSIP_param->cb_increaseWeight && DDSIP_bb->dualdescitcnt > 1 && last_weight*10. >= next_weight)
@@ -1217,8 +1239,9 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                 repeated_increase = 0;
                                 if (j > 5)
                                 {
-                                    repeated_increase = -1;
                                     many_iters++;
+                                    repeated_increase = -1;
+                                    //many_iters++;
                                     if (weight_decreases)
                                     {
                                         reduction_factor = 0.7*reduction_factor + 0.27;
@@ -1245,7 +1268,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                                 cb_set_next_weight (p, next_weight);
 ///////////     ///////////
                                                 if (DDSIP_param->outlev > 10)
-                                                    fprintf(DDSIP_bb->moreoutfile,"############### increased next weight to %g,  repeated increase= %d ##################\n",next_weight,repeated_increase);
+                                                    fprintf(DDSIP_bb->moreoutfile,"#############1. increased next weight to %g,  repeated increase= %d ##################\n",next_weight,repeated_increase);
 ///////////     ///////////
                                             }
                                             many_iters++;
@@ -1256,12 +1279,21 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                             cb_set_next_weight (p, next_weight);
 ///////////     ///////////
                                             if (DDSIP_param->outlev > 10)
-                                                fprintf(DDSIP_bb->moreoutfile,"############### increased next weight to %g,  many_iters = %d ##################\n",next_weight,many_iters);
+                                                fprintf(DDSIP_bb->moreoutfile,"#############2. increased next weight to %g, current iters = %d,  many_iters = %d ##################\n",next_weight,j,many_iters);
 ///////////     ///////////
-                                         }
+                                        }
+                                    }
+                                    else if(many_iters)
+                                    {
+                                        next_weight = last_weight * 1.008;
+                                        cb_set_next_weight (p, next_weight);
+///////////     ///////////
+                                        if (DDSIP_param->outlev > 10)
+                                            fprintf(DDSIP_bb->moreoutfile,"#############3. increased next weight to %g, current iters = %d,  many_iters = %d ##################\n",next_weight,j,many_iters);
+///////////     ///////////
                                     }
                                 }
-                                else if (DDSIP_param->cb_increaseWeight && many_iters > 1 && many_iters < 5)
+                                else if (j > 4 && many_iters > 1 && many_iters < 5)
                                 {
                                     if (last_weight < 1e5)
                                         next_weight = last_weight * 1.01;
@@ -1270,11 +1302,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                     cb_set_next_weight (p, next_weight);
 ///////////     ///////////
                                             if (DDSIP_param->outlev > 10)
-                                                fprintf(DDSIP_bb->moreoutfile,"############### increased next weight to %g,  many_iters = %d ##################\n",next_weight,many_iters);
+                                                fprintf(DDSIP_bb->moreoutfile,"#############4. increased next weight to %g, current iters = %d,  many_iters = %d ##################\n",next_weight,j,many_iters);
 ///////////     ///////////
                                 }
                             }
-                            if (DDSIP_param->cb_increaseWeight && many_iters > 4)
+                            if (many_iters > 4)
                             {
                                 next_weight = next_weight * 1.15;
                                 cb_set_next_weight (p, next_weight);
@@ -1291,7 +1323,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
 ///////////     ///////////
 //
                         if(DDSIP_param->outlev > 10)
-                            fprintf(DDSIP_bb->moreoutfile, " obj -  old_obj = %-16.12g - %-16.12g = %-10.6g, \tnoIncreaseCounter= %d, last_weight= %g, next_weight= %g\n",obj, old_obj, obj - old_obj, noIncreaseCounter, last_weight, next_weight);
+                            fprintf(DDSIP_bb->moreoutfile, " obj -  old_obj = %-16.12g - %-16.12g = %-10.6g, \tnoIncreaseCounter= %d, cycleCnt= %d, last_weight= %g, next_weight= %g\n",obj, old_obj, obj - old_obj, noIncreaseCounter, cycleCnt, last_weight, next_weight);
 //
                         old_obj = obj;
 
@@ -1423,7 +1455,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                     DDSIP_Print2 ("termination status: descent iteration limit exceeded.", "\n", 0, 0);
                 else if (DDSIP_bb->dualitcnt >= DDSIP_param->cbtotalitlim)
                     DDSIP_Print2 ("termination status: total iteration limit exceeded.", "\n", 0, 0);
-                else if (noIncreaseCounter >= 9)
+                else if (cycleCnt >= 2)
                     DDSIP_Print2 ("termination status: no bound increase achieved.", "\n", 0, 0);
                 else if (DDSIP_GetCpuTime () > DDSIP_param->timelim)
                     DDSIP_Print2 ("Time limit reached.", "\n", 0, 0);

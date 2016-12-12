@@ -301,7 +301,7 @@ DDSIP_InitNewNodes (void)
         // due to the change of the lower bound of additional variable in root node for risk model DDSIP_4 (worst case cost) and 5 (TVaR):
         //   do not pass on root node solutions in this case
         // for asd model the same applies in all nodes due to changes of target
-        if ((abs(DDSIP_param->riskmod) != 3 && (DDSIP_bb->curnode || (abs(DDSIP_param->riskmod) != 4 && abs(DDSIP_param->riskmod) != 5)) && (DDSIP_node[DDSIP_bb->curnode])->step != dual))
+        if (!DDSIP_bb->cutAdded && (abs(DDSIP_param->riskmod) != 3 && (DDSIP_bb->curnode || (abs(DDSIP_param->riskmod) != 4 && abs(DDSIP_param->riskmod) != 5)) && (DDSIP_node[DDSIP_bb->curnode])->step != dual))
         {
             if ((((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_bb->firstvar + 1]) < DDSIP_param->maxinherit ||
                     (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[i] == CPXMIP_OPTIMAL || (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[i] == CPXMIP_OPTIMAL_TOL)
@@ -434,7 +434,10 @@ DDSIP_InitNewNodes (void)
         {
             if (DDSIP_param->outlev > 29)
             {
-                if ((abs(DDSIP_param->riskmod) == 3 || abs(DDSIP_param->riskmod) == 4 || abs(DDSIP_param->riskmod) == 5))
+                if (DDSIP_bb->cutAdded)
+                    fprintf (DDSIP_bb->moreoutfile,"  nodes %d and %d did not inherit solution of scenario %d from node %d due to added cut.\n",
+                             DDSIP_bb->nonode, DDSIP_bb->nonode + 1, i+1, DDSIP_bb->curnode);
+                else if ((abs(DDSIP_param->riskmod) == 3 || abs(DDSIP_param->riskmod) == 4 || abs(DDSIP_param->riskmod) == 5))
                     fprintf (DDSIP_bb->moreoutfile,"  nodes %d and %d did not inherit solution of scenario %d from node %d due to risk model.\n",
                              DDSIP_bb->nonode, DDSIP_bb->nonode + 1, i + 1, DDSIP_bb->curnode);
                 else if ((DDSIP_node[DDSIP_bb->curnode])->step == dual)
@@ -464,6 +467,7 @@ DDSIP_InitNewNodes (void)
         fprintf (DDSIP_bb->moreoutfile,"**node %d inherited %d solutions from node %d\n",
                  DDSIP_bb->nonode + 1, (DDSIP_node[DDSIP_bb->nonode + 1])->numInheritedSols, DDSIP_bb->curnode);
     }
+    DDSIP_bb->cutAdded = 0;
 
     // Debugging information
     if (DDSIP_param->outlev > 2)

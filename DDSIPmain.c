@@ -53,7 +53,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2016-11-28 (for CPLEX 12.6.3)";
+const char DDSIP_version[] = "2016-12-12 (for CPLEX 12.7.0)";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -283,7 +283,6 @@ main (void)
 
     DDSIP_bb->DDSIP_step =  solve;
 
-
 #ifdef CONIC_BUNDLE
     if (DDSIP_param->cb)
     {
@@ -292,7 +291,6 @@ main (void)
             goto TERMINATE;
     }
 #endif
-
 
     printf ("\t Total initialization time: %4.2f seconds.\n", DDSIP_GetCpuTime ());
     if (DDSIP_param->outlev)

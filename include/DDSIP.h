@@ -25,6 +25,11 @@
 #include <sys/times.h>
 #endif
 
+// in the tests with pure binary first stage adding cuts didn'n speed up
+// defining the macro ADDCUTS here and adding "ADDCUTS 1" to the parameters
+// will activate this
+#undef ADDCUTS
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -165,16 +170,7 @@ extern "C" {
         // Pre- or Postfix of first-stage variables
         char * prefix;
         char * postfix;
-/////// these are now determined from the model file plus pre-/postfix, thus transferred to data
-        // Number of first-stage variables
-        //int   firstvar;
-        // Number of second-stage variables
-        //int   secvar;
-        // Number of first-stage constraints
-        //int   firstcon;
-        // Number of second-stage constraints
-        //int   seccon;
-///////////////////////////////////////////////////////////////////////////
+        /////// firstvar etc. are now determined from the model file plus pre-/postfix, thus transferred to data
         // Write deterministic equivalent? (only expectation-based so far)
         int   write_detequ;
         int   deteqType;
@@ -271,6 +267,10 @@ extern "C" {
         // set to 1 if heuristics should be interrupted as soon as the gap is reached
         // set to -1 if heuristic 12 should be left out or interrupted as soon as the gap is reached
         int interrupt_heur;
+#ifdef ADDCUTS
+        // add cuts?
+        int addCuts;
+#endif
     } para_t;
 
     typedef struct
@@ -530,6 +530,10 @@ extern "C" {
         int bestBound;
         // info whether a next try with higher weight should be done
         int newTry;
+        // counter for cuts introduced for all-binary first stage
+        int cutCntr;
+        // indicator, whether a cut was added (for pure binary first stage)
+        int cutAdded;
     } bb_t;
 
     typedef struct

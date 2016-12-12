@@ -22,7 +22,10 @@
     along with DDSIP; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#define EXPLICITPOSTFIX
+// by definig EXPLICITPOSTFIX it is required to give a post- or prefix in the paramater file
+//#define EXPLICITPOSTFIX
+// #undef EXPLICITPOSTFIX assumes a default postfix of '01' for the first-stage variables
+#undef EXPLICITPOSTFIX
 
 #include <DDSIP.h>
 #include <DDSIPconst.h>

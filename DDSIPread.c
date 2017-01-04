@@ -514,7 +514,9 @@ DDSIP_ReadCpxPara (FILE * specfile)
             }
 
             if (DDSIP_param->cpxwhich[cnt - 1] == CPX_PARAM_MIPORDIND)
+            {
                 DDSIP_param->cpxorder = DDSIP_param->cpxwhat[cnt - 1];
+            }
             // Read till end of line
             while ((c = fgetc (specfile)) != EOF && c != '\n');
             if (fscanf (specfile, "%s", str) != 1)
@@ -1034,9 +1036,8 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 }
         }
     }
-
     return 0;
-}
+} // DDSIP_ReadCpxPara
 
 //==========================================================================
 // Function reads specifications from specfile into structure 'param'
@@ -1056,6 +1057,7 @@ DDSIP_ReadSpec ()
     if (i == 0 || (specfile = fopen (fname, "r")) == NULL)
     {
         printf ("\nERROR: Cannot open `%s' (ReadSpec) \n", fname);
+        fprintf (DDSIP_outfile, "\nERROR: Cannot open `%s' (ReadSpec) \n", fname);
         return -1;
     }
     printf ("\n\t Reading specifications from `%s'.\n", fname);
@@ -1479,6 +1481,7 @@ DDSIP_ReadModel ()
     if (DDSIP_lp == NULL)
     {
         printf ("ERROR: Failed to create problem.\n");
+        fprintf (DDSIP_outfile, "ERROR: Failed to create problem.\n");
         return status;
     }
 
@@ -1486,7 +1489,8 @@ DDSIP_ReadModel ()
     i = scanf ("%s", fname);
     if (i == 0)
     {
-        printf ("\nError: could not read model file name.\n");
+        printf ("\nERROR: could not read model file name.\n");
+        fprintf (DDSIP_outfile, "\nERROR: could not read model file name.\n");
     }
 
     // Set core file type
@@ -1518,6 +1522,7 @@ DDSIP_ReadModel ()
     if (status)
     {
         printf ("ERROR: Failed to read problem file %s.\n", fname);
+        fprintf (DDSIP_outfile, "ERROR: Failed to read problem file %s.\n", fname);
         return status;
     }
     fprintf (DDSIP_outfile, "\nMODEL READ FROM `%s': \n", fname);
@@ -1535,6 +1540,7 @@ DDSIP_ReadModel ()
         if (status)
         {
             printf ("ERROR: Failed to write problem file '%s', return-code: %d.\n", fname, status);
+            fprintf (DDSIP_outfile, "ERROR: Failed to write problem file '%s', return-code: %d.\n", fname, status);
             return status;
         }
     }
@@ -1564,6 +1570,7 @@ DDSIP_ReadCPLEXOrder ()
     if (i)
     {
         printf ("ERROR: Failed to read priority order file.\n");
+        fprintf (DDSIP_outfile, "ERROR: Failed to read priority order file %s.\n", fname);
     }
     DDSIP_Free ((void **) &(fname));
 
@@ -1711,6 +1718,7 @@ DDSIP_ReadData ()
         else
         {
             printf ("ERROR: Failed to read scenario keyword %d (%s)\n", i, checkstr);
+            fprintf (DDSIP_outfile, "ERROR: Failed to read scenario keyword %d (%s)\n", i, checkstr);
             return 1;
         }
 
@@ -1733,6 +1741,7 @@ DDSIP_ReadData ()
             if (DDSIP_data->prob[j] < 1e-12)
             {
                 printf ("XXX ERROR: probability of scenario %d too small - exiting.\n",j);
+                fprintf (DDSIP_outfile, "XXX ERROR: probability of scenario %d too small - exiting.\n",j);
                 exit (111);
             }
 #endif
@@ -1766,12 +1775,16 @@ DDSIP_ReadData ()
 
 #ifndef NEOS
         if (status)
+        {
             printf ("*Warning: Identical scenarios.\n");
+            fprintf (DDSIP_outfile, "*Warning: Identical scenarios.\n");
+        }
 #else
         // for the NEOS server this is an error
         if (status)
         {
             printf ("XXX ERROR: Identical scenarios.\n");
+            fprintf (DDSIP_outfile, "XXX ERROR: Identical scenarios.\n");
             exit (1);
         }
 #endif
@@ -1817,6 +1830,7 @@ DDSIP_ReadData ()
         if (k == 0 || (datafile = fopen (fname, "r")) == NULL)
         {
             printf ("ERROR: Failed to open '%s' (ReadData)\n", fname);
+            fprintf (DDSIP_outfile, "ERROR: Failed to open '%s' (ReadData)\n", fname);
             return 1;
         }
 
@@ -1873,6 +1887,7 @@ DDSIP_ReadData ()
             else
             {
                 printf ("ERROR: Failed to read scenarios keyword\n");
+                fprintf (DDSIP_outfile, "ERROR: Failed to read scenarios keyword\n");
                 return 1;
             }
         }
@@ -1919,6 +1934,7 @@ DDSIP_ReadData ()
         if (k == 0 || (datafile = fopen (fname, "r")) == NULL)
         {
             printf ("ERROR: Failed to open '%s' (ReadDate)\n", fname);
+            fprintf (DDSIP_outfile, "ERROR: Failed to open '%s' (ReadDate)\n", fname);
             return 1;
         }
 
@@ -2004,6 +2020,7 @@ DDSIP_ReadData ()
             else
             {
                 printf ("ERROR: Failed to read scenarios keyword in %s \n", fname);
+                fprintf (DDSIP_outfile, "ERROR: Failed to read scenarios keyword in %s \n", fname);
                 return 1;
             }
         }
@@ -2041,6 +2058,7 @@ DDSIP_ReadData ()
         if (k == 0 || (datafile = fopen (fname, "r")) == NULL)
         {
             printf ("\nERROR: Failed to open '%s' (ReadData)\n", fname);
+            fprintf (DDSIP_outfile, "\nERROR: Failed to open '%s' (ReadData)\n", fname);
             return 1;
         }
 
@@ -2057,6 +2075,7 @@ DDSIP_ReadData ()
             if (ind < 0 || ind >= DDSIP_data->firstvar)
             {
                 printf ("ERROR: Wrong DDSIP_index (%d) in priority order file.\n", ind);
+                fprintf (DDSIP_outfile, "ERROR: Wrong DDSIP_index (%d) in priority order file.\n", ind);
                 return 1;
             }
             if (fscanf (datafile, "%d", &DDSIP_data->order[ind]) < 1)
@@ -2101,6 +2120,7 @@ DDSIP_AdvStart (void)
     if (k == 0 || (advfile = fopen (fname, "r")) == NULL)
     {
         printf ("ERROR: Cannot open '%s' (AdvStart) \n", fname);
+        fprintf (DDSIP_outfile, "ERROR: Cannot open '%s' (AdvStart) \n", fname);
         return 1;
     }
 

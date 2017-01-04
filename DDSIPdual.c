@@ -1190,10 +1190,26 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                         if (DDSIP_param->outlev > 10)
                             fprintf(DDSIP_bb->moreoutfile,"############### iters in descent step: %d,  repeated increase up to now: %d, last_weight - next_weight= %g ##################\n", DDSIP_bb->dualitcnt - last_dualitcnt,repeated_increase,  last_weight - next_weight);
 /////////
-                        if ((DDSIP_bb->dualitcnt - last_dualitcnt < 4 ) && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight)
+                        if (DDSIP_param->cb_reduceWeight && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight &&
+                            ((cpu_hrs = DDSIP_bb->dualitcnt - last_dualitcnt) < 4 || (cpu_hrs < 10 && DDSIP_bb->dualdescitcnt == 1)))
                         {
                             many_iters = 0;
-                            repeated_increase += 4 - DDSIP_bb->dualitcnt + last_dualitcnt;
+                            repeated_increase += DDSIP_Imax(0, 4 - DDSIP_bb->dualitcnt + last_dualitcnt);
+                            if ((DDSIP_bb->dualdescitcnt == 1) && (cpu_hrs < 9))
+                            {
+                                repeated_increase++;
+                                if (cpu_hrs < 7)
+                                {
+                                    last_weight = next_weight;
+                                    next_weight = last_weight * reduction_factor;
+                                    cb_set_next_weight (p, next_weight);
+                                    weight_decreases++;
+///////////     ///////////
+                                    if (DDSIP_param->outlev > 10)
+                                        fprintf(DDSIP_bb->moreoutfile,"############### reduced next weight to %g,  repeated increase= %d ##################\n",next_weight,repeated_increase);
+///////////     ///////////
+                                }
+                            }
                             if ((abs(DDSIP_param->riskmod) <= 3 && DDSIP_param->cb_reduceWeight && next_weight > 5.e-5) || (abs(DDSIP_param->riskmod) > 3 && DDSIP_param->cb_reduceWeight && next_weight > 1.e-4))
                             {
                                 if (repeated_increase > 2)
@@ -1221,27 +1237,15 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                 }
                             }
                         }
-                        else if ((DDSIP_bb->dualitcnt - last_dualitcnt < 10 && DDSIP_bb->dualdescitcnt == 1) && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight)
-                        {
-                            last_weight = next_weight;
-                            next_weight = last_weight * reduction_factor;
-                            cb_set_next_weight (p, next_weight);
-                            weight_decreases++;
-///////////     ///////////
-                            if (DDSIP_param->outlev > 10)
-                                fprintf(DDSIP_bb->moreoutfile,"############### reduced next weight to %g,  repeated increase= %d ##################\n",next_weight,repeated_increase);
-///////////     ///////////
-                        }
                         else if (DDSIP_param->cb_increaseWeight && DDSIP_bb->dualdescitcnt > 1 && last_weight*10. >= next_weight)
                         {
-                            if ((j = DDSIP_bb->dualitcnt - last_dualitcnt) > 4)
+                            if ((cpu_hrs = DDSIP_bb->dualitcnt - last_dualitcnt) > 4)
                             {
                                 repeated_increase = 0;
-                                if (j > 5)
+                                if (cpu_hrs > 5)
                                 {
                                     many_iters++;
                                     repeated_increase = -1;
-                                    //many_iters++;
                                     if (weight_decreases)
                                     {
                                         reduction_factor = 0.7*reduction_factor + 0.27;
@@ -1251,18 +1255,18 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                             fprintf(DDSIP_bb->moreoutfile,"############### repeated increase= %d, reduction factor increased to %g ##################\n",repeated_increase, reduction_factor);
 ///////////     ///////////
                                     }
-                                    if (j > 6)
+                                    if (cpu_hrs > 6)
                                     {
                                         repeated_increase = -2;
-                                        if (j > 9)
+                                        if (cpu_hrs > 9)
                                         {
                                             if (next_weight < 1.10*last_weight)
                                             {
                                                 last_weight = next_weight;
                                                 if (last_weight > 1.)
-                                                    next_weight = last_weight * 1.05;
+                                                    next_weight = last_weight * 1.06;
                                                 else if (last_weight > 1e-2)
-                                                    next_weight = last_weight * 1.20;
+                                                    next_weight = last_weight * 1.25;
                                                 else
                                                     next_weight = last_weight * 2.50;
                                                 cb_set_next_weight (p, next_weight);
@@ -1275,7 +1279,8 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                         }
                                         else if(many_iters)
                                         {
-                                            next_weight = last_weight * 1.02;
+                                            last_weight = next_weight;
+                                            next_weight = last_weight * 1.04;
                                             cb_set_next_weight (p, next_weight);
 ///////////     ///////////
                                             if (DDSIP_param->outlev > 10)
@@ -1285,6 +1290,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                     }
                                     else if(many_iters)
                                     {
+                                        last_weight = next_weight;
                                         next_weight = last_weight * 1.008;
                                         cb_set_next_weight (p, next_weight);
 ///////////     ///////////
@@ -1293,8 +1299,9 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
 ///////////     ///////////
                                     }
                                 }
-                                else if (j > 4 && many_iters > 1 && many_iters < 5)
+                                else if (cpu_hrs > 4 && many_iters > 1 && many_iters < 5)
                                 {
+                                    last_weight = next_weight;
                                     if (last_weight < 1e5)
                                         next_weight = last_weight * 1.01;
                                     else
@@ -1308,7 +1315,8 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                             }
                             if (many_iters > 4)
                             {
-                                next_weight = next_weight * 1.15;
+                                last_weight = next_weight;
+                                next_weight = next_weight * 1.20;
                                 cb_set_next_weight (p, next_weight);
 ///////////     ///////////
                                 if (DDSIP_param->outlev > 10)

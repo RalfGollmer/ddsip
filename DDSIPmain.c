@@ -189,6 +189,7 @@ main (void)
     if (DDSIP_env == NULL)
     {
         fprintf (stderr, "ERROR: Failed to open cplex environment, CPLEX error code %d.\n",status);
+        fprintf (DDSIP_outfile, "ERROR: Failed to open cplex environment, CPLEX error code %d.\n",status);
         return status;
     }
     else
@@ -221,6 +222,7 @@ main (void)
     if (status)
     {
         printf ("ERROR: Failed to get objective coefficients\n");
+        fprintf (DDSIP_outfile, "ERROR: Failed to get objective coefficients\n");
         goto TERMINATE;
     }
 
@@ -231,6 +233,7 @@ main (void)
         if ((DDSIP_bb->moreoutfile = fopen (DDSIP_moreoutfname, "w")) == NULL)
         {
             fprintf (stderr, "ERROR: Cannot open '%s'. \n", DDSIP_moreoutfname);
+            fprintf (DDSIP_outfile, "ERROR: Cannot open '%s'. \n", DDSIP_moreoutfname);
             status = 109;
             goto TERMINATE;
         }
@@ -260,6 +263,7 @@ main (void)
     if ((status = DDSIP_InitStages ()))
     {
         fprintf (stderr, "ERROR: Failed to initialize stages\n");
+        fprintf (DDSIP_outfile, "ERROR: Failed to initialize stages\n");
         goto TERMINATE;
     }
 
@@ -278,6 +282,7 @@ main (void)
     if ((status = DDSIP_DetectStageRows ()))
     {
         fprintf (stderr, "ERROR: Failed detection of row stages (BbInit)\n");
+        fprintf (DDSIP_outfile, "ERROR: Failed detection of row stages (BbInit)\n");
         goto TERMINATE;
     }
 
@@ -301,6 +306,7 @@ main (void)
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
+        fprintf (DDSIP_outfile, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
         return status;
     }
 

@@ -513,10 +513,6 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 break;
             }
 
-            if (DDSIP_param->cpxwhich[cnt - 1] == CPX_PARAM_MIPORDIND)
-            {
-                DDSIP_param->cpxorder = DDSIP_param->cpxwhat[cnt - 1];
-            }
             // Read till end of line
             while ((c = fgetc (specfile)) != EOF && c != '\n');
             if (fscanf (specfile, "%s", str) != 1)
@@ -1140,7 +1136,8 @@ DDSIP_ReadSpec ()
     else
         DDSIP_param->deteqType = 0;
 
-    DDSIP_param->order     = floor (DDSIP_ReadDbl (specfile, "PORDER", " PRIORITY ORDER", 0., 1, 0., 1.) + 0.1);
+    DDSIP_param->cpxorder  = floor (DDSIP_ReadDbl (specfile, "CPXORD", " READ CPLEX PRIORITY ORDER", 0., 1, 0., 1.) + 0.1);
+    DDSIP_param->order     = floor (DDSIP_ReadDbl (specfile, "PORDER", " DDSIP PRIORITY ORDER", 0., 1, 0., 1.) + 0.1);
     DDSIP_param->advstart  = floor (DDSIP_ReadDbl (specfile, "STARTI", " INITIAL SOLUTION/BOUND", 0., 1, 0., 1.) + 0.1);
     DDSIP_param->hot       = floor (DDSIP_ReadDbl (specfile, "HOTSTA", " HOT STARTS DURING B&B", 1., 1, 0., 6.) + 0.1);
     if (DDSIP_param->stoccost && DDSIP_param->hot == 2)

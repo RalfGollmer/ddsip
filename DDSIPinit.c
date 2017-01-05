@@ -239,8 +239,6 @@ DDSIP_InitCpxPara (void)
     status = CPXinfointparam (DDSIP_env, CPX_PARAM_NODELIM, &i, NULL, NULL);
     DDSIP_param->cpxnodelim = i;
     DDSIP_param->cpxubnodelim = i;
-    // Order
-    DDSIP_param->cpxorder = 0;
 
     // save some parameters seperately
     for (i = 0; i < DDSIP_param->cpxno; i++)
@@ -271,9 +269,6 @@ DDSIP_InitCpxPara (void)
             DDSIP_param->cpxnodelim = DDSIP_param->cpxwhat[i];
             DDSIP_param->cpxubnodelim = DDSIP_param->cpxwhat[i];
         }
-        else if (DDSIP_param->cpxwhich[i] == CPX_PARAM_MIPORDIND)
-            DDSIP_param->cpxorder = DDSIP_param->cpxwhat[i];
-
     }
 
     // Print output to file

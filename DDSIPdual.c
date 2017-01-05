@@ -1284,7 +1284,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                             cb_set_next_weight (p, next_weight);
 ///////////     ///////////
                                             if (DDSIP_param->outlev > 10)
-                                                fprintf(DDSIP_bb->moreoutfile,"#############2. increased next weight to %g, current iters = %d,  many_iters = %d ##################\n",next_weight,j,many_iters);
+                                                fprintf(DDSIP_bb->moreoutfile,"#############2. increased next weight to %g, current iters = %d,  many_iters = %d ##################\n",next_weight,cpu_hrs,many_iters);
 ///////////     ///////////
                                         }
                                     }
@@ -1295,7 +1295,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                         cb_set_next_weight (p, next_weight);
 ///////////     ///////////
                                         if (DDSIP_param->outlev > 10)
-                                            fprintf(DDSIP_bb->moreoutfile,"#############3. increased next weight to %g, current iters = %d,  many_iters = %d ##################\n",next_weight,j,many_iters);
+                                            fprintf(DDSIP_bb->moreoutfile,"#############3. increased next weight to %g, current iters = %d,  many_iters = %d ##################\n",next_weight,cpu_hrs,many_iters);
 ///////////     ///////////
                                     }
                                 }
@@ -1309,7 +1309,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                     cb_set_next_weight (p, next_weight);
 ///////////     ///////////
                                             if (DDSIP_param->outlev > 10)
-                                                fprintf(DDSIP_bb->moreoutfile,"#############4. increased next weight to %g, current iters = %d,  many_iters = %d ##################\n",next_weight,j,many_iters);
+                                                fprintf(DDSIP_bb->moreoutfile,"#############4. increased next weight to %g, current iters = %d,  many_iters = %d ##################\n",next_weight,cpu_hrs,many_iters);
 ///////////     ///////////
                                 }
                             }

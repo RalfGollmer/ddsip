@@ -53,7 +53,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2016-12-12 (for CPLEX 12.7.0)";
+const char DDSIP_version[] = "2017-01-05 (for CPLEX 12.7.0)";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -274,6 +274,12 @@ main (void)
     // Read order file if specified
     if (DDSIP_param->cpxorder)
     {
+        status = CPXsetintparam (DDSIP_env, CPX_PARAM_MIPORDIND, 1);
+        if (status)
+        {
+            fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_MIPORDIND.\n");
+            return status;
+        }
         if (DDSIP_ReadCPLEXOrder ())
             goto TERMINATE;
     }

@@ -240,8 +240,7 @@ DDSIP_InitCpxPara (void)
     DDSIP_param->cpxnodelim = i;
     DDSIP_param->cpxubnodelim = i;
     // Order
-    //status = CPXinfointparam (DDSIP_env, CPX_PARAM_MIPORDIND, &i, NULL, NULL);
-    //DDSIP_param->cpxorder = i;
+    DDSIP_param->cpxorder = 0;
 
     // save some parameters seperately
     for (i = 0; i < DDSIP_param->cpxno; i++)

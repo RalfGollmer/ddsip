@@ -21,7 +21,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#define MDEBUG
+//#define MDEBUG
 
 #include <DDSIP.h>
 #include <DDSIPconst.h>
@@ -1400,7 +1400,7 @@ DDSIP_LowerBound (void)
                         mipgap = 1.e+30;
                     }
                     time_lap = DDSIP_GetCpuTime ();
-                    if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
+                    if (DDSIP_param->cpxscr || DDSIP_param->outlev > 11)
                     {
                         j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
                         printf ("      LB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
@@ -1475,7 +1475,7 @@ DDSIP_LowerBound (void)
                         {
                             optstatus = CPXmipopt (DDSIP_env, DDSIP_lp);
                             mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
-                            if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
+                            if (DDSIP_param->cpxscr || DDSIP_param->outlev > 11)
                             {
                                 if (CPXgetmiprelgap(DDSIP_env, DDSIP_lp, &mipgap))
                                 {
@@ -2264,7 +2264,7 @@ if (DDSIP_param->outlev)
 
         //DEBUGOUT
 #ifdef MDEBUG
-        if (DDSIP_param->cb && DDSIP_param->outlev> 5)
+        if (DDSIP_param->cb && DDSIP_param->outlev> 49)
         {
             double expsubsol, expsubbound, expscenobj, risksubsol, risksubbound, riskscenobj;
             risksubsol = risksubbound = riskscenobj = expsubsol = expsubbound = expscenobj = 0.;
@@ -2472,7 +2472,7 @@ if (DDSIP_param->outlev)
                                                 fprintf (stderr, "       CPXgetstat returned: %d\n",status);
                                             }
                                             time_lap = DDSIP_GetCpuTime ();
-                                            if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
+                                            if (DDSIP_param->cpxscr || DDSIP_param->outlev > 11)
                                             {
                                                 j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
                                                 printf ("      LB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
@@ -2561,7 +2561,7 @@ if (DDSIP_param->outlev)
                                                         }
                                                     }
                                                     optstatus = CPXmipopt (DDSIP_env, DDSIP_lp);
-                                                    if (DDSIP_param->cpxscr || DDSIP_param->outlev > 19)
+                                                    if (DDSIP_param->cpxscr || DDSIP_param->outlev > 11)
                                                     {
                                                         if (CPXgetmiprelgap(DDSIP_env, DDSIP_lp, &mipgap))
                                                         {
@@ -3160,7 +3160,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                         mipgap = 1.e+30;
                     }
                     time_lap = DDSIP_GetCpuTime ();
-                    if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
+                    if (DDSIP_param->cpxscr || DDSIP_param->outlev > 11)
                     {
                         j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
                         printf ("      CBLB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
@@ -3253,7 +3253,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                             }
                             optstatus = CPXmipopt (DDSIP_env, DDSIP_lp);
                             mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
-                            if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
+                            if (DDSIP_param->cpxscr || DDSIP_param->outlev > 11)
                             {
                                 if (CPXgetmiprelgap(DDSIP_env, DDSIP_lp, &mipgap))
                                 {

@@ -30,6 +30,7 @@
 #include <DDSIP.h>
 #include <DDSIPconst.h>
 #include <math.h>
+#include <limits.h>
 
 int DDSIP_SkipToEOL (FILE *);
 int DDSIP_Find (FILE *, char *);
@@ -1121,7 +1122,7 @@ DDSIP_ReadSpec ()
     DDSIP_param->outlev    = floor (DDSIP_ReadDbl (specfile, "OUTLEV", " OUTPUT LEVEL", 0., 1, 0.,100.) + 0.1);
     DDSIP_param->files     = floor (DDSIP_ReadDbl (specfile, "OUTFIL", " OUTPUT FILES LEVEL", 1., 1, 0., 6.) + 0.1);
     DDSIP_param->logfreq   = floor (DDSIP_ReadDbl (specfile, "LOGFRE", " LOG FREQUENCY", 1., 1, 0., DDSIP_bigint) + 0.1);
-    DDSIP_param->nodelim   = floor (DDSIP_ReadDbl (specfile, "NODELI", " NODE LIMIT", 2147483646., 1, 1., DDSIP_bigint) + 0.1);
+    DDSIP_param->nodelim   = floor (DDSIP_ReadDbl (specfile, "NODELI", " NODE LIMIT", DDSIP_bigint, 1, 1., INT_MAX-1) + 0.1);
     // uncomment for default timelimit: 24h
     //DDSIP_param->timelim   = DDSIP_ReadDbl (specfile, "TIMELI", " TIME LIMIT", 86400., 0, 0., DDSIP_infty);
     // default timelimit: 14 days

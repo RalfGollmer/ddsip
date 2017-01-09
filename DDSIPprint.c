@@ -228,8 +228,8 @@ DDSIP_PrintState (int noiter)
     }
     else
     {
-        printf ("           ");
-        fprintf (DDSIP_outfile, "           ");
+        printf ("            ");
+        fprintf (DDSIP_outfile, "            ");
     }
 
     DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);

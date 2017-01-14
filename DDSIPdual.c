@@ -1210,7 +1210,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
 ///////////     ///////////
                                 }
                             }
-                            if ((abs(DDSIP_param->riskmod) <= 3 && DDSIP_param->cb_reduceWeight && next_weight > 5.e-5) || (abs(DDSIP_param->riskmod) > 3 && DDSIP_param->cb_reduceWeight && next_weight > 1.e-4))
+                            else if ((abs(DDSIP_param->riskmod) <= 3 && DDSIP_param->cb_reduceWeight && next_weight > 5.e-5) || (abs(DDSIP_param->riskmod) > 3 && DDSIP_param->cb_reduceWeight && next_weight > 1.e-4))
                             {
                                 if (repeated_increase > 2)
                                 {
@@ -1237,7 +1237,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                 }
                             }
                         }
-                        else if (DDSIP_param->cb_increaseWeight && DDSIP_bb->dualdescitcnt > 1 && last_weight*10. >= next_weight)
+                        else if (DDSIP_param->cb_increaseWeight && DDSIP_bb->dualdescitcnt > 1 && last_weight*8. >= next_weight)
                         {
                             if ((cpu_hrs = DDSIP_bb->dualitcnt - last_dualitcnt) > 4)
                             {

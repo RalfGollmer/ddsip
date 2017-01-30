@@ -460,7 +460,7 @@ DDSIP_Heuristics (int *comb)
     if (DDSIP_param->outlev)
     {
         fprintf (DDSIP_bb->moreoutfile, "\n----------------------\n");
-        fprintf (DDSIP_bb->moreoutfile, "Invoking heuristic %d...", DDSIP_param->heuristic);
+        fprintf (DDSIP_bb->moreoutfile, "Invoking heuristic %2d...", DDSIP_param->heuristic);
         if (DDSIP_param->cpxubscr||DDSIP_param->outlev > 10)
             printf ("Invoking heuristic %d...\n", DDSIP_param->heuristic);
     }

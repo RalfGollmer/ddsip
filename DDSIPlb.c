@@ -3740,6 +3740,11 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             // Evaluate the proposed first-stage solution
             DDSIP_UpperBound ();
         DDSIP_bb->DDSIP_step = dual;
+        DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
+        if (DDSIP_param->outlev > 9)
+        {
+            fprintf(DDSIP_bb->moreoutfile,"\tno violations in node %d , make it a leaf\n", DDSIP_bb->curnode);
+        }
     }
 
     DDSIP_bb->ref_max = -1;

@@ -112,8 +112,8 @@ DDSIP_PrintState (int noiter)
     {
         printf ("\n   Node   Nodes    Left  Objective         Heuristic");
         fprintf (DDSIP_outfile, "\n   Node   Nodes    Left  Objective         Heuristic");
-        printf ("         Best Value        Bound             Viol./Dispersion         Gap   Wall Time    CPU Time   Father Depth\n");
-        fprintf (DDSIP_outfile, "         Best Value        Bound             Viol./Dispersion         Gap   Wall Time    CPU Time   Father Depth\n");
+        printf ("         Best Value        Bound             Viol./Dispersion          Gap   Wall Time    CPU Time  Father Depth\n");
+        fprintf (DDSIP_outfile, "         Best Value        Bound             Viol./Dispersion          Gap   Wall Time    CPU Time  Father Depth\n");
     }
 
     if (!DDSIP_bb->violations && fabs(DDSIP_bb->bestvalue - DDSIP_node[DDSIP_bb->curnode]->bound)/(fabs(DDSIP_bb->bestvalue) + 3.e-16) < 5.e-16)
@@ -202,29 +202,29 @@ DDSIP_PrintState (int noiter)
     }
     else
     {
-        printf ("  %-16.12g", DDSIP_bb->bestbound);
-        fprintf (DDSIP_outfile, "  %-16.12g", DDSIP_bb->bestbound);
+        printf ("  %-17.14g", DDSIP_bb->bestbound);
+        fprintf (DDSIP_outfile, "  %-17.14g", DDSIP_bb->bestbound);
     }
 
     if (!print_violations || fabs (DDSIP_bb->bestbound - DDSIP_infty) < DDSIP_param->accuracy || fabs(DDSIP_node[DDSIP_bb->curnode]->dispnorm) >= DDSIP_infty)
     {
-        printf ("                  ");
-        fprintf (DDSIP_outfile, "                  ");
+        printf ("                 ");
+        fprintf (DDSIP_outfile, "                 ");
     }
     else
     {
         //number of violations of nonanticipativity
-        printf ("  %4d",DDSIP_bb->violations);
-        fprintf (DDSIP_outfile, "  %4d",DDSIP_bb->violations);
+        printf (" %4d",DDSIP_bb->violations);
+        fprintf (DDSIP_outfile, " %4d",DDSIP_bb->violations);
         //max dispersion of the variables
-        printf ("  %-10.5g",DDSIP_node[DDSIP_bb->curnode]->dispnorm);
-        fprintf (DDSIP_outfile, "  %-10.5g",DDSIP_node[DDSIP_bb->curnode]->dispnorm);
+        printf (" %-11.6g",DDSIP_node[DDSIP_bb->curnode]->dispnorm);
+        fprintf (DDSIP_outfile, " %-11.6g",DDSIP_node[DDSIP_bb->curnode]->dispnorm);
     }
 
     if (DDSIP_bb->bestvalue < DDSIP_infty && fabs (DDSIP_bb->bestbound) < DDSIP_infty)
     {
-        printf (" %10.4g%%", rgap);
-        fprintf (DDSIP_outfile, " %10.4g%%", rgap);
+        printf ("  %10.4g%%", rgap);
+        fprintf (DDSIP_outfile, "  %10.4g%%", rgap);
     }
     else
     {
@@ -235,8 +235,8 @@ DDSIP_PrintState (int noiter)
     DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
     time (&DDSIP_bb->cur_time);
     DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
-    printf ("  %3dh %02d:%02.0f  %3dh %02d:%02.0f %8d %5d\n", wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs,DDSIP_node[DDSIP_bb->curnode]->father,DDSIP_node[DDSIP_bb->curnode]->depth);
-    fprintf (DDSIP_outfile,"  %3dh %02d:%02.0f  %3dh %02d:%02.0f %8d %5d\n" ,wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs,DDSIP_node[DDSIP_bb->curnode]->father,DDSIP_node[DDSIP_bb->curnode]->depth);
+    printf ("  %3dh %02d:%02.0f  %3dh %02d:%02.0f %7d %5d\n", wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs,DDSIP_node[DDSIP_bb->curnode]->father,DDSIP_node[DDSIP_bb->curnode]->depth);
+    fprintf (DDSIP_outfile,"  %3dh %02d:%02.0f  %3dh %02d:%02.0f %7d %5d\n" ,wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs,DDSIP_node[DDSIP_bb->curnode]->father,DDSIP_node[DDSIP_bb->curnode]->depth);
 }
 
 //==========================================================================
@@ -263,19 +263,19 @@ DDSIP_PrintStateUB (int heur)
     }
     else
     {
-        printf ("     Heuristic %2d ", heur);
-        fprintf (DDSIP_outfile, "     Heuristic %2d ", heur);
+        printf ("    Heuristic %3d ", heur);
+        fprintf (DDSIP_outfile, "    Heuristic %3d ", heur);
     }
 
     // DDSIP_bb->heurval contains the objective value of the heuristic solution
     // DDSIP_bb->skip indicates whether the evaluation of an heuristic solution was skip for some reason
-    printf ("  %-16.12g", DDSIP_bb->heurval);
-    fprintf (DDSIP_outfile, "  %-16.12g", DDSIP_bb->heurval);
+    printf ("  %-17.12g", DDSIP_bb->heurval);
+    fprintf (DDSIP_outfile, "  %-17.12g", DDSIP_bb->heurval);
 
     if (fabs (DDSIP_bb->bestvalue) < DDSIP_infty)
     {
-        printf ("  %-16.12g", DDSIP_bb->bestvalue);
-        fprintf (DDSIP_outfile, "  %-16.12g", DDSIP_bb->bestvalue);
+        printf (" %-19.15g", DDSIP_bb->bestvalue);
+        fprintf (DDSIP_outfile, " %-19.15g", DDSIP_bb->bestvalue);
     }
     else
     {
@@ -283,8 +283,8 @@ DDSIP_PrintStateUB (int heur)
         fprintf (DDSIP_outfile, "                  ");
     }
 
-    printf ("                                                ");
-    fprintf (DDSIP_outfile,"                                                ");
+    printf ("                                              ");
+    fprintf (DDSIP_outfile,"                                              ");
 
     DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
     time (&DDSIP_bb->cur_time);

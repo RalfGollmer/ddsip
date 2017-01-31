@@ -1250,7 +1250,6 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                     if (weight_decreases)
                                     {
                                         reduction_factor = 0.7*reduction_factor + 0.27;
-                                        weight_decreases = 0;
 ///////////     ///////////
                                         if (DDSIP_param->outlev > 10)
                                             fprintf(DDSIP_bb->moreoutfile,"############### repeated increase= %d, reduction factor increased to %g ##################\n",repeated_increase, reduction_factor);
@@ -1260,14 +1259,14 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                     {
                                         repeated_increase = -2;
                                         many_iters++;
-                                        if (cpu_hrs > 9)
+                                        if (cpu_hrs > 9 || (cpu_hrs > 7 && !weight_decreases))
                                         {
                                             if (next_weight < 1.10*last_weight)
                                             {
                                                 last_weight = next_weight;
                                                 if (last_weight > 1.)
                                                     next_weight = last_weight * 1.08;
-                                                else if (last_weight > 1e-2)
+                                                else if (last_weight > 5e-3)
                                                     next_weight = last_weight * 1.25;
                                                 else
                                                     next_weight = last_weight * 2.50;
@@ -1277,9 +1276,10 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                                     fprintf(DDSIP_bb->moreoutfile,"#############1. increased next weight to %g,  repeated increase= %d ##################\n",next_weight,repeated_increase);
 ///////////     ///////////
                                             }
-                                            many_iters++;
+                                            if (cpu_hrs > 9)
+                                                many_iters++;
                                         }
-                                        else if(many_iters && last_weight > next_weight)
+                                        else if(many_iters && last_weight >= next_weight)
                                         {
                                             last_weight = next_weight;
                                             next_weight = last_weight * 1.04;
@@ -1300,6 +1300,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                             fprintf(DDSIP_bb->moreoutfile,"#############3. increased next weight to %g, current iters = %d,  many_iters = %d ##################\n",next_weight,cpu_hrs,many_iters);
 ///////////     ///////////
                                     }
+                                    weight_decreases = 0;
                                 }
                                 else if (cpu_hrs > 4 && many_iters > 1 && many_iters < 5)
                                 {

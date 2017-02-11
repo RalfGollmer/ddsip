@@ -101,7 +101,7 @@ DDSIP_Continue (int *noiter, int *boundstat)
     // Front is empty
     else if (*boundstat == 2)
     {
-        sprintf (message, "\nThe whole branching tree was backtracked.\\Probably due to MIP gaps (see below) the specified gap tolerance could not be reached.\n");
+        sprintf (message, "\nThe whole branching tree was backtracked.\nProbably due to MIP gaps (see below) the specified gap tolerance could not be reached.\n");
         solstat = 5;
     }
     // Maximal dispersion norm of front nodes is zero

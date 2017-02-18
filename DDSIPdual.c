@@ -1179,7 +1179,8 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                         }
 //
                         if(DDSIP_param->outlev > 10)
-                            fprintf(DDSIP_bb->moreoutfile, " obj -  old_obj = %-16.12g - %-16.12g = %-10.6g, \tnoIncreaseCounter= %d, last_weight= %g, next_weight= %g\n",obj, old_obj, obj - old_obj, noIncreaseCounter, last_weight, next_weight);
+                            fprintf(DDSIP_bb->moreoutfile, " obj -  old_obj = %-16.12g - %-16.12g = %-10.6g (%g%%), \tnoIncreaseCounter= %d, last_weight= %g, next_weight= %g\n",obj, old_obj, obj - old_obj,100*(obj - old_obj)/(fabs(obj)+1e-6), noIncreaseCounter, last_weight, next_weight);
+                                        cpu_secs=
 //
                         // the evaluation in bestdual might have increased the bound
                         obj = DDSIP_bb->dualObjVal;

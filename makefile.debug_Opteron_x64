@@ -21,7 +21,7 @@ SRCDIR    = $(HOME)
 OBJDIR    = $(SRCDIR)/$(OSTYPE).obj
 # Install here
 BINARY    = $(HOME)
-TARGET    = $(SRCDIR)/DDSIP_126_x64_debug
+TARGET    = $(SRCDIR)/DDSIP_x64_debug
 HELP      = $(SRCDIR)/ddsiphelp_x64_debug
 
 # Compiler 

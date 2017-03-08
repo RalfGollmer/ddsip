@@ -53,7 +53,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2017-02-18 (for CPLEX 12.7.0)";
+const char DDSIP_version[] = "2017-02-27 (for CPLEX 12.7.0)";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";

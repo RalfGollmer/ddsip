@@ -589,7 +589,7 @@ DDSIP_UpperBound (void)
                 mipgap = 1.e+30;
             }
             time_lap = DDSIP_GetCpuTime ();
-            if (DDSIP_param->cpxubscr ||  DDSIP_param->outlev > 19)
+            if (DDSIP_param->cpxubscr ||  DDSIP_param->outlev > 11)
             {
                 j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
                 printf ("      UB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
@@ -732,7 +732,7 @@ DDSIP_UpperBound (void)
                     }
                     status = CPXmipopt (DDSIP_env, DDSIP_lp);
                     mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
-                    if (DDSIP_param->cpxubscr || DDSIP_param->outlev > 19)
+                    if (DDSIP_param->cpxubscr || DDSIP_param->outlev > 11)
                     {
                         if (CPXgetmiprelgap(DDSIP_env, DDSIP_lp, &mipgap))
                         {
@@ -744,12 +744,9 @@ DDSIP_UpperBound (void)
                         {
                             j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
                             time_end = DDSIP_GetCpuTime ();
-                            if (DDSIP_param->cpxubscr ||  DDSIP_param->outlev > 19)
-                            {
-                                printf ("      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
-                                if (DDSIP_param->outlev)
-                                    fprintf (DDSIP_bb->moreoutfile,"      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
-                            }
+                            printf ("      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
+                            if (DDSIP_param->outlev)
+                                fprintf (DDSIP_bb->moreoutfile,"      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
                         }
                     }
                     if (DDSIP_param->watchkappa)

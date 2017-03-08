@@ -230,7 +230,7 @@ main (void)
     if (DDSIP_param->outlev)
     {
         // Open debug output file
-        if ((DDSIP_bb->moreoutfile = fopen (DDSIP_moreoutfname, "w")) == NULL)
+        if ((DDSIP_bb->moreoutfile = fopen (DDSIP_moreoutfname, "a")) == NULL)
         {
             fprintf (stderr, "ERROR: Cannot open '%s'. \n", DDSIP_moreoutfname);
             fprintf (DDSIP_outfile, "ERROR: Cannot open '%s'. \n", DDSIP_moreoutfname);
@@ -238,10 +238,15 @@ main (void)
             goto TERMINATE;
         }
         // Buffer size = 0
-        setbuf (stdout, 0);
-        if (DDSIP_param->outlev > 2)
-            setbuf (DDSIP_bb->moreoutfile, 0);
-
+        setbuf (DDSIP_bb->moreoutfile, 0);
+#ifndef _WIN32
+        // Print time to output file
+        sprintf (astring, "date > %s\n", DDSIP_moreoutfname);
+        i = system (astring);
+#else
+        sprintf (astring, "date /T > %s & time /T >> %s\n", DDSIP_moreoutfname,DDSIP_moreoutfname);
+        i = system (astring);
+#endif
         fprintf (DDSIP_bb->moreoutfile, "--------------------------------------------------------------");
         fprintf (DDSIP_bb->moreoutfile, "---------\nThis is an additional output file of DDSIP. The ");
         fprintf (DDSIP_bb->moreoutfile, "actual amount of output\nis controlled by the parameter ");

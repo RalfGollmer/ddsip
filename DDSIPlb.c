@@ -603,7 +603,7 @@ DDSIP_Warm (int iscen)
 
     if ((k = CPXgetnummipstarts(DDSIP_env, DDSIP_lp)) > 3)
     {
-        status    = CPXdelmipstarts (DDSIP_env, DDSIP_lp, 1, k-1);
+        status    = CPXdelmipstarts (DDSIP_env, DDSIP_lp, 1, k-2);
     }
     if (DDSIP_param->outlev > 90)
         fprintf (DDSIP_bb->moreoutfile, " before adding there are %d mip starts\n", CPXgetnummipstarts(DDSIP_env,DDSIP_lp));
@@ -632,6 +632,30 @@ DDSIP_Warm (int iscen)
         }
         else if (DDSIP_param->outlev > 90)
             fprintf (DDSIP_bb->moreoutfile, "  Copied mip start info %s of previous iteration (Warm)\n", DDSIP_bb->Names[0]);
+
+        if (DDSIP_bb->heurSuccess > -1)
+        {
+            // add solution of most frequent solution from previous iteration
+            sprintf (DDSIP_bb->Names[0],"Scen_%d",DDSIP_bb->heurSuccess+1);
+            // print debugging info
+            if(DDSIP_param->outlev > 99)
+            {
+                fprintf(DDSIP_bb->moreoutfile,"### MIP start values (in CB):\n");
+                for (j = 0; j < DDSIP_bb->total_int; j++)
+                    fprintf(DDSIP_bb->moreoutfile,"%d:%g, ",DDSIP_bb->intind[j], DDSIP_bb->intsolvals[DDSIP_bb->heurSuccess][j]);
+                fprintf(DDSIP_bb->moreoutfile,"\n");
+            }
+            // Copy starting informations to problem
+            status = CPXaddmipstarts (DDSIP_env, DDSIP_lp, 1, DDSIP_bb->total_int, DDSIP_bb->beg, DDSIP_bb->intind, DDSIP_bb->intsolvals[DDSIP_bb->heurSuccess], DDSIP_bb->effort, DDSIP_bb->Names);
+            if (status)
+            {
+                fprintf (stderr, "ERROR: Failed to copy mip start infos (Warm)\n");
+                return status;
+            }
+            else if (DDSIP_param->outlev > 90)
+                fprintf (DDSIP_bb->moreoutfile, "  Copied mip start info %s of most frequent solution from previous iteration (Warm)\n", DDSIP_bb->Names[0]);
+        }
+
         // ADVIND must be 2 when using start values
         status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 2);
         if (status)
@@ -1088,6 +1112,7 @@ DDSIP_LowerBound (void)
     char **colname;
     char *colstore;
 
+    DDSIP_bb->heurSuccess = -1;
     // Output
     if (DDSIP_param->outlev)
     {
@@ -2981,6 +3006,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     // Insurance in case CB doesn't stop as intended
     if (DDSIP_bb->dualitcnt > DDSIP_param->cbtotalitlim + 100)
         return 1;
+    DDSIP_bb->heurSuccess = -1;
     // Output
     if (DDSIP_param->outlev)
     {
@@ -3179,7 +3205,12 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                         j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
                         printf ("      CBLB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
                         if (DDSIP_param->outlev)
-                            fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
+                        {
+                            if (use_LB_params)
+                                fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)   - using CPLEX parameters for LB\n",mipgap*100.0,j,time_lap-time_start);
+                            else
+                                fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
+                        }
                     }
                     if (DDSIP_param->watchkappa)
                     {
@@ -3288,7 +3319,12 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                                     time_end = DDSIP_GetCpuTime ();
                                     printf ("      CBLB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
                                     if (DDSIP_param->outlev)
-                                        fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
+                                    {
+                                        if (use_LB_params)
+                                            fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)   - using CPLEX parameters for LB\n",mipgap*100.0,j,time_end-time_lap);
+                                        else
+                                            fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
+                                    }
                                 }
                             }
                         }
@@ -3788,7 +3824,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     *objective_val = -tmpbestbound;
     //if (DDSIP_param->outlev > 9)
     //    fprintf (DDSIP_bb->moreoutfile, " **** -> dual objective value returned by CBLowerBound: %lg <-   old bound: %g****\n", tmpbestbound, DDSIP_node[DDSIP_bb->curnode]->bound);
-    if (tmpbestbound > DDSIP_node[DDSIP_bb->curnode]->bound)
+    if (tmpbestbound > DDSIP_node[DDSIP_bb->curnode]->bound - fabs(DDSIP_node[DDSIP_bb->curnode]->bound)*2e-15)
     {
         DDSIP_bb->dualObjVal = tmpbestbound;
         increase = 1;
@@ -3992,7 +4028,8 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         // We have no violations, but a worse objective value - a zero subgradient would erroneously be the result
         // Reset first stage solutions to the ones that gave the best bound
         // use the CPLEX settings for LowerBound (probably tighter tols)
-        use_LB_params = 1;
+        if (meanGap)
+            use_LB_params = 1;
         printf ("***  no violations, but a worse objective value");
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "***  no violations, but a worse objective value");
@@ -4175,6 +4212,17 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                                         DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound);
         fprintf (DDSIP_bb->moreoutfile, "\tCurrent dual objective value             = \t%.16g          \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
         fprintf (DDSIP_bb->moreoutfile, "\tBest dual objective value in descent step= \t%.16g\n", DDSIP_bb->dualObjVal);
+    }
+    // determine most frequent scenario solution
+    DDSIP_bb->heurSuccess = -1;
+    k1 = 2;
+    for (j = 0; j < DDSIP_param->scenarios; j++)
+    {
+        if ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])[DDSIP_bb->firstvar] > k1)
+        {
+            k1 = (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])[DDSIP_bb->firstvar];
+            DDSIP_bb->heurSuccess = j;
+        }
     }
 
 TERMINATE:

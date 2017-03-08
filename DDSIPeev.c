@@ -31,6 +31,8 @@ int
 DDSIP_ExpValProb (void)
 {
     int status, j, mipstatus;
+    int wall_hrs, wall_mins,cpu_hrs, cpu_mins;
+    double objval, bobjval, time_start, time_end, wall_secs, cpu_secs, gap;
 
     char fname[DDSIP_ln_fname];
 
@@ -69,6 +71,7 @@ DDSIP_ExpValProb (void)
         }
     }
 
+    time_start = DDSIP_GetCpuTime ();
     mipstatus = CPXmipopt (DDSIP_env, DDSIP_lp);
 
     // Reset cplex parameters
@@ -107,6 +110,45 @@ DDSIP_ExpValProb (void)
     {
         fprintf (stderr, "ERROR: Failed to get solution \n");
         goto TERMINATE;
+    }
+// output of result
+    if (DDSIP_param->outlev)
+    {
+        status = CPXgetobjval (DDSIP_env, DDSIP_lp, &objval);
+        if (status)
+        {
+            fprintf (stderr, "ERROR*: Failed to get best objective value \n");
+            fprintf (DDSIP_outfile, "ERROR*: Failed to get best objective value \n");
+            if (DDSIP_param->outlev)
+                fprintf (DDSIP_bb->moreoutfile, "ERROR*: Failed to get best objective value \n");
+            goto TERMINATE;
+        }
+        if (mipstatus == CPXMIP_OPTIMAL)
+        {
+            bobjval = objval;
+        }
+        else
+        {
+            status = CPXgetbestobjval (DDSIP_env, DDSIP_lp, &bobjval);
+            if (status)
+            {
+                fprintf (stderr, "ERROR: Failed to get value of best remaining node\n");
+                fprintf (DDSIP_outfile, "ERROR: Failed to get value of best remaining node\n");
+                if (DDSIP_param->outlev)
+                    fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get value of best remaining node\n");
+                goto TERMINATE;
+            }
+        }
+        gap = 100.0*(objval-bobjval)/(fabs(objval)+1e-4);
+        time_end = DDSIP_GetCpuTime ();
+        time_start = time_end-time_start;
+        time (&DDSIP_bb->cur_time);
+        DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
+        DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
+        fprintf (DDSIP_bb->moreoutfile,
+                 "    exp. val. prob: Best=%-18.14g\tBound=%-18.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)",
+                 objval, bobjval, gap, mipstatus,
+                 wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
     }
     // Returns sometimes rubbish, don't know why..
     if (!DDSIP_bb->adv_sol)

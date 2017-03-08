@@ -219,9 +219,6 @@ DDSIP_InitCpxPara (void)
     int status = 0;
     double tmp;
 
-    /*    if (DDSIP_param->outlev) fprintf(DDSIP_bb->moreoutfile,"Initial setting of CPLEX parameters...\n"); */
-    /*    printf ("\t Initial setting of CPLEX parameters...\n"); */
-
     // Some parameters need an initialization
     // Screen indicator
     status = CPXinfointparam (DDSIP_env, CPX_PARAM_SCRIND, &i, NULL, NULL);

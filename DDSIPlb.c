@@ -1374,6 +1374,7 @@ DDSIP_LowerBound (void)
                 {
                     fprintf (DDSIP_bb->moreoutfile, "\tLower bound of node %d >= %.16g (-bestvalue = %g) cutoff after evaluation of %d scenarios, skip=%d\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,iscen+1,DDSIP_bb->skip);
                 }
+                DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
                 goto TERMINATE;
             }
         }
@@ -1994,6 +1995,7 @@ if (DDSIP_param->outlev)
                 {
                     fprintf (DDSIP_bb->moreoutfile, "\tLower bound of node %d >= %.16g (-bestvalue = %g) cutoff after evaluation of %d scenarios, skip=%d\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,iscen+1,DDSIP_bb->skip);
                 }
+                DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
                 goto TERMINATE;
             }
         }				// end else

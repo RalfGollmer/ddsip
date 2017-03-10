@@ -1128,7 +1128,7 @@ DDSIP_ReadSpec ()
     // default timelimit: 14 days
     DDSIP_param->timelim   = DDSIP_ReadDbl (specfile, "TIMELI", " TIME LIMIT", 1209600., 0, 0., DDSIP_infty);
     DDSIP_param->absgap    = DDSIP_ReadDbl (specfile, "ABSOLU", " ABSOLUTE GAP", 0., 0, 0., DDSIP_infty);
-    DDSIP_param->relgap    = DDSIP_ReadDbl (specfile, "RELATI", " RELATIVE GAP", 0.0001, 0, 1.e-10, 1.);
+    DDSIP_param->relgap    = DDSIP_ReadDbl (specfile, "RELATI", " RELATIVE GAP", 0.0001, 0, 2.e-11, 1.);
     DDSIP_param->expected  = floor (DDSIP_ReadDbl (specfile, "EEVPRO", " EXPECTED VALUE PROBLEM", 0., 1, 0., 1.) + 0.1);
     // Write deterministic DDSIP_equivalent (only expectation-based case so far)
     DDSIP_param->write_detequ = floor (DDSIP_ReadDbl (specfile, "DETEQU", " WRITE DETERMINISTIC EQUIVALENT", 0., 1, 0., 1.) + 0.1);
@@ -1161,10 +1161,10 @@ DDSIP_ReadSpec ()
     DDSIP_param->rgapsmall = floor (DDSIP_ReadDbl (specfile, "TOLSMA", " HEUR SMALL RGAP ITERS", 16., 1, 1., 1.*DDSIP_param->period) + 0.1);
 
     // Accuracy, e.g. for the  comparison of double numbers
-    DDSIP_param->accuracy    = DDSIP_ReadDbl (specfile, "ACCURA", " ACCURACY", 1.0e-12, 0, 1.e-13, 1.);
+    DDSIP_param->accuracy    = DDSIP_ReadDbl (specfile, "ACCURA", " ACCURACY", 2.0e-13, 0, 1.e-13, 1.);
     // DDSIP_param->accuracy = DDSIP_Dmax (DDSIP_param->relgap * DDSIP_param->accuracy,1e-8);
-    DDSIP_param->brancheps   = DDSIP_ReadDbl (specfile, "EPSILO", " EPSILON", 1.0e-10, 0, 1.e-10, 1.);
-    DDSIP_param->nulldisp    = DDSIP_ReadDbl (specfile, "NULLDI", " NULL DISPERSION", 5.e-10, 0, 5.e-10, DDSIP_infty);
+    DDSIP_param->brancheps   = DDSIP_ReadDbl (specfile, "EPSILO", " EPSILON", 1.5e-11, 0, 1.e-11, 1.);
+    DDSIP_param->nulldisp    = DDSIP_ReadDbl (specfile, "NULLDI", " NULL DISPERSION", 5.e-11, 0, 5.e-11, DDSIP_infty);
     DDSIP_param->watchkappa  = floor (DDSIP_ReadDbl (specfile, "KAPPA", " GATHER KAPPA INFORMATION", 0., 1, 0., 2.) + 0.1);
     DDSIP_param->relax       = floor (DDSIP_ReadDbl (specfile, "RELAXL", " RELAXATION LEVEL", 0., 1, 0., DDSIP_bigint) + 0.1);
     DDSIP_param->noquant     = floor (DDSIP_ReadDbl (specfile, "QUANTI", " NUMBER OF QUANTILES", 10., 1, 0., DDSIP_bigint) + 0.1);

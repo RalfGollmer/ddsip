@@ -612,16 +612,16 @@ DDSIP_Leaf (void)
         DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
 
 ///////////////////
-        if (DDSIP_param->outlev)
-            fprintf (DDSIP_bb->moreoutfile, "-------- Leaf check for node %d:\n", DDSIP_bb->curnode);
+//        if (DDSIP_param->outlev)
+//            fprintf (DDSIP_bb->moreoutfile, "-------- Leaf check for node %d:\n", DDSIP_bb->curnode);
 ///////////////////
 
         for (i = 0; i < DDSIP_bb->curbdcnt; i++)
         {
 
 ///////////////////
-            if (DDSIP_param->outlev)
-                fprintf (DDSIP_bb->moreoutfile, " variable %d: lb=%.14g, ub=%.14g, range=%g, relative: %g,  brancheps=%g\n", DDSIP_bb->curind[i], DDSIP_bb->curlb[i],DDSIP_bb->curub[i], DDSIP_bb->curub[i]-DDSIP_bb->curlb[i], (DDSIP_bb->curub[i] - DDSIP_bb->curlb[i])/(fabs(DDSIP_bb->curub[i])+1.e-16), DDSIP_param->brancheps);
+//            if (DDSIP_param->outlev)
+//                fprintf (DDSIP_bb->moreoutfile, " variable %d: lb=%.14g, ub=%.14g, range=%g, relative: %g,  brancheps=%g\n", DDSIP_bb->curind[i], DDSIP_bb->curlb[i],DDSIP_bb->curub[i], DDSIP_bb->curub[i]-DDSIP_bb->curlb[i], (DDSIP_bb->curub[i] - DDSIP_bb->curlb[i])/(fabs(DDSIP_bb->curub[i])+1.e-16), DDSIP_param->brancheps);
 ///////////////////
 
             // For continuous variables the difference has to be at least DDSIP_param->brancheps
@@ -634,8 +634,8 @@ DDSIP_Leaf (void)
             {
                 DDSIP_node[DDSIP_bb->curnode]->leaf = 0;
 ///////////////////
-                if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile, "-------- node %d:  leaf=0\n", DDSIP_bb->curnode);
+//                if (DDSIP_param->outlev)
+//                    fprintf (DDSIP_bb->moreoutfile, "-------- node %d:  leaf=0\n", DDSIP_bb->curnode);
 ///////////////////
                 break;
             }

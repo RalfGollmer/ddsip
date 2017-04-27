@@ -871,11 +871,13 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
             if (DDSIP_bb->newTry)
             {
                 // increase weight
-                last_weight = next_weight = DDSIP_Dmax(1.6e-2 * fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 100., 5e+3 * cb_get_last_weight (p));
-                cb_set_next_weight (p, next_weight);
-                if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile,"########### increased next weight to %g\n", next_weight);
-                goto NEXT_TRY;
+                if (last_weight < 1.e50)
+                    last_weight = next_weight = DDSIP_Dmax(1.6e-2 * fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 100., 5e+3 * cb_get_last_weight (p));
+                    cb_set_next_weight (p, next_weight);
+                    if (DDSIP_param->outlev)
+                        fprintf (DDSIP_bb->moreoutfile,"########### increased next weight to %g\n", next_weight);
+                    goto NEXT_TRY;
+                }
             }
             else
             {

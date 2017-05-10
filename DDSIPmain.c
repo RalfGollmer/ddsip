@@ -30,6 +30,10 @@
 
 CPXENVptr    DDSIP_env = NULL;
 CPXLPptr     DDSIP_lp  = NULL;
+#ifdef ADDBENDERSCUTS
+//CPXENVptr    DDSIP_dual_env = NULL;
+//CPXLPptr     DDSIP_dual_lp  = NULL;
+#endif
 
 FILE      * DDSIP_outfile = NULL;
 
@@ -53,7 +57,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2017-02-27 (for CPLEX 12.7.0)";
+const char DDSIP_version[] = "2017-05-08 (with Benders feasibility cuts)";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -289,6 +293,20 @@ main (void)
             goto TERMINATE;
     }
 
+#ifdef ADDBENDERSCUTS
+//    // open environment and create empty lp if Benders cuts should be added
+//    if (DDSIP_param->addBendersCuts)
+//    {
+//        DDSIP_dual_env = CPXopenCPLEX (&status);
+//        if (DDSIP_dual_env == NULL)
+//        {
+//            fprintf (stderr, "ERROR: Failed to open cplex environment, CPLEX error code %d.\n",status);
+//            fprintf (DDSIP_outfile, "ERROR: Failed to open cplex environment, CPLEX error code %d.\n",status);
+//            return status;
+//        }
+//    }
+#endif
+
     // Detect first and second stage constraints
     if ((status = DDSIP_DetectStageRows ()))
     {
@@ -386,7 +404,6 @@ main (void)
             for (i = 0; i < DDSIP_bb->firstvar; i++)
                 (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] = DDSIP_bb->adv_sol[i];
             DDSIP_bb->sug[DDSIP_param->nodelim + 2]->next = NULL;
-            //              DDSIP_bb->DDSIP_step=neobj;
             if ((status = DDSIP_UpperBound ()) && status < 100000)
                 goto TERMINATE;
         }
@@ -402,6 +419,8 @@ main (void)
             fprintf (DDSIP_outfile, "-EEV:     No solution found.\n");
         }
     }				// END if (EV)
+
+    DDSIP_FreeCutpool();
 
     // Print cplex log to debugfile
     if (DDSIP_param->outlev > 51)
@@ -627,6 +646,19 @@ TERMINATE:
             printf ("ERROR: CPXfreeprob failed, error code %d\n", status);
     }
     // Free up the CPLEX environment, if necessary
+#ifdef ADDBENDERSCUTS
+//    if (DDSIP_dual_env != NULL)
+//    {
+//        status = CPXcloseCPLEX (&DDSIP_env);
+//        if (status)
+//        {
+//            char errmsg[1024];
+//            fprintf (stderr, "ERROR: Failed to close CPLEX environment.\n");
+//            CPXgeterrorstring (DDSIP_env, status, errmsg);
+//            printf ("%s\n", errmsg);
+//        }
+//    }
+#endif
     if (DDSIP_env != NULL)
     {
         status = CPXcloseCPLEX (&DDSIP_env);

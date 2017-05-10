@@ -26,9 +26,14 @@
 #endif
 
 // in the tests with pure binary first stage adding cuts didn'n speed up
-// defining the macro ADDCUTS here and adding "ADDCUTS 1" to the parameters
+// defining the macro ADDINTEGERCUTS here and adding "ADDINTEGERCUTS 1" to the parameters
 // will activate this
-#undef ADDCUTS
+//#undef ADDINTEGERCUTS
+#define ADDINTEGERCUTS
+
+// in contrast to the integer cuts the use of Benders cuts improves the bound
+// in the tests, so this is enabled by default
+#define ADDBENDERSCUTS
 
 #ifdef __cplusplus
 extern "C" {
@@ -267,9 +272,13 @@ extern "C" {
         // set to 1 if heuristics should be interrupted as soon as the gap is reached
         // set to -1 if heuristic 12 should be left out or interrupted as soon as the gap is reached
         int interrupt_heur;
-#ifdef ADDCUTS
-        // add cuts?
-        int addCuts;
+#ifdef ADDINTEGERCUTS
+        // add integer cuts?
+        int addIntegerCuts;
+#endif
+#ifdef ADDBENDERSCUTS
+        // add Benders cuts?
+        int addBendersCuts;
 #endif
     } para_t;
 
@@ -329,6 +338,14 @@ extern "C" {
         double * first_sol;
         double cursubsol, subbound;
     } bestfirst_t;
+ 
+    typedef struct cut_tt
+    {
+        double *matval;
+        double rhs;
+        int    number;
+        struct cut_tt *prev;
+    } cutpool_t;
 
     typedef struct
     {
@@ -534,6 +551,14 @@ extern "C" {
         int cutCntr;
         // indicator, whether a cut was added (for pure binary first stage)
         int cutAdded;
+        // store cuts of the UB steps for testing proposals
+        cutpool_t* cutpool;
+        // indicator whether an optimal node (bound close enough to bestvalue and no violations) was found
+        int found_optimal_node;
+        double bound_optimal_node;
+        // indicator whether the current incumbent is feasible for the current node bounds
+        int bestsol_in_curnode;
+
     } bb_t;
 
     typedef struct
@@ -609,12 +634,17 @@ extern "C" {
         // Best cost coefficients when dual method is in use
         double *bestdual;
 
+        //was there a cut added in the meantime?
+        int cutAdded;
+
     } node_t;
 
 // DDSIP globals
 // CPLEX environement and lp pointer
     extern CPXENVptr    DDSIP_env;
     extern CPXLPptr     DDSIP_lp;
+    extern CPXENVptr    DDSIP_dual_env;
+    extern CPXLPptr     DDSIP_dual_lp;
 
     extern FILE         *DDSIP_outfile;
 
@@ -742,6 +772,7 @@ extern "C" {
     void  DDSIP_FreeData(void);
     void  DDSIP_FreeBb(void);
     void  DDSIP_FreeParam(void);
+    void  DDSIP_FreeCutpool(void);
 
 // Lagrangian dual
     int DDSIP_NonAnt(void);

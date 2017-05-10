@@ -43,12 +43,12 @@ DDSIP_SetCpxPara (const int cnt, const int * isdbl, const int * which, const dou
         return status;
     }
     // if not changed by user, we require minimal feasibilty, optimality and integrality tolerances
-    if ((status = CPXsetdblparam (DDSIP_env, CPX_PARAM_EPRHS, 1e-9)))
+    if ((status = CPXsetdblparam (DDSIP_env, CPX_PARAM_EPRHS, 1e-8)))
     {
         fprintf (stderr, "ERROR: Failed to set minimal feasibility tolerance\n");
         return status;
     }
-    if ((status = CPXsetdblparam (DDSIP_env, CPX_PARAM_EPOPT, 1e-9)))
+    if ((status = CPXsetdblparam (DDSIP_env, CPX_PARAM_EPOPT, 1e-8)))
     {
         fprintf (stderr, "ERROR: Failed to set minimal optimality tolerance\n");
         return status;
@@ -399,6 +399,10 @@ DDSIP_BbTypeInit (void)
         fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
     }
     /////
+    if (DDSIP_data->firstvar - DDSIP_bb->first_bin)
+    {
+        DDSIP_param->addIntegerCuts = 0;
+    }
 
     // Memory allocation for bb-type-members
     DDSIP_bb->solstat = (int *) DDSIP_Alloc (sizeof (int), DDSIP_param->scenarios, "solstat(BbTypeInit)");
@@ -477,6 +481,9 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->cutoff = 0;
 
     // Count the number of evaluated upper bounds
+    DDSIP_bb->found_optimal_node = 0;
+    DDSIP_bb->bound_optimal_node = DDSIP_infty;
+
     DDSIP_bb->neobjcnt = 0;
 
 #ifdef CONIC_BUNDLE
@@ -537,6 +544,7 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->front_nodes_sorted[0] = 0;
     DDSIP_bb->meanGapLB = DDSIP_bb->meanGapCBLB = DDSIP_bb->meanGapUB = 0.;
     DDSIP_bb->bestBound = DDSIP_bb->newTry = DDSIP_bb->cutCntr = DDSIP_bb->cutAdded = 0;
+    DDSIP_bb->bestsol_in_curnode = 1;
 
     return status;
 } // DDSIP_BbTypeInit
@@ -1078,9 +1086,9 @@ DDSIP_BbInit (void)
     fprintf (DDSIP_outfile, "\t\tNo. of second-stage variables:    %10d  (%d integers)\n", DDSIP_data->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
     fprintf (DDSIP_outfile, "------------------------------------------------------------\n");
 
-#ifdef ADDCUTS
-    if (DDSIP_param->addCuts && (DDSIP_bb->first_int > DDSIP_bb->first_bin))
-        DDSIP_param->addCuts = 0;
+#ifdef ADDINTEGERCUTS
+    if (DDSIP_param->addIntegerCuts && (DDSIP_bb->first_int > DDSIP_bb->first_bin))
+        DDSIP_param->addIntegerCuts = 0;
 #endif
 
     status = CPXgetobj (DDSIP_env, DDSIP_lp, DDSIP_data->obj_coef, 0, DDSIP_data->novar - 1);

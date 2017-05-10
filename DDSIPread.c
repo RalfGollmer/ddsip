@@ -499,9 +499,10 @@ DDSIP_ReadCpxPara (FILE * specfile)
         }
         // Read as long as the following patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
-                strncmp (str, "CPLEX2LB", 9)  && strncmp (str, "CPLEX2UB", 9) &&
-                strncmp (str, "CPLEXEEV", 8)  && strncmp (str, "CPLEXDUAL", 9) &&
-                strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
+               strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
+               strncmp (str, "CPLEXEEV", 8) &&
+               strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
+               strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
         {
             DDSIP_param->cpxwhich[cnt] = atoi (str);
             if (fscanf (specfile, "%lf", &DDSIP_param->cpxwhat[cnt++]) != 1)
@@ -566,10 +567,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
             printf ("*Error: could not read string in CPLEX parameter section\n");
         }
         // Read as long as the other patterns aren't met
-        while (strncmp (str, "CPLEXUB", 7)  &&
-                strncmp (str, "CPLEX2LB", 8) && strncmp (str, "CPLEX2UB", 8)  &&
-                strncmp (str, "CPLEXEEV", 8) && strncmp (str, "CPLEXDUAL", 9) &&
-                strncmp (str, "CPLEXEND", 8) && cnt < DDSIP_maxparam && atoi (str))
+        while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
+               strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
+               strncmp (str, "CPLEXEEV", 8) &&
+               strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
+               strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
         {
             if (str[0] != '*')
             {
@@ -605,6 +607,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
                     DDSIP_param->cpxlbisdbl[k] = j-1;
                 }
         }
+        else
+        {
+            DDSIP_Free ((void*) &DDSIP_param->cpxlbwhich);
+            DDSIP_Free ((void*) &DDSIP_param->cpxlbwhat);
+        }
     }
 
     find = 0;
@@ -637,10 +644,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
             printf ("*Error: could not read string in CPLEX parameter section\n");
         }
         // Read as long as the other patterns aren't met
-        while (strncmp (str, "CPLEXLB", 7)  && strncmp (str, "CPLEXUB", 7)   &&
-                strncmp (str, "CPLEX2UB", 8) &&
-                strncmp (str, "CPLEXEEV", 8) && strncmp (str, "CPLEXDUAL", 9) &&
-                strncmp (str, "CPLEXEND", 8) && cnt < DDSIP_maxparam && atoi (str))
+        while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
+               strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
+               strncmp (str, "CPLEXEEV", 8) &&
+               strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
+               strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
         {
             if (str[0] != '*')
             {
@@ -676,6 +684,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
                     DDSIP_param->cpxlbisdbl2[k] = j-1;
                 }
         }
+        else
+        {
+            DDSIP_Free ((void*) &DDSIP_param->cpxlbwhich2);
+            DDSIP_Free ((void*) &DDSIP_param->cpxlbwhat2);
+        }
     }
 
     find = 0;
@@ -707,10 +720,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
             printf ("*Error: could not read string in CPLEX parameter section\n");
         }
         // Read as long as the other patterns aren't met
-        while (strncmp (str, "CPLEXLB", 7)  &&
-                strncmp (str, "CPLEX2LB", 8) && strncmp (str, "CPLEX2UB", 8) &&
-                strncmp (str, "CPLEXEEV", 8) && strncmp (str, "CPLEXDUAL", 9) &&
-                strncmp (str, "CPLEXEND", 8) && cnt < DDSIP_maxparam && atoi (str))
+        while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
+               strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
+               strncmp (str, "CPLEXEEV", 8) &&
+               strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
+               strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
         {
             if (str[0] != '*')
             {
@@ -746,6 +760,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
                     DDSIP_param->cpxubisdbl[k] = j-1;
                 }
         }
+        else
+        {
+            DDSIP_Free ((void*) &DDSIP_param->cpxubwhich);
+            DDSIP_Free ((void*) &DDSIP_param->cpxubwhat);
+        }
     }
 
     find = 0;
@@ -778,10 +797,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
             printf ("*Error: could not read string in CPLEX parameter section\n");
         }
         // Read as long as the other patterns aren't met
-        while (strncmp (str, "CPLEXLB", 9)  && strncmp (str, "CPLEXUB", 7) &&
-                strncmp (str, "CPLEX2LB", 8) &&
-                strncmp (str, "CPLEXEEV", 8) && strncmp (str, "CPLEXDUAL", 9) &&
-                strncmp (str, "CPLEXEND", 8) && cnt < DDSIP_maxparam && atoi (str))
+        while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
+               strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
+               strncmp (str, "CPLEXEEV", 8) &&
+               strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
+               strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
         {
             if (str[0] != '*')
             {
@@ -817,6 +837,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
                     DDSIP_param->cpxubisdbl2[k] = j-1;
                 }
         }
+        else
+        {
+            DDSIP_Free ((void*) &DDSIP_param->cpxubwhich2);
+            DDSIP_Free ((void*) &DDSIP_param->cpxubwhat2);
+        }
     }
 
     find = 0;
@@ -849,10 +874,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
             printf ("*Error: could not read string in CPLEX parameter section\n");
         }
         // Read as long as the other patterns aren't met
-        while (strncmp (str, "CPLEXLB", 7)  && strncmp (str, "CPLEXUB", 7)   &&
-                strncmp (str, "CPLEX2LB", 8) && strncmp (str, "CPLEX2UB", 8) &&
-                strncmp (str, "CPLEXDUAL", 9) &&
-                strncmp (str, "CPLEXEND", 8) && cnt < DDSIP_maxparam && atoi (str))
+        while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
+               strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
+               strncmp (str, "CPLEXEEV", 8) &&
+               strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
+               strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
         {
             if (str[0] != '*')
             {
@@ -888,6 +914,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
                     DDSIP_param->cpxeevisdbl[k] = j-1;
                 }
         }
+        else
+        {
+            DDSIP_Free ((void*) &DDSIP_param->cpxeevwhich);
+            DDSIP_Free ((void*) &DDSIP_param->cpxeevwhat);
+        }
     }
 
     find = 0;
@@ -912,18 +943,19 @@ DDSIP_ReadCpxPara (FILE * specfile)
     // If 'DUAL'-CPLEX-parameters are specified
     if (find)
     {
-        DDSIP_param->cpxdualwhich = (int *) DDSIP_Alloc (sizeof (int), DDSIP_maxparam, "cpxeevwhich(ReadCpxPara)");
-        DDSIP_param->cpxdualwhat = (double *) DDSIP_Alloc (sizeof (double), DDSIP_maxparam, "cpxeevwhat(ReadCpxPara)");
+        DDSIP_param->cpxdualwhich = (int *) DDSIP_Alloc (sizeof (int), DDSIP_maxparam, "cpxdualwhich(ReadCpxPara)");
+        DDSIP_param->cpxdualwhat = (double *) DDSIP_Alloc (sizeof (double), DDSIP_maxparam, "cpxdualwhat(ReadCpxPara)");
         cnt = 0;
         if (fscanf (specfile, "%s", str) != 1)
         {
             printf ("*Error: could not read string in CPLEX parameter section\n");
         }
         // Read as long as the other patterns aren't met
-        while (strncmp (str, "CPLEXLB", 7)  && strncmp (str, "CPLEXUB", 7)   &&
-                strncmp (str, "CPLEX2LB", 8) && strncmp (str, "CPLEX2UB", 8) &&
-                strncmp (str, "CPLEXEEV", 8) &&
-                strncmp (str, "CPLEXEND", 8) && cnt < DDSIP_maxparam && atoi (str))
+        while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
+               strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
+               strncmp (str, "CPLEXEEV", 8) &&
+               strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
+               strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
         {
             if (str[0] != '*')
             {
@@ -960,6 +992,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
                     DDSIP_param->cpxdualisdbl[k] = j-1;
                 }
         }
+        else
+        {
+            DDSIP_Free ((void*) &DDSIP_param->cpxdualwhich);
+            DDSIP_Free ((void*) &DDSIP_param->cpxdualwhat);
+        }
     }
 
     find = 0;
@@ -992,10 +1029,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
             printf ("*Error: could not read string in CPLEX parameter section\n");
         }
         // Read as long as the other patterns aren't met
-        while (strncmp (str, "CPLEXLB", 7)  && strncmp (str, "CPLEXUB", 7)   &&
-                strncmp (str, "CPLEX2LB", 8) && strncmp (str, "CPLEX2UB", 8) &&
-                strncmp (str, "CPLEXEEV", 8) &&
-                strncmp (str, "CPLEXEND", 8) && cnt < DDSIP_maxparam && atoi (str))
+        while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
+               strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
+               strncmp (str, "CPLEXEEV", 8) &&
+               strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
+               strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
         {
             if (str[0] != '*')
             {
@@ -1031,6 +1069,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 {
                     DDSIP_param->cpxdualisdbl2[k] = j-1;
                 }
+        }
+        else
+        {
+            DDSIP_Free ((void*) &DDSIP_param->cpxdualwhich2);
+            DDSIP_Free ((void*) &DDSIP_param->cpxdualwhat2);
         }
     }
     return 0;
@@ -1127,8 +1170,13 @@ DDSIP_ReadSpec ()
     //DDSIP_param->timelim   = DDSIP_ReadDbl (specfile, "TIMELI", " TIME LIMIT", 86400., 0, 0., DDSIP_infty);
     // default timelimit: 14 days
     DDSIP_param->timelim   = DDSIP_ReadDbl (specfile, "TIMELI", " TIME LIMIT", 1209600., 0, 0., DDSIP_infty);
+    // Accuracy, e.g. for the  comparison of double numbers
+    DDSIP_param->accuracy  = DDSIP_ReadDbl (specfile, "ACCURA", " ACCURACY", 2.0e-13, 0, 1.e-13, 1.);
+    // DDSIP_param->accuracy = DDSIP_Dmax (DDSIP_param->relgap * DDSIP_param->accuracy,1e-8);
+    DDSIP_param->brancheps = DDSIP_ReadDbl (specfile, "EPSILO", " EPSILON", 1.5e-11, 0, 1.e-11, 1.);
+    DDSIP_param->nulldisp  = DDSIP_ReadDbl (specfile, "NULLDI", " NULL DISPERSION", 1.6e-11, 0, 1.6e-11, DDSIP_infty);
     DDSIP_param->absgap    = DDSIP_ReadDbl (specfile, "ABSOLU", " ABSOLUTE GAP", 0., 0, 0., DDSIP_infty);
-    DDSIP_param->relgap    = DDSIP_ReadDbl (specfile, "RELATI", " RELATIVE GAP", 0.0001, 0, 2.e-11, 1.);
+    DDSIP_param->relgap    = DDSIP_ReadDbl (specfile, "RELATI", " RELATIVE GAP", 0.0001, 0, 1.2*DDSIP_param->brancheps, 1.);
     DDSIP_param->expected  = floor (DDSIP_ReadDbl (specfile, "EEVPRO", " EXPECTED VALUE PROBLEM", 0., 1, 0., 1.) + 0.1);
     // Write deterministic DDSIP_equivalent (only expectation-based case so far)
     DDSIP_param->write_detequ = floor (DDSIP_ReadDbl (specfile, "DETEQU", " WRITE DETERMINISTIC EQUIVALENT", 0., 1, 0., 1.) + 0.1);
@@ -1160,11 +1208,6 @@ DDSIP_ReadSpec ()
     DDSIP_param->period = floor (DDSIP_ReadDbl (specfile, "PERIOD", " HEUR PERIOD ITERS", 32., 1, 1., 10000.) + 0.1);
     DDSIP_param->rgapsmall = floor (DDSIP_ReadDbl (specfile, "TOLSMA", " HEUR SMALL RGAP ITERS", 16., 1, 1., 1.*DDSIP_param->period) + 0.1);
 
-    // Accuracy, e.g. for the  comparison of double numbers
-    DDSIP_param->accuracy    = DDSIP_ReadDbl (specfile, "ACCURA", " ACCURACY", 2.0e-13, 0, 1.e-13, 1.);
-    // DDSIP_param->accuracy = DDSIP_Dmax (DDSIP_param->relgap * DDSIP_param->accuracy,1e-8);
-    DDSIP_param->brancheps   = DDSIP_ReadDbl (specfile, "EPSILO", " EPSILON", 1.5e-11, 0, 1.e-11, 1.);
-    DDSIP_param->nulldisp    = DDSIP_ReadDbl (specfile, "NULLDI", " NULL DISPERSION", 5.e-11, 0, 5.e-11, DDSIP_infty);
     DDSIP_param->watchkappa  = floor (DDSIP_ReadDbl (specfile, "KAPPA", " GATHER KAPPA INFORMATION", 0., 1, 0., 2.) + 0.1);
     DDSIP_param->relax       = floor (DDSIP_ReadDbl (specfile, "RELAXL", " RELAXATION LEVEL", 0., 1, 0., DDSIP_bigint) + 0.1);
     DDSIP_param->noquant     = floor (DDSIP_ReadDbl (specfile, "QUANTI", " NUMBER OF QUANTILES", 10., 1, 0., DDSIP_bigint) + 0.1);
@@ -1205,8 +1248,11 @@ DDSIP_ReadSpec ()
     }
     //DDSIP_param->prepro = floor (DDSIP_ReadDbl (specfile, "PREPRO", " PREPROCESSING", 0., 1, 0., 3.) + 0.1);
     DDSIP_param->prepro = 0;
-#ifdef ADDCUTS
-    DDSIP_param->addCuts = floor (DDSIP_ReadDbl (specfile, "ADDCUT", " ADD CUTS", 0., 1, 0., 1.) + 0.1);
+#ifdef ADDBENDERSCUTS
+    DDSIP_param->addBendersCuts = floor (DDSIP_ReadDbl (specfile, "ADDBEN", " ADD BENDERS CUTS", 1., 1, 0., 2.) + 0.1);
+#endif
+#ifdef ADDINTEGERCUTS
+    DDSIP_param->addIntegerCuts = floor (DDSIP_ReadDbl (specfile, "ADDINT", " ADD INTEGER CUTS", 0., 1, 0., 1.) + 0.1);
 #endif
     fprintf (DDSIP_outfile, "\n");
 
@@ -1396,7 +1442,7 @@ DDSIP_ReadSpec ()
     {
         //DDSIP_param->prematureStop = 0; // would be safer, but after current changes the lower bound used for premature stoppng is chosen with more caution (should work in many cases)
         DDSIP_param->prematureStop = 1;
-        DDSIP_param->cbitlim = floor (DDSIP_ReadDbl (specfile, "CBITLI", " CB DESCENT ITERATIONS", 20., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->cbitlim = floor (DDSIP_ReadDbl (specfile, "CBITLI", " CB DESCENT ITERATIONS", 25., 1, 0., DDSIP_bigint) + 0.1);
         if (abs(DDSIP_param->riskmod) == 4 || abs(DDSIP_param->riskmod) == 5)
         {
             printf ("     setting CBRITLIM to 0 due risk model.\n");
@@ -1404,7 +1450,7 @@ DDSIP_ReadSpec ()
             DDSIP_param->cbrootitlim = 0;
         }
         else
-            DDSIP_param->cbrootitlim = floor (DDSIP_ReadDbl (specfile, "CBRITL", " CB DESCENT ITERATIONS IN ROOT", DDSIP_param->cbitlim+10, 1, 0., DDSIP_bigint) + 0.1);
+            DDSIP_param->cbrootitlim = floor (DDSIP_ReadDbl (specfile, "CBRITL", " CB DESCENT ITERATIONS IN ROOT", DDSIP_param->cbitlim+15, 1, 0., DDSIP_bigint) + 0.1);
 
         DDSIP_param->cb_maxsteps  = floor (DDSIP_ReadDbl (specfile, "CBSTEP", " CB MAXSTEPS", 12., 1, 1., 10000.) + 0.1);
         DDSIP_param->cbtotalitlim = floor (DDSIP_ReadDbl (specfile, "CBTOTI", " CB ITERATION LIMIT",5000., 1, 0., DDSIP_bigint) + 0.1);

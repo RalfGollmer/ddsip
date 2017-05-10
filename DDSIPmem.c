@@ -308,6 +308,7 @@ DDSIP_FreeBb ()
         DDSIP_Free ((void **) &(DDSIP_bb->secondrowind));
         DDSIP_Free ((void **) &(DDSIP_bb->firstrowind_reverse));
         DDSIP_Free ((void **) &(DDSIP_bb->secondrowind_reverse));
+        DDSIP_FreeCutpool();
     }
     if (DDSIP_bb->moreoutfile != NULL)
     {
@@ -377,4 +378,19 @@ DDSIP_FreeParam ()
         DDSIP_Free ((void **) &(DDSIP_param->ref_point));
         DDSIP_Free ((void **) &(DDSIP_param->ref_scale));
     }
+}
+
+void
+DDSIP_FreeCutpool (void)
+{
+    cutpool_t *prev, *current;
+    current = DDSIP_bb->cutpool;
+    while (current)
+    {
+        prev = current->prev;
+        DDSIP_Free ((void **) &(current->matval));
+        DDSIP_Free ((void **) &(current));
+        current = prev;
+    }
+    DDSIP_bb->cutpool = NULL;
 }

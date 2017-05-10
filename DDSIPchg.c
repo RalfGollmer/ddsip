@@ -34,6 +34,8 @@ DDSIP_ChgBounds (int print)
 
     int *index = (int *) DDSIP_Alloc (sizeof (int), DDSIP_bb->curbdcnt, "index(chgbounds)");
 
+    DDSIP_bb->bestsol_in_curnode = 1;
+
     for (i = 0; i < DDSIP_bb->curbdcnt; i++)
         index[i] = DDSIP_bb->firstindex[DDSIP_bb->curind[i]];
     if (print && DDSIP_param->outlev > 3)
@@ -62,6 +64,17 @@ DDSIP_ChgBounds (int print)
     {
         fprintf (stderr, "ERROR: Failed to change upper bounds\n");
         return status;
+    }
+
+    // check whether the incumbent violates one of the changed bounds
+    if (DDSIP_bb->bestvalue < DDSIP_infty)
+    {
+        for (i = 0; i < DDSIP_bb->curbdcnt; i++)
+            if (DDSIP_bb->bestsol[DDSIP_bb->curind[i]] < DDSIP_bb->curlb[i] || DDSIP_bb->bestsol[DDSIP_bb->curind[i]] > DDSIP_bb->curub[i])
+            {
+                DDSIP_bb->bestsol_in_curnode = 0;
+                break;
+            }
     }
 
     DDSIP_Free ((void **) &(index));

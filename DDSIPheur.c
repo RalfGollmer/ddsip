@@ -563,7 +563,7 @@ DDSIP_Heuristics (int *comb)
         }
         break;
     default:
-        DDSIP_RoundNear (average);
+        DDSIP_Frequent ();
         break;
     }
 

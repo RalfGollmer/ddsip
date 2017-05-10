@@ -11,7 +11,8 @@ CB       = ../ConicBundle
 
 LIBTYPE   = static_pic
 
-PROCESSOR = -mtune=opteron -march=opteron -mmmx -msse -msse2 -m3dnow -m64
+PROCESSOR = -mtune=corei7 -march=corei7 -mmmx -msse -msse2 -msse3 -mssse3 -m64
+#PROCESSOR = -mtune=core-avx-i -march=core-avx-i -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx -m64
 
 # Directories and target
 HOME      = .

@@ -301,7 +301,7 @@ DDSIP_FreeBb ()
         DDSIP_Free ((void **) &(DDSIP_bb->ref_scenobj));
         DDSIP_Free ((void **) &(DDSIP_bb->adv_sol));
         DDSIP_Free ((void **) &(DDSIP_bb->lb_scen_order));
-        DDSIP_Free ((void **) &(DDSIP_bb->scen_order));
+        DDSIP_Free ((void **) &(DDSIP_bb->ub_scen_order));
         DDSIP_Free ((void **) &(DDSIP_bb->n_buffer));
         DDSIP_Free ((void **) &(DDSIP_bb->front_nodes_sorted));
         DDSIP_Free ((void **) &(DDSIP_bb->firstrowind));

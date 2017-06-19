@@ -311,7 +311,7 @@ DDSIP_DetEqu ()
         for (j = 0; j < DDSIP_param->stoccost; j++)
         {
             scaled_obj_coef[j] = 0.0;
-            if ((colindex_sorted[j] = DDSIP_bb->firstindex_reverse[DDSIP_data->costind[j]]))
+            if ((colindex_sorted[j] = DDSIP_bb->firstindex_reverse[DDSIP_data->costind[j]]) == -1)
                  colindex_sorted[j] = DDSIP_data->firstvar + DDSIP_bb->secondindex_reverse[DDSIP_data->costind[j]];
         }
         for (scen = 0; scen < DDSIP_param->scenarios; scen++)
@@ -484,7 +484,7 @@ DDSIP_DetEqu ()
         }
         for (j = 0; j < DDSIP_param->stocmat; j++)
         {
-            if ((colindex_sorted[j] = DDSIP_bb->firstindex_reverse[DDSIP_data->matcol[j]]))
+            if ((colindex_sorted[j] = DDSIP_bb->firstindex_reverse[DDSIP_data->matcol[j]]) == -1)
                  colindex_sorted[j] = DDSIP_data->firstvar + DDSIP_bb->secondindex_reverse[DDSIP_data->matcol[j]];
             rmatind[j] = DDSIP_data->firstcon + DDSIP_bb->secondrowind_reverse[DDSIP_data->matrow[j]];
         }
@@ -499,7 +499,9 @@ DDSIP_DetEqu ()
             {
                 char errmsg[1024];
                 CPXgeterrorstring (DDSIP_env, status, errmsg);
-                fprintf (stderr, "in DetEqu chgcoeflist returned %d: %s\n", status, errmsg);
+                fprintf (stderr, "in DetEqu:497 chgcoeflist returned %d: %s\n", status, errmsg);
+                for (j = 0; j < DDSIP_param->stocmat; j++) 
+                    fprintf (stderr, "  %4d:  %4d / %4d   %18.12g\n", j, rmatind[j], colindex_sorted[j], value[j]);
             }
             for (j = 0; j < DDSIP_param->stocmat; j++)
             {
@@ -573,7 +575,9 @@ DDSIP_DetEqu ()
             {
                 char errmsg[1024];
                 CPXgeterrorstring (DDSIP_env, status, errmsg);
-                fprintf (stderr, "in DetEqu chgcoeflist returned %d: %s\n", status, errmsg);
+                fprintf (stderr, "in DetEqu:571 chgcoeflist returned %d: %s\n", status, errmsg);
+                for (j = 0; j < DDSIP_param->stoccost; j++) 
+                    fprintf (stderr, "  %4d:  %4d / %4d   %18.12g\n", j, rmatind[j], colindex_sorted[j], value[j]);
             }
             for (j = 0; j < DDSIP_param->stocmat; j++)
             {

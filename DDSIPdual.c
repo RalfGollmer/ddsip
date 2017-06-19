@@ -31,7 +31,6 @@
 
 #include <DDSIPconst.h>
 
-
 //==========================================================================
 int
 DDSIP_NonAnt (void)
@@ -605,152 +604,86 @@ DDSIP_DualOpt (void)
 
     if (!DDSIP_bb->curnode)
     {
-        int comb, i;
-        double tmpbestheur;
-
-        printf ("\nUpper bounds for initial solution\n");
-        if (DDSIP_param->outlev)
-            fprintf (DDSIP_bb->moreoutfile, "\nUpper bounds for initial solution\n");
-        // Initialize, heurval contains the current heuristic solution
-        DDSIP_bb->heurval = DDSIP_infty;
-        tmpbestheur = DDSIP_infty;
-        // sort scenarios according to lower bounds for the initial solution
+        DDSIP_EvaluateScenarioSolutions ();
+        if (DDSIP_bb->cutAdded)
         {
-            // in order to allow for premature cutoff: sort scenarios according to lower bound in root node in descending order
-            double * sort_array;
-            sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "sort_array(LowerBound)");
-            for (i_scen = 0; i_scen < DDSIP_param->scenarios; i_scen++)
+            // reinit model
+            if (cb_reinit_function_model(p, (void *) DDSIP_DualUpdate))
             {
-                sort_array[i_scen] = DDSIP_data->prob[i_scen] * (DDSIP_node[DDSIP_bb->curnode]->subbound)[i_scen];
+                printf ("reinit_function_model failed\n");
+                cb_destruct_problem (&p);
+                DDSIP_Free ((void **) &(minfirst));
+                DDSIP_Free ((void **) &(maxfirst));
+                DDSIP_Free ((void **) &(center_point));
+                return 1;
             }
-            DDSIP_qsort_ins_D (sort_array, DDSIP_bb->scen_order, 0, DDSIP_param->scenarios-1);
-            DDSIP_Free ((void**) &sort_array);
-
-        }
-        DDSIP_bb->cutAdded = 0;
-        if (DDSIP_param->heuristic == 100)  	// use subsequently different heuristics in the same node
-        {
-            for (i = 1; i < DDSIP_param->heuristic_num; i++)
+            if ((status = cb_set_new_center_point (p, DDSIP_node[DDSIP_bb->curnode]->bestdual)))
             {
-                DDSIP_param->heuristic = floor (DDSIP_param->heuristic_vector[i] + 0.1);
-                if (!DDSIP_Heuristics (&comb))
-                {
-                    // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-                    if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
-                    {
-                        if (!(status = DDSIP_UpperBound ()) || status == 100000)
-                        {
-                            if (DDSIP_bb->heurval < tmpbestheur)
-                                tmpbestheur = DDSIP_bb->heurval;
-                        }
-                        if (status == 100000)
-                        {
-                            DDSIP_bb->skip = -5;
-                            if (DDSIP_param->interrupt_heur > 0)
-                                break;
-                        }
-                    }
-                }
+                printf ("set_new_center_point returned %d\n", status);
+                cb_destruct_problem (&p);
+                DDSIP_Free ((void **) &(minfirst));
+                DDSIP_Free ((void **) &(maxfirst));
+                DDSIP_Free ((void **) &(center_point));
+                return status;
             }
-            DDSIP_param->heuristic = 12;
-            if (!(DDSIP_param->interrupt_heur && (DDSIP_bb->skip == -5)))
+            // use the result of set_center as initial dualObjVal
+            if(DDSIP_param->outlev > 10)
+                fprintf(DDSIP_bb->moreoutfile," after 1. reinit: dualObjVal = %18.14g, old_obj= %18.14g, diff = %g\n", DDSIP_bb->dualObjVal, old_obj, DDSIP_bb->dualObjVal-old_obj);
+            if (DDSIP_bb->dualObjVal > old_obj)
             {
-                if (!DDSIP_Heuristics (&comb))
+                int cntr = 1;
+                old_obj = obj = DDSIP_bb->dualObjVal;
+                next_weight = next_weight * 2.0;
+                cb_set_next_weight (p, next_weight);
+                DDSIP_EvaluateScenarioSolutions ();
+                do
                 {
-                    // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-                    if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
+                    old_obj = obj = DDSIP_bb->dualObjVal;
+                    // reinit model
+                    if (cb_reinit_function_model(p, (void *) DDSIP_DualUpdate))
                     {
-                        if (!DDSIP_UpperBound ())
-                        {
-                            if (DDSIP_bb->heurval < tmpbestheur)
-                                tmpbestheur = DDSIP_bb->heurval;
-                        }
+                        printf ("reinit_function_model failed\n");
+                        cb_destruct_problem (&p);
+                        DDSIP_Free ((void **) &(minfirst));
+                        DDSIP_Free ((void **) &(maxfirst));
+                        DDSIP_Free ((void **) &(center_point));
+                        return 1;
                     }
-                }
+                    if ((status = cb_set_new_center_point (p, DDSIP_node[DDSIP_bb->curnode]->bestdual)))
+                    {
+                        printf ("set_new_center_point returned %d\n", status);
+                        cb_destruct_problem (&p);
+                        DDSIP_Free ((void **) &(minfirst));
+                        DDSIP_Free ((void **) &(maxfirst));
+                        DDSIP_Free ((void **) &(center_point));
+                        return status;
+                    }
+                    cntr++;
+                    if(DDSIP_param->outlev > 10)
+                        fprintf(DDSIP_bb->moreoutfile," after %d. reinit: dualObjVal = %18.14g, old_obj= %18.14g, diff = %g\n", cntr, DDSIP_bb->dualObjVal, old_obj, DDSIP_bb->dualObjVal-old_obj);
+                    if (DDSIP_bb->dualObjVal > old_obj)
+                    {
+                        old_obj = obj;
+                        obj = DDSIP_bb->dualObjVal;
+                        DDSIP_EvaluateScenarioSolutions ();
+                    }
+                } while (DDSIP_bb->cutAdded && obj > old_obj && cntr < DDSIP_param->numberReinits);
+                old_obj = obj;
             }
-            DDSIP_param->heuristic = 100;
-            DDSIP_bb->heurval = tmpbestheur;
-        }
-        else if (DDSIP_param->heuristic == 99)  	// use subsequently different heuristics in the same node
-        {
-            for (i = 1; i < DDSIP_param->heuristic_num; i++)
-            {
-                DDSIP_param->heuristic = floor (DDSIP_param->heuristic_vector[i] + 0.1);
-                if (!DDSIP_Heuristics (&comb))
-                {
-                    // Evaluate the proposed first-stage solution
-                    if (!(status = DDSIP_UpperBound ()) || status == 100000)
-                    {
-                        if (DDSIP_bb->heurval < tmpbestheur)
-                            tmpbestheur = DDSIP_bb->heurval;
-                    }
-                    if (status == 100000)
-                    {
-                        DDSIP_bb->skip = -5;
-                        if (DDSIP_param->interrupt_heur > 0)
-                            break;
-                    }
-                }
-            }
-            DDSIP_param->heuristic = 99;
-            DDSIP_bb->heurval = tmpbestheur;
-        }
-        else
-        {
-            if (!DDSIP_Heuristics (&comb))
-                // Evaluate the proposed first-stage solution
-                if (!(status = DDSIP_UpperBound ()) || status == 100000)
-                {
-                    if (DDSIP_bb->heurval < tmpbestheur)
-                        tmpbestheur = DDSIP_bb->heurval;
-                }
-                if (status == 100000)
-                {
-                    DDSIP_bb->skip = -5;
-                }
-        }
-         if (DDSIP_bb->cutAdded)
-         {
-             // reinit model
-             if (cb_reinit_function_model(p, (void *) DDSIP_DualUpdate))
-             {
-                 printf ("reinit_function_model failed\n");
-                 cb_destruct_problem (&p);
-                 DDSIP_Free ((void **) &(minfirst));
-                 DDSIP_Free ((void **) &(maxfirst));
-                 DDSIP_Free ((void **) &(center_point));
-                 return 1;
-             }
-             if ((status = cb_set_new_center_point (p, DDSIP_node[DDSIP_bb->curnode]->bestdual)))
-             {
-                 printf ("set_new_center_point returned %d\n", status);
-                 cb_destruct_problem (&p);
-                 DDSIP_Free ((void **) &(minfirst));
-                 DDSIP_Free ((void **) &(maxfirst));
-                 DDSIP_Free ((void **) &(center_point));
-                 return status;
-             }
-             // use the result of set_center as initial dualObjVal
-             if(DDSIP_param->outlev > 10)
-                 fprintf(DDSIP_bb->moreoutfile," after reinit: dualObjVal = %18.14g, old_obj= %18.14g\n", DDSIP_bb->dualObjVal,old_obj);
-             if (DDSIP_bb->dualObjVal > old_obj)
-             {
-                 old_obj = obj = DDSIP_bb->dualObjVal;
-                 next_weight = next_weight * 1.5;
-                 cb_set_next_weight (p, next_weight);
-             }
-             last_dualitcnt = DDSIP_bb->dualitcnt;
-             last_weight = next_weight;
+            last_dualitcnt = DDSIP_bb->dualitcnt;
+            last_weight = next_weight;
         }
     }
 
     if (DDSIP_param->outlev)
     {
         DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
-        fprintf (DDSIP_outfile, "\n   --------- Dual:  Descent    Total  Objective        Weight        Bound                              CPU Time");
-        printf ("\n   --------- Dual:  Descent    Total  Objective        Weight        Bound                              CPU Time");
-        fprintf (DDSIP_outfile,"\n  |                       0        1  %-16.12g %-11.6g   %-18.14g%18dh %02d:%05.2f\n", obj, start_weight, DDSIP_node[DDSIP_bb->curnode]->bound, cpu_hrs,cpu_mins,cpu_secs);
-        printf ("\n  |                       0        1  %-16.12g %-11.6g   %-18.14g%18dh %02d:%05.2f\n", obj, start_weight, DDSIP_node[DDSIP_bb->curnode]->bound, cpu_hrs,cpu_mins,cpu_secs);
+        fprintf (DDSIP_outfile, "\n   --------- Dual:  Descent    Total  Objective        Weight        Bound                              CPU Time\n");
+        printf ("\n   --------- Dual:  Descent    Total  Objective        Weight        Bound                              CPU Time\n");
+        printf ("  | %23d  %7d  %-16.12g %-11.6g   %-18.14g%18dh %02d:%05.2f\n",
+                     0, DDSIP_bb->dualitcnt, obj, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, cpu_hrs,cpu_mins,cpu_secs);
+        fprintf (DDSIP_outfile, "  | %23d  %7d  %-16.12g %-11.6g   %-18.14g%18dh %02d:%05.2f\n",
+                     0, DDSIP_bb->dualitcnt, obj, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, cpu_hrs,cpu_mins,cpu_secs);
     }
 
     if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 0.05*fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap)
@@ -965,7 +898,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                             {
                                 repeated_increase--;
                                 last_weight = next_weight;
-                                if (noIncreaseCounter > 4)
+                                if (noIncreaseCounter > 3)
                                 {
                                     if (last_weight > 20000.)
                                     {
@@ -1497,7 +1430,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
             }
             else if (!DDSIP_bb->violations)
                 DDSIP_Print2 ("termination status: optimal.", "\n", 0, 0);
-            else if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*0.05*DDSIP_param->relgap)
+            else if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap)
             {
                 if (DDSIP_node[DDSIP_bb->curnode]->violations > 0.2*DDSIP_param->scenarios && (DDSIP_bb->nofront > 1)
                    && (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*(DDSIP_Dmin(0.01*DDSIP_param->relgap, 1.e-11)))
@@ -1572,7 +1505,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
             // This order is changed as soon as a suggested heuristics points is infeasible for one of the scenarios
             for (i_scen=0; i_scen<DDSIP_param->scenarios; i_scen++)
             {
-                DDSIP_bb->scen_order[i_scen] = DDSIP_bb->lb_scen_order[i_scen];
+                DDSIP_bb->ub_scen_order[i_scen] = DDSIP_bb->lb_scen_order[i_scen];
             }
         }
     }
@@ -1744,4 +1677,5 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
 #endif
     return 0;
 }
+
 #endif

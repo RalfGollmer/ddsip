@@ -279,6 +279,8 @@ extern "C" {
 #ifdef ADDBENDERSCUTS
         // add Benders cuts?
         int addBendersCuts;
+        int testOtherScens;
+        int numberReinits;
 #endif
     } para_t;
 
@@ -515,7 +517,7 @@ extern "C" {
         // pointer for re-sorting the scenarios for lower bounding
         int   *lb_scen_order;
         // pointer for re-sorting the scenarios for upper bounding
-        int   *scen_order;
+        int   *ub_scen_order;
 
         // Text buffer for querying variable name
         char * name_buffer[1];
@@ -558,6 +560,8 @@ extern "C" {
         double bound_optimal_node;
         // indicator whether the current incumbent is feasible for the current node bounds
         int bestsol_in_curnode;
+        //  number of scenarios shifted to begin of the sorted list due to ub infeasibility
+        int shifts;
 
     } bb_t;
 
@@ -755,8 +759,9 @@ extern "C" {
     int  DDSIP_ChgProb(int);
     int  DDSIP_LowerBound(void);
     int  DDSIP_Heuristics(int *);
-    int  DDSIP_SolChk(void);
+    int  DDSIP_SolChk(double *);
     int  DDSIP_UpperBound(void);
+    void DDSIP_EvaluateScenarioSolutions (void);
     int  DDSIP_RestoreBoundAndType(void);
     int  DDSIP_Bound(void);
     int  DDSIP_Branch(void);

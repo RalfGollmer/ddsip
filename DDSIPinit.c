@@ -534,17 +534,17 @@ DDSIP_BbTypeInit (void)
     }
     // DDSIP_Allocate and initialize lb_scen_order for lower bound, scen_order for upper bound
     DDSIP_bb->lb_scen_order = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_param->scenarios), "DDSIP_bb->lb_scen_order(BbInit)");
-    DDSIP_bb->scen_order    = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_param->scenarios), "DDSIP_bb->scen_order(BbInit)");
+    DDSIP_bb->ub_scen_order = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_param->scenarios), "DDSIP_bb->ub_scen_order(BbInit)");
     for(i=0; i<DDSIP_param->scenarios; i++)
     {
-        DDSIP_bb->lb_scen_order[i] = i;
-        DDSIP_bb->scen_order[i]    = i;
+        DDSIP_bb->lb_scen_order[i] = DDSIP_bb->ub_scen_order[i]    = i;
     }
     DDSIP_bb->front_nodes_sorted = (int *) DDSIP_Alloc (sizeof (int), 1, "DDSIP_bb->front_nodes_sorted(BbInit)");
     DDSIP_bb->front_nodes_sorted[0] = 0;
     DDSIP_bb->meanGapLB = DDSIP_bb->meanGapCBLB = DDSIP_bb->meanGapUB = 0.;
     DDSIP_bb->bestBound = DDSIP_bb->newTry = DDSIP_bb->cutCntr = DDSIP_bb->cutAdded = 0;
     DDSIP_bb->bestsol_in_curnode = 1;
+    DDSIP_bb->shifts = 0;
 
     return status;
 } // DDSIP_BbTypeInit
@@ -701,6 +701,12 @@ DDSIP_InitStages (void)
     }
     DDSIP_data->firstvar = cnt;
     DDSIP_data->secvar   = DDSIP_data->novar - cnt;
+    if (!cnt)
+    {
+        printf ("XXX ERROR: no first-stage variables found. Wrong post- or prefix given? Problem cannot be handled by DDSIP.\n    Exiting.\n");
+        fprintf (DDSIP_outfile, "XXX ERROR: no first-stage variables found. Wrong post- or prefix given? Problem cannot be handled by DDSIP.\n    Exiting.\n");
+        return -1;
+    }
     if (abs(DDSIP_param->riskmod) == 4)
     {
         firindex[cnt]             = DDSIP_data->novar;
@@ -885,10 +891,10 @@ DDSIP_DetectStageRows (void)
     }
     DDSIP_bb->nocon = DDSIP_bb->firstcon + DDSIP_bb->seccon;
 
-    DDSIP_bb->firstrowind = (int *) DDSIP_Alloc(sizeof (int), DDSIP_bb->firstcon, "secondrowind(DDSIP_DetectStageRows)");
-    DDSIP_bb->secondrowind = (int *) DDSIP_Alloc(sizeof (int), DDSIP_bb->seccon, "firstrowind(DDSIP_DetectStageRows)");
-    DDSIP_bb->firstrowind_reverse = (int *) DDSIP_Alloc(sizeof (int), DDSIP_bb->nocon, "secondrowind(DDSIP_DetectStageRows)");
-    DDSIP_bb->secondrowind_reverse = (int *) DDSIP_Alloc(sizeof (int), DDSIP_bb->nocon, "firstrowind(DDSIP_DetectStageRows)");
+    DDSIP_bb->firstrowind = (int *) DDSIP_Alloc(sizeof (int), DDSIP_bb->firstcon, "firstrowind(DDSIP_DetectStageRows)");
+    DDSIP_bb->secondrowind = (int *) DDSIP_Alloc(sizeof (int), DDSIP_bb->seccon, "secondrowind(DDSIP_DetectStageRows)");
+    DDSIP_bb->firstrowind_reverse = (int *) DDSIP_Alloc(sizeof (int), DDSIP_bb->nocon, "firstrowind_reverse(DDSIP_DetectStageRows)");
+    DDSIP_bb->secondrowind_reverse = (int *) DDSIP_Alloc(sizeof (int), DDSIP_bb->nocon, "secondrowind_reverse(DDSIP_DetectStageRows)");
     j = k = 0;
     for (i = 0; i < DDSIP_bb->nocon; i++)
     {

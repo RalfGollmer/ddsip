@@ -1250,6 +1250,9 @@ DDSIP_ReadSpec ()
     DDSIP_param->prepro = 0;
 #ifdef ADDBENDERSCUTS
     DDSIP_param->addBendersCuts = floor (DDSIP_ReadDbl (specfile, "ADDBEN", " ADD BENDERS CUTS", 1., 1, 0., 2.) + 0.1);
+    DDSIP_param->testOtherScens = DDSIP_param->stocmat ? 1. : 0.;
+    DDSIP_param->testOtherScens = floor (DDSIP_ReadDbl (specfile, "TESTBE", " TEST FOR FURTHER BENDERS CUTS", DDSIP_param->testOtherScens, 1, 0., 1.) + 0.1);
+    DDSIP_param->numberReinits  = floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 10., 1, 0., DDSIP_bigint) + 0.1);
 #endif
 #ifdef ADDINTEGERCUTS
     DDSIP_param->addIntegerCuts = floor (DDSIP_ReadDbl (specfile, "ADDINT", " ADD INTEGER CUTS", 0., 1, 0., 1.) + 0.1);
@@ -1969,8 +1972,6 @@ DDSIP_ReadData ()
         DDSIP_data->matval = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios * DDSIP_param->stocmat, "matval(ReadData)");
         DDSIP_data->matcol = (int *) DDSIP_Alloc (sizeof (int), DDSIP_param->stocmat, "matcol(ReadData)");
         DDSIP_data->matrow = (int *) DDSIP_Alloc (sizeof (int), DDSIP_param->stocmat, "matrow(ReadData)");
-
-        strcpy (identifier, "pos");
 
         printf ("Enter data file name (stochastic matrix entries):  ");
         k = scanf ("%s", fname);

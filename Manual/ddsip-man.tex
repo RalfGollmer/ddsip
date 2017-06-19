@@ -5,6 +5,7 @@
 \usepackage{german}
 \usepackage{longtable}
 \frenchspacing
+\parindent0ex
 
 \newcommand{\expect}{{\textsc{E}}} % Expectation operator
 \newcommand{\E}{{\expect}} % Expectation operator
@@ -34,7 +35,7 @@
 \newcommand{\domeg}{(d \omega)}
 \newcommand{\Pdo}{{~\Prob(d \omega)}}
 
-\title{\huge User's Guide to ddsip -- A C Package for the Dual
+\title{\huge User's Guide to \texttt{ddsip} -- A C Package for the Dual
 Decomposition of Two-Stage Stochastic Programs with Mixed-Integer Recourse}
 \author{A. M\"arkert, R. Gollmer\\
 	Department of Mathematics\\
@@ -51,18 +52,21 @@ Decomposition of Two-Stage Stochastic Programs with Mixed-Integer Recourse}
 
 \section{Introduction}
  \texttt{ddsip} is a C-implementation of a number of scenario decomposition algorithms for two-stage
-stochastic linear programs with mixed-integer recourse. It expects a MIP, stochastic LPs are not supported.\\
-The program is based on a previous Fortran~90-implementation
-of C.C. Car\o e. Main idea of the decomposition algorithms is the Lagrangian relaxation of the
-non\-anti\-ci\-pa\-tivity constraints and a branch-and-bound algorithm to reestablish
-non\-anti\-ci\-pa\-tivity. The original scenarios decomposition algorithm has been developed in
-\cite{cs1}. Extensions including the treatment of mean-risk models have been made in \cite{diss}. 
-
+stochastic linear programs with mixed-integer recourse and/or mixed-integer first stage.
+It expects a MIP, stochastic LPs are not supported.\\[0.5em]
+The program is based on a previous Fortran~90-implementation of C.C. Car\o e.
+The main idea of the decomposition algorithms is the Lagrangian relaxation of the
+non\-anti\-ci\-pa\-tivity constraints and a branch-and-bound algorithm on the first-stage variables to reestablish
+non\-anti\-ci\-pa\-tivity. This branch-and-bound and the dual nonsmooth optimization are complemented by the
+addition of Benders feasibility cuts when heuristic solutions derived in the course of the solution process
+from the single scenario problems are infeasible for one of the scenarios.\\[0.5em]
+The original scenarios decomposition algorithm has been developed in
+\cite{cs1}. Extensions including the treatment of mean-risk models have been made in \cite{diss}. \\[0.6em]
 For the dual optimization we use \texttt{ConicBundle} -- a C$^{++}$-implementation kindly provided by
-C. Helmberg, see \cite{CB}. We use the CPLEX callable library to solve the mixed-integer subproblems in
-the branch-and-bound tree, see \cite{cp}. The current version of \texttt{ddsip} is ready for CPLEX~12.6.3
-and requires at least version 11.2.
-
+C. Helmberg, see \cite{CB}.\\
+We use the CPLEX callable library to solve the mixed-integer subproblems in
+the branch-and-bound tree, see \cite{cp}. The current version of \texttt{ddsip} is ready for CPLEX~12.7.1
+and requires at least version 11.2.\\[0.8em]
 The implementation features risk minimization, too. This version supports mean-risk models involving
 the risk measure {\it expected excess of a target} (see \cite{og}, here: {\it expected shortfall below
 target}), {\it excess probabilities} (as investigated in \cite{tied}), {\it absolute semideviation},
@@ -72,10 +76,9 @@ The code is of research quality, i.e. no production quality should be expected w
 and efficiency.
 We kindly ask the user to support us fixing bugs by reporting them to us as they occur.
 
-We did not %yet 
-include support for the SMPS format, but a rather basic input format is implemented, which
-is not very handy with stochastic matrix entries. Any contributions in this respect are welcome.
-Our code only supports the scenario formulation.
+We did not include support for the SMPS format, but a rather basic input format for the {\bf two-stage scenario
+formulation}.
+Any contributions in this respect are welcome.
 
 This manual describes the format of the input files and the data contained in the output
 files of \texttt{ddsip}. We try to provide all necessary information on the input parameters.
@@ -266,13 +269,12 @@ We remark that problems related to random recourse have to be cared about by the
 \newpage
 \section{Input files} \label{S:INP}
 
-\texttt{ddsip} requires 3 input files, a number of other files are optional. 
-
-\begin{itemize}
-\item Specification file: a file containing the specifications of the
-stochastic program, some CPLEX- and b\&b-parameters
+\texttt{ddsip} requires 3 input files, a number of other files are optional. \\[-1.5em]
+\begin{itemize}\topsep0em\itemsep0.2em
 \item Model file: a file readable by CPLEX (e.g. lp- or mps-format, possibly in gzipped form) that specifies the 
 single-scenario model
+\item Specification file: a file containing the specifications of the
+stochastic program, some CPLEX- and b\&b-parameters
 \item Priority order file for subproblems (optional): a CPLEX order file corresponding to the
 model file
 \item RHS scenario file: a file containing the stochastic right-hand sides
@@ -314,21 +316,19 @@ start.in
 \section{The model file}
 The model file contains the single-scenario model. Its format can be one of the formats readable by
 \texttt{CPLEX}, as e.g.\ the lp- or mps-format. The gzipped forms of these files (with extensions .lp.gz or .mps.gz)
-can be used for the sake of saving disk space. This is especially advisable in case OUTFILE is chosen greater than 2.\\
-The first-stage variables have to be identified by a prefix or a postfix appended to their names
-as specified in the specs file.\\
-The requirements on the ordering of the variables and constraints from earlier ddsip versions are now obsolete.\\
-The only requirement on the model file is that all first-stage variables are identified by a prefix or postfix appended to their names
-which is specified in the specs file.
+can be used for the sake of saving disk space. This is especially advisable when the parameter OUTFILE is chosen greater than 2.\\
+The only requirement on the model file is that all first-stage variables are identified by a prefix or postfix
+appended to their names which is specified in the specs file.\\
+There are no requirements on the ordering of the variables and constraints like in earlier \texttt{ddsip} versions.
 %
 \section{The specification file}
 Comments could be included anywhere in this file apart from the CPLEX parameter section.
 An Asterisk identifies the beginning of a comment until the end of the line.
-This way explanations could be included and parameter lines temporarily inactivated
-Comments or commenting out lines could not be used within the CPLEX parameter section.
+This way explanations could be included and parameter lines temporarily inactivated.
+Commenting out whole lines could not be used within the CPLEX parameter section, but comments can be added after a parameter number/value pair in this section, too.
 
-Keywords are accepted if their start matches the strings given in the tables.
-Unknown keywords are simply ignored. Lines with the first occurrence of each keyword are evaluated.
+Keywords for parameters are accepted if their first six characters match the strings given in the tables.
+Unknown keywords are simply ignored. Only the lines with the {\bf first occurrence} of each keyword are evaluated.
 
 A sample specification file is given in Appendix \ref{S:SAM}. %Figure~\ref{F:SPEC}.
 \subsection{Parameters for the two-stage model}
@@ -336,7 +336,7 @@ Hopefully, the identifiers in the first part of the file are self explaining. Ot
 become clear when consulting the two-stage chapter of one of the standard text books on stochastic
 programming, see \cite{bir,kal,pre}.
 
-The parameters FIRSTVAR, FIRSTCON, SECVAR, SECCON  used in the older DDSIP versions are now obsolete.
+The parameters FIRSTVAR, FIRSTCON, SECVAR, SECCON  used in the older \texttt{ddsip} versions are now obsolete.
 These values and the corresponding indices of variables and constraints are now determined by the program
 using the prefix or postfix specified.
 
@@ -369,15 +369,17 @@ CPLEX parameters to be set different from their defaults have to be specified fo
 The contained lines have to start with the CPLEX parameter number followed by the parameter value. This can be followed by a comment, starting with an asterisk.
 The parameter numbers are specified in the CPLEX callable library documentation, section parameter table.\\
 The settings following directly the line with {\it CPLEXBEGIN} are applied to all problems solved.\\[0.5em]
-Special settings for CPLEX parameters can be specified for the different stages of the program.\\
-For the calculation of the EEV
-parameter values can be overwritten after the identifier {\it CPLEXEEV},\\
-for the evaluation of lower bounds after the identifier {\it CPLEXLB},\\
-for a continuation of the evaluation of lower bounds with different settings after the identifier {\it CPLEX2UB},\\
-for the evaluation of upper bounds after the identifier {\it CPLEXUB},\\
-for a continuation of the evaluation of upper bounds with different settings after the identifier {\it CPLEX2UB},\\
-for the subproblems of the Lagrangian dual after the identifier {\it CPLEXDUAL},\\
-for a continuation of the subproblems of the Lagrangian dual after the identifier {\it CPLEX2DUAL}.\\[0.5em]
+Special settings for CPLEX parameters can be specified for the different stages of the program.
+\begin{itemize}\topsep0em\itemsep0.1em
+\item For the calculation of the expected value problem (with all stochastic entries set to their expected values)
+parameter values can be overwritten after the identifier {\it CPLEXEEV},
+\item for the evaluation of lower bounds after the identifier {\it CPLEXLB},
+\item for a continuation of the evaluation of lower bounds with different settings after the identifier {\it CPLEX2LB},
+\item for the evaluation of upper bounds after the identifier {\it CPLEXUB},
+\item for a continuation of the evaluation of upper bounds with different settings after the identifier {\it CPLEX2UB},
+\item for the subproblems of the Lagrangian dual after the identifier {\it CPLEXDUAL},
+\item for a continuation of the subproblems of the Lagrangian dual after the identifier {\it CPLEX2DUAL}.
+\end{itemize}
 For some problems it is beneficial to use two optimization calls with different parameter setings (e.g. mip emphasis, heuristic frequency)
 sequentially, the second one starting with the B\&B tree and solutions obtained in the first call. This is enabled for lower and upper bound calculations and the Lagrangean dual if the sections beginning 
 with {\it CPLEX2LB}, {\it CPLEX2UB}, or  {\it CPLEX2DUAL} are specified.\\[0.5em]
@@ -436,6 +438,10 @@ DETEQT&Int&0..1&0&Determines the form of the obj. of\\&&&& the deterministic equ
 %\end{center} \caption{Output and termination parameters} \label{T:OUT}
 %\end{table}
 %
+The two types of the deterministic equivalent differ only in the objective.
+In both cases additional variables with names DDSIP\_objSC001 etc. are added plus equations assigning the corresponding scenario objective values.
+In the type 0 equivalent the objective is the sum of these additional variables multiplied by the scenario probability.
+In the type 1 file the objective is formed using the original first-stage variables.
 
 The {\it branching value} is used to create two new subproblems as described in {\em STEP 5} of the
 decomposition algorithm. For continuous components it depends on the parameter EPSILON.
@@ -446,7 +452,7 @@ of the $S$ subproblems and $x_{ij}$, $i=1,\ldots,n$, are their i-th components.
 Nodes with a dispersion norm smaller than NULLDISP are considered as leaves of the 
 B\&B tree (i.e. no further branching on them).
 
-\newpage
+%\newpage
 %\begin{table}[h]
 \begin{center}
 \tablefirsthead{%
@@ -475,6 +481,9 @@ page}\\
 \hline}
 \tablelasttail{\hline}
 \begin{supertabular}{|llllp{6.2cm}|} 
+ACCURA&Dbl&1e-13..1&1e-12& Accuracy -- real values are considered equal if the absolute value of their difference is less than accuracy\\[0.2em]
+EPSILO&Dbl&1e.10..&1e-10&Specifies the gap between disjoint subdomains if continuous variables are branched.\\[0.2em]
+NULLDI&Dbl&5e-10..&5e-10&Branch nodes only if their dispersion norm is greater than NULLDI.\\[0.2em]
 CPXORD&Int&0..1&0&Read a CPLEX priority order?\\[0.2em]
 PORDER&Int&0..1&0&Use priority order for branching? If this
 parameter is 1, a priority order file has to be specified. \\[0.2em]
@@ -505,11 +514,9 @@ BOUSTR&Int&0..10&0&choose node with best bound as next node\\
 &&&4& heuristic: among nodes with sufficiently small bound choose node with least number of violations\\
 &&&5-9& heuristic: depth first until a incumbent is found, then switch to\\&&&& BOUSTRAT-5\\[0.2em]
 &&&10*& heuristic: among last four generated nodes choose node with best bound (unsolved nodes first) as long as its objective value does not exceed a threshold. Choose the best bound node otherwise and also every 25th node.\\
+BESTFR&Int&1..&30&frequency for choosing the best bound node regardless of the other criteria\\
 PERIOD&Int&1..&32&for BOUSTRAT$>$0: determines the period of bounding steps with changing tolerances for ''sufficiently small''\\
 TOLSMA&Int&1..{\footnotesize PERIOD}&16&for BOUSTRAT$>$0: determines the number of steps in each period with a small tolerance\\[0.2em]
-ACCURA&Dbl&1e-13..1&1e-12& Accuracy -- real values are considered equal if the absolute value of their difference is less than accuracy\\[0.2em]
-EPSILO&Dbl&1e.10..&1e-10&Specifies the gap between disjoint subdomains if continuous variables are branched.\\[0.2em]
-NULLDI&Dbl&5e-10..&5e-10&Branch nodes only if their dispersion norm is greater than NULLDI.\\[0.2em]
 KAPPA&Int&0..2&0*&No gathering of kappa values by CPLEX\\
 &Int&&1&sample gathering of kappa values by CPLEX and reporting\\
 &Int&&2&full gathering of kappa values by CPLEX and reporting\\[0.2em]
@@ -517,9 +524,18 @@ RELAXL&Int&0..2&0*&No integrality relaxation.\\
 &&&1&Relax first-stage variables.\\
 &&&2&Relax first- and second-stage variables.\\[0.2em]
 QUANTI&Int&0..&10&Number of Quantiles to be displayed at the end\\[0.2em]
-PREMA&Int&0..1&1&Should premature stop in upper bounding be used?\\[0.2em]
 MAXINH&Int&0..&5&maximal level of inheritance of solutions in lower bounding\\[0.2em]
 HEURIS&Int&0..13,99,100&100&choice of heuristics, cf. Table 5\\[0.2em]
+INTHEU&Int&-1..1&&should the evaluation of different heuristics be interrupted when the relative gap is reached?\\
+&&&0& do not interrupt\\
+&&&1& interrupt instantly\\
+&&&-1& continue through the list 1-10 if HEURIS is 100, but don't use 12\\
+      &   &      &&default: 0 for HEURIS 99, -1 for HEURIS 100\\[0.2em]
+ADDBEN&Int&0..1&1&Should Benders feasibility cuts be added?\\[0.2em]
+TESTBE&Int&0..1&1&Should be tested for further cuts from the remaining scenarios if one cut is violated?\\[0.2em]
+REINIT&Int&0..&10&In the root node: how many times should the first lower bounding/upper bounding be repeated? (only as long as a new cut was added, which increases the bound)\\[0.2em]
+ADDINT&Int&0..1&1&For pure binary first stage: should integer cuts be added excluding the current vertex in case of infeasibility?\\[0.2em]
+PREMA&Int&0..1&1&Should premature stop in upper bounding be used?\\[0.2em]
 \hline
 \end{supertabular}\\[0.5em]
 {Table 3:\quad Branch-and-bound parameters}
@@ -527,10 +543,13 @@ HEURIS&Int&0..13,99,100&100&choice of heuristics, cf. Table 5\\[0.2em]
 %\end{center}\caption{Branch-and-bound parameters} \label{T:BB}
 %\end{table}
 
-The MAXINHERIT parameter specifies a maximal level of passing on solutions and bounds in the B\&B-tree
+The MAXINHERIT parameter specifies a maximal level of passing on to the descendant nodes solutions and bounds in the B\&B-tree
 for the lower bound step.
 This facility is interrupted by an invocation of the conic bundle algorithm, which will change the
-Lagrangian multipliers. It saves half of the solutions of scenario problems, but in case these problems
+Lagrangian multipliers.
+If a Benders feasibility cut is added the feasibility of single scenario solutions of the node being branched on
+is checked with regard to the added cuts.
+Inheritance of solutions saves up to half of the evaluations of scenario problems, but in case these problems
 are not solved to optimality the lower bound might be inferior to the one possibly obtained for the descendants
 (with the addtional bounds on the variables branched on).
 For this reason the level of inheritance can be bounded to the number
@@ -653,7 +672,7 @@ yet. We recommend to reformulate the problem by an additional variable and an ad
 representing the objective function. This leads to a stochastic matrix. 
 
 The ConicBundle weight is changed between single dual steps under certain conditions by ConicBundle itself.
-DDSIP offers the possibility to heuristically change (increase or decrease) the weight between descent steps.
+\texttt{ddsip} offers the possibility to heuristically change (increase or decrease) the weight between descent steps.
 By default this feature is turned on and could be deactivated by parameters.
 
 %\begin{table}[ht]

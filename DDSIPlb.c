@@ -1313,7 +1313,7 @@ DDSIP_LowerBound (void)
                     fprintf (DDSIP_bb->moreoutfile, "\n    First-stage solution:\n");
                     for (j = 0; j < DDSIP_bb->firstvar; j++)
                     {
-                        fprintf (DDSIP_bb->moreoutfile," %18.13g,", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
+                        fprintf (DDSIP_bb->moreoutfile," %19.14g", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
                         if (!((j + 1) % 5))
                             fprintf (DDSIP_bb->moreoutfile, "\n");
                     }
@@ -1920,7 +1920,7 @@ DDSIP_LowerBound (void)
                         // Print something
                         if (DDSIP_param->outlev >= DDSIP_first_stage_outlev && i_scen >= scen)
                         {
-                            fprintf (DDSIP_bb->moreoutfile," %19.14g,", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
+                            fprintf (DDSIP_bb->moreoutfile," %19.14g", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
                             if (!((j + 1) % 5))
                                 fprintf (DDSIP_bb->moreoutfile, "\n");
                         }
@@ -1962,7 +1962,7 @@ if (DDSIP_param->outlev > 5)
                     tmpsecsol[scen * DDSIP_bb->secvar + j] = mipx[DDSIP_bb->secondindex[j]];
                     if (DDSIP_param->outlev >= DDSIP_second_stage_outlev)
                     {
-                        fprintf (DDSIP_bb->moreoutfile, "%19.14g\t",  mipx[DDSIP_bb->secondindex[j]]);
+                        fprintf (DDSIP_bb->moreoutfile, " %19.14g",  mipx[DDSIP_bb->secondindex[j]]);
                         if (!((j + 1) % 5))
                             fprintf (DDSIP_bb->moreoutfile, "\n");
                     }
@@ -2928,7 +2928,7 @@ if (DDSIP_param->outlev > 5)
                                         tmpsecsol[scen * DDSIP_bb->secvar + j] = mipx[DDSIP_bb->secondindex[j]];
                                         if (DDSIP_param->outlev >= DDSIP_second_stage_outlev)
                                         {
-                                            fprintf (DDSIP_bb->moreoutfile, "%19.14g\t",  mipx[DDSIP_bb->secondindex[j]]);
+                                            fprintf (DDSIP_bb->moreoutfile, " %19.14g",  mipx[DDSIP_bb->secondindex[j]]);
                                             if (!((j + 1) % 5))
                                                 fprintf (DDSIP_bb->moreoutfile, "\n");
                                         }
@@ -3718,7 +3718,6 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                     if (DDSIP_param->outlev)
                     {
                         fprintf (DDSIP_bb->moreoutfile,"    ->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
-                        //fprintf (DDSIP_bb->moreoutfile, "    First-stage solution:   same as in scenario %d (%g identical scen. sols)\n", i_scen + 1, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i_scen][DDSIP_bb->firstvar]);
                         if (DDSIP_param->outlev > 7)
                         {
                             printf ("    ->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
@@ -3752,7 +3751,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                         // Print something
                         if (DDSIP_param->outlev >= DDSIP_first_stage_outlev)
                         {
-                            fprintf (DDSIP_bb->moreoutfile," %19.14g,", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
+                            fprintf (DDSIP_bb->moreoutfile," %19.14g", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
                             if (!((j + 1) % 5))
                                 fprintf (DDSIP_bb->moreoutfile, "\n");
                         }
@@ -3767,7 +3766,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                         fprintf (DDSIP_bb->moreoutfile, "    Second-stage solution:\n");
                         for (j = 0; j < DDSIP_bb->secvar; j++)
                         {
-                            fprintf (DDSIP_bb->moreoutfile, "%19.14g\t",  mipx[DDSIP_bb->secondindex[j]]);
+                            fprintf (DDSIP_bb->moreoutfile, " %19.14g",  mipx[DDSIP_bb->secondindex[j]]);
                             if (!((j + 1) % 5))
                                 fprintf (DDSIP_bb->moreoutfile, "\n");
                         }

@@ -666,7 +666,7 @@ DDSIP_UpperBound (void)
                     if (DDSIP_param->outlev)
                     {
                         fprintf (DDSIP_bb->moreoutfile,
-                                 "%4d Scenario %4.0d:  Best=%-19.14g\tBound=%-19.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
+                                 "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
                                  iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
                                  wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
                         fprintf (DDSIP_bb->moreoutfile,
@@ -905,7 +905,7 @@ DDSIP_UpperBound (void)
                                     }
                                     else
                                     {
-                                        DDSIP_bb->cutAdded = 1;
+                                        DDSIP_bb->cutAdded++;
                                     }
                                     // store cut in bb->cutpool
                                     newCut = (cutpool_t*) DDSIP_Alloc(sizeof(cutpool_t), 1, "cutpool (DDSIP_UpperBound)");
@@ -1045,7 +1045,7 @@ DDSIP_UpperBound (void)
                         }
                         else
                         {
-                            DDSIP_bb->cutAdded = 1;
+                            DDSIP_bb->cutAdded++;
                         }
                         // store cut in bb->cutpool
                         newCut = (cutpool_t*) DDSIP_Alloc(sizeof(cutpool_t), 1, "cutpool (DDSIP_UpperBound)");
@@ -1078,7 +1078,8 @@ DDSIP_UpperBound (void)
             }
 #endif
             //shift this infeasible scenario to first place, such that next time it is checked first
-            DDSIP_bb->shifts++;
+            if (iscen >= DDSIP_bb->shifts)
+                DDSIP_bb->shifts++;
             k = DDSIP_bb->ub_scen_order[iscen];
             for(j = iscen; j>0; j--)
                 DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
@@ -1114,12 +1115,12 @@ DDSIP_UpperBound (void)
             DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
             DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
             fprintf (DDSIP_bb->moreoutfile,
-                     "%4d Scenario %4.0d:  Best=%-19.14g\tBound=%-19.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
+                     "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
                      iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
                      wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
             if (DDSIP_param->outlev>7)
             {
-                printf ("%4d Scenario %4.0d:  Best=%-19.14g\tBound=%-19.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
+                printf ("%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
                         iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
                         wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
                 if (DDSIP_param->cpxscr)
@@ -1331,13 +1332,26 @@ void DDSIP_EvaluateScenarioSolutions (void)
         // in order to allow for premature cutoff: sort scenarios according to lower bound in root node in descending order
         double * sort_array;
         sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "sort_array(LowerBound)");
-        for (i_scen = DDSIP_bb->shifts; i_scen < DDSIP_param->scenarios; i_scen++)
+        for (i_scen = 0; i_scen < DDSIP_param->scenarios; i_scen++)
         {
             sort_array[i_scen] = DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]] * (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]];
         }
         DDSIP_qsort_ins_D (sort_array, DDSIP_bb->ub_scen_order, DDSIP_bb->shifts, DDSIP_param->scenarios-1);
-        DDSIP_Free ((void**) &sort_array);
 
+        if (DDSIP_param->outlev > 30)
+        {
+            // debug output
+            fprintf (DDSIP_bb->moreoutfile,"order of scenarios after sorting ub order (%d shifts)\n", DDSIP_bb->shifts);
+            for (i_scen = 0; i_scen < DDSIP_param->scenarios; i_scen++)
+            {
+                fprintf(DDSIP_bb->moreoutfile," %3d: Scen%3d  %g =  %g * %g\n",
+                        i_scen+1, DDSIP_bb->ub_scen_order[i_scen]+1, sort_array[DDSIP_bb->ub_scen_order[i_scen]],
+                        DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]],
+                        (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]]);
+            }
+            // debug output
+        }
+        DDSIP_Free ((void**) &sort_array);
     }
     DDSIP_bb->cutAdded = 0;
     if (DDSIP_param->heuristic == 100)  	// use subsequently different heuristics in the same node

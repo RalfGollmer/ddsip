@@ -30,10 +30,6 @@
 
 CPXENVptr    DDSIP_env = NULL;
 CPXLPptr     DDSIP_lp  = NULL;
-#ifdef ADDBENDERSCUTS
-//CPXENVptr    DDSIP_dual_env = NULL;
-//CPXLPptr     DDSIP_dual_lp  = NULL;
-#endif
 
 FILE      * DDSIP_outfile = NULL;
 
@@ -52,12 +48,12 @@ const int DDSIP_maxparam = 64;
 const int DDSIP_maxrisk = 7;
 
 // Large values
-const double DDSIP_bigint = 1.0e7;	   // Upper bound on integer parameters
+const double DDSIP_bigint   = 1.0e7;	   // Upper bound on integer parameters
 const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
-const double DDSIP_infty = CPX_INFBOUND; // is 1.0e20; -- Infinity
+const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2017-07-20 (with Benders feasibility cuts)";
+const char DDSIP_version[] = "2017-07-29 (with Benders feasibility cuts)";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -633,15 +629,19 @@ main (void)
                     if ((status = DDSIP_LowerBound ()))
                         goto TERMINATE;
                 }
+                boundstat = DDSIP_Bound ();
+                // Print a line of output at the first, the last and each `ith' node
+                if (0 == DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
+                    DDSIP_PrintState (DDSIP_bb->noiter);
             } while (!DDSIP_bb->curnode && DDSIP_bb->cutAdded && DDSIP_node[DDSIP_bb->curnode]->bound > old_bound && cntr < DDSIP_param->numberReinits);
         }
-
-        boundstat = DDSIP_Bound ();
-
-        // Print a line of output at the first, the last and each `ith' node
-        if (0 == DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
-            DDSIP_PrintState (DDSIP_bb->noiter);
-
+        else
+        {
+            boundstat = DDSIP_Bound ();
+            // Print a line of output at the first, the last and each `ith' node
+            if (0 == DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
+                DDSIP_PrintState (DDSIP_bb->noiter);
+        }
 
         // DDSIP_bb->skip indicates that UpperBound calls have been skipped
         // DDSIP_bb->heurval contains the objective value of the heuristic solution

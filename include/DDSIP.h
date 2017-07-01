@@ -551,7 +551,7 @@ extern "C" {
         int newTry;
         // counter for cuts introduced for all-binary first stage
         int cutCntr;
-        // indicator, whether a cut was added (for pure binary first stage)
+        // indicator, whether cuts were added
         int cutAdded;
         // store cuts of the UB steps for testing proposals
         cutpool_t* cutpool;

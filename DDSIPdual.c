@@ -648,11 +648,6 @@ DDSIP_DualOpt (void)
             
             if (DDSIP_param->outlev)
             {
-                if (DDSIP_bb->cutAdded)
-                {
-                    printf ("  | %23d  %7d                                                   %3d cuts\n", 0, DDSIP_bb->dualitcnt, DDSIP_bb->cutAdded);
-                    fprintf (DDSIP_outfile, "  | %23d  %7d                                                   %3d cuts\n", 0, DDSIP_bb->dualitcnt, DDSIP_bb->cutAdded);
-                }
                 DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
                 printf ("  | %23d  %7d  %-16.12g %-11.6g   %-20.14g%18dh %02d:%05.2f\n",
                              0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, cpu_hrs,cpu_mins,cpu_secs);
@@ -710,7 +705,7 @@ DDSIP_DualOpt (void)
                         fprintf (DDSIP_outfile, "  | %23d  %7d  %-16.12g %-11.6g   %-20.14g%18dh %02d:%05.2f\n",
                                      0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, cpu_hrs,cpu_mins,cpu_secs);
                     }
-                } while (DDSIP_bb->cutAdded && obj > old_obj && cntr < DDSIP_param->numberReinits);
+                } while (DDSIP_bb->cutAdded && ((obj - old_obj)/(fabs(obj)+1e-16) > 5.e-8) && cntr < DDSIP_param->numberReinits);
                 old_obj = obj = DDSIP_bb->dualObjVal;
             }
             last_dualitcnt = DDSIP_bb->dualitcnt;

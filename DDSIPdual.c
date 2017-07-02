@@ -611,11 +611,6 @@ DDSIP_DualOpt (void)
             fprintf (DDSIP_outfile, "\n   --------- Dual:  Descent    Total  Objective        Weight        Bound                              CPU Time\n");
             printf ("\n   --------- Dual:  Descent    Total  Objective        Weight        Bound                              CPU Time\n");
             DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
-            if (DDSIP_bb->cutAdded)
-            {
-                printf ("  | %23d  %7d                                                   %3d cuts\n", 0, DDSIP_bb->dualitcnt, DDSIP_bb->cutAdded);
-                fprintf (DDSIP_outfile, "  | %23d  %7d                                                   %3d cuts\n", 0, DDSIP_bb->dualitcnt, DDSIP_bb->cutAdded);
-            }
             printf ("  | %23d  %7d  %-16.12g %-11.6g   %-20.14g%18dh %02d:%05.2f\n",
                          0, DDSIP_bb->dualitcnt, obj, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, cpu_hrs,cpu_mins,cpu_secs);
             fprintf (DDSIP_outfile, "  | %23d  %7d  %-16.12g %-11.6g   %-20.14g%18dh %02d:%05.2f\n",
@@ -648,6 +643,11 @@ DDSIP_DualOpt (void)
             
             if (DDSIP_param->outlev)
             {
+                if (DDSIP_bb->cutAdded)
+                {
+                    printf ("  | %23d  %7d                                                   %3d cuts\n", 0, DDSIP_bb->dualitcnt, DDSIP_bb->cutAdded);
+                    fprintf (DDSIP_outfile, "  | %23d  %7d                                                   %3d cuts\n", 0, DDSIP_bb->dualitcnt, DDSIP_bb->cutAdded);
+                }
                 DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
                 printf ("  | %23d  %7d  %-16.12g %-11.6g   %-20.14g%18dh %02d:%05.2f\n",
                              0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, cpu_hrs,cpu_mins,cpu_secs);

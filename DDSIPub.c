@@ -1334,7 +1334,7 @@ void DDSIP_EvaluateScenarioSolutions (void)
         sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "sort_array(LowerBound)");
         for (i_scen = 0; i_scen < DDSIP_param->scenarios; i_scen++)
         {
-            sort_array[i_scen] = DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]] * (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]];
+            sort_array[DDSIP_bb->ub_scen_order[i_scen]] = DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]] * (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]];
         }
         DDSIP_qsort_ins_D (sort_array, DDSIP_bb->ub_scen_order, DDSIP_bb->shifts, DDSIP_param->scenarios-1);
 
@@ -1352,6 +1352,11 @@ void DDSIP_EvaluateScenarioSolutions (void)
             // debug output
         }
         DDSIP_Free ((void**) &sort_array);
+        // copy order to lb order
+        for (i_scen=0; i_scen<DDSIP_param->scenarios; i_scen++)
+        {
+            DDSIP_bb->lb_scen_order[i_scen] = DDSIP_bb->ub_scen_order[i_scen];
+        }
     }
     DDSIP_bb->cutAdded = 0;
     if (DDSIP_param->heuristic == 100)  	// use subsequently different heuristics in the same node

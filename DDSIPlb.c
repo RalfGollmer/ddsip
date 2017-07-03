@@ -3182,8 +3182,8 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                             if (lhs < currentCut->rhs - 1.e-7)
                             {
                                 
-                                if (DDSIP_param->outlev > 10)
-                                    fprintf (DDSIP_bb->moreoutfile, "sol. of scen. %d violates cut %d, violation %g.\n", DDSIP_bb->lb_scen_order[iscen] + 1, currentCut->number, currentCut->rhs - lhs);
+                                if (DDSIP_param->outlev > 30)
+                                    fprintf (DDSIP_bb->moreoutfile, "sol. of scen. %d violates cut %d, violation %g.\n", iscen + 1, currentCut->number, currentCut->rhs - lhs);
                                 keepSolution = 0;
                                 break;
                             }
@@ -3192,8 +3192,8 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                     }
                     if (keepSolution)
                     {
-if (DDSIP_param->outlev > 10)
-   fprintf (DDSIP_bb->moreoutfile, "keeping sol. of scen. %d.\n", DDSIP_bb->lb_scen_order[iscen] + 1);
+                        if (DDSIP_param->outlev > 20)
+                            fprintf (DDSIP_bb->moreoutfile, "keeping sol. of scen. %d.\n", iscen + 1);
                         continue;
                     }
                 }

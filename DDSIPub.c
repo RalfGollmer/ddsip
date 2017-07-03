@@ -1338,7 +1338,7 @@ void DDSIP_EvaluateScenarioSolutions (void)
         }
         DDSIP_qsort_ins_D (sort_array, DDSIP_bb->ub_scen_order, DDSIP_bb->shifts, DDSIP_param->scenarios-1);
 
-        if (DDSIP_param->outlev > 30)
+        if (DDSIP_param->outlev > 20)
         {
             // debug output
             fprintf (DDSIP_bb->moreoutfile,"order of scenarios after sorting ub order (%d shifts)\n", DDSIP_bb->shifts);

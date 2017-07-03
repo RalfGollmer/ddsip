@@ -588,6 +588,8 @@ main (void)
                     int cnt, j;
                     double lhs;
                     cutpool_t *currentCut;
+                    if (0 == DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
+                        DDSIP_PrintState (DDSIP_bb->noiter);
                     // Free the solutions from former LowerBound
                     for (i = 0; i < DDSIP_param->scenarios; i++)
                     {
@@ -629,11 +631,16 @@ main (void)
                     if ((status = DDSIP_LowerBound ()))
                         goto TERMINATE;
                 }
+                if (DDSIP_bb->cutAdded)
+                {
+                    fprintf (DDSIP_outfile, "       %3d cuts\n", DDSIP_bb->cutAdded);
+                }
                 boundstat = DDSIP_Bound ();
+                DDSIP_bb->noiter = 1;
                 // Print a line of output at the first, the last and each `ith' node
                 if (0 == DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
                     DDSIP_PrintState (DDSIP_bb->noiter);
-            } while (!DDSIP_bb->curnode && DDSIP_bb->cutAdded && DDSIP_node[DDSIP_bb->curnode]->bound > old_bound && cntr < DDSIP_param->numberReinits);
+            } while (!DDSIP_bb->curnode && DDSIP_bb->cutAdded && ((DDSIP_node[DDSIP_bb->curnode]->bound - old_bound)/(old_bound + 1e-16) > 5.e-8) && cntr < DDSIP_param->numberReinits);
         }
         else
         {

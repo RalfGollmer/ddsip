@@ -53,7 +53,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2017-07-29 (with Benders feasibility cuts)";
+const char DDSIP_version[] = "2017-07-04 (with Benders feasibility cuts)";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -588,6 +588,7 @@ main (void)
                     int cnt, j;
                     double lhs;
                     cutpool_t *currentCut;
+                    boundstat = DDSIP_Bound ();
                     if (0 == DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
                         DDSIP_PrintState (DDSIP_bb->noiter);
                     // Free the solutions from former LowerBound
@@ -636,7 +637,8 @@ main (void)
                     fprintf (DDSIP_outfile, "       %3d cuts\n", DDSIP_bb->cutAdded);
                 }
                 boundstat = DDSIP_Bound ();
-                DDSIP_bb->noiter = 1;
+                if (!DDSIP_bb->noiter)
+                    DDSIP_bb->noiter = 1;
                 // Print a line of output at the first, the last and each `ith' node
                 if (0 == DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
                     DDSIP_PrintState (DDSIP_bb->noiter);

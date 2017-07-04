@@ -2012,7 +2012,7 @@ if (DDSIP_param->outlev > 5)
         nfactor = 1.-2.e-15;
     }
 
-    if (!(DDSIP_bb->curnode))
+    if (!(DDSIP_bb->curnode && !DDSIP_bb->noiter))
     {
         // in order to allow for premature cutoff: sort scenarios according to lower bound in root node in descending order
         double * sort_array;
@@ -2023,7 +2023,7 @@ if (DDSIP_param->outlev > 5)
         }
         DDSIP_qsort_ins_D (sort_array, DDSIP_bb->lb_scen_order, DDSIP_bb->shifts, DDSIP_param->scenarios-1);
 
-        if (DDSIP_param->outlev > 30)
+        if (DDSIP_param->outlev > 20)
         {
             // debug output
             fprintf (DDSIP_bb->moreoutfile,"order of scenarios after sorting lb order (%d shifts)\n", DDSIP_bb->shifts);

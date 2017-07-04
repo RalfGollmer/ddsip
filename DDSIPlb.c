@@ -3164,7 +3164,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         {
             if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[iscen] != NULL)
             {
-                if (!DDSIP_bb->dualdescitcnt)
+                if (!DDSIP_bb->curnode && !DDSIP_bb->dualdescitcnt)
                 {
                     // we are repeating the initial dual evaluation
                     // check whether the scenario solution violates a cut

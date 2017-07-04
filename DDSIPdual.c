@@ -766,8 +766,8 @@ DDSIP_DualOpt (void)
     {
         if (DDSIP_param->outlev)
         {
-            fprintf (DDSIP_outfile, "\n   -- Dual:  Descent    Total  Objective        Weight        Bound                                                             Wall Time    CPU Time\n");
-            printf ("\n   -- Dual:  Descent    Total  Objective        Weight        Bound                                                             Wall Time    CPU Time\n");
+            fprintf (DDSIP_outfile, "\n   -- Dual:  Descent    Total  Objective        Weight                         Bound                                            Wall Time    CPU Time\n");
+            printf ("\n   -- Dual:  Descent    Total  Objective        Weight                         Bound                                            Wall Time    CPU Time\n");
             DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
             time (&DDSIP_bb->cur_time);
             DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);

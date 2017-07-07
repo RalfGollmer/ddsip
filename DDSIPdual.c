@@ -661,8 +661,8 @@ DDSIP_DualOpt (void)
             {
                 if (DDSIP_bb->cutAdded)
                 {
-                    printf ("  | %16d  %7d                                              %23d cuts\n", 0, DDSIP_bb->dualitcnt, DDSIP_bb->cutAdded);
-                    fprintf (DDSIP_outfile, "  | %16d  %7d                                              %23d cuts\n", 0, DDSIP_bb->dualitcnt, DDSIP_bb->cutAdded);
+                    printf ("  | %16d  %88d cuts\n", 0, DDSIP_bb->cutAdded);
+                    fprintf (DDSIP_outfile, "  | %16d  %88d cuts\n", 0, DDSIP_bb->cutAdded);
                 }
                 DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
                 time (&DDSIP_bb->cur_time);
@@ -732,8 +732,8 @@ DDSIP_DualOpt (void)
                         DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                         if (DDSIP_bb->cutAdded)
                         {
-                            printf ("  | %16d  %7d                                              %23d cuts\n", 0, DDSIP_bb->dualitcnt, DDSIP_bb->cutAdded);
-                            fprintf (DDSIP_outfile, "  | %16d  %7d                                              %23d cuts\n", 0, DDSIP_bb->dualitcnt, DDSIP_bb->cutAdded);
+                            printf ("  | %16d  %88d cuts\n", 0, DDSIP_bb->cutAdded);
+                            fprintf (DDSIP_outfile, "  | %16d  %88d cuts\n", 0, DDSIP_bb->cutAdded);
                         }
                         if (!DDSIP_bb->curnode && DDSIP_bb->bestvalue < DDSIP_infty)
                         {
@@ -1785,7 +1785,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
             maxfirst[j] -= minfirst[j];
             if (fabs(maxfirst[j])>DDSIP_param->nulldisp)
             {
-                if (DDSIP_param->outlev>20)
+                if (DDSIP_param->outlev>40)
                     fprintf (DDSIP_bb->moreoutfile," ---- Deviation of variable %d : %g\n",j,maxfirst[j]);
             }
         }

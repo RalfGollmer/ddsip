@@ -1338,13 +1338,13 @@ void DDSIP_EvaluateScenarioSolutions (void)
         }
         DDSIP_qsort_ins_D (sort_array, DDSIP_bb->ub_scen_order, DDSIP_bb->shifts, DDSIP_param->scenarios-1);
 
-        if (DDSIP_param->outlev > 20)
+        if (DDSIP_param->outlev > 40)
         {
             // debug output
             fprintf (DDSIP_bb->moreoutfile,"order of scenarios after sorting ub order (%d shifts)\n", DDSIP_bb->shifts);
             for (i_scen = 0; i_scen < DDSIP_param->scenarios; i_scen++)
             {
-                fprintf(DDSIP_bb->moreoutfile," %3d: Scen%3d  %g =  %g * %g\n",
+                fprintf(DDSIP_bb->moreoutfile," %3d: Scen %3d  %20.14g =  %10.07g * %20.14g\n",
                         i_scen+1, DDSIP_bb->ub_scen_order[i_scen]+1, sort_array[DDSIP_bb->ub_scen_order[i_scen]],
                         DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]],
                         (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]]);
@@ -1352,11 +1352,6 @@ void DDSIP_EvaluateScenarioSolutions (void)
             // debug output
         }
         DDSIP_Free ((void**) &sort_array);
-        // copy order to lb order
-        for (i_scen=0; i_scen<DDSIP_param->scenarios; i_scen++)
-        {
-            DDSIP_bb->lb_scen_order[i_scen] = DDSIP_bb->ub_scen_order[i_scen];
-        }
     }
     DDSIP_bb->cutAdded = 0;
     if (DDSIP_param->heuristic == 100)  	// use subsequently different heuristics in the same node

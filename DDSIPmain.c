@@ -466,6 +466,33 @@ main (void)
         if ((status = LowerBound ()))
             goto TERMINATE;
 #endif
+        if (!DDSIP_bb->curnode)
+        {
+            // in order to allow for premature cutoff: sort scenarios according to lower bound in root node in descending order
+            double * sort_array;
+            int i_scen;
+            sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "sort_array(LowerBound)");
+            for (i_scen = 0; i_scen < DDSIP_param->scenarios; i_scen++)
+            {
+                sort_array[DDSIP_bb->ub_scen_order[i_scen]] = DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]] * (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]];
+            }
+            DDSIP_qsort_ins_D (sort_array, DDSIP_bb->ub_scen_order, DDSIP_bb->shifts, DDSIP_param->scenarios-1);
+
+            if (DDSIP_param->outlev > 20)
+            {
+                // debug output
+                fprintf (DDSIP_bb->moreoutfile,"order of scenarios after sorting ub order (%d shifts)\n", DDSIP_bb->shifts);
+                for (i_scen = 0; i_scen < DDSIP_param->scenarios; i_scen++)
+                {
+                    fprintf(DDSIP_bb->moreoutfile," %3d: Scen %3d  %20.14g =  %10.07g * %20.14g\n",
+                            i_scen+1, DDSIP_bb->ub_scen_order[i_scen]+1, sort_array[DDSIP_bb->ub_scen_order[i_scen]],
+                            DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]],
+                            (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]]);
+                }
+                // debug output
+            }
+            DDSIP_Free ((void**) &sort_array);
+        }
 
         if (!DDSIP_bb->skip)
         {
@@ -473,16 +500,16 @@ main (void)
             int cntr;
             cntr = 0;
             if (DDSIP_bb->DDSIP_step != solve)
-                cntr = DDSIP_param->numberReinits;
+                cntr = DDSIP_param->numberReinits-1;
             do {
                 old_bound = DDSIP_node[DDSIP_bb->curnode]->bound;
                 DDSIP_bb->cutAdded = 0;
-                cntr++;
                 DDSIP_bb->DDSIP_step = neobj;
                 // Initialize, heurval contains the obj. value of the current heuristic solution
                 DDSIP_bb->heurval = DDSIP_infty;
                 tmpbestheur = DDSIP_infty;
                 heur_skip = DDSIP_bigint;
+////////////////////////
                 if (DDSIP_param->heuristic == 100)  	// use subsequently different heuristics in the same node
                 {
                     DDSIP_bb->heurSuccess = 0;
@@ -583,14 +610,16 @@ main (void)
                             DDSIP_bb->skip = DDSIP_bigint;
                     }
                 }
-                if (!DDSIP_bb->curnode && DDSIP_bb->cutAdded && DDSIP_param->numberReinits)
+////////////////////////
+                boundstat = DDSIP_Bound ();
+                if (!DDSIP_bb->curnode)
+                    DDSIP_PrintState (DDSIP_bb->noiter);
+//                if (!DDSIP_bb->curnode && (DDSIP_bb->cutAdded || DDSIP_node[DDSIP_bb->curnode]->step != solve) /*&& cntr < DDSIP_param->numberReinits*/)
+                if (!DDSIP_bb->curnode && (DDSIP_bb->cutAdded || DDSIP_node[DDSIP_bb->curnode]->step != solve))
                 {
                     int cnt, j;
                     double lhs;
                     cutpool_t *currentCut;
-                    boundstat = DDSIP_Bound ();
-                    if (0 == DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
-                        DDSIP_PrintState (DDSIP_bb->noiter);
                     // Free the solutions from former LowerBound
                     for (i = 0; i < DDSIP_param->scenarios; i++)
                     {
@@ -627,22 +656,23 @@ main (void)
                             }
                         }
                     }
-                    DDSIP_node[DDSIP_bb->curnode]->step = DDSIP_bb->DDSIP_step = solve;
+                    DDSIP_bb->DDSIP_step = solve;
                     // status=1 means there was no solution found to a scenario problem
                     if ((status = DDSIP_LowerBound ()))
                         goto TERMINATE;
                 }
-                if (DDSIP_bb->cutAdded)
+                if (DDSIP_bb->cutAdded && DDSIP_param->outlev > 1)
                 {
-                    fprintf (DDSIP_outfile, "       %3d cuts\n", DDSIP_bb->cutAdded);
+                    fprintf (DDSIP_outfile, " %6d%103d cuts\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
                 }
                 boundstat = DDSIP_Bound ();
                 if (!DDSIP_bb->noiter)
                     DDSIP_bb->noiter = 1;
-                // Print a line of output at the first, the last and each `ith' node
-                if (0 == DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
-                    DDSIP_PrintState (DDSIP_bb->noiter);
+                cntr++;
             } while (!DDSIP_bb->curnode && DDSIP_bb->cutAdded && ((DDSIP_node[DDSIP_bb->curnode]->bound - old_bound)/(old_bound + 1e-16) > 5.e-8) && cntr < DDSIP_param->numberReinits);
+            // Print a line of output at the first, the last and each `ith' node
+            if (0 == DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
+                DDSIP_PrintState (DDSIP_bb->noiter);
         }
         else
         {

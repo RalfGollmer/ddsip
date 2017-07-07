@@ -308,7 +308,7 @@ DDSIP_InitNewNodes (void)
                 lhs = 0.;
                 for (j = 0; j < DDSIP_bb->firstvar; j++)
                 {
-                    lhs += (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[j] * currentCut->matval[i];
+                    lhs += (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[j] * currentCut->matval[j];
                 }
                 if ((lhs -= currentCut->rhs) < - 1e-7)
                 {

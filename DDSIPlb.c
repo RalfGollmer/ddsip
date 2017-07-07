@@ -2012,24 +2012,24 @@ if (DDSIP_param->outlev > 5)
         nfactor = 1.-2.e-15;
     }
 
-    if (!(DDSIP_bb->curnode && !DDSIP_bb->noiter))
+    if (!(DDSIP_bb->curnode))
     {
         // in order to allow for premature cutoff: sort scenarios according to lower bound in root node in descending order
         double * sort_array;
         sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "sort_array(LowerBound)");
         for (iscen = 0; iscen < DDSIP_param->scenarios; iscen++)
         {
-            sort_array[iscen] = DDSIP_data->prob[iscen] * (DDSIP_node[DDSIP_bb->curnode]->subbound)[iscen];
+            sort_array[DDSIP_bb->lb_scen_order[iscen]] = DDSIP_data->prob[DDSIP_bb->lb_scen_order[iscen]] * (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->lb_scen_order[iscen]];
         }
-        DDSIP_qsort_ins_D (sort_array, DDSIP_bb->lb_scen_order, DDSIP_bb->shifts, DDSIP_param->scenarios-1);
+        DDSIP_qsort_ins_D (sort_array, DDSIP_bb->lb_scen_order, 0, DDSIP_param->scenarios-1);
 
-        if (DDSIP_param->outlev > 20)
+        if (DDSIP_param->outlev > 40)
         {
             // debug output
-            fprintf (DDSIP_bb->moreoutfile,"order of scenarios after sorting lb order (%d shifts)\n", DDSIP_bb->shifts);
+            fprintf (DDSIP_bb->moreoutfile,"order of scenarios after sorting lb order\n");
             for (iscen = 0; iscen < DDSIP_param->scenarios; iscen++)
             {
-                fprintf(DDSIP_bb->moreoutfile," %3d: Scen %3d  %g =  %g * %g\n",
+                fprintf(DDSIP_bb->moreoutfile," %3d: Scen %3d  %20.14g =  %10.07g * %20.14g\n",
                         iscen+1, DDSIP_bb->lb_scen_order[iscen]+1, sort_array[DDSIP_bb->lb_scen_order[iscen]],
                         DDSIP_data->prob[DDSIP_bb->lb_scen_order[iscen]],
                         (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->lb_scen_order[iscen]]);
@@ -2038,13 +2038,6 @@ if (DDSIP_param->outlev > 5)
         }
 
         DDSIP_Free ((void**) &sort_array);
-
-        // initially: sort the scenarios for upper bounds in the same oder. This might be useful to stop evaluation prematurely.
-        // This order is changed as soon as a suggested heuristics point is infeasible for one of the scenarios
-        for (i_scen=0; i_scen<DDSIP_param->scenarios; i_scen++)
-        {
-            DDSIP_bb->ub_scen_order[i_scen] = DDSIP_bb->lb_scen_order[i_scen];
-        }
 
         // for the case of worst case cost risk:
         // change lower bound of the risk variable in root node to be the maximal lower bound

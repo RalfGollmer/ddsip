@@ -499,8 +499,8 @@ main (void)
             double old_bound;
             int cntr;
             cntr = 0;
-            if (DDSIP_bb->DDSIP_step != solve)
-                cntr = DDSIP_param->numberReinits-1;
+            if (DDSIP_node[DDSIP_bb->curnode]->step == dual)
+                cntr = DDSIP_param->numberReinits - 1;
             do {
                 old_bound = DDSIP_node[DDSIP_bb->curnode]->bound;
                 DDSIP_bb->cutAdded = 0;
@@ -614,8 +614,7 @@ main (void)
                 boundstat = DDSIP_Bound ();
                 if (!DDSIP_bb->curnode)
                     DDSIP_PrintState (DDSIP_bb->noiter);
-//                if (!DDSIP_bb->curnode && (DDSIP_bb->cutAdded || DDSIP_node[DDSIP_bb->curnode]->step != solve) /*&& cntr < DDSIP_param->numberReinits*/)
-                if (!DDSIP_bb->curnode && (DDSIP_bb->cutAdded || DDSIP_node[DDSIP_bb->curnode]->step != solve))
+                if (!DDSIP_bb->curnode && (DDSIP_bb->cutAdded || DDSIP_node[DDSIP_bb->curnode]->step == dual) && cntr < DDSIP_param->numberReinits)
                 {
                     int cnt, j;
                     double lhs;
@@ -625,38 +624,57 @@ main (void)
                     {
                         if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])
                         {
-                            currentCut = DDSIP_bb->cutpool;
-                            while (currentCut)
+                            if (DDSIP_node[DDSIP_bb->curnode]->step == solve)
                             {
-                                lhs = 0.;
-                                for (j = 0; j < DDSIP_bb->firstvar; j++)
+                                currentCut = DDSIP_bb->cutpool;
+                                while (currentCut)
                                 {
-                                    lhs += (DDSIP_node[DDSIP_bb->curnode])->first_sol[i][j] * currentCut->matval[j];
-                                }
-                                if (lhs < currentCut->rhs - 1.e-7)
-                                {
-                                    if (DDSIP_param->outlev > 50)
-                                        fprintf (DDSIP_bb->moreoutfile, "scen %d solution violates cut %d.\n", i+1, currentCut->number);
-                                    if ((cnt = (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 1))
-                                    for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
+                                    lhs = 0.;
+                                    for (j = 0; j < DDSIP_bb->firstvar; j++)
                                     {
+                                        lhs += (DDSIP_node[DDSIP_bb->curnode])->first_sol[i][j] * currentCut->matval[j];
+                                    }
+                                    if (lhs < currentCut->rhs - 1.e-7)
+                                    {
+                                        if (DDSIP_param->outlev > 50)
+                                            fprintf (DDSIP_bb->moreoutfile, "scen %d solution violates cut %d.\n", i+1, currentCut->number);
+                                        if ((cnt = (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 1))
+                                        for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
                                         {
-                                            if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
-                                              && ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i] == ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])
                                             {
-                                                ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j] = NULL;
-                                                cnt--;
+                                                if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
+                                                  && ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i] == ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])
+                                                {
+                                                    ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j] = NULL;
+                                                    cnt--;
+                                                }
                                             }
                                         }
+                                        DDSIP_Free ((void **) &(((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]));
+                                        break;
                                     }
-                                    DDSIP_Free ((void **) &(((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]));
-                                    break;
+                                    currentCut = currentCut->prev;
                                 }
-                                currentCut = currentCut->prev;
+                            }
+                            else
+                            {
+                               if ((cnt = (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 1))
+                               for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
+                               {
+                                   {
+                                       if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
+                                         && ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i] == ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])
+                                       {
+                                           ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j] = NULL;
+                                           cnt--;
+                                       }
+                                   }
+                               }
+                               DDSIP_Free ((void **) &(((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]));
                             }
                         }
                     }
-                    DDSIP_bb->DDSIP_step = solve;
+                    DDSIP_node[DDSIP_bb->curnode]->step = DDSIP_bb->DDSIP_step = solve;
                     // status=1 means there was no solution found to a scenario problem
                     if ((status = DDSIP_LowerBound ()))
                         goto TERMINATE;

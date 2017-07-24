@@ -1420,7 +1420,7 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
             }
         }
         // use (expensive) heuristic 12 using all single-scenario solutions as suugestions
-        if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || DDSIP_bb->curnode < 1 || DDSIP_bb->noiter%250 > 247))
+        if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || DDSIP_bb->curnode < 13 || DDSIP_bb->noiter%250 > 247))
         {
             DDSIP_param->heuristic = 12;
             if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))

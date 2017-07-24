@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <DDSIP.h>
 #include <DDSIPconst.h>
+//#define CHECKINTEGERCUT
 
 //int DDSIP_RecFun (double *);
 int DDSIP_PrintModFileUb (int);
@@ -220,10 +221,10 @@ DDSIP_SolChk (double* cutViolation)
             if (DDSIP_bb->firsttype[i] == 'B' || DDSIP_bb->firsttype[i] == 'I' || DDSIP_bb->firsttype[i] == 'N')
             {
                 ih = floor ((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] + 0.5);
-                fprintf (DDSIP_bb->moreoutfile, " %18d,", ih);
+                fprintf (DDSIP_bb->moreoutfile, " %20d,", ih);
             }
             else
-                fprintf (DDSIP_bb->moreoutfile, " %18.16g,", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]);
+                fprintf (DDSIP_bb->moreoutfile, " %20.16g,", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]);
 
             if (!((i + 1) % 5))
                 fprintf (DDSIP_bb->moreoutfile, "\n");
@@ -321,9 +322,6 @@ DDSIP_SolChk (double* cutViolation)
     }
 
     // a new solution
-    DDSIP_bb->sug[DDSIP_param->nodelim + 2]->next = DDSIP_bb->sug[DDSIP_bb->curnode];
-    DDSIP_bb->sug[DDSIP_bb->curnode] = DDSIP_bb->sug[DDSIP_param->nodelim + 2];
-    DDSIP_bb->sug[DDSIP_param->nodelim + 2] = NULL;
     return 1;
 }
 
@@ -332,9 +330,9 @@ DDSIP_SolChk (double* cutViolation)
 // calculates a new objective value
 
 int
-DDSIP_UpperBound (void)
+DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
 {
-    int status, scen, iscen, mipstatus = 0;
+    int status, scen, iscen, mipstatus = 0, nr;
     int i, j, k, Bi, Bs, prematureStop = 0;
     int *index;
     int wall_hrs, wall_mins,cpu_hrs, cpu_mins;
@@ -375,11 +373,11 @@ DDSIP_UpperBound (void)
         {
             if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
             {
-                ih = floor ((DDSIP_bb->sug[DDSIP_bb->curnode]->firstval)[j] + 0.5);
-                fprintf (DDSIP_bb->moreoutfile, " %18d,", ih);
+                ih = floor ((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] + 0.5);
+                fprintf (DDSIP_bb->moreoutfile, " %20d,", ih);
             }
             else
-                fprintf (DDSIP_bb->moreoutfile, " %18.16g,", (DDSIP_bb->sug[DDSIP_bb->curnode]->firstval)[j]);
+                fprintf (DDSIP_bb->moreoutfile, " %20.16g,", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j]);
 
             if (!((j + 1) % 5))
                 fprintf (DDSIP_bb->moreoutfile, "\n");
@@ -400,7 +398,10 @@ DDSIP_UpperBound (void)
     if (DDSIP_param->outlev)
     {
         fprintf (DDSIP_bb->moreoutfile, "\n----------------------\n");
-        fprintf (DDSIP_bb->moreoutfile, "Evaluating first-stage solution (Upper bounds):\n");
+        if (feasCheckOnly)
+            fprintf (DDSIP_bb->moreoutfile, "Checking first-stage solution for possible cuts:\n");
+        else
+            fprintf (DDSIP_bb->moreoutfile, "Evaluating first-stage solution (Upper bounds):\n");
     }
 
     status = DDSIP_SetCpxPara (DDSIP_param->cpxnoub, DDSIP_param->cpxubisdbl, DDSIP_param->cpxubwhich, DDSIP_param->cpxubwhat);
@@ -436,16 +437,16 @@ DDSIP_UpperBound (void)
     }
     DDSIP_Free ((void **) &(index));
     /* */
-    // Heuristic returns suggested solution, SolChck puts it in the first element of list sug[DDSIP_bb->curnode]
+    // Heuristic returns suggested solution
     // Fix first stage variables to these values
     // Lower bounds
     values = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar, "values(UpperBound)");
     for(j=0; j<DDSIP_bb->firstvar; j++)
     {
         if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
-            values[j] = floor((DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j] + 0.5);
+            values[j] = floor((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[j] + 0.5);
         else
-            values[j] = DDSIP_Dmax (DDSIP_bb->lborg[j],(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
+            values[j] = DDSIP_Dmax (DDSIP_bb->lborg[j],(DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[j]);
         for (k = 0; k < DDSIP_bb->curbdcnt; k++)
         {
             if (DDSIP_bb->curind[k] == j)
@@ -465,9 +466,9 @@ DDSIP_UpperBound (void)
     for(j=0; j<DDSIP_data->firstvar; j++)
     {
         if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
-            values[j] = floor((DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j] + 0.5);
+            values[j] = floor((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[j] + 0.5);
         else
-            values[j] = DDSIP_Dmin(DDSIP_bb->uborg[j],(DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[j]);
+            values[j] = DDSIP_Dmin(DDSIP_bb->uborg[j],(DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[j]);
         for (k = 0; k < DDSIP_bb->curbdcnt; k++)
         {
             if (DDSIP_bb->curind[k] == j)
@@ -482,7 +483,7 @@ DDSIP_UpperBound (void)
     }
 
     // prepare for decision about stopping: rest_bound is the expectation of all the lower bounds in this node
-    if (DDSIP_bb->DDSIP_step == adv || DDSIP_bb->DDSIP_step == eev)
+    if (DDSIP_bb->DDSIP_step == adv || DDSIP_bb->DDSIP_step == eev || feasCheckOnly)
         rest_bound = -DDSIP_infty;
     else if(DDSIP_param->cb)
     {
@@ -501,7 +502,8 @@ DDSIP_UpperBound (void)
 
     // UpperBound single-scenario problems
     meanGap = tmpprob = tmpbestvalue = 0.;
-    for (iscen = 0; iscen < DDSIP_param->scenarios; iscen++)
+    nr = feasCheckOnly ? 1 : DDSIP_param->scenarios;
+    for (iscen = 0; iscen < nr; iscen++)
     {
         scen = DDSIP_bb->ub_scen_order[iscen];
         if (DDSIP_killsignal)
@@ -512,289 +514,300 @@ DDSIP_UpperBound (void)
 
         tmpprob += DDSIP_data->prob[scen];
 
-        if (DDSIP_param->cpxubscr)
-        {
-            printf ("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n");
-            printf ("Calculating objective value for scenario problem %d in node %d (heuristic %d).....\n", scen + 1,DDSIP_bb->curnode,DDSIP_param->heuristic);
-        }
-
         status = DDSIP_ChgProb (scen);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change problem \n");
             goto TERMINATE;
         }
-        // Calculate Tx+h
-        //      if (DDSIP_param->outlev)  status = RecFun(param,bb,Tx);
-
-        // Debugging information
-        DDSIP_PrintModFileUb (scen);
-
-        // Warm start
-        if (DDSIP_param->hot)
+        if (!feasCheckOnly)
         {
-            status = DDSIP_WarmUb ();
-            if (status)
-                goto TERMINATE;
-        }
-
-        // query time limit amd mip rel. gap parameters
-        if (DDSIP_param->cpxubscr || DDSIP_param->outlev > 21)
-        {
-            status = CPXgetdblparam (DDSIP_env,CPX_PARAM_TILIM,&we);
-            status = CPXgetdblparam (DDSIP_env,CPX_PARAM_EPGAP,&wr);
-            printf ("   -- 1st optimization time limit: %gs, rel. gap: %g%% --\n",we,wr*100.0);
-        }
-        //
-        time_start = DDSIP_GetCpuTime ();
-        // Optimize
-        status = CPXmipopt (DDSIP_env, DDSIP_lp);
-        if (DDSIP_Error (status))
-        {
-            fprintf (stderr, "ERROR: Failed to optimze (UB)\n");
-            goto TERMINATE;
-        }
-        mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
-        if (!DDSIP_Infeasible (mipstatus))
-        {
-            if (CPXgetmiprelgap(DDSIP_env, DDSIP_lp, &mipgap))
+            // Calculate Tx+h
+            //      if (DDSIP_param->outlev)  status = RecFun(param,bb,Tx);
+    
+            if (DDSIP_param->cpxubscr)
             {
-                fprintf (stderr, "ERROR: Query of CPLEX mip gap from 1st optimization failed (UpperBound) \n");
-                fprintf (stderr, "       CPXgetstat returned: %d\n",mipstatus);
-                mipgap = 1.e+30;
+                printf ("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n");
+                printf ("Calculating objective value for scenario problem %d in node %d (heuristic %d).....\n", scen + 1,DDSIP_bb->curnode,DDSIP_param->heuristic);
             }
-            time_lap = DDSIP_GetCpuTime ();
-            if (DDSIP_param->cpxubscr ||  DDSIP_param->outlev > 11)
+            // Debugging information
+            DDSIP_PrintModFileUb (scen);
+    
+            // Warm start
+            if (DDSIP_param->hot)
             {
-                j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
-                printf ("      UB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
-                if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile,"      UB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
-            }
-            if (DDSIP_param->watchkappa)
-            {
-                double maxkappaval, stablekappaval, suspiciouskappaval, unstablekappaval, illposedkappaval;
-                status = (CPXgetdblquality(DDSIP_env,DDSIP_lp,&maxkappaval,CPX_KAPPA_MAX) ||
-                          CPXgetdblquality(DDSIP_env,DDSIP_lp,&illposedkappaval,CPX_KAPPA_ILLPOSED) ||
-                          CPXgetdblquality(DDSIP_env,DDSIP_lp,&stablekappaval,CPX_KAPPA_STABLE) ||
-                          CPXgetdblquality(DDSIP_env,DDSIP_lp,&suspiciouskappaval,CPX_KAPPA_SUSPICIOUS) ||
-                          CPXgetdblquality(DDSIP_env,DDSIP_lp,&unstablekappaval,CPX_KAPPA_UNSTABLE));
+                status = DDSIP_WarmUb ();
                 if (status)
+                    goto TERMINATE;
+            }
+    
+            // query time limit amd mip rel. gap parameters
+            if (DDSIP_param->cpxubscr || DDSIP_param->outlev > 21)
+            {
+                status = CPXgetdblparam (DDSIP_env,CPX_PARAM_TILIM,&we);
+                status = CPXgetdblparam (DDSIP_env,CPX_PARAM_EPGAP,&wr);
+                printf ("   -- 1st optimization time limit: %gs, rel. gap: %g%% --\n",we,wr*100.0);
+            }
+            //
+            time_start = DDSIP_GetCpuTime ();
+            // Optimize
+            status = CPXmipopt (DDSIP_env, DDSIP_lp);
+            if (DDSIP_Error (status))
+            {
+                fprintf (stderr, "ERROR: Failed to optimize (UB)\n");
+                goto TERMINATE;
+            }
+            mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
+            if (!DDSIP_Infeasible (mipstatus))
+            {
+                if (CPXgetmiprelgap(DDSIP_env, DDSIP_lp, &mipgap))
                 {
-                    fprintf (stderr, "Failed to obtain Kappa information. \n");
+                    fprintf (stderr, "ERROR: Query of CPLEX mip gap from 1st optimization failed (UpperBound) \n");
+                    fprintf (stderr, "       CPXgetstat returned: %d\n",mipstatus);
+                    mipgap = 1.e+30;
                 }
-                else
+                time_lap = DDSIP_GetCpuTime ();
+                if (DDSIP_param->cpxubscr ||  DDSIP_param->outlev > 11)
                 {
-                    printf("maximal Kappa value        = %g\n",maxkappaval);
-                    if (stablekappaval < 1.)
-                    {
-                        if (stablekappaval)
-                            printf("numerically stable bases     %7.3f%%\n",stablekappaval*1e2);
-                        if (suspiciouskappaval)
-                            printf("numerically suspicious bases %7.3f%%\n",suspiciouskappaval*1e2);
-                        if (unstablekappaval)
-                            printf("numerically unstable bases   %7.3f%%\n",unstablekappaval*1e2);
-                        if (illposedkappaval)
-                            printf("numerically ill-posed bases  %7.3f%%\n",illposedkappaval*1e2);
-                    }
+                    j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
+                    printf ("      UB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
                     if (DDSIP_param->outlev)
+                        fprintf (DDSIP_bb->moreoutfile,"      UB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
+                }
+                if (DDSIP_param->watchkappa)
+                {
+                    double maxkappaval, stablekappaval, suspiciouskappaval, unstablekappaval, illposedkappaval;
+                    status = (CPXgetdblquality(DDSIP_env,DDSIP_lp,&maxkappaval,CPX_KAPPA_MAX) ||
+                              CPXgetdblquality(DDSIP_env,DDSIP_lp,&illposedkappaval,CPX_KAPPA_ILLPOSED) ||
+                              CPXgetdblquality(DDSIP_env,DDSIP_lp,&stablekappaval,CPX_KAPPA_STABLE) ||
+                              CPXgetdblquality(DDSIP_env,DDSIP_lp,&suspiciouskappaval,CPX_KAPPA_SUSPICIOUS) ||
+                              CPXgetdblquality(DDSIP_env,DDSIP_lp,&unstablekappaval,CPX_KAPPA_UNSTABLE));
+                    if (status)
                     {
-                        fprintf(DDSIP_bb->moreoutfile, "             maximal Kappa value        = %g\n",maxkappaval);
+                        fprintf (stderr, "Failed to obtain Kappa information. \n");
+                    }
+                    else
+                    {
+                        printf("maximal Kappa value        = %g\n",maxkappaval);
                         if (stablekappaval < 1.)
                         {
                             if (stablekappaval)
-                                fprintf(DDSIP_bb->moreoutfile, "             numerically stable bases     %7.3f%%\n",stablekappaval*1e2);
+                                printf("numerically stable bases     %7.3f%%\n",stablekappaval*1e2);
                             if (suspiciouskappaval)
-                                fprintf(DDSIP_bb->moreoutfile, "             numerically suspicious bases %7.3f%%\n",suspiciouskappaval*1e2);
+                                printf("numerically suspicious bases %7.3f%%\n",suspiciouskappaval*1e2);
                             if (unstablekappaval)
-                                fprintf(DDSIP_bb->moreoutfile, "             numerically unstable bases   %7.3f%%\n",unstablekappaval*1e2);
+                                printf("numerically unstable bases   %7.3f%%\n",unstablekappaval*1e2);
                             if (illposedkappaval)
-                                fprintf(DDSIP_bb->moreoutfile, "             numerically ill-posed bases  %7.3f%%\n",illposedkappaval*1e2);
+                                printf("numerically ill-posed bases  %7.3f%%\n",illposedkappaval*1e2);
                         }
-                    }
-                }
-            }
-            // If even with the lower bounds we would reach a greater value we may stop here and save some time
-            // reduce the sum of the bounds rest_bound by the term for the current scenario
-            if (DDSIP_param->cb)
-                rest_bound -= (DDSIP_node[DDSIP_bb->curnode]->subboundNoLag)[scen] * DDSIP_data->prob[scen];
-            else
-                rest_bound -= (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen] * DDSIP_data->prob[scen];
-            status = CPXgetbestobjval(DDSIP_env, DDSIP_lp, &bobjval);
-
-            if (DDSIP_param->prematureStop && DDSIP_bb->bestvalue < DDSIP_infty && !DDSIP_param->riskalg && iscen < DDSIP_param->scenarios - 1 &&
-                !DDSIP_param->scalarization && DDSIP_bb->DDSIP_step != dual)
-            {
-                // for risk models: premature stop requires also partial risk value
-                if (DDSIP_param->riskmod > 0)
-                {
-                    // Expected excess
-                    if (DDSIP_param->riskmod == 1)
-                    {
-                        tmprisk  += DDSIP_data->prob[scen] * DDSIP_Dmax (bobjval - DDSIP_param->risktarget, 0);
-                    }
-                    // Excess probability
-                    if (DDSIP_param->riskmod == 2)
-                    {
-                        if (bobjval > DDSIP_param->risktarget)
-                            tmprisk += DDSIP_data->prob[scen];
-                    }
-                    // Worst case cost
-                    if (DDSIP_param->riskmod == 4)
-                    {
-                        if (bobjval > tmprisk4)
-                            tmprisk4 = bobjval;
-                        tmprisk = tmpprob * tmprisk4;
-                    }
-                    if (DDSIP_param->outlev > 50 && ((DDSIP_param->riskmod == 1)||(DDSIP_param->riskmod == 2)||(DDSIP_param->riskmod == 4)))
-                        fprintf(DDSIP_bb->moreoutfile, " for premature stop: riskweight*tmprisk = %g\n", DDSIP_param->riskweight*tmprisk);
-                }
-                if (tmpbestvalue + DDSIP_param->riskweight*tmprisk + bobjval * DDSIP_data->prob[scen] + rest_bound > DDSIP_bb->bestvalue + DDSIP_param->accuracy)
-                {
-                    if (!(DDSIP_bb->heurval < DDSIP_infty))
-                        DDSIP_bb->skip = 100 + iscen;
-                    time (&DDSIP_bb->cur_time);
-                    time_end = DDSIP_GetCpuTime ();
-                    time_start = time_end-time_start;
-                    DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
-                    DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
-                    status = DDSIP_GetCpxSolution (mipstatus, &objval, &bobjval, mipx);
-                    if (status)
-                        objval = DDSIP_infty;
-                    gap = 100.0*(objval-bobjval)/(fabs(objval)+1e-4);
-                    meanGap += DDSIP_data->prob[scen] * gap;
-                    if (DDSIP_param->outlev)
-                    {
-                        fprintf (DDSIP_bb->moreoutfile,
-                                 "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
-                                 iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
-                                 wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
-                        fprintf (DDSIP_bb->moreoutfile,
-                                 "Lower bound for suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk +rest_bound);
-                    }
-                    prematureStop = 1;
-                    goto TERMINATE;
-                }
-            }
-            if (DDSIP_param->cpxnoub2 && status != CPXMIP_OPTIMAL)
-            {
-                // more iterations with different settings
-                status = DDSIP_SetCpxPara (DDSIP_param->cpxnoub2, DDSIP_param->cpxubisdbl2, DDSIP_param->cpxubwhich2, DDSIP_param->cpxubwhat2);
-                if (status)
-                {
-                    fprintf (stderr, "ERROR: Failed to set CPLEX parameters (UpperBound) \n");
-                    goto TERMINATE;
-                }
-                // query time limit amd mip rel. gap parameters
-                status = CPXgetdblparam (DDSIP_env,CPX_PARAM_EPGAP,&wr);
-                status = CPXgetdblparam (DDSIP_env,CPX_PARAM_TILIM,&we);
-                // continue if desired gap is not reached yet
-                if (mipgap > wr)
-                {
-                    if (DDSIP_param->cpxubscr || DDSIP_param->outlev > 21)
-                    {
-                        printf ("   -- 2nd optimization time limit: %gs, rel. gap: %g%% --\n",we,wr*100.0);
-                    }
-                    status = CPXmipopt (DDSIP_env, DDSIP_lp);
-                    mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
-                    if (DDSIP_param->cpxubscr || DDSIP_param->outlev > 11)
-                    {
-                        if (CPXgetmiprelgap(DDSIP_env, DDSIP_lp, &mipgap))
+                        if (DDSIP_param->outlev)
                         {
-                            fprintf (stderr, "ERROR: Query of CPLEX mip gap from 2nd optimization failed (UpperBound) \n");
-                            fprintf (stderr, "       CPXgetstat returned: %d\n",mipstatus);
-                            mipgap = 1.e+30;
-                        }
-                        else
-                        {
-                            j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
-                            time_end = DDSIP_GetCpuTime ();
-                            printf ("      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
-                            if (DDSIP_param->outlev)
-                                fprintf (DDSIP_bb->moreoutfile,"      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
-                        }
-                    }
-                    if (DDSIP_param->watchkappa)
-                    {
-                        double maxkappaval, stablekappaval, suspiciouskappaval, unstablekappaval, illposedkappaval;
-                        status = (CPXgetdblquality(DDSIP_env,DDSIP_lp,&maxkappaval,CPX_KAPPA_MAX) ||
-                                  CPXgetdblquality(DDSIP_env,DDSIP_lp,&illposedkappaval,CPX_KAPPA_ILLPOSED) ||
-                                  CPXgetdblquality(DDSIP_env,DDSIP_lp,&stablekappaval,CPX_KAPPA_STABLE) ||
-                                  CPXgetdblquality(DDSIP_env,DDSIP_lp,&suspiciouskappaval,CPX_KAPPA_SUSPICIOUS) ||
-                                  CPXgetdblquality(DDSIP_env,DDSIP_lp,&unstablekappaval,CPX_KAPPA_UNSTABLE));
-                        if (status)
-                        {
-                            fprintf (stderr, "Failed to obtain Kappa information. \n\n");
-                        }
-                        else
-                        {
-                            printf("maximal Kappa value        = %g\n",maxkappaval);
+                            fprintf(DDSIP_bb->moreoutfile, "             maximal Kappa value        = %g\n",maxkappaval);
                             if (stablekappaval < 1.)
                             {
                                 if (stablekappaval)
-                                    printf("numerically stable bases     %7.3f%%\n",stablekappaval*1e2);
+                                    fprintf(DDSIP_bb->moreoutfile, "             numerically stable bases     %7.3f%%\n",stablekappaval*1e2);
                                 if (suspiciouskappaval)
-                                    printf("numerically suspicious bases %7.3f%%\n",suspiciouskappaval*1e2);
+                                    fprintf(DDSIP_bb->moreoutfile, "             numerically suspicious bases %7.3f%%\n",suspiciouskappaval*1e2);
                                 if (unstablekappaval)
-                                    printf("numerically unstable bases   %7.3f%%\n",unstablekappaval*1e2);
+                                    fprintf(DDSIP_bb->moreoutfile, "             numerically unstable bases   %7.3f%%\n",unstablekappaval*1e2);
                                 if (illposedkappaval)
-                                    printf("numerically ill-posed bases  %7.3f%%\n",illposedkappaval*1e2);
+                                    fprintf(DDSIP_bb->moreoutfile, "             numerically ill-posed bases  %7.3f%%\n",illposedkappaval*1e2);
                             }
-                            if (DDSIP_param->outlev)
+                        }
+                    }
+                }
+                // If even with the lower bounds we would reach a greater value we may stop here and save some time
+                // reduce the sum of the bounds rest_bound by the term for the current scenario
+                if (DDSIP_param->cb)
+                    rest_bound -= (DDSIP_node[DDSIP_bb->curnode]->subboundNoLag)[scen] * DDSIP_data->prob[scen];
+                else
+                    rest_bound -= (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen] * DDSIP_data->prob[scen];
+                status = CPXgetbestobjval(DDSIP_env, DDSIP_lp, &bobjval);
+    
+                if (DDSIP_param->prematureStop && DDSIP_bb->bestvalue < DDSIP_infty && !DDSIP_param->riskalg && iscen < DDSIP_param->scenarios - 1 &&
+                    !DDSIP_param->scalarization && DDSIP_bb->DDSIP_step != dual)
+                {
+                    // for risk models: premature stop requires also partial risk value
+                    if (DDSIP_param->riskmod > 0)
+                    {
+                        // Expected excess
+                        if (DDSIP_param->riskmod == 1)
+                        {
+                            tmprisk  += DDSIP_data->prob[scen] * DDSIP_Dmax (bobjval - DDSIP_param->risktarget, 0);
+                        }
+                        // Excess probability
+                        if (DDSIP_param->riskmod == 2)
+                        {
+                            if (bobjval > DDSIP_param->risktarget)
+                                tmprisk += DDSIP_data->prob[scen];
+                        }
+                        // Worst case cost
+                        if (DDSIP_param->riskmod == 4)
+                        {
+                            if (bobjval > tmprisk4)
+                                tmprisk4 = bobjval;
+                            tmprisk = tmpprob * tmprisk4;
+                        }
+                        if (DDSIP_param->outlev > 50 && ((DDSIP_param->riskmod == 1)||(DDSIP_param->riskmod == 2)||(DDSIP_param->riskmod == 4)))
+                            fprintf(DDSIP_bb->moreoutfile, " for premature stop: riskweight*tmprisk = %g\n", DDSIP_param->riskweight*tmprisk);
+                    }
+                    if (tmpbestvalue + DDSIP_param->riskweight*tmprisk + bobjval * DDSIP_data->prob[scen] + rest_bound > DDSIP_bb->bestvalue + DDSIP_param->accuracy)
+                    {
+                        if (!(DDSIP_bb->heurval < DDSIP_infty))
+                            DDSIP_bb->skip = 100 + iscen;
+                        time (&DDSIP_bb->cur_time);
+                        time_end = DDSIP_GetCpuTime ();
+                        time_start = time_end-time_start;
+                        DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
+                        DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
+                        status = DDSIP_GetCpxSolution (mipstatus, &objval, &bobjval, mipx);
+                        if (status)
+                            objval = DDSIP_infty;
+                        gap = 100.0*(objval-bobjval)/(fabs(objval)+1e-4);
+                        meanGap += DDSIP_data->prob[scen] * gap;
+                        if (DDSIP_param->outlev)
+                        {
+                            fprintf (DDSIP_bb->moreoutfile,
+                                     "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
+                                     iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
+                                     wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
+                            fprintf (DDSIP_bb->moreoutfile,
+                                     "Lower bound for suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk +rest_bound);
+                        }
+                        prematureStop = 1;
+                        goto TERMINATE;
+                    }
+                }
+                if (DDSIP_param->cpxnoub2 && status != CPXMIP_OPTIMAL && !feasCheckOnly)
+                {
+                    // more iterations with different settings
+                    status = DDSIP_SetCpxPara (DDSIP_param->cpxnoub2, DDSIP_param->cpxubisdbl2, DDSIP_param->cpxubwhich2, DDSIP_param->cpxubwhat2);
+                    if (status)
+                    {
+                        fprintf (stderr, "ERROR: Failed to set CPLEX parameters (UpperBound) \n");
+                        goto TERMINATE;
+                    }
+                    // query time limit amd mip rel. gap parameters
+                    status = CPXgetdblparam (DDSIP_env,CPX_PARAM_EPGAP,&wr);
+                    status = CPXgetdblparam (DDSIP_env,CPX_PARAM_TILIM,&we);
+                    // continue if desired gap is not reached yet
+                    if (mipgap > wr)
+                    {
+                        if (DDSIP_param->cpxubscr || DDSIP_param->outlev > 21)
+                        {
+                            printf ("   -- 2nd optimization time limit: %gs, rel. gap: %g%% --\n",we,wr*100.0);
+                        }
+                        status = CPXmipopt (DDSIP_env, DDSIP_lp);
+                        mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
+                        if (DDSIP_param->cpxubscr || DDSIP_param->outlev > 11)
+                        {
+                            if (CPXgetmiprelgap(DDSIP_env, DDSIP_lp, &mipgap))
                             {
-                                fprintf(DDSIP_bb->moreoutfile, "             maximal Kappa value        = %g\n",maxkappaval);
+                                fprintf (stderr, "ERROR: Query of CPLEX mip gap from 2nd optimization failed (UpperBound) \n");
+                                fprintf (stderr, "       CPXgetstat returned: %d\n",mipstatus);
+                                mipgap = 1.e+30;
+                            }
+                            else
+                            {
+                                j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
+                                time_end = DDSIP_GetCpuTime ();
+                                printf ("      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
+                                if (DDSIP_param->outlev)
+                                    fprintf (DDSIP_bb->moreoutfile,"      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
+                            }
+                        }
+                        if (DDSIP_param->watchkappa)
+                        {
+                            double maxkappaval, stablekappaval, suspiciouskappaval, unstablekappaval, illposedkappaval;
+                            status = (CPXgetdblquality(DDSIP_env,DDSIP_lp,&maxkappaval,CPX_KAPPA_MAX) ||
+                                      CPXgetdblquality(DDSIP_env,DDSIP_lp,&illposedkappaval,CPX_KAPPA_ILLPOSED) ||
+                                      CPXgetdblquality(DDSIP_env,DDSIP_lp,&stablekappaval,CPX_KAPPA_STABLE) ||
+                                      CPXgetdblquality(DDSIP_env,DDSIP_lp,&suspiciouskappaval,CPX_KAPPA_SUSPICIOUS) ||
+                                      CPXgetdblquality(DDSIP_env,DDSIP_lp,&unstablekappaval,CPX_KAPPA_UNSTABLE));
+                            if (status)
+                            {
+                                fprintf (stderr, "Failed to obtain Kappa information. \n\n");
+                            }
+                            else
+                            {
+                                printf("maximal Kappa value        = %g\n",maxkappaval);
                                 if (stablekappaval < 1.)
                                 {
                                     if (stablekappaval)
-                                        fprintf(DDSIP_bb->moreoutfile, "             numerically stable bases     %7.3f%%\n",stablekappaval*1e2);
+                                        printf("numerically stable bases     %7.3f%%\n",stablekappaval*1e2);
                                     if (suspiciouskappaval)
-                                        fprintf(DDSIP_bb->moreoutfile, "             numerically suspicious bases %7.3f%%\n",suspiciouskappaval*1e2);
+                                        printf("numerically suspicious bases %7.3f%%\n",suspiciouskappaval*1e2);
                                     if (unstablekappaval)
-                                        fprintf(DDSIP_bb->moreoutfile, "             numerically unstable bases   %7.3f%%\n",unstablekappaval*1e2);
+                                        printf("numerically unstable bases   %7.3f%%\n",unstablekappaval*1e2);
                                     if (illposedkappaval)
-                                        fprintf(DDSIP_bb->moreoutfile, "             numerically ill-posed bases  %7.3f%%\n",illposedkappaval*1e2);
+                                        printf("numerically ill-posed bases  %7.3f%%\n",illposedkappaval*1e2);
+                                }
+                                if (DDSIP_param->outlev)
+                                {
+                                    fprintf(DDSIP_bb->moreoutfile, "             maximal Kappa value        = %g\n",maxkappaval);
+                                    if (stablekappaval < 1.)
+                                    {
+                                        if (stablekappaval)
+                                            fprintf(DDSIP_bb->moreoutfile, "             numerically stable bases     %7.3f%%\n",stablekappaval*1e2);
+                                        if (suspiciouskappaval)
+                                            fprintf(DDSIP_bb->moreoutfile, "             numerically suspicious bases %7.3f%%\n",suspiciouskappaval*1e2);
+                                        if (unstablekappaval)
+                                            fprintf(DDSIP_bb->moreoutfile, "             numerically unstable bases   %7.3f%%\n",unstablekappaval*1e2);
+                                        if (illposedkappaval)
+                                            fprintf(DDSIP_bb->moreoutfile, "             numerically ill-posed bases  %7.3f%%\n",illposedkappaval*1e2);
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                // reset CPLEX parameters for 1st optimization
-                status = DDSIP_SetCpxPara (DDSIP_param->cpxnoub, DDSIP_param->cpxubisdbl, DDSIP_param->cpxubwhich, DDSIP_param->cpxubwhat);
-                if (status)
-                {
-                    fprintf (stderr, "ERROR: Failed to set CPLEX parameters (UpperBound) \n");
-                    goto TERMINATE;
+                    // reset CPLEX parameters for 1st optimization
+                    status = DDSIP_SetCpxPara (DDSIP_param->cpxnoub, DDSIP_param->cpxubisdbl, DDSIP_param->cpxubwhich, DDSIP_param->cpxubwhat);
+                    if (status)
+                    {
+                        fprintf (stderr, "ERROR: Failed to set CPLEX parameters (UpperBound) \n");
+                        goto TERMINATE;
+                    }
                 }
             }
+            if ((k = CPXgetnummipstarts(DDSIP_env, DDSIP_lp)) > 3)
+            {
+                status    = CPXdelmipstarts (DDSIP_env, DDSIP_lp, 2, k-1);
+            }
+            // Infeasible, unbounded .. ?
+            if (!DDSIP_Infeasible (mipstatus))
+                mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
         }
-        if ((k = CPXgetnummipstarts(DDSIP_env, DDSIP_lp)) > 3)
+        else
         {
-            status    = CPXdelmipstarts (DDSIP_env, DDSIP_lp, 2, k-1);
+            mipstatus = CPXMIP_INFEASIBLE;
         }
-        // Infeasible, unbounded .. ?
-        if (!DDSIP_Infeasible (mipstatus))
-            mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
-
         if (DDSIP_NoSolution (mipstatus))
         {
-            if (DDSIP_param->outlev)
+            time_start = DDSIP_GetCpuTime ();
+            if (!feasCheckOnly)
             {
-                fprintf (DDSIP_bb->moreoutfile,
-                    "Suggested solution infeasible for scenario problem %d (Status=%d)\n", scen + 1, mipstatus);
-            }
-            if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
-            {
-                printf ("Suggested solution infeasible for scenario problem %d (Status=%d)\n", scen + 1, mipstatus);
+                if (DDSIP_param->outlev)
+                {
+                    fprintf (DDSIP_bb->moreoutfile,
+                        "Suggested solution infeasible for scenario problem %d (Status=%d)\n", scen + 1, mipstatus);
+                }
+                if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
+                {
+                    printf ("Suggested solution infeasible for scenario problem %d (Status=%d)\n", scen + 1, mipstatus);
+                }
             }
 #ifdef ADDBENDERSCUTS
             if (DDSIP_param->addBendersCuts && (DDSIP_param->heuristic > 3 || iscen))
             {
                 CPXLPptr     DDSIP_dual_lp  = NULL;
                 cutpool_t * newCut;
-                int end;
-                end = (DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 7 && DDSIP_param->testOtherScens)) ? DDSIP_param->scenarios : iscen+1;
-                for (Bi = iscen; Bi < end; Bi++)
+                int beg, end;
+                beg = feasCheckOnly ? 0 : iscen;
+                end = (DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 9 && DDSIP_param->testOtherScens)) ? DDSIP_param->scenarios : DDSIP_Imax(nrScenarios, iscen+1);
+                for (Bi = beg; Bi < end; Bi++)
                 {
+                    time_lap = DDSIP_GetCpuTime ();
                     Bs = DDSIP_bb->ub_scen_order[Bi];
                     status = DDSIP_ChgProb (Bs);
                     if (status)
@@ -828,10 +841,15 @@ DDSIP_UpperBound (void)
                             return status;
                         }
                         status = CPXgetstat (DDSIP_env, DDSIP_dual_lp);
+                        time_end = DDSIP_GetCpuTime ();
                         if (status == CPX_STAT_INFEASIBLE)
                         {
                             double *ray = (double *) DDSIP_Alloc (sizeof (double), numRows, "ray (UpperBound)");
                             status = CPXdualfarkas (DDSIP_env, DDSIP_dual_lp, ray, &viol);
+                            if (DDSIP_param->outlev > 21)
+                                fprintf (DDSIP_bb->moreoutfile," ------------ LP infeasible for scen. %3d, violation %g, oldviol %g (%6.2f) ---------------\n", Bs+1, viol, oldviol, time_end - time_lap);
+                            
+                            time_lap = DDSIP_GetCpuTime ();
                             if (!status && (viol > 1e-1) && (fabs(viol - oldviol)/viol > 1.1e-8))
                             {
                                 int rmatbeg;
@@ -860,8 +878,8 @@ DDSIP_UpperBound (void)
                                     rowname[0] = rowstore;
                                     sprintf (rowstore, "DDSIPBendersCut%d",DDSIP_bb->cutCntr);
                                     if (DDSIP_param->outlev)
-                                        fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (from scen %2d), violation %g ############\n", rowstore, Bs+1, viol);
-                                    printf (" ############ adding cut %s  (from scen %2d) ############\n", rowstore, Bs+1);
+                                        fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %g ############\n", rowstore, Bs+1, viol);
+                                    printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
                                     rhs = 1.;
                                     sense = 'G';
                                     rmatbeg = 0;
@@ -929,8 +947,8 @@ DDSIP_UpperBound (void)
                         }
                         else
                         {
-                            if (DDSIP_param->outlev > 23)
-                                fprintf (DDSIP_bb->moreoutfile," ------------ LP feasible ---------------\n");
+                            if (DDSIP_param->outlev > 21)
+                                fprintf (DDSIP_bb->moreoutfile," ------------ LP   feasible for scen. %3d  (%6.2f) ---------------\n", Bs+1, time_end - time_lap);
                         }
                     }
                     if (DDSIP_dual_lp != NULL)
@@ -940,11 +958,16 @@ DDSIP_UpperBound (void)
                             printf ("ERROR: CPXfreeprob failed, error code %d\n", status);
                     }
                 }
+                if (DDSIP_param->outlev > 20)
+                {
+                    time_end = DDSIP_GetCpuTime ();
+                    fprintf (DDSIP_bb->moreoutfile," ------------ total time for checking for cuts  %6.2fs ---------------\n", time_end-time_start);
+                }
             }
 #endif
 #ifdef ADDINTEGERCUTS
             //if all first-stage variables are binary ones, we can add an inequality, cutting off this point
-            if (DDSIP_param->addIntegerCuts)
+            if (DDSIP_param->addIntegerCuts && !feasCheckOnly)
             {
                 int rmatbeg;
                 int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_bb->novar), "rmatind(UpperBound)");
@@ -963,7 +986,7 @@ DDSIP_UpperBound (void)
                 for (k = 0; k < DDSIP_bb->firstvar; k++)
                 {
                     rmatind[k] = DDSIP_bb->firstindex[k];
-                    if (floor((DDSIP_bb->sug[DDSIP_bb->curnode])->firstval[k] + 0.5))
+                    if (floor((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[k] + 0.5))
                     {
                         rmatval[k] = -1.;
                         rhs -= 1.;
@@ -1034,7 +1057,7 @@ DDSIP_UpperBound (void)
                         DDSIP_bb->cutCntr++;
                         sprintf (rowstore, "DDSIPIntegerCut%d",DDSIP_bb->cutCntr);
                         if (DDSIP_param->outlev)
-                            fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s ############\n", rowstore);
+                            fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
                         printf (" ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
 #endif
                         if ((status = CPXaddrows(DDSIP_env, DDSIP_lp, 0, 1, DDSIP_data->firstvar, &rhs, &sense, &rmatbeg, rmatind, rmatval, NULL, rowname)))
@@ -1077,6 +1100,8 @@ DDSIP_UpperBound (void)
                 DDSIP_Free ((void *) &rowstore);
             }
 #endif
+            if (feasCheckOnly)
+                continue;
             //shift this infeasible scenario to first place, such that next time it is checked first
             if (iscen >= DDSIP_bb->shifts)
                 DDSIP_bb->shifts++;
@@ -1086,83 +1111,88 @@ DDSIP_UpperBound (void)
             DDSIP_bb->ub_scen_order[0] = k;
             goto TERMINATE;
         }
-        // Get solution
-        status = DDSIP_GetCpxSolution (mipstatus, &objval, &bobjval, mipx);
-        if (status)
-            goto TERMINATE;
-
-        // Remember objective function contribution
-        if (DDSIP_param->outlev > 10)
-            DDSIP_Contrib (mipx, scen);
-
-        // Store second stage solutions
-        for (j = 0; j < DDSIP_bb->secvar; j++)
-            tmpsecsol[j][scen] = mipx[DDSIP_bb->secondindex[j]];
-
-        if ( mipstatus == 101 && bobjval > DDSIP_infty )
-            bobjval=objval;
-
-        subsol[scen] = objval;
-
-        gap = 100.0*(objval-bobjval)/(fabs(objval)+1e-4);
-        meanGap += DDSIP_data->prob[scen] * gap;
-        // Debugging information
-        if (DDSIP_param->outlev)
+        if (!feasCheckOnly)
         {
-            time (&DDSIP_bb->cur_time);
-            time_end = DDSIP_GetCpuTime ();
-            time_start = time_end-time_start;
-            DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
-            DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
-            fprintf (DDSIP_bb->moreoutfile,
-                     "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
-                     iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
-                     wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
-            if (DDSIP_param->outlev>7)
-            {
-                printf ("%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
-                        iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
-                        wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
-                if (DDSIP_param->cpxscr)
-                    printf ("\n");
-            }
-        }
+            // Get solution
+            status = DDSIP_GetCpxSolution (mipstatus, &objval, &bobjval, mipx);
+            if (status)
+                goto TERMINATE;
 
-        tmpfeasbound += DDSIP_Dmin (objval, bobjval) * DDSIP_data->prob[scen];
-        tmpbestvalue += objval * DDSIP_data->prob[scen];
+            // Remember objective function contribution
+            if (DDSIP_param->outlev > 10)
+                DDSIP_Contrib (mipx, scen);
 
-        // If even with the lower bounds we would reach a greater value we may stop here and save some time
-        // reduce the sum of the bounds rest_bound by the term for the current scenario
-        if (DDSIP_param->prematureStop && DDSIP_bb->DDSIP_step != dual && DDSIP_param->heuristic > 99 && DDSIP_bb->bestvalue < DDSIP_infty && !DDSIP_param->riskalg && iscen < DDSIP_param->scenarios - 1 &&
-                tmpbestvalue + rest_bound > DDSIP_bb->bestvalue + DDSIP_param->accuracy && !DDSIP_param->scalarization)
-        {
-            if (!(DDSIP_bb->heurval < DDSIP_infty))
-                DDSIP_bb->skip = 100 + iscen;
+            // Store second stage solutions
+            for (j = 0; j < DDSIP_bb->secvar; j++)
+                tmpsecsol[j][scen] = mipx[DDSIP_bb->secondindex[j]];
+
+            if ( mipstatus == 101 && bobjval > DDSIP_infty )
+                bobjval=objval;
+
+            subsol[scen] = objval;
+
+            gap = 100.0*(objval-bobjval)/(fabs(objval)+1e-4);
+            meanGap += DDSIP_data->prob[scen] * gap;
+            // Debugging information
             if (DDSIP_param->outlev)
             {
-                printf (
-                    "Suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue,tmpbestvalue+rest_bound);
+                time (&DDSIP_bb->cur_time);
+                time_end = DDSIP_GetCpuTime ();
+                time_start = time_end-time_start;
+                DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
+                DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
                 fprintf (DDSIP_bb->moreoutfile,
-                         "Suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue,tmpbestvalue+rest_bound);
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
+                         iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
+                         wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
+                if (DDSIP_param->outlev>7)
+                {
+                    printf ("%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
+                            iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
+                            wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
+                    if (DDSIP_param->cpxscr)
+                        printf ("\n");
+                }
             }
-            goto TERMINATE;
-        }
 
-        if ((j = CPXgetnummipstarts(DDSIP_env, DDSIP_lp)) > 3)
-        {
-            status    = CPXdelmipstarts (DDSIP_env, DDSIP_lp, 2, j-1);
-        }
+            tmpfeasbound += DDSIP_Dmin (objval, bobjval) * DDSIP_data->prob[scen];
+            tmpbestvalue += objval * DDSIP_data->prob[scen];
 
-        if (DDSIP_param->hot)
-        {
-            status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 2);
-            if (status)
+            // If even with the lower bounds we would reach a greater value we may stop here and save some time
+            // reduce the sum of the bounds rest_bound by the term for the current scenario
+            if (DDSIP_param->prematureStop && DDSIP_bb->DDSIP_step != dual && DDSIP_param->heuristic > 99 && DDSIP_bb->bestvalue < DDSIP_infty && !DDSIP_param->riskalg && iscen < DDSIP_param->scenarios - 1 &&
+                    tmpbestvalue + rest_bound > DDSIP_bb->bestvalue + DDSIP_param->accuracy && !DDSIP_param->scalarization)
             {
-                fprintf (DDSIP_outfile, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
-                return status;
+                if (!(DDSIP_bb->heurval < DDSIP_infty))
+                    DDSIP_bb->skip = 100 + iscen;
+                if (DDSIP_param->outlev)
+                {
+                    printf (
+                        "Suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue,tmpbestvalue+rest_bound);
+                    fprintf (DDSIP_bb->moreoutfile,
+                             "Suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue,tmpbestvalue+rest_bound);
+                }
+                goto TERMINATE;
+            }
+
+            if ((j = CPXgetnummipstarts(DDSIP_env, DDSIP_lp)) > 3)
+            {
+                status    = CPXdelmipstarts (DDSIP_env, DDSIP_lp, 2, j-1);
+            }
+
+            if (DDSIP_param->hot)
+            {
+                status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 2);
+                if (status)
+                {
+                    fprintf (DDSIP_outfile, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
+                    return status;
+                }
             }
         }
     }				// end for iscen=..
+    if (feasCheckOnly)
+        goto TERMINATE;
 
     if (DDSIP_param->riskmod)
     {
@@ -1243,7 +1273,7 @@ DDSIP_UpperBound (void)
                 DDSIP_bb->bestriskval[j] = DDSIP_bb->curriskval[j];
 
         for (j = 0; j < DDSIP_bb->firstvar; j++)
-            DDSIP_bb->bestsol[j] = ((DDSIP_bb->sug[DDSIP_bb->curnode])->firstval)[j];
+            DDSIP_bb->bestsol[j] = ((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval)[j];
 
         if (tmpbestvalue < DDSIP_node[DDSIP_bb->curnode]->bound)
         {
@@ -1271,6 +1301,13 @@ DDSIP_UpperBound (void)
 
 TERMINATE:
 
+    // if not only feasibility was tested, add the suggested first-stage to the list of suggested solutions
+    if (!feasCheckOnly)
+    {
+        DDSIP_bb->sug[DDSIP_param->nodelim + 2]->next = DDSIP_bb->sug[DDSIP_bb->curnode];
+        DDSIP_bb->sug[DDSIP_bb->curnode] = DDSIP_bb->sug[DDSIP_param->nodelim + 2];
+        DDSIP_bb->sug[DDSIP_param->nodelim + 2] = NULL;
+    }
     // Store optimal value of EEV problem
     if (DDSIP_bb->DDSIP_step == eev)
     {
@@ -1304,7 +1341,7 @@ TERMINATE:
         DDSIP_Free ((void **) &(tmpsecsol[j]));
     DDSIP_Free ((void **) &(tmpsecsol));
     DDSIP_Free ((void **) &(mipx));
-
+    
     status = DDSIP_RestoreBoundAndType ();
     if (status)
     {
@@ -1319,11 +1356,15 @@ TERMINATE:
     return status;
 }
 
-void DDSIP_EvaluateScenarioSolutions (void)
+void DDSIP_EvaluateScenarioSolutions (int* comb)
 {
-    int comb, i, i_scen, status = 0;
+    int i, i_scen, status = 0;
     double tmpbestheur = DDSIP_infty;
+    enum DDSIP_step_t currentStep;
 
+    currentStep = DDSIP_bb->DDSIP_step;
+    DDSIP_bb->heurSuccess = 0;
+    DDSIP_bb->DDSIP_step = neobj;
     // Initialize, heurval contains the current heuristic solution
     DDSIP_bb->heurval = DDSIP_infty;
     // sort scenarios according to lower bounds for the initial solution
@@ -1359,12 +1400,12 @@ void DDSIP_EvaluateScenarioSolutions (void)
         for (i = 1; i < DDSIP_param->heuristic_num; i++)
         {
             DDSIP_param->heuristic = floor (DDSIP_param->heuristic_vector[i] + 0.1);
-            if (!DDSIP_Heuristics (&comb))
+            if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
             {
                 // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
                 if (DDSIP_bb->skip != -4 && DDSIP_bb->sug[DDSIP_param->nodelim + 2])
                 {
-                    if (!(status = DDSIP_UpperBound ()) || status == 100000)
+                    if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
                     {
                         if (DDSIP_bb->heurval < tmpbestheur)
                             tmpbestheur = DDSIP_bb->heurval;
@@ -1378,19 +1419,32 @@ void DDSIP_EvaluateScenarioSolutions (void)
                 }
             }
         }
-        DDSIP_param->heuristic = 12;
-        if (!(DDSIP_param->interrupt_heur && (DDSIP_bb->skip == -5)))
+        // use (expensive) heuristic 12 using all single-scenario solutions as suugestions
+        if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || DDSIP_bb->curnode < 1 || DDSIP_bb->noiter%250 > 247))
         {
-            if (!DDSIP_Heuristics (&comb))
+            DDSIP_param->heuristic = 12;
+            if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
             {
                 // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
                 if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
                 {
-                    if (!DDSIP_UpperBound ())
+                    if (!DDSIP_UpperBound (DDSIP_param->scenarios, 0))
                     {
                         if (DDSIP_bb->heurval < tmpbestheur)
                             tmpbestheur = DDSIP_bb->heurval;
                     }
+                }
+            }
+        }
+        else if (DDSIP_param->alwaysBendersCuts && DDSIP_bb->shifts)
+        {
+            DDSIP_param->heuristic = 12;
+            if (!DDSIP_Heuristics (comb, DDSIP_bb->shifts, 1))
+            {
+                // Check if the proposed first-stage solution gives a new cut
+                if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
+                {
+                    DDSIP_UpperBound (DDSIP_bb->shifts, 1);
                 }
             }
         }
@@ -1402,10 +1456,10 @@ void DDSIP_EvaluateScenarioSolutions (void)
         for (i = 1; i < DDSIP_param->heuristic_num; i++)
         {
             DDSIP_param->heuristic = floor (DDSIP_param->heuristic_vector[i] + 0.1);
-            if (!DDSIP_Heuristics (&comb))
+            if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
             {
                 // Evaluate the proposed first-stage solution
-                if (!(status = DDSIP_UpperBound ()) || status == 100000)
+                if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
                 {
                     if (DDSIP_bb->heurval < tmpbestheur)
                         tmpbestheur = DDSIP_bb->heurval;
@@ -1423,9 +1477,9 @@ void DDSIP_EvaluateScenarioSolutions (void)
     }
     else
     {
-        if (!DDSIP_Heuristics (&comb))
+        if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
             // Evaluate the proposed first-stage solution
-            if (!(status = DDSIP_UpperBound ()) || status == 100000)
+            if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
             {
                 if (DDSIP_bb->heurval < tmpbestheur)
                     tmpbestheur = DDSIP_bb->heurval;
@@ -1435,5 +1489,6 @@ void DDSIP_EvaluateScenarioSolutions (void)
                 DDSIP_bb->skip = -5;
             }
     }
+    DDSIP_bb->DDSIP_step = currentStep;
     return;
 }

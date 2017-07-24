@@ -226,6 +226,7 @@ DDSIP_FreeBb ()
     if (DDSIP_bb != NULL)
     {
         if (DDSIP_bb->sug != NULL)
+        {
             for (i = 0; i < DDSIP_param->nodelim + 3; i++)
             {
                 tmp = (DDSIP_bb->sug)[i];
@@ -237,6 +238,7 @@ DDSIP_FreeBb ()
                     tmp = next;
                 }
             }
+        }
         DDSIP_Free ((void **) &(DDSIP_bb->sug));
 
         DDSIP_Free ((void **) &(DDSIP_bb->subsol));

@@ -1250,13 +1250,25 @@ DDSIP_ReadSpec ()
     DDSIP_param->prepro = 0;
 #ifdef ADDBENDERSCUTS
     DDSIP_param->addBendersCuts = floor (DDSIP_ReadDbl (specfile, "ADDBEN", " ADD BENDERS CUTS", 1., 1, 0., 2.) + 0.1);
-    DDSIP_param->testOtherScens = DDSIP_param->stocmat ? 1. : 0.;
-    DDSIP_param->testOtherScens = floor (DDSIP_ReadDbl (specfile, "TESTBE", " TEST FOR FURTHER BENDERS CUTS", DDSIP_param->testOtherScens, 1, 0., 1.) + 0.1);
-    DDSIP_param->numberReinits  = floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 10., 1, 0., DDSIP_bigint) + 0.1);
+    if (DDSIP_param->addBendersCuts)
+    {
+        DDSIP_param->alwaysBendersCuts = floor (DDSIP_ReadDbl (specfile, "ALWAYS", " ALWAYS CHECK FOR CUTS", 1., 1, 0., 1.) + 0.1);
+        DDSIP_param->testOtherScens = DDSIP_param->stocmat ? 1. : 0.;
+        DDSIP_param->testOtherScens = floor (DDSIP_ReadDbl (specfile, "TESTBE", " TEST FOR FURTHER BENDERS CUTS", DDSIP_param->testOtherScens, 1, 0., 1.) + 0.1);
+        DDSIP_param->numberReinits  = floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 10., 1, 0., DDSIP_bigint) + 0.1);
+    }
+    else
+    {
+        DDSIP_param->alwaysBendersCuts = 0;
+        DDSIP_param->testOtherScens = 0;
+        DDSIP_param->numberReinits  = 0;
+    }
 #endif
 #ifdef ADDINTEGERCUTS
-    DDSIP_param->addIntegerCuts = floor (DDSIP_ReadDbl (specfile, "ADDINT", " ADD INTEGER CUTS", 0., 1, 0., 1.) + 0.1);
+    DDSIP_param->addIntegerCuts = floor (DDSIP_ReadDbl (specfile, "ADDINT", " ADD INTEGER CUTS", 1., 1, 0., 1.) + 0.1);
 #endif
+    DDSIP_param->redundancyCheck = floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", 1., 1, 0., 1.) + 0.1);
+    DDSIP_param->annotationFile = DDSIP_ReadString (specfile, "ANNOTA", " ANNOTATION FILE FOR CPLEX BENDERS");
     fprintf (DDSIP_outfile, "\n");
 
 
@@ -1780,7 +1792,7 @@ DDSIP_ReadData ()
         {
             DDSIP_data->prob[j] = DDSIP_data->prob[j] / probsum;
             fprintf (DDSIP_outfile, "sc(%3d)=%g, ", j+1, DDSIP_data->prob[j]);
-            if (!((j + 1) % 10))
+            if (!((j + 1) % 5))
                 fprintf (DDSIP_outfile, "\n");
 #ifdef NEOS
             /* sanity check:*/
@@ -1793,7 +1805,7 @@ DDSIP_ReadData ()
             }
 #endif
         }
-        if (j % 10)
+        if (j % 5)
         {
             fprintf (DDSIP_outfile, "\n");
         }

@@ -616,7 +616,7 @@ DDSIP_Warm (int iscen)
     if (DDSIP_param->outlev > 90)
         fprintf (DDSIP_bb->moreoutfile, " before adding there are %d mip starts\n", CPXgetnummipstarts(DDSIP_env,DDSIP_lp));
     // Hotstart = 0 --> ADVIND  0 - start values should not be used
-    if (DDSIP_bb->DDSIP_step == dual && DDSIP_bb->dualitcnt)
+    if ((DDSIP_bb->DDSIP_step == dual || (DDSIP_param->cb < 0 && !DDSIP_bb->curnode)) && DDSIP_bb->dualitcnt)
     {
         DDSIP_bb->beg[0]=0;
         DDSIP_bb->effort[0]=3;
@@ -626,7 +626,7 @@ DDSIP_Warm (int iscen)
         // print debugging info
         if(DDSIP_param->outlev > 99)
         {
-            fprintf(DDSIP_bb->moreoutfile,"### MIP start values (in CB):\n");
+            fprintf(DDSIP_bb->moreoutfile,"### MIP start values (in CB): %s  \n",DDSIP_bb->Names[0]);
             for (j = 0; j < DDSIP_bb->total_int; j++)
                 fprintf(DDSIP_bb->moreoutfile,"%d:%g, ",DDSIP_bb->intind[j], DDSIP_bb->intsolvals[scen][j]);
             fprintf(DDSIP_bb->moreoutfile,"\n");
@@ -3881,9 +3881,9 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
         j = DDSIP_param->heuristic;
         DDSIP_param->heuristic = 100;
-        if (!DDSIP_Heuristics (&comb))
+        if (!DDSIP_Heuristics (&comb, DDSIP_param->scenarios, 0))
             // Evaluate the proposed first-stage solution
-            DDSIP_UpperBound ();
+            DDSIP_UpperBound (DDSIP_param->scenarios, 0);
         DDSIP_param->heuristic = j;
     }
 #endif

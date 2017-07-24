@@ -49,7 +49,7 @@ linux.CPLEX.LDDIR = -L$(CPLEX)/lib/$(LINUXVAR)/$(LIBTYPE)/
 
 #Objects
 OBJECTS = DDSIPmain.o DDSIPsmall.o DDSIPmem.o DDSIPread.o DDSIPrisk.o DDSIPinit.o DDSIPeev.o DDSIPterm.o DDSIPprint.o \
-			DDSIPdual.o  DDSIPub.o DDSIPlb.o DDSIPheur.o DDSIPbandb.o DDSIPchg.o DDSIPrest.o DDSIPdetequ.o
+			DDSIPdual.o  DDSIPub.o DDSIPlb.o DDSIPheur.o DDSIPbandb.o DDSIPchg.o DDSIPrest.o DDSIPdetequ.o DDSIPredu.o
 
 #Objects with directories
 OBJSWITHDIR = $(addprefix $(OBJDIR)/,$(OBJECTS))

@@ -53,7 +53,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2017-07-04 (with Benders feasibility cuts)";
+const char DDSIP_version[] = "2017-07-11 (with Benders feasibility cuts and CPLEX Benders)";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -83,9 +83,7 @@ main (void)
 
     char astring[DDSIP_ln_fname];
 
-    int status = 0, cont, boundstat, comb, heur_skip, i;
-    double tmpbestheur;
-    static int heur_12 = 10;
+    int status = 0, cont, boundstat, comb, i;
 
     // guarantee minimal stacksize limit
     const rlim_t kStackSize = 128 * 1024 * 1024;   // min stack size = 128 MB
@@ -212,6 +210,16 @@ main (void)
     // Set specified CPLEX parameters
     if ((status = DDSIP_InitCpxPara ()))
         goto TERMINATE;
+
+    // if a Benders annotation file is given, read it
+    if (DDSIP_param->annotationFile)
+    {
+        status = CPXreadcopyannotations (DDSIP_env, DDSIP_lp, DDSIP_param->annotationFile);
+        if ( status ) {
+           printf ("ERROR: Failed to read and copy the annotation data from file %s.\n", DDSIP_param->annotationFile);
+           goto TERMINATE;
+        }
+    }
 
     // data->cost contains: stoch. costs for all scenarios, followed by the original costs
     DDSIP_data->cost =
@@ -357,7 +365,7 @@ main (void)
             for (i = 0; i < (DDSIP_bb->firstvar); i++)
                 (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] = DDSIP_bb->adv_sol[i];
             (DDSIP_bb->sug[DDSIP_param->nodelim + 2])->next = NULL;
-            if ((status = DDSIP_UpperBound ()) && status < 100000)
+            if ((status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) && status < 100000)
                 goto TERMINATE;
         }
         // Only weak consistency check:
@@ -390,7 +398,7 @@ main (void)
             for (i = 0; i < DDSIP_bb->firstvar; i++)
                 (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] = DDSIP_bb->adv_sol[i];
             DDSIP_bb->sug[DDSIP_param->nodelim + 2]->next = NULL;
-            if ((status = DDSIP_UpperBound ()) && status < 100000)
+            if ((status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) && status < 100000)
                 goto TERMINATE;
         }
 
@@ -406,7 +414,10 @@ main (void)
         }
     }				// END if (EV)
 
-    DDSIP_FreeCutpool();
+    if (DDSIP_bb->cutAdded && DDSIP_param->outlev > 1)
+    {
+        fprintf (DDSIP_outfile, " %6d%101d cuts\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
+    }
 
     // Print cplex log to debugfile
     if (DDSIP_param->outlev > 51)
@@ -420,12 +431,13 @@ main (void)
     // comb tells in case of a combined heuristic, which one to apply (3 = RoundNear)
     comb = 3;
 
-
     printf ("Starting branch-and-bound algorithm.\n");
     fprintf (DDSIP_outfile, "----------------------------------------------------------------------------------------\n");
 
     while (cont)
     {
+        // the cuts from the root node are contained in every following node model, there is no need to check their violation
+        // for the scenario solutions. But the rounding heuristics could violate a cut, so keep them.
 #ifdef CONIC_BUNDLE
         // Dual method
         if ((DDSIP_param->cb > 0 && (!(DDSIP_bb->noiter % abs(DDSIP_param->cb))) && (abs(DDSIP_param->riskmod) != 4 || DDSIP_bb->noiter)) ||
@@ -497,134 +509,35 @@ main (void)
         if (!DDSIP_bb->skip)
         {
             double old_bound;
-            int cntr;
+            int cntr, maxCntr;
+
+            DDSIP_EvaluateScenarioSolutions (&comb);
             cntr = 0;
-            if (DDSIP_node[DDSIP_bb->curnode]->step == dual)
-                cntr = DDSIP_param->numberReinits - 1;
-            do {
-                old_bound = DDSIP_node[DDSIP_bb->curnode]->bound;
-                DDSIP_bb->cutAdded = 0;
-                DDSIP_bb->DDSIP_step = neobj;
-                // Initialize, heurval contains the obj. value of the current heuristic solution
-                DDSIP_bb->heurval = DDSIP_infty;
-                tmpbestheur = DDSIP_infty;
-                heur_skip = DDSIP_bigint;
-////////////////////////
-                if (DDSIP_param->heuristic == 100)  	// use subsequently different heuristics in the same node
+            if (DDSIP_node[DDSIP_bb->curnode]->step != dual)
+                maxCntr = DDSIP_param->numberReinits;
+            else
+                maxCntr = 0;
+            old_bound = DDSIP_node[DDSIP_bb->curnode]->bound;
+            boundstat = DDSIP_Bound ();
+            if (!DDSIP_bb->curnode)
+            {
+                int cnt, j;
+                double lhs;
+                cutpool_t *currentCut;
+                DDSIP_PrintState (DDSIP_bb->noiter);
+                if (DDSIP_bb->cutAdded && DDSIP_param->outlev > 1)
                 {
-                    DDSIP_bb->heurSuccess = 0;
-                    for (i = 1; i < DDSIP_param->heuristic_num; i++)
-                    {
-                        DDSIP_param->heuristic = floor (DDSIP_param->heuristic_vector[i] + 0.1);
-                        if (DDSIP_Heuristics (&comb))
-                            goto TERMINATE;
-                        // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-                        if (DDSIP_bb->skip != -4 && DDSIP_bb->sug[DDSIP_param->nodelim + 2])
-                        {
-                            if ((status = DDSIP_UpperBound ()) && status < 100000)
-                            {
-                                goto TERMINATE;
-                            }
-                            if (DDSIP_bb->skip < heur_skip)
-                                heur_skip = DDSIP_bb->skip;
-                            if (DDSIP_bb->heurval < tmpbestheur)
-                                tmpbestheur = DDSIP_bb->heurval;
-                            if (status == 100000)
-                            {
-                                DDSIP_bb->skip = -5;
-                                if (DDSIP_param->interrupt_heur > 0)
-                                    break;
-                            }
-                        }
-                        else
-                            DDSIP_bb->skip = DDSIP_bigint;
-                    }
-                    if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || DDSIP_bb->curnode < 11 || DDSIP_bb->noiter%250 > 247))
-                    {
-                        DDSIP_param->heuristic = 12;
-                        if (DDSIP_Heuristics (&comb))
-                            goto TERMINATE;
-                        // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-                        if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
-                        {
-                            heur_12 ++;
-                            if ((status = DDSIP_UpperBound ()) && status < 100000)
-                            {
-                                goto TERMINATE;
-                            }
-                            if (DDSIP_bb->skip < heur_skip)
-                                heur_skip = DDSIP_bb->skip;
-                            if (DDSIP_bb->heurval < tmpbestheur)
-                                tmpbestheur = DDSIP_bb->heurval;
-                        }
-                        else
-                            DDSIP_bb->skip = DDSIP_bigint;
-                    }
-                    DDSIP_param->heuristic = 100;
-                    DDSIP_bb->heurval = tmpbestheur;
-                    DDSIP_bb->skip = heur_skip;
+                    fprintf (DDSIP_outfile, " %6d%101d cuts\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
                 }
-                else if (DDSIP_param->heuristic == 99)  	// use subsequently different heuristics in the same node
+                while ((DDSIP_bb->cutAdded || DDSIP_node[0]->step == dual) && cntr < maxCntr)
                 {
-                    for (i = 1; i < DDSIP_param->heuristic_num; i++)
-                    {
-                        DDSIP_param->heuristic = floor (DDSIP_param->heuristic_vector[i] + 0.1);
-                        if (DDSIP_Heuristics (&comb))
-                            goto TERMINATE;
-                        // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-                        if (DDSIP_bb->skip != -4 && DDSIP_bb->sug[DDSIP_param->nodelim + 2])
-                        {
-                            if ((status = DDSIP_UpperBound ()))
-                            {
-                                if (status < 100000)
-                                    goto TERMINATE;
-                            }
-                            if (DDSIP_bb->skip < heur_skip)
-                                heur_skip = DDSIP_bb->skip;
-                            if (DDSIP_bb->heurval < tmpbestheur)
-                                tmpbestheur = DDSIP_bb->heurval;
-                            if (status == 100000)
-                            {
-                                DDSIP_bb->skip = -5;
-                                if (DDSIP_param->interrupt_heur > 0)
-                                    break;
-                            }
-                        }
-                        else
-                            DDSIP_bb->skip = DDSIP_bigint;
-                    }
-                    DDSIP_param->heuristic = 99;
-                    DDSIP_bb->heurval = tmpbestheur;
-                    DDSIP_bb->skip = heur_skip;
-                }
-                else
-                {
-                    if (DDSIP_Heuristics (&comb))
-                        goto TERMINATE;
-                    // Evaluate the proposed first-stage solution
-                    if ((status = DDSIP_UpperBound ()))
-                    {
-                        if (status < 100000)
-                            goto TERMINATE;
-                        else
-                            DDSIP_bb->skip = DDSIP_bigint;
-                    }
-                }
-////////////////////////
-                boundstat = DDSIP_Bound ();
-                if (!DDSIP_bb->curnode)
-                    DDSIP_PrintState (DDSIP_bb->noiter);
-                if (!DDSIP_bb->curnode && (DDSIP_bb->cutAdded || DDSIP_node[DDSIP_bb->curnode]->step == dual) && cntr < DDSIP_param->numberReinits)
-                {
-                    int cnt, j;
-                    double lhs;
-                    cutpool_t *currentCut;
+                    old_bound = DDSIP_node[0]->bound;
                     // Free the solutions from former LowerBound
                     for (i = 0; i < DDSIP_param->scenarios; i++)
                     {
-                        if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])
+                        if (((DDSIP_node[0])->first_sol)[i])
                         {
-                            if (DDSIP_node[DDSIP_bb->curnode]->step == solve)
+                            if (DDSIP_node[0]->step == solve)
                             {
                                 currentCut = DDSIP_bb->cutpool;
                                 while (currentCut)
@@ -632,25 +545,25 @@ main (void)
                                     lhs = 0.;
                                     for (j = 0; j < DDSIP_bb->firstvar; j++)
                                     {
-                                        lhs += (DDSIP_node[DDSIP_bb->curnode])->first_sol[i][j] * currentCut->matval[j];
+                                        lhs += (DDSIP_node[0])->first_sol[i][j] * currentCut->matval[j];
                                     }
                                     if (lhs < currentCut->rhs - 1.e-7)
                                     {
                                         if (DDSIP_param->outlev > 50)
                                             fprintf (DDSIP_bb->moreoutfile, "scen %d solution violates cut %d.\n", i+1, currentCut->number);
-                                        if ((cnt = (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 1))
+                                        if ((cnt = (((DDSIP_node[0])->first_sol)[i])[DDSIP_bb->firstvar] - 1))
                                         for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
                                         {
                                             {
-                                                if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
-                                                  && ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i] == ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])
+                                                if (((DDSIP_node[0])->first_sol)[j]
+                                                  && ((DDSIP_node[0])->first_sol)[i] == ((DDSIP_node[0])->first_sol)[j])
                                                 {
-                                                    ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j] = NULL;
+                                                    ((DDSIP_node[0])->first_sol)[j] = NULL;
                                                     cnt--;
                                                 }
                                             }
                                         }
-                                        DDSIP_Free ((void **) &(((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]));
+                                        DDSIP_Free ((void **) &(((DDSIP_node[0])->first_sol)[i]));
                                         break;
                                     }
                                     currentCut = currentCut->prev;
@@ -658,39 +571,48 @@ main (void)
                             }
                             else
                             {
-                               if ((cnt = (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 1))
+                               if ((cnt = (((DDSIP_node[0])->first_sol)[i])[DDSIP_bb->firstvar] - 1))
                                for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
                                {
                                    {
-                                       if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
-                                         && ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i] == ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])
+                                       if (((DDSIP_node[0])->first_sol)[j]
+                                         && ((DDSIP_node[0])->first_sol)[i] == ((DDSIP_node[0])->first_sol)[j])
                                        {
-                                           ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j] = NULL;
+                                           ((DDSIP_node[0])->first_sol)[j] = NULL;
                                            cnt--;
                                        }
                                    }
                                }
-                               DDSIP_Free ((void **) &(((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]));
+                               DDSIP_Free ((void **) &(((DDSIP_node[0])->first_sol)[i]));
                             }
                         }
                     }
-                    DDSIP_node[DDSIP_bb->curnode]->step = DDSIP_bb->DDSIP_step = solve;
+                    DDSIP_node[0]->step = DDSIP_bb->DDSIP_step = solve;
                     // status=1 means there was no solution found to a scenario problem
                     if ((status = DDSIP_LowerBound ()))
                         goto TERMINATE;
+                    DDSIP_EvaluateScenarioSolutions (&comb);
+                    cntr++;
+                    DDSIP_bb->bestbound = DDSIP_node[0]->bound;
+                    DDSIP_PrintState (1);
+                    if (DDSIP_bb->cutAdded && DDSIP_param->outlev > 1)
+                    {
+                        fprintf (DDSIP_outfile, " %6d %82d. reinit: %8d cuts\n", 0, cntr, DDSIP_bb->cutAdded);
+                    }
+                    if ((DDSIP_node[0]->bound - old_bound)/(fabs(old_bound) + 1e-16) < 1.e-7)
+                        break;
                 }
+            }
+            else
+            {
+                // Print a line of output at the first, the last and each `ith' node
+                if (DDSIP_bb->noiter == 0 || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
+                        DDSIP_PrintState (DDSIP_bb->noiter);
                 if (DDSIP_bb->cutAdded && DDSIP_param->outlev > 1)
                 {
-                    fprintf (DDSIP_outfile, " %6d%103d cuts\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
+                    fprintf (DDSIP_outfile, " %6d%101d cuts\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
                 }
-                boundstat = DDSIP_Bound ();
-                if (!DDSIP_bb->noiter)
-                    DDSIP_bb->noiter = 1;
-                cntr++;
-            } while (!DDSIP_bb->curnode && DDSIP_bb->cutAdded && ((DDSIP_node[DDSIP_bb->curnode]->bound - old_bound)/(old_bound + 1e-16) > 5.e-8) && cntr < DDSIP_param->numberReinits);
-            // Print a line of output at the first, the last and each `ith' node
-            if (0 == DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
-                DDSIP_PrintState (DDSIP_bb->noiter);
+            }
         }
         else
         {
@@ -715,11 +637,17 @@ main (void)
 
         if ((status = DDSIP_Branch ()))
             goto TERMINATE;
-
     }
 
     // Termination
 TERMINATE:
+
+    // check if some of the cuts are redundant
+    if (DDSIP_param->redundancyCheck)
+    {
+        DDSIP_CheckRedundancy();
+    }
+
 
     DDSIP_PrintErrorMsg (status);
 

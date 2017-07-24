@@ -398,11 +398,11 @@ DDSIP_BbTypeInit (void)
         fprintf (DDSIP_outfile, "\t\t No. of second-stage variables:    %6d  (%d integers)\n", DDSIP_bb->secvar, DDSIP_bb->total_int - DDSIP_bb->first_int);
         fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
     }
-    /////
-    if (DDSIP_data->firstvar - DDSIP_bb->first_bin)
-    {
+
+#ifdef ADDINTEGERCUTS
+    if (DDSIP_bb->firstvar > DDSIP_bb->first_bin)
         DDSIP_param->addIntegerCuts = 0;
-    }
+#endif
 
     // Memory allocation for bb-type-members
     DDSIP_bb->solstat = (int *) DDSIP_Alloc (sizeof (int), DDSIP_param->scenarios, "solstat(BbTypeInit)");
@@ -1093,7 +1093,7 @@ DDSIP_BbInit (void)
     fprintf (DDSIP_outfile, "------------------------------------------------------------\n");
 
 #ifdef ADDINTEGERCUTS
-    if (DDSIP_param->addIntegerCuts && (DDSIP_bb->first_int > DDSIP_bb->first_bin))
+    if (DDSIP_bb->first_int > DDSIP_bb->first_bin)
         DDSIP_param->addIntegerCuts = 0;
 #endif
 

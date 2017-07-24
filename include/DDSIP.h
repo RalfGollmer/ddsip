@@ -279,9 +279,13 @@ extern "C" {
 #ifdef ADDBENDERSCUTS
         // add Benders cuts?
         int addBendersCuts;
+        int alwaysBendersCuts;
         int testOtherScens;
         int numberReinits;
+        int redundancyCheck;
 #endif
+        // annotation file name if Benders decomposition within CPLEX should be used
+        char *annotationFile;
     } para_t;
 
     typedef struct
@@ -732,6 +736,7 @@ extern "C" {
 
 // Initialisations and stuff
     void DDSIP_DetEqu(void);
+    void DDSIP_CheckRedundancy(void);
     int  DDSIP_BbTypeInit(void);
     int  DDSIP_BranchOrder(void);
     int  DDSIP_InitStages(void);
@@ -758,10 +763,10 @@ extern "C" {
     int  DDSIP_ChgBounds(int);
     int  DDSIP_ChgProb(int);
     int  DDSIP_LowerBound(void);
-    int  DDSIP_Heuristics(int *);
+    int  DDSIP_Heuristics(int *, int, int);
     int  DDSIP_SolChk(double *);
-    int  DDSIP_UpperBound(void);
-    void DDSIP_EvaluateScenarioSolutions (void);
+    int  DDSIP_UpperBound(int, int);
+    void DDSIP_EvaluateScenarioSolutions (int *);
     int  DDSIP_RestoreBoundAndType(void);
     int  DDSIP_Bound(void);
     int  DDSIP_Branch(void);

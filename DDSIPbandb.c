@@ -807,8 +807,10 @@ DDSIP_Bound (void)
                     {
                         fprintf (DDSIP_bb->moreoutfile, " - selection of next node: depth first\n");
                         if (DDSIP_bb->bestBound)
-                          fprintf (DDSIP_bb->moreoutfile, " DDSIP_bb->bestBound = %d", DDSIP_bb->bestBound);
-                          fprintf (DDSIP_bb->moreoutfile, " -> select best bound node among all.\n");
+                        {
+                            fprintf (DDSIP_bb->moreoutfile, " DDSIP_bb->bestBound = %d", DDSIP_bb->bestBound);
+                            fprintf (DDSIP_bb->moreoutfile, " -> select best bound node among all.\n");
+                        }
                     }
                     // use depth first
                     // sort front nodes wrt. their number

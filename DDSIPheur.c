@@ -36,7 +36,7 @@ void DDSIP_SmallValue (void);
 void DDSIP_LargeValue (void);
 void DDSIP_MinSum (void);
 void DDSIP_MaxSum (void);
-int  DDSIP_All (void);
+int  DDSIP_All (int, int);
 void DDSIP_BoundConsistent (void);
 
 
@@ -290,7 +290,7 @@ DDSIP_MaxSum (void)
 //==========================================================================
 // All suggests successively all scenario problem solutions  Heur. 12
 int
-DDSIP_All (void)
+DDSIP_All (int nrScenarios, int feasCheckOnly)
 {
     int i, ii, j, status;
     int cnt;
@@ -338,7 +338,8 @@ DDSIP_All (void)
             DDSIP_Free ((void **) &(unind));
             return 1;
         }
-        if (!(tmp = DDSIP_bb->sug[DDSIP_param->nodelim + 2]))
+        tmp = DDSIP_bb->sug[DDSIP_param->nodelim + 2];
+        if (!tmp)
         {
             // DDSIP_Allocate memory for heuristics suggestion if there is none yet
             tmp = (sug_t *)DDSIP_Alloc (sizeof (sug_t), 1, "sug[i](Heuristic)");
@@ -379,7 +380,7 @@ DDSIP_All (void)
             (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[DDSIP_bb->firstvar - 1] = worst_case_lb + DDSIP_param->accuracy;
         }
 
-        if ((status = DDSIP_UpperBound ()))
+        if ((status = DDSIP_UpperBound (nrScenarios, feasCheckOnly)))
         {
             if (status < 100000)
             {
@@ -398,7 +399,8 @@ DDSIP_All (void)
 // the last scenario
     if (cnt)
     {
-        if (!(tmp = DDSIP_bb->sug[DDSIP_param->nodelim + 2]))
+        tmp = DDSIP_bb->sug[DDSIP_param->nodelim + 2];
+        if (!tmp)
         {
             // DDSIP_Allocate memory for heuristics suggestion if there is none yet
             tmp = (sug_t *)DDSIP_Alloc (sizeof (sug_t), 1, "sug[i](Heuristic)");
@@ -433,15 +435,15 @@ DDSIP_All (void)
 //==========================================================================
 // Function returns a suggestion in the first components of sug[DDSIP_param->nodelim + 2]
 int
-DDSIP_Heuristics (int *comb)
+DDSIP_Heuristics (int *comb, int nrScenarios, int feasCheckOnly)
 {
     int i, j, status = 0;
     sug_t *tmp;
 
     double *average = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar,
                       "average(Heuristic)");
-
-    if (!(tmp = DDSIP_bb->sug[DDSIP_param->nodelim + 2]))
+    tmp = DDSIP_bb->sug[DDSIP_param->nodelim + 2];
+    if (!tmp)
     {
         // DDSIP_Allocate memory for heuristics suggestion if there is none yet
         tmp = (sug_t *)DDSIP_Alloc (sizeof (sug_t), 1, "sug[i](Heuristic)");
@@ -546,7 +548,7 @@ DDSIP_Heuristics (int *comb)
     case 12:
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "all scen. sols ");
-        status = DDSIP_All ();
+        status = DDSIP_All (nrScenarios, feasCheckOnly);
         break;
     case 13:			// Combined heuristic 4 and 5
         if (DDSIP_param->outlev)

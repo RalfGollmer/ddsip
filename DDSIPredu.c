@@ -366,12 +366,13 @@ DDSIP_CheckRedundancy ()
         // if the objval is nonnegative, the cut is redundant
         if (objval >= 0.)
         {
-             fprintf (stderr, "######## Cut %d is redundant\n", DDSIP_bb->cutCntr-k);
-             fprintf (DDSIP_outfile, "######## Cut %d is redundant\n", DDSIP_bb->cutCntr-k);
+             fprintf (stderr, "\r######## Cut %d is redundant\n", DDSIP_bb->cutCntr-k);
+             fprintf (DDSIP_outfile, "\r######## Cut %d is redundant\n", DDSIP_bb->cutCntr-k);
              if (DDSIP_param->outlev)
-                 fprintf (DDSIP_bb->moreoutfile, "######## Cut %d is redundant\n", DDSIP_bb->cutCntr-k);
+                 fprintf (DDSIP_bb->moreoutfile, "\r######## Cut %d is redundant\n", DDSIP_bb->cutCntr-k);
              ind++;
         }
+        fprintf (DDSIP_outfile, "\r    %4d Cuts out %d tested", k+1, DDSIP_bb->cutCntr);
         
         if ((status = CPXchgbds(DDSIP_env, redundancy, 1, rmatind_stage, sense, ub_sorted)))
         {

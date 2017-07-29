@@ -216,7 +216,8 @@ main (void)
     {
         status = CPXreadcopyannotations (DDSIP_env, DDSIP_lp, DDSIP_param->annotationFile);
         if ( status ) {
-           printf ("ERROR: Failed to read and copy the annotation data from file %s.\n", DDSIP_param->annotationFile);
+           fprintf (stderr, "ERROR: Failed to read and copy the annotation data from file %s.\n", DDSIP_param->annotationFile);
+           fprintf (DDSIP_outfile, "ERROR: Failed to read and copy the annotation data from file %s.\n", DDSIP_param->annotationFile);
            goto TERMINATE;
         }
     }
@@ -229,7 +230,7 @@ main (void)
     status = CPXgetobj (DDSIP_env, DDSIP_lp, DDSIP_data->cost + DDSIP_param->scenarios * DDSIP_param->stoccost, 0, DDSIP_data->novar - 1);
     if (status)
     {
-        printf ("ERROR: Failed to get objective coefficients\n");
+        fprintf (stderr, "ERROR: Failed to get objective coefficients\n");
         fprintf (DDSIP_outfile, "ERROR: Failed to get objective coefficients\n");
         goto TERMINATE;
     }
@@ -316,9 +317,11 @@ main (void)
     }
 #endif
 
-    printf ("\t Total initialization time: %4.2f seconds.\n", DDSIP_GetCpuTime ());
     if (DDSIP_param->outlev)
+    {
+        printf ("\t Total initialization time: %4.2f seconds.\n", DDSIP_GetCpuTime ());
         fprintf (DDSIP_bb->moreoutfile, " Total initialization time: %4.2f seconds.\n", DDSIP_GetCpuTime ());
+    }
 
     // at the start there is no solution
     status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 0);
@@ -336,14 +339,14 @@ main (void)
 #endif
     if (DDSIP_param->riskmod < 0)
     {
-        printf (" pure risk models are disabled for now, exiting.\n");
+        fprintf (stderr, " pure risk models are disabled for now, exiting.\n");
         fprintf (DDSIP_outfile, " pure risk models are disabled for now, exiting.\n");
         goto TERMINATE;
     }
     if (DDSIP_param->stoccost && DDSIP_param->riskmod)
     {
         fprintf (DDSIP_outfile, "XXX Error: Risk optimization not implemented for stochastic cost coefficients.\n");
-        printf ("XXX Error: Risk optimization not implemented for stochastic cost coefficients.\n");
+        fprintf (stderr, "XXX Error: Risk optimization not implemented for stochastic cost coefficients.\n");
         goto TERMINATE;
     }
 
@@ -404,12 +407,14 @@ main (void)
 
         if (fabs (DDSIP_bb->expbest) < DDSIP_infty)
         {
-            printf ("\t\t EEV:  %13.7f\n", DDSIP_bb->expbest);
+            if (DDSIP_param->outlev)
+                printf ("\t\t EEV:  %13.7f\n", DDSIP_bb->expbest);
             fprintf (DDSIP_outfile, "-EEV:     %13.7f\n", DDSIP_bb->expbest);
         }
         else
         {
-            printf ("\t\t EEV:  No solution found.\n");
+            if (DDSIP_param->outlev)
+                printf ("\t\t EEV:  No solution found.\n");
             fprintf (DDSIP_outfile, "-EEV:     No solution found.\n");
         }
     }				// END if (EV)
@@ -431,7 +436,8 @@ main (void)
     // comb tells in case of a combined heuristic, which one to apply (3 = RoundNear)
     comb = 3;
 
-    printf ("Starting branch-and-bound algorithm.\n");
+    if (DDSIP_param->outlev)
+        printf ("Starting branch-and-bound algorithm.\n");
     fprintf (DDSIP_outfile, "----------------------------------------------------------------------------------------\n");
 
     while (cont)
@@ -478,33 +484,6 @@ main (void)
         if ((status = LowerBound ()))
             goto TERMINATE;
 #endif
-        if (!DDSIP_bb->curnode)
-        {
-            // in order to allow for premature cutoff: sort scenarios according to lower bound in root node in descending order
-            double * sort_array;
-            int i_scen;
-            sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "sort_array(LowerBound)");
-            for (i_scen = 0; i_scen < DDSIP_param->scenarios; i_scen++)
-            {
-                sort_array[DDSIP_bb->ub_scen_order[i_scen]] = DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]] * (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]];
-            }
-            DDSIP_qsort_ins_D (sort_array, DDSIP_bb->ub_scen_order, DDSIP_bb->shifts, DDSIP_param->scenarios-1);
-
-            if (DDSIP_param->outlev > 20)
-            {
-                // debug output
-                fprintf (DDSIP_bb->moreoutfile,"order of scenarios after sorting ub order (%d shifts)\n", DDSIP_bb->shifts);
-                for (i_scen = 0; i_scen < DDSIP_param->scenarios; i_scen++)
-                {
-                    fprintf(DDSIP_bb->moreoutfile," %3d: Scen %3d  %20.14g =  %10.07g * %20.14g\n",
-                            i_scen+1, DDSIP_bb->ub_scen_order[i_scen]+1, sort_array[DDSIP_bb->ub_scen_order[i_scen]],
-                            DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]],
-                            (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]]);
-                }
-                // debug output
-            }
-            DDSIP_Free ((void**) &sort_array);
-        }
 
         if (!DDSIP_bb->skip)
         {
@@ -599,6 +578,7 @@ main (void)
                     {
                         fprintf (DDSIP_outfile, " %6d %82d. reinit: %8d cuts\n", 0, cntr, DDSIP_bb->cutAdded);
                     }
+                    DDSIP_bb->noiter++;
                     if ((DDSIP_node[0]->bound - old_bound)/(fabs(old_bound) + 1e-16) < 1.e-7)
                         break;
                 }
@@ -606,7 +586,7 @@ main (void)
             else
             {
                 // Print a line of output at the first, the last and each `ith' node
-                if (DDSIP_bb->noiter == 0 || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
+                if (!DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
                         DDSIP_PrintState (DDSIP_bb->noiter);
                 if (DDSIP_bb->cutAdded && DDSIP_param->outlev > 1)
                 {
@@ -618,7 +598,7 @@ main (void)
         {
             boundstat = DDSIP_Bound ();
             // Print a line of output at the first, the last and each `ith' node
-            if (0 == DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
+            if (!DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
                 DDSIP_PrintState (DDSIP_bb->noiter);
         }
 
@@ -674,7 +654,7 @@ TERMINATE:
     {
         status = CPXfreeprob (DDSIP_env, &DDSIP_lp);
         if (status)
-            printf ("ERROR: CPXfreeprob failed, error code %d\n", status);
+            fprintf (stderr, "ERROR: CPXfreeprob failed, error code %d\n", status);
     }
     // Free up the CPLEX environment, if necessary
 #ifdef ADDBENDERSCUTS
@@ -714,7 +694,8 @@ TERMINATE:
         DDSIP_Free ((void **) &(DDSIP_param));
     }
 
-    printf ("Terminating DDSIP.\n");
+    if (DDSIP_param->outlev)
+        printf ("Terminating DDSIP.\n");
     fprintf (DDSIP_outfile, "Current system time: ");
 #ifndef _WIN32
     i = system ("date");

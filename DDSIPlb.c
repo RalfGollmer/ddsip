@@ -2012,7 +2012,7 @@ if (DDSIP_param->outlev > 5)
         nfactor = 1.-2.e-15;
     }
 
-    if (!(DDSIP_bb->curnode))
+    if (!(DDSIP_bb->lb_sorted))
     {
         // in order to allow for premature cutoff: sort scenarios according to lower bound in root node in descending order
         double * sort_array;
@@ -2023,7 +2023,7 @@ if (DDSIP_param->outlev > 5)
         }
         DDSIP_qsort_ins_D (sort_array, DDSIP_bb->lb_scen_order, 0, DDSIP_param->scenarios-1);
 
-        if (DDSIP_param->outlev > 40)
+        if (DDSIP_param->outlev > 21)
         {
             // debug output
             fprintf (DDSIP_bb->moreoutfile,"order of scenarios after sorting lb order\n");
@@ -2112,10 +2112,12 @@ if (DDSIP_param->outlev > 5)
                 }
                 if (DDSIP_param->cb && DDSIP_param->cbweight < (tmp = fabs(scensol[ordind[i_scen]])*0.025))
                 {
-                    printf ("\n     CBWEIGHT less than 0.025*(lb of TVaR), resetting to %g, CBFACTOR to %g.\n\n", tmp, 3e-1/tmp);
                     fprintf (DDSIP_outfile, "\n     CBWEIGHT less than 0.025*(lb of TVaR), resetting to %g, CBFACTOR to %g.\n", tmp, 3e-1/tmp);
                     if (DDSIP_param->outlev)
-                      fprintf (DDSIP_bb->moreoutfile, "\n     CBWEIGHT less than 0.025*(lb of TVaR), resetting to %g, CBFACTOR to %g.\n", tmp, 3e-1/tmp);
+                    {
+                        printf ("\n     CBWEIGHT less than 0.025*(lb of TVaR), resetting to %g, CBFACTOR to %g.\n\n", tmp, 3e-1/tmp);
+                        fprintf (DDSIP_bb->moreoutfile, "\n     CBWEIGHT less than 0.025*(lb of TVaR), resetting to %g, CBFACTOR to %g.\n", tmp, 3e-1/tmp);
+                    }
                     DDSIP_param->cbfactor = 3e-1/tmp;
                     DDSIP_param->cbweight = DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] = tmp;
                     DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] = tmp;
@@ -2124,6 +2126,7 @@ if (DDSIP_param->outlev > 5)
                 DDSIP_Free ((void **) &scensol);
             }
         }
+        DDSIP_bb->lb_sorted = 1;
     }
 
     if (DDSIP_param->riskmod || DDSIP_param->riskalg || DDSIP_param->scalarization)
@@ -2152,13 +2155,15 @@ if (DDSIP_param->outlev > 5)
     {
         if ((tmpbestbound - DDSIP_node[DDSIP_bb->curnode]->bound)/(fabs(tmpbestbound) + 1.e-12) > 1.e-6)
         {
-            printf("*** WARNING: current evaluation gave a worse bound (%16.10g) than that of the father (%16.10g), difference: %g\n",  
-                   tmpbestbound, DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestbound - DDSIP_node[DDSIP_bb->curnode]->bound);
             fprintf(DDSIP_outfile, "*** WARNING: current evaluation gave a worse bound (%16.10g) than the father (%16.10g), difference: %g\n",  
                    tmpbestbound, DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestbound - DDSIP_node[DDSIP_bb->curnode]->bound);
             if (DDSIP_param->outlev)
+            {
+                printf("*** WARNING: current evaluation gave a worse bound (%16.10g) than that of the father (%16.10g), difference: %g\n",  
+                   tmpbestbound, DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestbound - DDSIP_node[DDSIP_bb->curnode]->bound);
                 fprintf(DDSIP_bb->moreoutfile, "*** WARNING: current evaluation gave a worse bound (%16.10g) than the father (%16.10g), difference: %g\n",  
                    tmpbestbound, DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestbound - DDSIP_node[DDSIP_bb->curnode]->bound);
+           }
         }
     }
 
@@ -2214,12 +2219,14 @@ if (DDSIP_param->outlev > 5)
         //if ((DDSIP_node[DDSIP_bb->curnode]->bound <  DDSIP_bb->bestvalue + DDSIP_param->accuracy) && ((DDSIP_node[DDSIP_bb->curnode]->bound + 0.008*meanGap * fabs(DDSIP_node[DDSIP_bb->curnode]->bound)) > DDSIP_bb->bestvalue + DDSIP_param->accuracy))
         if ((DDSIP_node[DDSIP_bb->curnode]->bound <  DDSIP_bb->bestvalue + DDSIP_param->accuracy) && (tmpbestvalue > DDSIP_bb->bestvalue + DDSIP_param->accuracy))
         {
-            printf("          WARNING: node %d is possibly not cut off just due to the MIP gaps. mean MIP gap = %g%%, upper bound= %16.12g\n", DDSIP_bb->curnode, meanGap, tmpbestvalue);
             fprintf(DDSIP_outfile, "          WARNING: node %d is possibly not cut off just due to the MIP gaps. mean MIP gap = %g%%, upper bound= %16.12g\n",
                                    DDSIP_bb->curnode, meanGap, tmpbestvalue);
             if (DDSIP_param->outlev)
+            {
+                printf("          WARNING: node %d is possibly not cut off just due to the MIP gaps. mean MIP gap = %g%%, upper bound= %16.12g\n", DDSIP_bb->curnode, meanGap, tmpbestvalue);
                 fprintf(DDSIP_bb->moreoutfile, "          WARNING: node %d is possibly not cut off just due to the MIP gaps. mean MIP gap = %g%%, upper bound= %16.12g\n",
                                                DDSIP_bb->curnode, meanGap, tmpbestvalue);
+            }
             DDSIP_bb->bestBound = 1;
         }
         // Count number of differences within first stage solution in current node
@@ -2285,25 +2292,29 @@ if (DDSIP_param->outlev > 5)
             if (DDSIP_bb->violations)
             {
                 if (DDSIP_param->outlev > 3)
+                {
                     fprintf (DDSIP_bb->moreoutfile,
                              "\tNumber of violations of nonanticipativity of first-stage variables:  %d, max: %g\n", DDSIP_bb->violations, maxdispersion);
-                if (DDSIP_param->outlev > 7)
-                {
-                    printf ("\tNumber of violations of nonanticipativity of first-stage variables:  %d, max: %g\n", DDSIP_bb->violations, maxdispersion);
-                    printf ("\tLower bound of node %d = %.16g          \t(upper bound = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
-                            DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestvalue, meanGap);
+                    if (DDSIP_param->outlev > 7)
+                    {
+                        printf ("\tNumber of violations of nonanticipativity of first-stage variables:  %d, max: %g\n", DDSIP_bb->violations, maxdispersion);
+                        printf ("\tLower bound of node %d = %.16g          \t(upper bound = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
+                                DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestvalue, meanGap);
+                    }
                 }
             }
             else
             {
                 if (DDSIP_param->outlev > 3)
+                {
                     fprintf (DDSIP_bb->moreoutfile,
                              "\tNumber of violations of nonanticipativity of first-stage variables:  %d\n", DDSIP_bb->violations);
-                if (DDSIP_param->outlev > 7)
-                {
-                    printf ("\tNumber of violations of nonanticipativity of first-stage variables:  %d\n", DDSIP_bb->violations);
-                    printf ("\tLower bound of node %d = %.16g          \t(upper bound = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
-                            DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestvalue, meanGap);
+                    if (DDSIP_param->outlev > 7)
+                    {
+                        printf ("\tNumber of violations of nonanticipativity of first-stage variables:  %d\n", DDSIP_bb->violations);
+                        printf ("\tLower bound of node %d = %.16g          \t(upper bound = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
+                                DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestvalue, meanGap);
+                    }
                 }
             }
             fprintf (DDSIP_bb->moreoutfile, "\tLower bound of node %d = %.16g          \t(upper bound = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
@@ -2755,9 +2766,11 @@ if (DDSIP_param->outlev > 5)
                                         }
                                         DDSIP_node[DDSIP_bb->curnode]->bound = DDSIP_infty;
                                         CPXgetdblparam (DDSIP_env,CPX_PARAM_TILIM,&cpu_secs);
-                                        printf ("ERROR: Problem infeasible within time limit of %g secs for scenario %d (LowerBound)\n", cpu_secs, scen + 1);
                                         if (DDSIP_param->outlev)
+                                        {
+                                            printf ("ERROR: Problem infeasible within time limit of %g secs for scenario %d (LowerBound)\n", cpu_secs, scen + 1);
                                             fprintf (DDSIP_bb->moreoutfile, "ERROR: Problem infeasible within time limit of %g secs for scenario %d (LowerBound)\n", cpu_secs, scen + 1);
+                                        }
                                         DDSIP_bb->skip = -2;
                                         for (k = scen; k < DDSIP_param->scenarios; k++)
                                             DDSIP_bb->solstat[k] = 0;
@@ -3185,7 +3198,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                     }
                     if (keepSolution)
                     {
-                        if (DDSIP_param->outlev > 20)
+                        if (DDSIP_param->outlev > 23)
                             fprintf (DDSIP_bb->moreoutfile, "keeping sol. of scen. %d.\n", iscen + 1);
                         continue;
                     }
@@ -3499,10 +3512,12 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 DDSIP_bb->solstat[scen] = 0;
                 status = mipstatus;
                 CPXgetdblparam (DDSIP_env,CPX_PARAM_TILIM,&cpu_secs);
-                printf ("ERROR: Problem infeasible within time limit of %g secs for scenario %d (CBLowerBound)\n", cpu_secs, scen + 1);
                 fprintf (DDSIP_outfile, "ERROR: Problem infeasible within time limit of %g secs for scenario %d (CBLowerBound)\n", cpu_secs, scen + 1);
                 if (DDSIP_param->outlev)
+                {
+                    printf ("ERROR: Problem infeasible within time limit of %g secs for scenario %d (CBLowerBound)\n", cpu_secs, scen + 1);
                     fprintf (DDSIP_bb->moreoutfile, "ERROR: Problem infeasible within time limit of %g secs for scenario %d (CBLowerBound)\n", cpu_secs, scen + 1);
+                }
                 goto TERMINATE;
             }
             else if (DDSIP_Infeasible (mipstatus))
@@ -3510,9 +3525,11 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 DDSIP_bb->skip = 1;
                 DDSIP_bb->solstat[scen] = 0;
                 status = mipstatus;
-                printf ("WARNING: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
                 if (DDSIP_param->outlev)
+                {
+                    printf ("WARNING: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
                     fprintf (DDSIP_bb->moreoutfile, "WARNING: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
+                }
                 if ((DDSIP_bb->dualitcnt && DDSIP_bb->newTry < 6) || (!DDSIP_bb->dualitcnt && DDSIP_bb->newTry < 3))
                 {
                     DDSIP_bb->newTry++;
@@ -3875,9 +3892,11 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     if (!DDSIP_bb->violations)
     {
         int comb = 22;
-        printf ("\nUpper bounds for solution with no violations\n");
         if (DDSIP_param->outlev)
+        {
+            printf ("\nUpper bounds for solution with no violations\n");
             fprintf (DDSIP_bb->moreoutfile, "\nUpper bounds for solution with no violations\n");
+        }
         DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
         j = DDSIP_param->heuristic;
         DDSIP_param->heuristic = 100;
@@ -4110,20 +4129,26 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         // use the CPLEX settings for LowerBound (probably tighter tols)
         if (meanGap)
             use_LB_params = 1;
-        printf ("***  no violations, but a worse objective value");
         if (DDSIP_param->outlev)
+        {
+            printf ("***  no violations, but a worse objective value");
             fprintf (DDSIP_bb->moreoutfile, "***  no violations, but a worse objective value");
+        }
         if (tmpupper > DDSIP_node[DDSIP_bb->curnode]->bound)
         {
-            printf (" - probably due to mipgaps\n");
             if (DDSIP_param->outlev)
+            {
+                printf (" - probably due to mipgaps\n");
                 fprintf (DDSIP_bb->moreoutfile, " - probably due to mipgaps\n");
+            }
         }
         else
         {
-            printf (" - reset first stage solutions to the ones that gave the best bound\n");
             if (DDSIP_param->outlev)
+            {
+                printf (" - reset first stage solutions to the ones that gave the best bound\n");
                 fprintf (DDSIP_bb->moreoutfile, " - reset first stage solutions to the ones that gave the best bound\n");
+            }
             // Free previous first stage
             for (j = 0; j < DDSIP_param->scenarios; j++)
             {

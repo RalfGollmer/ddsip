@@ -803,8 +803,16 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                 CPXLPptr     DDSIP_dual_lp  = NULL;
                 cutpool_t * newCut;
                 int beg, end;
-                beg = feasCheckOnly ? 0 : iscen;
-                end = (DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 9 && DDSIP_param->testOtherScens)) ? DDSIP_param->scenarios : DDSIP_Imax(nrScenarios, iscen+1);
+                if (feasCheckOnly)
+                {
+                    beg = 0;
+                    end = (DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 7 && DDSIP_param->testOtherScens) || !nrScenarios) ? DDSIP_param->scenarios : nrScenarios;
+                }
+                else
+                {
+                    beg = iscen;
+                    end = (DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 7 && DDSIP_param->testOtherScens) || (DDSIP_bb->noiter < 3 && DDSIP_bb->dualitcnt < 3)) ? DDSIP_param->scenarios : DDSIP_Imax(iscen+1, DDSIP_bb->shifts);
+                }
                 for (Bi = beg; Bi < end; Bi++)
                 {
                     time_lap = DDSIP_GetCpuTime ();
@@ -818,7 +826,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     DDSIP_dual_lp = CPXcloneprob (DDSIP_env, DDSIP_lp, &status);
                     if (status)
                     {
-                        printf ("ERROR: Failed to clone problem for Benders.\n");
+                        fprintf (stderr, "ERROR: Failed to clone problem for Benders.\n");
                         fprintf (DDSIP_outfile, "ERROR: Failed to clone problem for Benders.\n");
                         DDSIP_param->addBendersCuts = 0;
                     }
@@ -828,7 +836,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         status = CPXchgprobtype (DDSIP_env, DDSIP_dual_lp, CPXPROB_LP);
                         if (status)
                         {
-                            printf ("ERROR: Failed to change type of problem for Benders to LP.\n");
+                            fprintf (stderr, "ERROR: Failed to change type of problem for Benders to LP.\n");
                             fprintf (DDSIP_outfile, "ERROR: Failed to change type of problem for Benders to LP.\n");
                             return status;
                         }
@@ -836,7 +844,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         status = CPXdualopt (DDSIP_env, DDSIP_dual_lp);
                         if (status)
                         {
-                            printf ("ERROR: dualopt of LP for Benders failed.\n");
+                            fprintf (stderr, "ERROR: dualopt of LP for Benders failed.\n");
                             fprintf (DDSIP_outfile, "ERROR: dualopt of LP for Benders failed.\n");
                             return status;
                         }
@@ -878,8 +886,10 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                     rowname[0] = rowstore;
                                     sprintf (rowstore, "DDSIPBendersCut%d",DDSIP_bb->cutCntr);
                                     if (DDSIP_param->outlev)
+                                    {
                                         fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %g ############\n", rowstore, Bs+1, viol);
-                                    printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
+                                        printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
+                                    }
                                     rhs = 1.;
                                     sense = 'G';
                                     rmatbeg = 0;
@@ -933,6 +943,24 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                     newCut->number = DDSIP_bb->cutCntr;
                                     DDSIP_bb->cutpool = newCut;
                                     rmatval = NULL;
+                                    //shift this infeasible scenario to first place, such that next time it is checked first
+                                    if (Bi)
+                                    {
+if(DDSIP_param->outlev > 20)
+{
+  fprintf (DDSIP_bb->moreoutfile, "###: shifting scenario %d (Bi=%d) to first place, shifts before: %d", Bs+1, Bi, DDSIP_bb->shifts);
+}
+                                        if (Bi >= DDSIP_bb->shifts)
+                                            DDSIP_bb->shifts++;
+                                        k = DDSIP_bb->ub_scen_order[Bi];
+                                        for(j = Bi; j>0; j--)
+                                            DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
+                                        DDSIP_bb->ub_scen_order[0] = k;
+if(DDSIP_param->outlev > 20)
+{
+  fprintf (DDSIP_bb->moreoutfile, ", shifts now: %d\n", DDSIP_bb->shifts);
+}
+                                    }
                                 }
 
                                 DDSIP_Free ((void *) &rmatind);
@@ -955,7 +983,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     {
                         status = CPXfreeprob (DDSIP_env, &DDSIP_dual_lp);
                         if (status)
-                            printf ("ERROR: CPXfreeprob failed, error code %d\n", status);
+                            fprintf (stderr, "ERROR: CPXfreeprob failed, error code %d\n", status);
                     }
                 }
                 if (DDSIP_param->outlev > 20)
@@ -1018,7 +1046,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                 DDSIP_dual_lp = CPXcloneprob (DDSIP_env, DDSIP_lp, &status);
                 if (status)
                 {
-                    printf ("ERROR: Failed to clone problem for check.\n");
+                    fprintf (stderr, "ERROR: Failed to clone problem for check.\n");
                     fprintf (DDSIP_outfile, "ERROR: Failed to clone problem for check.\n");
                 }
                 else
@@ -1026,7 +1054,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     status = CPXchgprobtype (DDSIP_env, DDSIP_dual_lp, CPXPROB_LP);
                     if (status)
                     {
-                        printf ("ERROR: Failed to change type of problem for check to LP.\n");
+                        fprintf (stderr, "ERROR: Failed to change type of problem for check to LP.\n");
                         fprintf (DDSIP_outfile, "ERROR: Failed to change type of problem for check to LP.\n");
                         return status;
                     }
@@ -1034,12 +1062,13 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     if (status)
                     {
                         fprintf (stderr, "ERROR: Failed to update objective coefficients\n");
+                        fprintf (DDSIP_outfile, "ERROR: Failed to update objective coefficients\n");
                         return status;
                     }
                     status = CPXdualopt (DDSIP_env, DDSIP_dual_lp);
                     if (status)
                     {
-                        printf ("ERROR: dualopt of LP for check failed.\n");
+                        fprintf (stderr, "ERROR: dualopt of LP for check failed.\n");
                         fprintf (DDSIP_outfile, "ERROR: dualopt of LP for check failed.\n");
                         return status;
                     }
@@ -1050,15 +1079,19 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         DDSIP_bb->cutCntr++;
                         sprintf (rowstore, "DDSIPIntegerCut%d",DDSIP_bb->cutCntr);
                         if (DDSIP_param->outlev)
+                        {
                             fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
-                        printf (" ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
+                            printf (" ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
+                        }
 #else
                         cutpool_t * newCut;
                         DDSIP_bb->cutCntr++;
                         sprintf (rowstore, "DDSIPIntegerCut%d",DDSIP_bb->cutCntr);
                         if (DDSIP_param->outlev)
+                        {
                             fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
-                        printf (" ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
+                            printf (" ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
+                        }
 #endif
                         if ((status = CPXaddrows(DDSIP_env, DDSIP_lp, 0, 1, DDSIP_data->firstvar, &rhs, &sense, &rmatbeg, rmatind, rmatval, NULL, rowname)))
                         {
@@ -1069,6 +1102,24 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         else
                         {
                             DDSIP_bb->cutAdded++;
+                        }
+                        //shift this infeasible scenario to first place, such that next time it is checked first
+                        if (iscen)
+                        {
+if(DDSIP_param->outlev > 20)
+{
+  fprintf (DDSIP_bb->moreoutfile, "###: shifting scenario %d (iscen=%d) to first place, shifts before: %d", scen+1, iscen, DDSIP_bb->shifts);
+}
+                            if (iscen >= DDSIP_bb->shifts)
+                                DDSIP_bb->shifts++;
+                            k = DDSIP_bb->ub_scen_order[iscen];
+                            for(j = iscen; j>0; j--)
+                                DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
+                            DDSIP_bb->ub_scen_order[0] = k;
+if(DDSIP_param->outlev > 20)
+{
+  fprintf (DDSIP_bb->moreoutfile, ", shifts now: %d\n", DDSIP_bb->shifts);
+}
                         }
                         // store cut in bb->cutpool
                         newCut = (cutpool_t*) DDSIP_Alloc(sizeof(cutpool_t), 1, "cutpool (DDSIP_UpperBound)");
@@ -1083,15 +1134,17 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     else
                     {
                         if (DDSIP_param->outlev > 20)
+                        {
                             fprintf (DDSIP_bb->moreoutfile," ############ integer cut is not effective: objval = %g, rhs = %g ############\n", objv, rhs);
-                        printf (" ############ integer cut is not effective: objval = %g, rhs = %g ############\n", objv, rhs);
+                            printf (" ############ integer cut is not effective: objval = %g, rhs = %g ############\n", objv, rhs);
+                        }
                     }
                 }
                 if (DDSIP_dual_lp != NULL)
                 {
                     status = CPXfreeprob (DDSIP_env, &DDSIP_dual_lp);
                     if (status)
-                        printf ("ERROR: CPXfreeprob failed, error code %d\n", status);
+                        fprintf (stderr, "ERROR: CPXfreeprob failed, error code %d\n", status);
                 }
 #endif
                 DDSIP_Free ((void *) &rmatind);
@@ -1102,13 +1155,6 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
 #endif
             if (feasCheckOnly)
                 continue;
-            //shift this infeasible scenario to first place, such that next time it is checked first
-            if (iscen >= DDSIP_bb->shifts)
-                DDSIP_bb->shifts++;
-            k = DDSIP_bb->ub_scen_order[iscen];
-            for(j = iscen; j>0; j--)
-                DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
-            DDSIP_bb->ub_scen_order[0] = k;
             goto TERMINATE;
         }
         if (!feasCheckOnly)
@@ -1321,17 +1367,21 @@ TERMINATE:
     {
         if (DDSIP_NoSolution (mipstatus))
         {
-            printf ("\t\t Solution infeasible.\n");
             fprintf (DDSIP_outfile, " SOLUTION infeasible.\n");
             if (DDSIP_param->outlev)
+            {
                 fprintf (DDSIP_bb->moreoutfile, " SOLUTION infeasible.\n");
+                printf ("\t\t Solution infeasible.\n");
+            }
         }
         else
         {
-            printf ("\t\t Best: %13.7f\n", tmpbestvalue);
             fprintf (DDSIP_outfile, " OBJECTIVE OF START VALUE:     %13.7f\n", tmpbestvalue);
             if (DDSIP_param->outlev)
+            {
                 fprintf (DDSIP_bb->moreoutfile, " OBJECTIVE OF START VALUE:     %13.7f\n", tmpbestvalue);
+                printf ("\t\t Best: %13.7f\n", tmpbestvalue);
+            }
         }
     }
 
@@ -1368,7 +1418,7 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
     // Initialize, heurval contains the current heuristic solution
     DDSIP_bb->heurval = DDSIP_infty;
     // sort scenarios according to lower bounds for the initial solution
-    if (!DDSIP_bb->curnode)
+    if (!DDSIP_bb->curnode && DDSIP_bb->dualitcnt < 2)
     {
         // in order to allow for premature cutoff: sort scenarios according to lower bound in root node in descending order
         double * sort_array;
@@ -1379,7 +1429,7 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
         }
         DDSIP_qsort_ins_D (sort_array, DDSIP_bb->ub_scen_order, DDSIP_bb->shifts, DDSIP_param->scenarios-1);
 
-        if (DDSIP_param->outlev > 40)
+        if (DDSIP_param->outlev > 20)
         {
             // debug output
             fprintf (DDSIP_bb->moreoutfile,"order of scenarios after sorting ub order (%d shifts)\n", DDSIP_bb->shifts);

@@ -282,6 +282,7 @@ DDSIP_Continue (int *noiter, int *boundstat)
         fprintf (DDSIP_outfile, "Upper bounds     %6d\t ", DDSIP_bb->neobjcnt);
         fprintf (DDSIP_outfile, "Tree depth       %6d\n", DDSIP_bb->depth);
         fprintf (DDSIP_outfile, "Nodes            %6d\n", DDSIP_bb->nonode);
+        fprintf (DDSIP_outfile, "Benders cuts     %6d\n", DDSIP_bb->cutCntr);
         fprintf (DDSIP_outfile, "max. mean MIP gap LB  %g%%\n", DDSIP_bb->meanGapLB);
         fprintf (DDSIP_outfile, "max. mean MIP gap UB  %g%%\n", DDSIP_bb->meanGapUB);
         if (DDSIP_param->cb)

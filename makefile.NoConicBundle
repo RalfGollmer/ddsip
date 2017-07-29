@@ -5,7 +5,7 @@ OSTYPE		:=	$(shell uname -s | tr '[A-Z]' '[a-z]')
 # for CPLEX 12.6.3
 #CPLEX    = /opt/ibm/ILOG/CPLEX_Enterprise_Server1263/CPLEX_Studio/cplex
 #CPLEX    = /opt/ibm/ILOG/CPLEX_Studio1263/cplex
-CPLEX    = /opt/ibm/ILOG/CPLEX_Studio127/cplex
+CPLEX    = /opt/ibm/ILOG/CPLEX_Studio1271/cplex
 LINUXVAR = x86-64_linux
 CB       = .
 

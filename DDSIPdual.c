@@ -206,7 +206,11 @@ DDSIP_DualUpdate (void *function_key, double *dual, double relprec,
 ONCE_AGAIN:
     if ((status = DDSIP_CBLowerBound (objective_value, relprec)) > 1 || status == -111)
     {
-        printf ("Failed to solve scenario problems: status = %d .\n", status);
+        if (DDSIP_param->outlev)
+        {
+            printf ("Failed to solve scenario problems: status = %d .\n", status);
+            fprintf (DDSIP_bb->moreoutfile, "Failed to solve scenario problems: status = %d .\n", status);
+        }
         *new_subg = 0;
         if (status != -111)
             return status;
@@ -219,18 +223,22 @@ ONCE_AGAIN:
             }
             if (!i && DDSIP_bb->dualitcnt<2 && DDSIP_bb->curnode > 0)
             {
-                printf ("Possibly due to unbounded variables. Trying zero Lagrangean multipliers.\n");
                 if (DDSIP_param->outlev)
+                {
+                    printf ("Possibly due to unbounded variables. Trying zero Lagrangean multipliers.\n");
                     fprintf (DDSIP_bb->moreoutfile, "Possibly due to unbounded variables. Trying zero Lagrangean multipliers.\n");
+                }
                 memset (DDSIP_node[DDSIP_bb->curnode]->dual, 0, sizeof (double) * DDSIP_bb->dimdual);
                 i = 1;
                 goto ONCE_AGAIN;
             }
             else
             {
-                printf ("Possibly due to unbounded variables. Trying smaller stepsize = higher weight.\n");
                 if (DDSIP_param->outlev)
+                {
+                    printf ("Possibly due to unbounded variables. Trying smaller stepsize = higher weight.\n");
                     fprintf (DDSIP_bb->moreoutfile, "Possibly due to unbounded variables. Trying smaller stepsize = higher weight.\n");
+                }
                 DDSIP_bb->newTry++;
                 *new_subg = 0;
                 return -111;
@@ -383,7 +391,7 @@ DDSIP_DualOpt (void)
     p = cb_construct_problem (0);
     if (p == 0)
     {
-        printf ("construct_problem failed\n");
+        fprintf (stderr, "ERROR: construct_problem failed\n");
         DDSIP_Free ((void **) &(minfirst));
         DDSIP_Free ((void **) &(maxfirst));
         DDSIP_Free ((void **) &(center_point));
@@ -394,7 +402,7 @@ DDSIP_DualOpt (void)
     cb_set_defaults (p);
     if (cb_init_problem (p, DDSIP_bb->dimdual, NULL, NULL))
     {
-        printf ("init_problem failed\n");
+        fprintf (stderr, "ERROR: init_problem failed\n");
         cb_destruct_problem (&p);
         DDSIP_Free ((void **) &(minfirst));
         DDSIP_Free ((void **) &(maxfirst));
@@ -403,7 +411,7 @@ DDSIP_DualOpt (void)
     }
     if (cb_add_function (p, (void *) DDSIP_DualUpdate, DDSIP_DualUpdate, 0, 0))
     {
-        printf ("add DUAL_UPDATE failed\n");
+        fprintf (stderr, "ERROR: add DUAL_UPDATE failed\n");
         cb_destruct_problem (&p);
         DDSIP_Free ((void **) &(minfirst));
         DDSIP_Free ((void **) &(maxfirst));
@@ -412,7 +420,7 @@ DDSIP_DualOpt (void)
     }
     if (cb_reinit_function_model(p, (void *) DDSIP_DualUpdate))
     {
-        printf ("reinit_function_model failed\n");
+        fprintf (stderr, "ERROR: reinit_function_model failed\n");
         cb_destruct_problem (&p);
         DDSIP_Free ((void **) &(minfirst));
         DDSIP_Free ((void **) &(maxfirst));
@@ -474,7 +482,7 @@ DDSIP_DualOpt (void)
 ////////////////////////////////////////////
 #endif
     }
-    DDSIP_bb->dualitcnt    = 0;
+    DDSIP_bb->dualitcnt     = 0;
     DDSIP_bb->dualdescitcnt = 0;
     if (DDSIP_param->outlev)
         fprintf (DDSIP_bb->moreoutfile, "\nInitial dual evaluation");
@@ -482,7 +490,7 @@ DDSIP_DualOpt (void)
     // paranoid dimension check
     if (cb_get_dim(p) != DDSIP_bb->dimdual)
     {
-        printf ("XXX Error in dimension of the conic bundle problem: is %d, should be %d.\n",cb_get_dim(p),DDSIP_bb->dimdual);
+        fprintf (stderr, "XXX Error in dimension of the conic bundle problem: is %d, should be %d.\n",cb_get_dim(p),DDSIP_bb->dimdual);
         exit (1);
     }
     if (DDSIP_param->outlev)
@@ -493,7 +501,8 @@ DDSIP_DualOpt (void)
     // Initialize multipliers (0 in root node, multipliers of father node otherwise)
     if ((status = cb_set_new_center_point (p, DDSIP_node[DDSIP_bb->curnode]->dual)))
     {
-        printf ("set_new_center_point returned %d\n", status);
+        fprintf (stderr, "set_new_center_point returned %d\n", status);
+        fprintf (DDSIP_outfile, "set_new_center_point returned %d\n", status);
         cb_destruct_problem (&p);
         DDSIP_Free ((void **) &(minfirst));
         DDSIP_Free ((void **) &(maxfirst));
@@ -516,15 +525,18 @@ DDSIP_DualOpt (void)
         {
             // the branched problems produced a worse bound than in the father node - reset temporarily cplex tolerance and time limit
             limits_reset = 1;
-            printf("Initial evaluation at branched node gave obj=%g, worse than bound %g from father node - reset CPLEX relgap and/or time limit.\n", obj, DDSIP_node[DDSIP_bb->curnode]->bound);
             if (DDSIP_param->outlev)
+            {
+                printf("Initial evaluation at branched node gave obj=%g, worse than bound %g from father node - reset CPLEX relgap and/or time limit.\n", obj, DDSIP_node[DDSIP_bb->curnode]->bound);
                 fprintf(DDSIP_bb->moreoutfile, "Initial evaluation at branched node gave obj=%g, worse than bound %g from father node - reset CPLEX relgap and/or time limit.\n", obj, DDSIP_node[DDSIP_bb->curnode]->bound);
+            }
             for (cpu_hrs=0; cpu_hrs < DDSIP_param->cpxnodual; cpu_hrs++)
             {
                 if (DDSIP_param->cpxdualwhich[cpu_hrs] == CPX_PARAM_TILIM)
                 {
                     old_cpxtimelim = DDSIP_param->cpxdualwhat[cpu_hrs];
-                    printf(" reset: old_timelim= %g, DDSIP_param->cpxdualwhich[%d]= %d, what= %g\n", old_cpxtimelim, cpu_hrs, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
+                    if (DDSIP_param->outlev)
+                        printf(" reset: old_timelim= %g, DDSIP_param->cpxdualwhich[%d]= %d, what= %g\n", old_cpxtimelim, cpu_hrs, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
                     DDSIP_param->cpxdualwhat[cpu_hrs] = 1.5*old_cpxtimelim;
                     status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
                     if (status)
@@ -533,15 +545,18 @@ DDSIP_DualOpt (void)
                     }
                     else
                     {
-                        printf("temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                         if (DDSIP_param->outlev)
+                        {
+                            printf("temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                             fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
+                        }
                     }
                 }
                 if (DDSIP_param->cpxdualwhich[cpu_hrs] == CPX_PARAM_EPGAP)
                 {
                     old_cpxrelgap = DDSIP_param->cpxdualwhat[cpu_hrs];
-                    printf(" reset: old_relgap = %g, DDSIP_param->cpxdualwhich[%d]= %d, what= %g\n", old_cpxtimelim, cpu_hrs, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
+                    if (DDSIP_param->outlev)
+                        printf(" reset: old_relgap = %g, DDSIP_param->cpxdualwhich[%d]= %d, what= %g\n", old_cpxtimelim, cpu_hrs, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
                     DDSIP_param->cpxdualwhat[cpu_hrs] = 0.10*old_cpxrelgap;
                     status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxdualwhich[cpu_hrs], DDSIP_param->cpxdualwhat[cpu_hrs]);
                     if (status)
@@ -550,9 +565,11 @@ DDSIP_DualOpt (void)
                     }
                     else
                     {
-                        printf("temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                         if (DDSIP_param->outlev)
+                        {
+                            printf("temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                             fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
+                        }
                     }
                 }
             }
@@ -569,9 +586,11 @@ DDSIP_DualOpt (void)
                     }
                     else
                     {
-                        printf("temporarily reset CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                         if (DDSIP_param->outlev)
+                        {
+                            printf("temporarily reset CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                             fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                        }
                     }
                 }
                 if (DDSIP_param->cpxdualwhich2[cpu_hrs] == CPX_PARAM_EPGAP)
@@ -585,16 +604,18 @@ DDSIP_DualOpt (void)
                     }
                     else
                     {
-                        printf("temporarily reset CPLEX relgap tolerance 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                         if (DDSIP_param->outlev)
+                        {
+                            printf("temporarily reset CPLEX relgap tolerance 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                             fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX relgap tolerance 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                        }
                     }
                 }
             }
             // reevaluate initial point with changed parameters
             if ((status = cb_set_new_center_point (p, DDSIP_node[DDSIP_bb->curnode]->bestdual)))
             {
-                printf ("set_new_center_point returned %d\n", status);
+                fprintf (stderr, "set_new_center_point returned %d\n", status);
                 cb_destruct_problem (&p);
                 DDSIP_Free ((void **) &(minfirst));
                 DDSIP_Free ((void **) &(maxfirst));
@@ -660,7 +681,7 @@ DDSIP_DualOpt (void)
             // reinit model
             if (cb_reinit_function_model(p, (void *) DDSIP_DualUpdate))
             {
-                printf ("reinit_function_model failed\n");
+                fprintf (stderr, "ERROR: reinit_function_model failed\n");
                 cb_destruct_problem (&p);
                 DDSIP_Free ((void **) &(minfirst));
                 DDSIP_Free ((void **) &(maxfirst));
@@ -669,7 +690,7 @@ DDSIP_DualOpt (void)
             }
             if ((status = cb_set_new_center_point (p, DDSIP_node[DDSIP_bb->curnode]->bestdual)))
             {
-                printf ("set_new_center_point returned %d\n", status);
+                fprintf (stderr, "set_new_center_point returned %d\n", status);
                 cb_destruct_problem (&p);
                 DDSIP_Free ((void **) &(minfirst));
                 DDSIP_Free ((void **) &(maxfirst));
@@ -738,7 +759,7 @@ DDSIP_DualOpt (void)
                     // reinit model
                     if (cb_reinit_function_model(p, (void *) DDSIP_DualUpdate))
                     {
-                        printf ("reinit_function_model failed\n");
+                        fprintf (stderr, "ERROR: reinit_function_model failed\n");
                         cb_destruct_problem (&p);
                         DDSIP_Free ((void **) &(minfirst));
                         DDSIP_Free ((void **) &(maxfirst));
@@ -747,7 +768,7 @@ DDSIP_DualOpt (void)
                     }
                     if ((status = cb_set_new_center_point (p, DDSIP_node[DDSIP_bb->curnode]->bestdual)))
                     {
-                        printf ("set_new_center_point returned %d\n", status);
+                        fprintf (stderr, "set_new_center_point returned %d\n", status);
                         cb_destruct_problem (&p);
                         DDSIP_Free ((void **) &(minfirst));
                         DDSIP_Free ((void **) &(maxfirst));
@@ -868,10 +889,11 @@ DDSIP_DualOpt (void)
         {
             DDSIP_Print2 ("   --------- termination status: gap reached.", "\n", 0, 0);
         }
+        DDSIP_bb->dualitcnt    = 0;
     }
     else
     {
-        if (DDSIP_bb->cutAdded)
+        if (DDSIP_param->outlev && DDSIP_bb->cutAdded)
         {
             printf ("  | %16d  %86d cuts\n", DDSIP_bb->dualdescitcnt, DDSIP_bb->cutAdded);
             fprintf (DDSIP_outfile, "  | %16d  %86d cuts\n", DDSIP_bb->dualdescitcnt, DDSIP_bb->cutAdded);
@@ -914,7 +936,7 @@ DDSIP_DualOpt (void)
                 // check the changes of the center point
                 if ((status = cb_get_center (p, center_point)))
                 {
-                    printf ("get_center returned %d\n", status);
+                    fprintf (stderr, "get_center returned %d\n", status);
                 }
                 else
                 {
@@ -953,11 +975,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
             {
                 if (!DDSIP_bb->newTry || DDSIP_bb->newTry > 5)
                 {
-                    printf ("cb_do_descent_step returned %d\n", cb_status);
+                    fprintf (stderr, "cb_do_descent_step returned %d\n", cb_status);
                     if (DDSIP_param->outlev)
                         fprintf (DDSIP_bb->moreoutfile, "cb_do_descent_step returned %d\n", cb_status);
                     cb_status = cb_termination_code(p);
-                    printf ("cb_termination_code returned %d\n", cb_status);
+                    fprintf (stderr, "cb_termination_code returned %d\n", cb_status);
                     if (DDSIP_param->outlev)
                         fprintf (DDSIP_bb->moreoutfile, "cb_termination_code returned %d\n", cb_status);
                     cb_destruct_problem (&p);
@@ -1008,7 +1030,7 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
             {
                 if ((cb_status = cb_termination_code(p)))
                 {
-                    printf ("cb_termination_code: %d\n", cb_status);
+                    fprintf (stderr, "cb_termination_code: %d\n", cb_status);
                     if (DDSIP_param->outlev)
                         fprintf (DDSIP_bb->moreoutfile, "cb_termination_code: %d\n", cb_status);
                 }
@@ -1149,9 +1171,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                         {
                             // the branched problems produced a bound worse than already known - reset temporarily cplex tolerance and time limit
                             limits_reset = 2;
-                            printf(" reset CPLEX relgap and/or time limit.\n");
                             if (DDSIP_param->outlev)
+                            {
+                                printf(" reset CPLEX relgap and/or time limit.\n");
                                 fprintf(DDSIP_bb->moreoutfile, " reset CPLEX relgap and/or time limit.\n");
+                            }
                             for (cpu_hrs=0; cpu_hrs < DDSIP_param->cpxnodual; cpu_hrs++)
                             {
                                 if (DDSIP_param->cpxdualwhich[cpu_hrs] == CPX_PARAM_TILIM)
@@ -1165,9 +1189,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                     }
                                     else
                                     {
-                                        printf("temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                                         if (DDSIP_param->outlev)
+                                        {
+                                            printf("temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                                             fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                        }
                                     }
                                 }
                                 if (DDSIP_param->cpxdualwhich[cpu_hrs] == CPX_PARAM_EPGAP)
@@ -1181,9 +1207,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                     }
                                     else
                                     {
-                                        printf("temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                                         if (DDSIP_param->outlev)
+                                        {
+                                            printf("temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                                             fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                        }
                                     }
                                 }
                             }
@@ -1200,9 +1228,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                     }
                                     else
                                     {
-                                        printf("temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                         if (DDSIP_param->outlev)
+                                        {
+                                            printf("temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                             fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                        }
                                     }
                                 }
                                 if (DDSIP_param->cpxdualwhich2[cpu_hrs] == CPX_PARAM_EPGAP)
@@ -1216,9 +1246,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                     }
                                     else
                                     {
-                                        printf("temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                         if (DDSIP_param->outlev)
+                                        {
+                                            printf("temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                             fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                        }
                                     }
                                 }
                             } // end for
@@ -1229,9 +1261,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                             if (DDSIP_param->cb_changetol)
                             {
                                 // the branched problems produced a worse bound than known - reset temporarily cplex tolerance and time limit
-                                printf("reset CPLEX relgap and/or time limit.\n");
                                 if (DDSIP_param->outlev)
+                                {
+                                    printf("reset CPLEX relgap and/or time limit.\n");
                                     fprintf(DDSIP_bb->moreoutfile, " reset CPLEX relgap and/or time limit.\n");
+                                }
                                 for (cpu_hrs=0; cpu_hrs < DDSIP_param->cpxnodual; cpu_hrs++)
                                 {
                                     if (DDSIP_param->cpxdualwhich[cpu_hrs] == CPX_PARAM_TILIM)
@@ -1245,9 +1279,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                         }
                                         else
                                         {
-                                            printf("temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                                             if (DDSIP_param->outlev)
+                                            {
+                                                printf("temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                                                 fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                            }
                                         }
                                     }
                                     if (DDSIP_param->cpxdualwhich[cpu_hrs] == CPX_PARAM_EPGAP)
@@ -1261,9 +1297,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                         }
                                         else
                                         {
-                                            printf("temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                                             if (DDSIP_param->outlev)
+                                            {
+                                                printf("temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                                                 fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                            }
                                         }
                                     }
                                 } // end for
@@ -1280,9 +1318,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                         }
                                         else
                                         {
-                                            printf("temporarily reset CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                             if (DDSIP_param->outlev)
+                                            {
+                                                printf("temporarily reset CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                                 fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                            }
                                         }
                                     }
                                     if (DDSIP_param->cpxdualwhich2[cpu_hrs] == CPX_PARAM_EPGAP)
@@ -1296,9 +1336,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                                         }
                                         else
                                         {
-                                            printf("temporarily reset CPLEX relgap tolerance 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                             if (DDSIP_param->outlev)
+                                            {
+                                                printf("temporarily reset CPLEX relgap tolerance 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                                 fprintf(DDSIP_bb->moreoutfile, "temporarily reset CPLEX relgap tolerance 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                            }
                                         }
                                     }
                                 } // end for
@@ -1515,9 +1557,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                             }
                             else
                             {
-                                printf("Reverted CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                                 if (DDSIP_param->outlev)
+                                {
+                                    printf("Reverted CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                                     fprintf(DDSIP_bb->moreoutfile, "Reverted CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                }
                             }
                         }
                         if (DDSIP_param->cpxdualwhich[cpu_hrs] == CPX_PARAM_EPGAP)
@@ -1530,9 +1574,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                             }
                             else
                             {
-                                printf("Reverted CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                                 if (DDSIP_param->outlev)
+                                {
+                                    printf("Reverted CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                                     fprintf(DDSIP_bb->moreoutfile, "Reverted CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
+                                }
                             }
                         }
                     } // end for
@@ -1548,9 +1594,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                             }
                             else
                             {
-                                printf("Reverted CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                 if (DDSIP_param->outlev)
+                                {
+                                    printf("Reverted CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                     fprintf(DDSIP_bb->moreoutfile, "Reverted CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                }
                             }
                         }
                         if (DDSIP_param->cpxdualwhich2[cpu_hrs] == CPX_PARAM_EPGAP)
@@ -1563,9 +1611,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                             }
                             else
                             {
-                                printf("Reverted CPLEX relgap tolerance 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                 if (DDSIP_param->outlev)
+                                {
+                                    printf("Reverted CPLEX relgap tolerance 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                                     fprintf(DDSIP_bb->moreoutfile, "Reverted CPLEX relgap tolerance 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                                }
                             }
                         }
                     }
@@ -1672,26 +1722,6 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                     fprintf (DDSIP_outfile, "\n");
             }
         }
-        if (!(DDSIP_bb->curnode))
-        {
-            //printf ("   --------- sorting scenarios ---------\n");
-            // in order to allow for premature cutoff: sort scenarios according to lower bound in root node in descending order
-            double * sort_array;
-            sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "sort_array(LowerBound)");
-            for (i_scen = 0; i_scen < DDSIP_param->scenarios; i_scen++)
-            {
-                sort_array[i_scen] = DDSIP_data->prob[i_scen] * (DDSIP_node[DDSIP_bb->curnode]->subbound)[i_scen];
-            }
-            DDSIP_qsort_ins_D (sort_array, DDSIP_bb->lb_scen_order, 0, DDSIP_param->scenarios-1);
-            DDSIP_Free ((void**) &sort_array);
-
-            // initially: sort the scenarios for upper bounds in the same oder. This might be useful to stop evaluation prematurely.
-            // This order is changed as soon as a suggested heuristics points is infeasible for one of the scenarios
-            for (i_scen=0; i_scen<DDSIP_param->scenarios; i_scen++)
-            {
-                DDSIP_bb->ub_scen_order[i_scen] = DDSIP_bb->lb_scen_order[i_scen];
-            }
-        }
     }
 
     // update dual solution
@@ -1769,9 +1799,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                     }
                     else
                     {
-                        printf("Reverted CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                         if (DDSIP_param->outlev)
+                        {
+                            printf("Reverted CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                             fprintf(DDSIP_bb->moreoutfile, "Reverted CPLEX time limit to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
+                        }
                     }
                 }
                 if (DDSIP_param->cpxdualwhich[cpu_hrs] == CPX_PARAM_EPGAP)
@@ -1784,9 +1816,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                     }
                     else
                     {
-                        printf("Reverted CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                         if (DDSIP_param->outlev)
+                        {
+                            printf("Reverted CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
                             fprintf(DDSIP_bb->moreoutfile, "Reverted CPLEX relgap tolerance to %g.\n", DDSIP_param->cpxdualwhat[cpu_hrs]);
+                        }
                     }
                 }
             } // end for
@@ -1802,9 +1836,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                     }
                     else
                     {
-                        printf("Reverted CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                         if (DDSIP_param->outlev)
+                        {
+                            printf("Reverted CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                             fprintf(DDSIP_bb->moreoutfile, "Reverted CPLEX time limit 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                        }
                     }
                 }
                 if (DDSIP_param->cpxdualwhich2[cpu_hrs] == CPX_PARAM_EPGAP)
@@ -1817,9 +1853,11 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
                     }
                     else
                     {
-                        printf("Reverted CPLEX relgap tolerance 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                         if (DDSIP_param->outlev)
+                        {
+                            printf("Reverted CPLEX relgap tolerance 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
                             fprintf(DDSIP_bb->moreoutfile, "Reverted CPLEX relgap tolerance 2nd opt. to %g.\n", DDSIP_param->cpxdualwhat2[cpu_hrs]);
+                        }
                     }
                 }
             }

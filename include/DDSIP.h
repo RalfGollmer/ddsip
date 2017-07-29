@@ -522,6 +522,8 @@ extern "C" {
         int   *lb_scen_order;
         // pointer for re-sorting the scenarios for upper bounding
         int   *ub_scen_order;
+        // were the scenarios sorted for lower bounding?
+        int lb_sorted;
 
         // Text buffer for querying variable name
         char * name_buffer[1];

@@ -656,20 +656,7 @@ TERMINATE:
         if (status)
             fprintf (stderr, "ERROR: CPXfreeprob failed, error code %d\n", status);
     }
-    // Free up the CPLEX environment, if necessary
-#ifdef ADDBENDERSCUTS
-//    if (DDSIP_dual_env != NULL)
-//    {
-//        status = CPXcloseCPLEX (&DDSIP_env);
-//        if (status)
-//        {
-//            char errmsg[1024];
-//            fprintf (stderr, "ERROR: Failed to close CPLEX environment.\n");
-//            CPXgeterrorstring (DDSIP_env, status, errmsg);
-//            printf ("%s\n", errmsg);
-//        }
-//    }
-#endif
+    // Free up the CPLEX environment
     if (DDSIP_env != NULL)
     {
         status = CPXcloseCPLEX (&DDSIP_env);
@@ -688,14 +675,15 @@ TERMINATE:
         DDSIP_Free ((void **) &(DDSIP_bb));
     }
 
+    if (DDSIP_param->outlev)
+        printf ("Terminating DDSIP.\n");
+
     if (DDSIP_param != NULL)
     {
         DDSIP_FreeParam ();
         DDSIP_Free ((void **) &(DDSIP_param));
     }
 
-    if (DDSIP_param->outlev)
-        printf ("Terminating DDSIP.\n");
     fprintf (DDSIP_outfile, "Current system time: ");
 #ifndef _WIN32
     i = system ("date");

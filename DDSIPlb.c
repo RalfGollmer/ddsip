@@ -77,6 +77,13 @@ DDSIP_GetBranchIndex (double *dispnorm)
     int i, j, k, cnt, below, above, diff, mindiff, maxdiff, cur_diff = 99999;
     double hlb, hub, h, hbranch = 0., dist, dist_below = 0., dist_above = 0., maxdist = 0., factor = 1., maxord = -1., cur_dist = DDSIP_infty;
     int *index = (int *) DDSIP_Alloc (sizeof (int), DDSIP_bb->firstvar, "index GetBI");
+    // no branching on leaf
+    if (DDSIP_node[DDSIP_bb->curnode]->leaf)
+    {
+        DDSIP_node[DDSIP_bb->curnode]->branchind = 0;
+        DDSIP_node[DDSIP_bb->curnode]->branchval = 0.;
+        return 0;
+    }
     for (i=0; i<DDSIP_bb->firstvar; index[i++]=-100000);
 
     // Initialize branching index and dispersion norm of current node

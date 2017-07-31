@@ -484,6 +484,7 @@ DDSIP_DualOpt (void)
     }
     DDSIP_bb->dualitcnt     = 0;
     DDSIP_bb->dualdescitcnt = 0;
+    DDSIP_bb->cutAdded = 0;
     if (DDSIP_param->outlev)
         fprintf (DDSIP_bb->moreoutfile, "\nInitial dual evaluation");
 

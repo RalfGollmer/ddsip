@@ -113,7 +113,7 @@ DDSIP_ReadDbl (FILE * specfile, char *pattern, char *text, double defval, int is
                 find = 1;
                 if (fscanf (specfile, "%lf", &val) != 1)
                 {
-                    printf ("*Error: could not read value for %s\n", pattern);
+                    fprintf (stderr, "*ERROR: could not read value for %s\n", pattern);
                 }
             }
             i = 0;
@@ -140,12 +140,17 @@ DDSIP_ReadDbl (FILE * specfile, char *pattern, char *text, double defval, int is
             printf ("*Warning: Illegal parameter setting: %s = %d.\n", text, ih);
             printf ("*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
                     floor (lb + 0.1), floor (lb + 0.1), floor (ub + 0.1));
+            fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting: %s = %d.\n", text, ih);
+            fprintf (DDSIP_outfile, "*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
+                    floor (lb + 0.1), floor (lb + 0.1), floor (ub + 0.1));
             val = floor (lb + 0.1);
         }
         else
         {
             printf ("*Warning: Illegal parameter setting (%s = %g).\n", text, val);
             printf ("*         Reset parameter to %g (Parameter range: %g - %g).\n", lb, lb, ub);
+            fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting (%s = %g).\n", text, val);
+            fprintf (DDSIP_outfile, "*         Reset parameter to %g (Parameter range: %g - %g).\n", lb, lb, ub);
             val = lb;
         }
     }
@@ -158,12 +163,17 @@ DDSIP_ReadDbl (FILE * specfile, char *pattern, char *text, double defval, int is
             printf ("*Warning: Illegal parameter setting: %s = %d.\n", text, ih);
             printf ("*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
                     floor (ub + 0.1), floor (lb + 0.1), floor (ub + 0.1));
+            fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting: %s = %d.\n", text, ih);
+            fprintf (DDSIP_outfile, "*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
+                    floor (ub + 0.1), floor (lb + 0.1), floor (ub + 0.1));
             val = floor (ub + 0.1);
         }
         else
         {
             printf ("*Warning: Illegal parameter setting (%s = %g).\n", text, val);
             printf ("*         Reset parameter to %g (Parameter range: %g - %g).\n", ub, lb, ub);
+            fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting (%s = %g).\n", text, val);
+            fprintf (DDSIP_outfile, "*         Reset parameter to %g (Parameter range: %g - %g).\n", ub, lb, ub);
             val = ub;
         }
     }
@@ -252,12 +262,17 @@ DDSIP_ReadDblVec (FILE * specfile, char *pattern, char *text, double defval, int
                                 printf ("*Warning: Illegal parameter setting: %s = %d.\n", text, i);
                                 printf ("*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
                                         floor (lb + 0.1), floor (lb + 0.1), floor (ub + 0.1));
+                                fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting: %s = %d.\n", text, i);
+                                fprintf (DDSIP_outfile, "*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
+                                        floor (lb + 0.1), floor (lb + 0.1), floor (ub + 0.1));
                                 val[ih] = floor (lb + 0.1);
                             }
                             else
                             {
                                 printf ("*Warning: Illegal parameter setting (%s = %f).\n", text, val[ih]);
                                 printf ("*         Reset parameter to %f (Parameter range: %f - %f).\n", lb, lb, ub);
+                                fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting (%s = %f).\n", text, val[ih]);
+                                fprintf (DDSIP_outfile, "*         Reset parameter to %f (Parameter range: %f - %f).\n", lb, lb, ub);
                                 val[ih] = lb;
                             }
                         }
@@ -269,12 +284,17 @@ DDSIP_ReadDblVec (FILE * specfile, char *pattern, char *text, double defval, int
                                 printf ("*Warning: Illegal parameter setting: %s = %d.\n", text, i);
                                 printf ("*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
                                         floor (ub + 0.1), floor (lb + 0.1), floor (ub + 0.1));
+                                fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting: %s = %d.\n", text, i);
+                                fprintf (DDSIP_outfile, "*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
+                                        floor (ub + 0.1), floor (lb + 0.1), floor (ub + 0.1));
                                 val[ih] = floor (ub + 0.1);
                             }
                             else
                             {
                                 printf ("*Warning: Illegal parameter setting (%s = %f).\n", text, val[ih]);
                                 printf ("*         Reset parameter to %f (Parameter range: %f - %f).\n", ub, lb, ub);
+                                fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting (%s = %f).\n", text, val[ih]);
+                                fprintf (DDSIP_outfile, "*         Reset parameter to %f (Parameter range: %f - %f).\n", ub, lb, ub);
                                 val[ih] = ub;
                             }
                         }
@@ -373,7 +393,7 @@ DDSIP_ReadString (FILE * specfile, char *pattern, char *text)
     {
         if (!(string = (char *) calloc (256, sizeof (char))))
         {
-            printf ("XXX ERROR ReadString: could not allocate string of size 256.\n");
+            fprintf (stderr, "XXX ERROR ReadString: could not allocate string of size 256.\n");
             exit (1);
         }
         while ((c = fgetc (specfile)) != EOF)
@@ -381,7 +401,7 @@ DDSIP_ReadString (FILE * specfile, char *pattern, char *text)
                 break;
         if (c == EOF)
         {
-            printf ("XXX ERROR ReadString: found %s, but no following string.\n", pattern);
+            fprintf (stderr, "XXX ERROR ReadString: found %s, but no following string.\n", pattern);
             exit (1);
         }
         string[0] = c;
@@ -395,7 +415,7 @@ DDSIP_ReadString (FILE * specfile, char *pattern, char *text)
             if (i >= 255)
             {
                 string[255] = '\0';
-                printf ("XXX ERROR ReadString: string following %s is too long: %s\n", pattern, string);
+                fprintf (stderr, "XXX ERROR ReadString: string following %s is too long: %s\n", pattern, string);
                 exit (1);
             }
         }
@@ -409,7 +429,7 @@ DDSIP_ReadString (FILE * specfile, char *pattern, char *text)
             string[i] = '\0';
             if (!(outstring = (char *) calloc (i+1, sizeof (char))))
             {
-                printf ("XXX ERROR ReadString: could not allocate string of size %d.\n", i+1);
+                fprintf (stderr, "XXX ERROR ReadString: could not allocate string of size %d.\n", i+1);
                 exit (1);
             }
             strcpy(outstring, string);
@@ -436,7 +456,7 @@ DDSIP_ReadWord (FILE * infile, char *string, int stringlength)
             break;
     if (c == EOF)
     {
-        printf ("XXX Warning ReadWord: no word found up to EOF.\n");
+        fprintf (stderr, "XXX Warning ReadWord: no word found up to EOF.\n");
         return (0);
     }
     string[0] = c;
@@ -450,7 +470,7 @@ DDSIP_ReadWord (FILE * infile, char *string, int stringlength)
         if (i >= stringlength - 1)
         {
             string[stringlength -1] = '\0';
-            printf ("XXX ERROR ReadWord: word is too long for array string of size %d: %s\n", stringlength, string);
+            fprintf (stderr, "XXX ERROR ReadWord: word is too long for array string of size %d: %s\n", stringlength, string);
             exit (1);
         }
     }
@@ -495,7 +515,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
         cnt = 0;
         if (fscanf (specfile, "%s", str) != 1)
         {
-            printf ("*Error: could not read string in CPLEX parameter section\n");
+            fprintf (stderr, "*Error: could not read string in CPLEX parameter section\n");
         }
         // Read as long as the following patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
@@ -507,11 +527,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
             DDSIP_param->cpxwhich[cnt] = atoi (str);
             if (fscanf (specfile, "%lf", &DDSIP_param->cpxwhat[cnt++]) != 1)
             {
-                printf ("*Error: could not read value in CPLEX parameter section for parameter %d\n", DDSIP_param->cpxwhich[cnt-1]);
+                fprintf (stderr, "*Error: could not read value in CPLEX parameter section for parameter %d\n", DDSIP_param->cpxwhich[cnt-1]);
             }
             if (cnt >= DDSIP_maxparam)
             {
-                printf ("\nFirst %d parameters in section CPLEXBEGIN read, remaining neglected.\n", DDSIP_maxparam);
+                fprintf (DDSIP_outfile, "\nFirst %d parameters in section CPLEXBEGIN read, remaining neglected.\n", DDSIP_maxparam);
                 break;
             }
 
@@ -519,7 +539,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
             while ((c = fgetc (specfile)) != EOF && c != '\n');
             if (fscanf (specfile, "%s", str) != 1)
             {
-                printf ("*Error: could not read string in CPLEX parameter section\n");
+                fprintf (stderr, "*Error: could not read string in CPLEX parameter section\n");
             }
         }
         DDSIP_param->cpxno = cnt;
@@ -529,7 +549,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
             for(k=0; k<cnt; k++)
                 if ((status=CPXgetparamtype(DDSIP_env, DDSIP_param->cpxwhich[k], &j)))
                 {
-                    printf ("XXX Warning CPLEX returned an error %d in the inquiry of type of parameter %d.\n",status,DDSIP_param->cpxwhich[k]);
+                    fprintf (DDSIP_outfile, "XXX Warning: CPLEX returned an error %d in the inquiry of type of parameter %d.\n",status,DDSIP_param->cpxwhich[k]);
                 }
                 else
                 {
@@ -564,7 +584,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
         cnt = 0;
         if (fscanf (specfile, "%s", str) != 1)
         {
-            printf ("*Error: could not read string in CPLEX parameter section\n");
+            fprintf (stderr, "*Error: could not read string in CPLEX parameter section\n");
         }
         // Read as long as the other patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
@@ -578,11 +598,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 DDSIP_param->cpxlbwhich[cnt] = atoi (str);
                 if (fscanf (specfile, "%lf", &DDSIP_param->cpxlbwhat[cnt++]) != 1)
                 {
-                    printf ("*Error: could not read value in CPLEXLB parameter section for parameter %d\n", DDSIP_param->cpxlbwhich[cnt-1]);
+                    fprintf (stderr, "*Error: could not read value in CPLEXLB parameter section for parameter %d\n", DDSIP_param->cpxlbwhich[cnt-1]);
                 }
                 if (cnt >= DDSIP_maxparam)
                 {
-                    printf ("\nFirst %d parameters in section CPLEXLB read, remaining neglected.\n", DDSIP_maxparam);
+                    fprintf (DDSIP_outfile, "\nFirst %d parameters in section CPLEXLB read, remaining neglected.\n", DDSIP_maxparam);
                     break;
                 }
             }
@@ -590,7 +610,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
             while ((c = fgetc (specfile)) != EOF && c != '\n');
             if (fscanf (specfile, "%s", str) != 1)
             {
-                printf ("*Error: could not read string in CPLEX parameter section\n");
+                fprintf (stderr, "*Error: could not read string in CPLEX parameter section\n");
             }
         }
         DDSIP_param->cpxnolb = cnt;
@@ -600,7 +620,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
             for(k=0; k<cnt; k++)
                 if ((status=CPXgetparamtype(DDSIP_env, DDSIP_param->cpxlbwhich[k], &j)))
                 {
-                    printf ("XXX Warning CPLEX returned an error %d in the inquiry of type of parameter %d.\n",status,DDSIP_param->cpxlbwhich[k]);
+                    fprintf (DDSIP_outfile, "XXX Warning CPLEX returned an error %d in the inquiry of type of parameter %d.\n",status,DDSIP_param->cpxlbwhich[k]);
                 }
                 else
                 {
@@ -641,7 +661,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
         cnt = 0;
         if (fscanf (specfile, "%s", str) != 1)
         {
-            printf ("*Error: could not read string in CPLEX parameter section\n");
+            fprintf (stderr, "*Error: could not read string in CPLEX parameter section\n");
         }
         // Read as long as the other patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
@@ -655,11 +675,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 DDSIP_param->cpxlbwhich2[cnt] = atoi (str);
                 if (fscanf (specfile, "%lf", &DDSIP_param->cpxlbwhat2[cnt++]) != 1)
                 {
-                    printf ("*Error: could not read value in CPLEXLB2 parameter section for parameter %d\n", DDSIP_param->cpxlbwhich2[cnt-1]);
+                    fprintf (stderr, "*Error: could not read value in CPLEXLB2 parameter section for parameter %d\n", DDSIP_param->cpxlbwhich2[cnt-1]);
                 }
                 if (cnt >= DDSIP_maxparam)
                 {
-                    printf ("\nFirst %d parameters in section CPLEX2LB read, remaining neglected.\n", DDSIP_maxparam);
+                    fprintf (DDSIP_outfile, "\nFirst %d parameters in section CPLEX2LB read, remaining neglected.\n", DDSIP_maxparam);
                     break;
                 }
             }
@@ -667,7 +687,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
             while ((c = fgetc (specfile)) != EOF && c != '\n');
             if (fscanf (specfile, "%s", str) != 1)
             {
-                printf ("*Error: could not read string in CPLEX parameter section\n");
+                fprintf (stderr, "*Error: could not read string in CPLEX parameter section\n");
             }
         }
         DDSIP_param->cpxnolb2 = cnt;
@@ -677,7 +697,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
             for(k=0; k<cnt; k++)
                 if ((status=CPXgetparamtype(DDSIP_env, DDSIP_param->cpxlbwhich2[k], &j)))
                 {
-                    printf ("XXX Warning CPLEX returned an error %d in the inquiry of type of parameter %d.\n",status,DDSIP_param->cpxlbwhich2[k]);
+                    fprintf (DDSIP_outfile, "XXX Warning CPLEX returned an error %d in the inquiry of type of parameter %d.\n",status,DDSIP_param->cpxlbwhich2[k]);
                 }
                 else
                 {
@@ -717,7 +737,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
         cnt = 0;
         if (fscanf (specfile, "%s", str) != 1)
         {
-            printf ("*Error: could not read string in CPLEX parameter section\n");
+            fprintf (stderr, "*Error: could not read string in CPLEX parameter section\n");
         }
         // Read as long as the other patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
@@ -731,11 +751,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 DDSIP_param->cpxubwhich[cnt] = atoi (str);
                 if(fscanf (specfile, "%lf", &DDSIP_param->cpxubwhat[cnt++]) != 1)
                 {
-                    printf ("*Error: could not read value in CPLEXUB parameter section for parameter %d\n", DDSIP_param->cpxubwhich[cnt-1]);
+                    fprintf (stderr, "*Error: could not read value in CPLEXUB parameter section for parameter %d\n", DDSIP_param->cpxubwhich[cnt-1]);
                 }
                 if (cnt >= DDSIP_maxparam)
                 {
-                    printf ("\nFirst %d parameters in section CPLEXUB read, remaining neglected.\n", DDSIP_maxparam);
+                    fprintf (DDSIP_outfile, "\nFirst %d parameters in section CPLEXUB read, remaining neglected.\n", DDSIP_maxparam);
                     break;
                 }
             }
@@ -743,7 +763,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
             while ((c = fgetc (specfile)) != EOF && c != '\n');
             if (fscanf (specfile, "%s", str) != 1)
             {
-                printf ("*Error: could not read string in CPLEX parameter section\n");
+                fprintf (stderr, "*Error: could not read string in CPLEX parameter section\n");
             }
         }
         DDSIP_param->cpxnoub = cnt;
@@ -753,7 +773,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
             for(k=0; k<cnt; k++)
                 if ((status=CPXgetparamtype(DDSIP_env, DDSIP_param->cpxubwhich[k], &j)))
                 {
-                    printf ("XXX Warning CPLEX returned an error %d in the inquiry of type of parameter %d.\n",status,DDSIP_param->cpxubwhich[k]);
+                    fprintf (DDSIP_outfile, "XXX Warning CPLEX returned an error %d in the inquiry of type of parameter %d.\n",status,DDSIP_param->cpxubwhich[k]);
                 }
                 else
                 {
@@ -794,7 +814,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
         cnt = 0;
         if (fscanf (specfile, "%s", str) != 1)
         {
-            printf ("*Error: could not read string in CPLEX parameter section\n");
+            fprintf (stderr, "*Error: could not read string in CPLEX parameter section\n");
         }
         // Read as long as the other patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
@@ -808,11 +828,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 DDSIP_param->cpxubwhich2[cnt] = atoi (str);
                 if (fscanf (specfile, "%lf", &DDSIP_param->cpxubwhat2[cnt++]) != 1)
                 {
-                    printf ("*Error: could not read value in CPLEX2UB parameter section for parameter %d\n", DDSIP_param->cpxubwhich2[cnt-1]);
+                    fprintf (stderr, "*Error: could not read value in CPLEX2UB parameter section for parameter %d\n", DDSIP_param->cpxubwhich2[cnt-1]);
                 }
                 if (cnt >= DDSIP_maxparam)
                 {
-                    printf ("\nFirst %d parameters in section CPLEX2UB read, remaining neglected.\n", DDSIP_maxparam);
+                    fprintf (DDSIP_outfile, "\nFirst %d parameters in section CPLEX2UB read, remaining neglected.\n", DDSIP_maxparam);
                     break;
                 }
             }
@@ -820,7 +840,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
             while ((c = fgetc (specfile)) != EOF && c != '\n');
             if (fscanf (specfile, "%s", str) != 1)
             {
-                printf ("*Error: could not read string in CPLEX parameter section\n");
+                fprintf (stderr, "*Error: could not read string in CPLEX parameter section\n");
             }
         }
         DDSIP_param->cpxnoub2 = cnt;
@@ -830,7 +850,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
             for(k=0; k<cnt; k++)
                 if ((status=CPXgetparamtype(DDSIP_env, DDSIP_param->cpxubwhich2[k], &j)))
                 {
-                    printf ("XXX Warning CPLEX returned an error %d in the inquiry of type of parameter %d.\n",status,DDSIP_param->cpxubwhich2[k]);
+                    fprintf (DDSIP_outfile, "XXX Warning CPLEX returned an error %d in the inquiry of type of parameter %d.\n",status,DDSIP_param->cpxubwhich2[k]);
                 }
                 else
                 {
@@ -871,7 +891,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
         cnt = 0;
         if (fscanf (specfile, "%s", str) != 1)
         {
-            printf ("*Error: could not read string in CPLEX parameter section\n");
+            fprintf (stderr, "*Error: could not read string in CPLEX parameter section\n");
         }
         // Read as long as the other patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
@@ -885,11 +905,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 DDSIP_param->cpxeevwhich[cnt] = atoi (str);
                 if (fscanf (specfile, "%lf", &DDSIP_param->cpxeevwhat[cnt++]) != 1)
                 {
-                    printf ("*Error: could not read value in CPLEXEEV parameter section for parameter %d\n", DDSIP_param->cpxeevwhich[cnt-1]);
+                    fprintf (stderr, "*Error: could not read value in CPLEXEEV parameter section for parameter %d\n", DDSIP_param->cpxeevwhich[cnt-1]);
                 }
                 if (cnt >= DDSIP_maxparam)
                 {
-                    printf ("\nFirst %d parameters in section CPLEXEEV read, remaining neglected.\n", DDSIP_maxparam);
+                    fprintf (DDSIP_outfile, "\nFirst %d parameters in section CPLEXEEV read, remaining neglected.\n", DDSIP_maxparam);
                     break;
                 }
             }
@@ -897,7 +917,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
             while ((c = fgetc (specfile)) != EOF && c != '\n');
             if (fscanf (specfile, "%s", str) != 1)
             {
-                printf ("*Error: could not read string in CPLEX parameter section\n");
+                fprintf (stderr, "*Error: could not read string in CPLEX parameter section\n");
             }
         }
         DDSIP_param->cpxnoeev = cnt;
@@ -907,7 +927,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
             for(k=0; k<cnt; k++)
                 if ((status=CPXgetparamtype(DDSIP_env, DDSIP_param->cpxeevwhich[k], &j)))
                 {
-                    printf ("XXX Warning CPLEX returned an error %d in the inquiry of type of parameter %d.\n",status,DDSIP_param->cpxeevwhich[k]);
+                    fprintf (DDSIP_outfile, "XXX Warning CPLEX returned an error %d in the inquiry of type of parameter %d.\n",status,DDSIP_param->cpxeevwhich[k]);
                 }
                 else
                 {
@@ -948,7 +968,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
         cnt = 0;
         if (fscanf (specfile, "%s", str) != 1)
         {
-            printf ("*Error: could not read string in CPLEX parameter section\n");
+            fprintf (stderr, "*Error: could not read string in CPLEX parameter section\n");
         }
         // Read as long as the other patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
@@ -962,11 +982,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 DDSIP_param->cpxdualwhich[cnt] = atoi (str);
                 if (fscanf (specfile, "%lf", &DDSIP_param->cpxdualwhat[cnt++]) != 1)
                 {
-                    printf ("*Error: could not read value in CPLEXDUAL parameter section for parameter %d\n", DDSIP_param->cpxdualwhich[cnt-1]);
+                    fprintf (stderr, "*Error: could not read value in CPLEXDUAL parameter section for parameter %d\n", DDSIP_param->cpxdualwhich[cnt-1]);
                 }
                 if (cnt >= DDSIP_maxparam)
                 {
-                    printf ("\nFirst %d parameters in section CPLEXDUAL read, remaining neglected.\n", DDSIP_maxparam);
+                    fprintf (DDSIP_outfile, "\nFirst %d parameters in section CPLEXDUAL read, remaining neglected.\n", DDSIP_maxparam);
                     break;
                 }
             }
@@ -974,7 +994,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
             while ((c = fgetc (specfile)) != EOF && c != '\n');
             if (fscanf (specfile, "%s", str) != 1)
             {
-                printf ("*Error: could not read string in CPLEX parameter section\n");
+                fprintf (stderr, "*Error: could not read string in CPLEX parameter section\n");
             }
         }
         DDSIP_param->cpxnodual = cnt;
@@ -984,7 +1004,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
             for(k=0; k<cnt; k++)
                 if ((status=CPXgetparamtype(DDSIP_env, DDSIP_param->cpxdualwhich[k], &j)))
                 {
-                    printf ("XXX Warning CPLEX returned an error %d in the inquiry of type of parameter %d.\n",status,DDSIP_param->cpxdualwhich[k]);
+                    fprintf (DDSIP_outfile, "XXX Warning CPLEX returned an error %d in the inquiry of type of parameter %d.\n",status,DDSIP_param->cpxdualwhich[k]);
                     DDSIP_param->cpxdualisdbl[k] = -1;
                 }
                 else
@@ -1026,7 +1046,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
         cnt = 0;
         if (fscanf (specfile, "%s", str) != 1)
         {
-            printf ("*Error: could not read string in CPLEX parameter section\n");
+            fprintf (stderr, "*Error: could not read string in CPLEX parameter section\n");
         }
         // Read as long as the other patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
@@ -1040,11 +1060,11 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 DDSIP_param->cpxdualwhich2[cnt] = atoi (str);
                 if (fscanf (specfile, "%lf", &DDSIP_param->cpxdualwhat2[cnt++]) != 1)
                 {
-                    printf ("*Error: could not read value in CPLEXDUAL parameter section for parameter %d\n", DDSIP_param->cpxdualwhich[cnt-1]);
+                    fprintf (stderr, "*Error: could not read value in CPLEXDUAL parameter section for parameter %d\n", DDSIP_param->cpxdualwhich[cnt-1]);
                 }
                 if (cnt >= DDSIP_maxparam)
                 {
-                    printf ("\nFirst %d parameters in section CPLEXDUAL read, remaining neglected.\n", DDSIP_maxparam);
+                    fprintf (DDSIP_outfile, "\nFirst %d parameters in section CPLEXDUAL read, remaining neglected.\n", DDSIP_maxparam);
                     break;
                 }
             }
@@ -1052,7 +1072,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
             while ((c = fgetc (specfile)) != EOF && c != '\n');
             if (fscanf (specfile, "%s", str) != 1)
             {
-                printf ("*Error: could not read string in CPLEX parameter section\n");
+                fprintf (stderr, "*Error: could not read string in CPLEX parameter section\n");
             }
         }
         DDSIP_param->cpxnodual2 = cnt;
@@ -1062,7 +1082,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
             for(k=0; k<cnt; k++)
                 if ((status=CPXgetparamtype(DDSIP_env, DDSIP_param->cpxdualwhich2[k], &j)))
                 {
-                    printf ("XXX Warning CPLEX returned an error %d in the inquiry of type of parameter %d.\n",status,DDSIP_param->cpxdualwhich2[k]);
+                    fprintf (DDSIP_outfile, "XXX Warning CPLEX returned an error %d in the inquiry of type of parameter %d.\n",status,DDSIP_param->cpxdualwhich2[k]);
                     DDSIP_param->cpxdualisdbl2[k] = -1;
                 }
                 else

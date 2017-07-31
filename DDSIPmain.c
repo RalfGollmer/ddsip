@@ -53,7 +53,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2017-07-11 (with Benders feasibility cuts and CPLEX Benders)";
+const char DDSIP_version[] = "2017-07-31 (with Benders feasibility cuts) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -120,7 +120,7 @@ main (void)
     printf ("################################\n##########  ");
     printf ("D D S I P -- Dual Decomposition In Stochastic Integer Programming");
     printf ("  #########\n");
-    printf ("##########  Version:     %s                         #########\n", DDSIP_version);
+    printf ("##########  Version: %-57.57s #########\n", DDSIP_version);
     printf ("For copyright, license agreements, help, comments, requests, ... ");
     printf ("see\n\thttp://www.uni-duisburg-essen.de/~hn215go/ddsip.shtml\n");
     printf ("\thttp://www.www.github.com/RalfGollmer/ddsip\n");

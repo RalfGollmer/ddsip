@@ -956,6 +956,8 @@ if(DDSIP_param->outlev > 20)
                                         for(j = Bi; j>0; j--)
                                             DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
                                         DDSIP_bb->ub_scen_order[0] = k;
+                                        iscen = 0;
+                                        scen = k;
 if(DDSIP_param->outlev > 20)
 {
   fprintf (DDSIP_bb->moreoutfile, ", shifts now: %d\n", DDSIP_bb->shifts);
@@ -1073,6 +1075,12 @@ if(DDSIP_param->outlev > 20)
                         return status;
                     }
                     status = CPXgetobjval (DDSIP_env, DDSIP_dual_lp, &objv);
+                    if (status)
+                    {
+                        fprintf (stderr, "ERROR: dualopt: getobjval failed.\n");
+                        fprintf (DDSIP_outfile, "ERROR: dualopt: getobjval failed.\n");
+                        return status;
+                    }
                     if (objv < rhs - 3e-2)
                     {
                         cutpool_t * newCut;
@@ -1089,8 +1097,8 @@ if(DDSIP_param->outlev > 20)
                         sprintf (rowstore, "DDSIPIntegerCut%d",DDSIP_bb->cutCntr);
                         if (DDSIP_param->outlev)
                         {
-                            fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
-                            printf (" ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
+                            fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s ############\n", rowstore);
+                            printf (" ############ adding cut %s ############\n", rowstore);
                         }
 #endif
                         if ((status = CPXaddrows(DDSIP_env, DDSIP_lp, 0, 1, DDSIP_data->firstvar, &rhs, &sense, &rmatbeg, rmatind, rmatval, NULL, rowname)))

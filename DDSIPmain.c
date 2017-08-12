@@ -53,7 +53,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2017-07-31 (with Benders feasibility cuts) ";
+const char DDSIP_version[] = "2017-08-12 (with Benders feasibility cuts) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";

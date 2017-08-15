@@ -757,6 +757,8 @@ DDSIP_DualOpt (void)
                 do
                 {
                     old_obj = obj = DDSIP_bb->dualObjVal;
+                    if (cntr > DDSIP_param->numberReinits)
+                        break;
                     // reinit model
                     if (cb_reinit_function_model(p, (void *) DDSIP_DualUpdate))
                     {
@@ -878,8 +880,14 @@ DDSIP_DualOpt (void)
         {
             if ((DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue)/(fabs(DDSIP_bb->bestvalue)+1.e-10) > DDSIP_param->accuracy)
                 DDSIP_Print2 ("   --------- termination status: cutoff.", "\n", 0, 0);
-            else if (DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*1.e-15)
+            else if (!DDSIP_bb->violations &&
+                     (DDSIP_node[DDSIP_bb->curnode]->bound >= DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*1.e-15) &&
+                     (DDSIP_node[DDSIP_bb->curnode]->bound <= DDSIP_bb->bestvalue + fabs(DDSIP_bb->bestvalue)*1.e-15))
+            {
                 DDSIP_Print2 ("   --------- termination status: optimal.", "\n", 0, 0);
+                DDSIP_bb->skip = 3;
+                DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
+            }
             else
                 DDSIP_Print2 ("   --------- termination status: within relative gap.", "\n", 0, 0);
         }
@@ -901,7 +909,8 @@ DDSIP_DualOpt (void)
         }
         noIncreaseCounter = 0;
         many_iters = 0;
-        while (!cb_termination_code (p) && DDSIP_bb->violations && (DDSIP_GetCpuTime () < DDSIP_param->timelim)
+        while ((!cb_termination_code (p)) && DDSIP_bb->violations
+                && (DDSIP_GetCpuTime () < DDSIP_param->timelim)
                 && ((DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt < DDSIP_param->cbitlim && (DDSIP_bb->curnode >= DDSIP_param->cbBreakIters || DDSIP_bb->dualdescitcnt < (DDSIP_param->cbitlim+1)/2))
                     || (!DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt < DDSIP_param->cbrootitlim))
                 && DDSIP_bb->dualitcnt < DDSIP_param->cbtotalitlim && !(obj > DDSIP_bb->bestvalue - DDSIP_param->accuracy) 
@@ -976,13 +985,13 @@ NEXT_TRY:   cb_status = cb_do_maxsteps(p, DDSIP_param->cb_maxsteps + (DDSIP_bb->
             {
                 if (!DDSIP_bb->newTry || DDSIP_bb->newTry > 5)
                 {
-                    fprintf (stderr, "cb_do_descent_step returned %d\n", cb_status);
+                    fprintf (stderr, "############### cb_do_maxsteps returned %d\n", cb_status);
                     if (DDSIP_param->outlev)
-                        fprintf (DDSIP_bb->moreoutfile, "cb_do_descent_step returned %d\n", cb_status);
+                        fprintf (DDSIP_bb->moreoutfile, "############### cb_do_maxsteps returned %d\n", cb_status);
                     cb_status = cb_termination_code(p);
-                    fprintf (stderr, "cb_termination_code returned %d\n", cb_status);
+                    fprintf (stderr, "############### cb_termination_code is %d\n", cb_status);
                     if (DDSIP_param->outlev)
-                        fprintf (DDSIP_bb->moreoutfile, "cb_termination_code returned %d\n", cb_status);
+                        fprintf (DDSIP_bb->moreoutfile, "############### cb_termination_code is %d\n", cb_status);
                     cb_destruct_problem (&p);
                     // Reset first stage solutions to the ones that gave the best bound
                     for (j = 0; j < DDSIP_param->scenarios; j++)

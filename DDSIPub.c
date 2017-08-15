@@ -345,6 +345,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     double *subsol;
 
     double we, wr, d, mipgap, oldviol = DDSIP_infty, viol;
+    double rhs;
     //  double         *Tx;
 
     DDSIP_bb->skip = 0;
@@ -811,7 +812,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                 else
                 {
                     beg = iscen;
-                    end = (DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 7 && DDSIP_param->testOtherScens) || (DDSIP_bb->noiter < 3 && DDSIP_bb->dualitcnt < 3)) ? DDSIP_param->scenarios : DDSIP_Imax(iscen+1, DDSIP_bb->shifts);
+                    end = (DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 7 && DDSIP_param->testOtherScens) || (DDSIP_bb->noiter < 2 && DDSIP_bb->dualitcnt < 3)) ? DDSIP_param->scenarios : DDSIP_Imax(iscen+1, DDSIP_bb->shifts);
                 }
                 for (Bi = beg; Bi < end; Bi++)
                 {
@@ -855,7 +856,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                             double *ray = (double *) DDSIP_Alloc (sizeof (double), numRows, "ray (UpperBound)");
                             status = CPXdualfarkas (DDSIP_env, DDSIP_dual_lp, ray, &viol);
                             if (DDSIP_param->outlev > 21)
-                                fprintf (DDSIP_bb->moreoutfile," ------------ LP infeasible for scen. %3d, violation %g, oldviol %g (%6.2f) ---------------\n", Bs+1, viol, oldviol, time_end - time_lap);
+                                fprintf (DDSIP_bb->moreoutfile," ------------ LP infeasible for scen. %3d, violation %g, oldviol %g (%6.2f) -- noiter %3d -------------\n", Bs+1, viol, oldviol, time_end - time_lap, DDSIP_bb->noiter);
                             
                             time_lap = DDSIP_GetCpuTime ();
                             if (!status && (viol > 1e-1) && (fabs(viol - oldviol)/viol > 1.1e-8))
@@ -863,7 +864,6 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                 int rmatbeg;
                                 int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->firstvar + 1), "rmatind(UpperBound)");
                                 double *rmatval = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_data->firstvar + 1), "rmatval (UpperBound)");
-                                double rhs;
                                 char sense;
                                 char **rowname = (char **) DDSIP_Alloc (sizeof (char *), 1, "colname(UpperBound)");
                                 char *rowstore = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_varname, "colstore(UpperBound)");
@@ -997,16 +997,17 @@ if(DDSIP_param->outlev > 20)
 #endif
 #ifdef ADDINTEGERCUTS
             //if all first-stage variables are binary ones, we can add an inequality, cutting off this point
-            if (DDSIP_param->addIntegerCuts && !feasCheckOnly)
+            if (DDSIP_param->addIntegerCuts && !feasCheckOnly && DDSIP_param->heuristic > 3)
             {
                 int rmatbeg;
                 int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_bb->novar), "rmatind(UpperBound)");
                 double *rmatval = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_bb->novar), "rmatval (UpperBound)");
-                double rhs, objv = DDSIP_infty;
+                double rhs;
                 char sense;
                 char **rowname = (char **) DDSIP_Alloc (sizeof (char *), 1, "colname(UpperBound)");
                 char *rowstore = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_varname, "colstore(UpperBound)");
 #ifdef CHECKINTEGERCUT
+                double objv = DDSIP_infty;
                 CPXLPptr     DDSIP_dual_lp  = NULL;
 #endif
                 rowname[0] = rowstore;
@@ -1329,16 +1330,27 @@ if(DDSIP_param->outlev > 20)
         for (j = 0; j < DDSIP_bb->firstvar; j++)
             DDSIP_bb->bestsol[j] = ((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval)[j];
 
-        if (tmpbestvalue < DDSIP_node[DDSIP_bb->curnode]->bound)
+        rhs = DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestvalue;
+        if (rhs > 0.)
         {
             // something's wrong with the accuracy of solutions - the heuristic gave a better value than the lower bound in the same node!
-          printf ("*\t*** WARNING: heuristic value is better than lower bound of the node by %g, MIP gaps or tolerances probably not small enough ***\n", DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestvalue);
+          printf ("*\t*** WARNING: heuristic value is better than lower bound of the node by %g, MIP gaps or tolerances probably not small enough ***\n", rhs);
             if (DDSIP_param->outlev)
             {
-                fprintf (DDSIP_outfile, "*\t*** WARNING: heuristic value is better than lower bound of the current node by %g, MIP gaps or tolerances probably not small enough ***\n", DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestvalue);
-                fprintf (DDSIP_bb->moreoutfile, "*\t*** WARNING: heuristic value is better than lower bound of the current node by %g, MIP gaps or tolerances probably not small enough ***\n", DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestvalue);
+                fprintf (DDSIP_outfile, "*\t*** WARNING: heuristic value is better than lower bound of the current node by %g", rhs);
+                fprintf (DDSIP_bb->moreoutfile, "*\t*** WARNING: heuristic value is better than lower bound of the current node by %g", rhs);
+                if (rhs > 1e-9)
+                {
+                    fprintf (DDSIP_outfile, ", MIP gaps or tolerances probably not small enough ***\n");
+                    fprintf (DDSIP_bb->moreoutfile, ", MIP gaps or tolerances probably not small enough ***\n");
+                }
+                else
+                {
+                    fprintf (DDSIP_outfile, " ***\n");
+                    fprintf (DDSIP_bb->moreoutfile, " ***\n");
+                }
             }
-            DDSIP_bb->correct_bounding = DDSIP_Dmax (DDSIP_bb->correct_bounding,  DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestvalue);
+            DDSIP_bb->correct_bounding = DDSIP_Dmax (DDSIP_bb->correct_bounding,  rhs);
         }
 
         for (j = 0; j < DDSIP_bb->secvar; j++)
@@ -1420,6 +1432,8 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
     double tmpbestheur = DDSIP_infty;
     enum DDSIP_step_t currentStep;
 
+    if ((DDSIP_bb->skip == 3) && (DDSIP_node[DDSIP_bb->curnode]->bound >= DDSIP_bb->bestvalue))
+        return;
     currentStep = DDSIP_bb->DDSIP_step;
     DDSIP_bb->heurSuccess = 0;
     DDSIP_bb->DDSIP_step = neobj;

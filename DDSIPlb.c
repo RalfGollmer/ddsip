@@ -1128,6 +1128,7 @@ DDSIP_LowerBound (void)
     char *colstore;
 
     DDSIP_bb->heurSuccess = -1;
+    DDSIP_bb->skip = 0;
     // Output
     if (DDSIP_param->outlev)
     {
@@ -1614,6 +1615,14 @@ DDSIP_LowerBound (void)
                     fprintf (DDSIP_outfile, "ERROR:                                scenario %d.(LowerBound) subproblem status=%d\n", scen + 1, optstatus);
                     if (DDSIP_param->outlev)
                         fprintf (DDSIP_bb->moreoutfile, "ERROR:                                scenario %d.(LowerBound) subproblem status=%d\n", scen + 1, optstatus);
+                }
+                // shift the infeasible scenario to first place
+                if (iscen)
+                {
+                    i_scen = DDSIP_bb->lb_scen_order[iscen];
+                    for(j = iscen; j>0; j--)
+                        DDSIP_bb->lb_scen_order[j] = DDSIP_bb->lb_scen_order[j-1];
+                    DDSIP_bb->ub_scen_order[0] = i_scen;
                 }
                 status = optstatus;
                 goto TERMINATE;
@@ -3059,6 +3068,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     char *colstore;
 
     DDSIP_bb->DDSIP_step = dual;
+    DDSIP_bb->skip = 0;
 
     // ConicBundle somtimes gave negative relprec
     relprec = fabs(relprec);
@@ -4031,6 +4041,84 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         fprintf (DDSIP_bb->moreoutfile,
                  " -**** dual step not increasing  bound for node: %d, new val: %.16g, old bound: %.16g (upper bound: %.16g) weight = %g ****-\n",
                  DDSIP_bb->curnode, tmpbestbound, DDSIP_node[DDSIP_bb->curnode]->bound, tmpupper, cb_get_last_weight(DDSIP_bb->dualProblem));
+        // even when bound was not increased, store the first-stage solution in initial evaluation
+        if (cb_get_last_weight(DDSIP_bb->dualProblem) < 0.)
+        {
+            // Free previous first stage in best point
+            for (j = 0; j < DDSIP_param->scenarios; j++)
+            {
+                if (DDSIP_bb->bestfirst[j].first_sol)
+                {
+                    if ((cnt=DDSIP_bb->bestfirst[j].first_sol[DDSIP_bb->firstvar] -1))
+                    {
+                        if (DDSIP_param->outlev > 90)
+                            fprintf (DDSIP_bb->moreoutfile,
+                                     "  ---  free bestfirst for scenario %d, %d identical ones.\n", j,cnt);
+                        for (k1 = j + 1; cnt && k1 < DDSIP_param->scenarios; k1++)
+                        {
+                            if (DDSIP_bb->bestfirst[j].first_sol == DDSIP_bb->bestfirst[k1].first_sol)
+                            {
+                                DDSIP_bb->bestfirst[k1].first_sol = NULL;
+                                cnt--;
+                                if (DDSIP_param->outlev > 90)
+                                    fprintf (DDSIP_bb->moreoutfile,
+                                             "  +++  NULL bestfirst for scenario %d, %d identical remaining.\n", j,cnt);
+                            }
+                        }
+                    }
+                    if (DDSIP_param->outlev > 90)
+                        fprintf (DDSIP_bb->moreoutfile,
+                                 "  ---> free bestfirst for scenario %d.\n", j);
+                    DDSIP_Free ((void **) &(DDSIP_bb->bestfirst[j].first_sol));
+                }
+                else
+                {
+                    if (DDSIP_param->outlev > 90)
+                        fprintf (DDSIP_bb->moreoutfile, "  ---       bestfirst for scenario %d is %p\n",j,DDSIP_bb->bestfirst[j].first_sol);
+                }
+            }
+            // Save first stage in best point
+            for (j = 0; j < DDSIP_param->scenarios; j++)
+            {
+                if (!DDSIP_bb->bestfirst[j].first_sol)
+                {
+                    DDSIP_bb->bestfirst[j].first_sol = (double *) DDSIP_Alloc(sizeof(double),DDSIP_bb->firstvar+3,"bestfirst.first_sol(CBLowerBound)");
+                    memcpy (DDSIP_bb->bestfirst[j].first_sol, DDSIP_node[DDSIP_bb->curnode]->first_sol[j], sizeof (double) * (DDSIP_bb->firstvar + 3));
+                    if (DDSIP_param->outlev > 69)
+                    {
+                        fprintf (DDSIP_bb->moreoutfile,
+                                 " **** saved solution for scenario %d in bestfirst, %g identical sols.\n", j, (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])[DDSIP_bb->firstvar]);
+                        for (k1 = 0; k1 < DDSIP_bb->firstvar; k1++)
+                        {
+                            fprintf (DDSIP_bb->moreoutfile," %20.14g,", DDSIP_bb->bestfirst[j].first_sol[k1]);
+                            if (!((k1 + 1) % 5))
+                                fprintf (DDSIP_bb->moreoutfile, "\n");
+                        }
+                        fprintf (DDSIP_bb->moreoutfile, "\n");
+                    }
+                    if ((cnt = (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])[DDSIP_bb->firstvar] - 1))
+                        for (k1 = j + 1; cnt && k1 < DDSIP_param->scenarios; k1++)
+                        {
+                            if ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]) == (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[k1]))
+                            {
+                                DDSIP_bb->bestfirst[k1].first_sol = DDSIP_bb->bestfirst[j].first_sol;
+                                cnt--;
+                                if (DDSIP_param->outlev > 69)
+                                    fprintf (DDSIP_bb->moreoutfile,
+                                             "       same solution for scenarios %d and %d, %d identical remaining.\n", j, k1 ,cnt);
+                            }
+                        }
+                }
+                else
+                {
+                    if (DDSIP_param->outlev > 79)
+                        fprintf (DDSIP_bb->moreoutfile,
+                                 " ++++ bestfirst->first_sol for scenario %d already present.\n", j);
+                }
+                DDSIP_bb->bestfirst[j].cursubsol = (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j];
+                DDSIP_bb->bestfirst[j].subbound  = (DDSIP_node[DDSIP_bb->curnode]->subbound)[j];
+            }
+        }
     }
     // Evaluate an upper bound if we found a solution for at least one scenario
     // otherwise it will be skipped

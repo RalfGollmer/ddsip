@@ -53,7 +53,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2017-08-12 (with Benders feasibility cuts) ";
+const char DDSIP_version[] = "2017-09-12 (with Benders feasibility cuts) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -247,7 +247,8 @@ main (void)
             goto TERMINATE;
         }
         // Buffer size = 0
-        setbuf (DDSIP_bb->moreoutfile, 0);
+        if (DDSIP_param->outlev > 21)
+            setbuf (DDSIP_bb->moreoutfile, 0);
 #ifndef _WIN32
         // Print time to output file
         sprintf (astring, "date > %s\n", DDSIP_moreoutfname);
@@ -579,7 +580,8 @@ main (void)
                         fprintf (DDSIP_outfile, " %6d %82d. reinit: %8d cuts\n", 0, cntr, DDSIP_bb->cutAdded);
                     }
                     DDSIP_bb->noiter++;
-                    if ((DDSIP_node[0]->bound - old_bound)/(fabs(old_bound) + 1e-16) < 1.e-7)
+                    if ((DDSIP_node[0]->bound - old_bound)/(fabs(old_bound) + 1e-16) < 1.e-7 ||
+                        (DDSIP_bb->bestvalue - DDSIP_node[0]->bound)/(fabs(DDSIP_bb->bestvalue) + 1e-16) < 0.5*DDSIP_param->relgap)
                         break;
                 }
             }

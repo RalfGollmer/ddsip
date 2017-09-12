@@ -206,6 +206,8 @@ DDSIP_Continue (int *noiter, int *boundstat)
                     for (i = 0; i < DDSIP_param->scenarios; i++)
                         fprintf (outputfile, "%5d    %13.7g         %13.7g\n", i + 1, DDSIP_bb->btlb[i], DDSIP_bb->subsol[i]);
 
+                    fprintf (outputfile, "\nBest Value:        %20.12g (Risk model %d)\n", DDSIP_bb->bestvalue,DDSIP_param->riskmod);
+                    fprintf (outputfile, "Lower Bound:       %20.12g\n", DDSIP_bb->bestbound);
                     // 3. Quantiles
                     fprintf (outputfile, "\n3. Quantiles\n");
                     // Sort index
@@ -286,7 +288,10 @@ DDSIP_Continue (int *noiter, int *boundstat)
         fprintf (DDSIP_outfile, "max. mean MIP gap LB  %g%%\n", DDSIP_bb->meanGapLB);
         fprintf (DDSIP_outfile, "max. mean MIP gap UB  %g%%\n", DDSIP_bb->meanGapUB);
         if (DDSIP_param->cb)
+        {
             fprintf (DDSIP_outfile, "max. mean MIP gap CB  %g%%\n", DDSIP_bb->meanGapCBLB);
+            fprintf (DDSIP_outfile, "CB function eval %6d\n", DDSIP_bb->CBIters);
+        }
 
         // Risk Model
         if (DDSIP_param->riskmod && feas)

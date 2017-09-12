@@ -35,15 +35,6 @@ DDSIP_RestoreBoundAndType (void)
     if ((DDSIP_bb->DDSIP_step == neobj || DDSIP_bb->DDSIP_step == eev) && DDSIP_param->riskvar)
         DDSIP_UndeleteRiskObj ();
 
-    /*   if (DDSIP_bb->DDSIP_step==solve || DDSIP_bb->DDSIP_step==dual) */
-    /* 	{ */
-    /* 	  status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_bb->firstvar, DDSIP_bb->firstindex, DDSIP_bb->cost); */
-    /* 	  if ( status ) { */
-    /* 		fprintf (stderr,"ERROR: Failed to update objective coefficients\n"); */
-    /* 		return status; */
-    /* 	  } */
-    /* 	} */
-
     // Restore original bounds
     status = CPXchgbds (DDSIP_env, DDSIP_lp, DDSIP_bb->firstvar, DDSIP_bb->firstindex, DDSIP_bb->lbident, DDSIP_bb->lborg);
     if (status)

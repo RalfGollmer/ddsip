@@ -1182,21 +1182,26 @@ DDSIP_ReadSpec ()
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
     fprintf (DDSIP_outfile, "-DUAL DECOMPOSITION PROCEDURE\n\n");
 
+#ifdef NEOS
+    DDSIP_param->outlev    = floor (DDSIP_ReadDbl (specfile, "OUTLEV", " OUTPUT LEVEL", 0., 1, 0.,3.) + 0.1);
+    DDSIP_param->files     = floor (DDSIP_ReadDbl (specfile, "OUTFIL", " OUTPUT FILES LEVEL", 1., 1, 0., 1.) + 0.1);
+    DDSIP_param->timelim   = DDSIP_ReadDbl (specfile, "TIMELI", " TIME LIMIT", 7000., 0, 0., DDSIP_infty);
+#else
     DDSIP_param->outlev    = floor (DDSIP_ReadDbl (specfile, "OUTLEV", " OUTPUT LEVEL", 0., 1, 0.,100.) + 0.1);
     DDSIP_param->files     = floor (DDSIP_ReadDbl (specfile, "OUTFIL", " OUTPUT FILES LEVEL", 1., 1, 0., 6.) + 0.1);
-    DDSIP_param->logfreq   = floor (DDSIP_ReadDbl (specfile, "LOGFRE", " LOG FREQUENCY", 1., 1, 0., DDSIP_bigint) + 0.1);
-    DDSIP_param->nodelim   = floor (DDSIP_ReadDbl (specfile, "NODELI", " NODE LIMIT", DDSIP_bigint, 1, 1., INT_MAX-1) + 0.1);
     // uncomment for default timelimit: 24h
     //DDSIP_param->timelim   = DDSIP_ReadDbl (specfile, "TIMELI", " TIME LIMIT", 86400., 0, 0., DDSIP_infty);
     // default timelimit: 14 days
     DDSIP_param->timelim   = DDSIP_ReadDbl (specfile, "TIMELI", " TIME LIMIT", 1209600., 0, 0., DDSIP_infty);
+#endif
+    DDSIP_param->logfreq   = floor (DDSIP_ReadDbl (specfile, "LOGFRE", " LOG FREQUENCY", 1., 1, 0., DDSIP_bigint) + 0.1);
+    DDSIP_param->nodelim   = floor (DDSIP_ReadDbl (specfile, "NODELI", " NODE LIMIT", DDSIP_bigint, 1, 1., INT_MAX-1) + 0.1);
     // Accuracy, e.g. for the  comparison of double numbers
     DDSIP_param->accuracy  = DDSIP_ReadDbl (specfile, "ACCURA", " ACCURACY", 2.0e-13, 0, 1.e-13, 1.);
-    // DDSIP_param->accuracy = DDSIP_Dmax (DDSIP_param->relgap * DDSIP_param->accuracy,1e-8);
     DDSIP_param->brancheps = DDSIP_ReadDbl (specfile, "EPSILO", " EPSILON", 1.5e-11, 0, 1.e-11, 1.);
     DDSIP_param->nulldisp  = DDSIP_ReadDbl (specfile, "NULLDI", " NULL DISPERSION", 1.6e-11, 0, 1.6e-11, DDSIP_infty);
     DDSIP_param->absgap    = DDSIP_ReadDbl (specfile, "ABSOLU", " ABSOLUTE GAP", 0., 0, 0., DDSIP_infty);
-    DDSIP_param->relgap    = DDSIP_ReadDbl (specfile, "RELATI", " RELATIVE GAP", 0.0001, 0, 1.2*DDSIP_param->brancheps, 1.);
+    DDSIP_param->relgap    = DDSIP_ReadDbl (specfile, "RELATI", " RELATIVE GAP", 1.0e-5, 0, 1.2*DDSIP_param->brancheps, 1.);
     DDSIP_param->expected  = floor (DDSIP_ReadDbl (specfile, "EEVPRO", " EXPECTED VALUE PROBLEM", 0., 1, 0., 1.) + 0.1);
     // Write deterministic DDSIP_equivalent (only expectation-based case so far)
     DDSIP_param->write_detequ = floor (DDSIP_ReadDbl (specfile, "DETEQU", " WRITE DETERMINISTIC EQUIVALENT", 0., 1, 0., 1.) + 0.1);
@@ -1275,7 +1280,6 @@ DDSIP_ReadSpec ()
         DDSIP_param->alwaysBendersCuts = floor (DDSIP_ReadDbl (specfile, "ALWAYS", " ALWAYS CHECK FOR CUTS", 1., 1, 0., 1.) + 0.1);
         DDSIP_param->testOtherScens = DDSIP_param->stocmat ? 1. : 0.;
         DDSIP_param->testOtherScens = floor (DDSIP_ReadDbl (specfile, "TESTBE", " TEST FOR FURTHER BENDERS CUTS", DDSIP_param->testOtherScens, 1, 0., 1.) + 0.1);
-        DDSIP_param->numberReinits  = floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 10., 1, 0., DDSIP_bigint) + 0.1);
     }
     else
     {
@@ -1287,6 +1291,11 @@ DDSIP_ReadSpec ()
 #ifdef ADDINTEGERCUTS
     DDSIP_param->addIntegerCuts = floor (DDSIP_ReadDbl (specfile, "ADDINT", " ADD INTEGER CUTS", 1., 1, 0., 1.) + 0.1);
 #endif
+    if (DDSIP_param->addBendersCuts || DDSIP_param->addIntegerCuts)
+    {
+        DDSIP_param->numberReinits  = floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 20., 1, 0., DDSIP_bigint) + 0.1);
+    }
+    
     DDSIP_param->redundancyCheck = floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", 0., 1, 0., 1.) + 0.1);
     DDSIP_param->annotationFile = DDSIP_ReadString (specfile, "ANNOTA", " ANNOTATION FILE FOR CPLEX BENDERS");
     fprintf (DDSIP_outfile, "\n");
@@ -1500,11 +1509,11 @@ DDSIP_ReadSpec ()
         DDSIP_param->cbrelgap = DDSIP_ReadDbl (specfile, "CBPREC", " CB PRECISION", 1.e-14, 0, 0., DDSIP_infty);
         DDSIP_param->nonant = floor (DDSIP_ReadDbl (specfile, "NONANT", " CB NON-ANTICIPATIVITY", 1., 1, 1., 3.) + 0.1);
         DDSIP_param->cbprint = floor (DDSIP_ReadDbl (specfile, "CBPRIN", " CB PRINT LEVEL", 0., 1, 0., DDSIP_bigint) + 0.1);
-        DDSIP_param->cbbundlesz = floor (DDSIP_ReadDbl (specfile, "CBBUNS", " CB MAXIMAL BUNDLE SIZE", 500., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->cbbundlesz = floor (DDSIP_ReadDbl (specfile, "CBBUNS", " CB MAXIMAL BUNDLE SIZE", 200., 1, 0., DDSIP_bigint) + 0.1);
         //DDSIP_param->cbmaxsubg = floor (DDSIP_ReadDbl (specfile, "CBMAXS", " CB MAXIMAL NO OF SUBGRADIENTS", 1., 1, 0., DDSIP_bigint) + 0.1);
         DDSIP_param->cbmaxsubg = 1;
         DDSIP_param->cbweight = DDSIP_ReadDbl (specfile, "CBWEIG", " CB START WEIGHT", 1., 0, 0., DDSIP_infty);
-        DDSIP_param->cbfactor = DDSIP_ReadDbl (specfile, "CBFACT", " FACTOR OF CB START WEIGHT", 0.01, 0, 0., 1.);
+        DDSIP_param->cbfactor = DDSIP_ReadDbl (specfile, "CBFACT", " FACTOR OF CB START WEIGHT", 0.05, 0, 0., 1.);
         if (abs(DDSIP_param->riskmod) == 4 && DDSIP_param->cbweight < (tmp = DDSIP_param->riskweight*0.5))
         {
             printf ("\n     CBWEIGHT less than 0.5*(risk weight), resetting to %g, CBFACTOR to %g.\n\n", tmp, 1e-1/tmp);
@@ -1516,6 +1525,7 @@ DDSIP_ReadSpec ()
         DDSIP_param->cb_changetol = floor (DDSIP_ReadDbl (specfile, "CBCHAN", " CB CHANGE TOLERANCE", 0., 1, 0., 1.) + 0.1);
         DDSIP_param->cb_reduceWeight = floor (DDSIP_ReadDbl (specfile, "CBREDU", " CB REDUCE WEIGHT", 1., 1, 0., 1.) + 0.1);
         DDSIP_param->cb_increaseWeight = floor (DDSIP_ReadDbl (specfile, "CBINCR", " CB INCREASE WEIGHT", 1., 1, 0., 1.) + 0.1);
+        DDSIP_param->cb_checkBestdual = floor (DDSIP_ReadDbl (specfile, "CBCHEC", " CB CHECK BESTDUAL", 1., 1, 0., 1.) + 0.1);
     }
 #else
 //if (DDSIP_param->cb){

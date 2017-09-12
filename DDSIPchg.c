@@ -142,7 +142,7 @@ DDSIP_ChgProb (int scen)
                 for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
                         j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
                 {
-                    if (fabs (DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]]) > 4e-16)
+                    if (fabs (DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]]) > 1e-18)
                     {
                         if (DDSIP_param->outlev > 74)
                         {

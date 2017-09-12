@@ -152,13 +152,13 @@ DDSIP_InitNewNodes (void)
     // Initialize multiplier in node
     if (DDSIP_param->cb)
     {
-        DDSIP_node[DDSIP_bb->nonode]->dual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 1, "dual(InitNewNodes)");
-        memcpy (DDSIP_node[DDSIP_bb->nonode]->dual, DDSIP_node[DDSIP_bb->curnode]->bestdual, sizeof (double) * (DDSIP_bb->dimdual + 1));
+        DDSIP_node[DDSIP_bb->nonode]->dual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 2, "dual(InitNewNodes)");
+        memcpy (DDSIP_node[DDSIP_bb->nonode]->dual, DDSIP_node[DDSIP_bb->curnode]->bestdual, sizeof (double) * (DDSIP_bb->dimdual + 2));
         DDSIP_node[DDSIP_bb->nonode + 1]->dual = DDSIP_node[DDSIP_bb->curnode]->dual;
-        memcpy (DDSIP_node[DDSIP_bb->nonode+1]->dual, DDSIP_node[DDSIP_bb->curnode]->bestdual, sizeof (double) * (DDSIP_bb->dimdual + 1));
+        memcpy (DDSIP_node[DDSIP_bb->nonode+1]->dual, DDSIP_node[DDSIP_bb->curnode]->bestdual, sizeof (double) * (DDSIP_bb->dimdual + 2));
         DDSIP_node[DDSIP_bb->curnode]->dual = NULL;
-        DDSIP_node[DDSIP_bb->nonode]->bestdual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 1, "dual(InitNewNodes)");
-        memcpy (DDSIP_node[DDSIP_bb->nonode]->bestdual, DDSIP_node[DDSIP_bb->curnode]->bestdual, sizeof (double) * (DDSIP_bb->dimdual + 1));
+        DDSIP_node[DDSIP_bb->nonode]->bestdual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 2, "dual(InitNewNodes)");
+        memcpy (DDSIP_node[DDSIP_bb->nonode]->bestdual, DDSIP_node[DDSIP_bb->curnode]->bestdual, sizeof (double) * (DDSIP_bb->dimdual + 2));
         DDSIP_node[DDSIP_bb->nonode + 1]->bestdual = DDSIP_node[DDSIP_bb->curnode]->bestdual;
         DDSIP_node[DDSIP_bb->curnode]->bestdual = NULL;
 
@@ -1084,7 +1084,8 @@ DDSIP_Bound (void)
             fprintf (DDSIP_bb->moreoutfile,
                      "No of front nodes: %d (including %d leaves)\n", DDSIP_bb->nofront, DDSIP_bb->nofront - DDSIP_bb->no_reduced_front);
             fprintf (DDSIP_bb->moreoutfile, "     No.   bound             violations dispnorm  branchvar lower bound  upper        range         depth isleaf solved cutAdded\n");
-            for (i = 0; i < DDSIP_bb->nofront; i++)
+            j = (DDSIP_param->outlev > 21 || !(DDSIP_bb->curnode % 200)) ? DDSIP_bb->nofront : DDSIP_Imin(DDSIP_bb->nofront,25);
+            for (i = 0; i < j; i++)
             {
                 if (DDSIP_Equal (DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->dispnorm, DDSIP_infty))
                 {

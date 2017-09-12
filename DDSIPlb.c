@@ -622,7 +622,6 @@ DDSIP_Warm (int iscen)
     }
     if (DDSIP_param->outlev > 90)
         fprintf (DDSIP_bb->moreoutfile, " before adding there are %d mip starts\n", CPXgetnummipstarts(DDSIP_env,DDSIP_lp));
-    // Hotstart = 0 --> ADVIND  0 - start values should not be used
     if ((DDSIP_bb->DDSIP_step == dual || (DDSIP_param->cb < 0 && !DDSIP_bb->curnode)) && DDSIP_bb->dualitcnt)
     {
         DDSIP_bb->beg[0]=0;
@@ -679,6 +678,7 @@ DDSIP_Warm (int iscen)
             return status;
         }
     }
+    // Hotstart = 0 --> ADVIND  0 - start values should not be used
     if (DDSIP_param->hot == 0 && !(DDSIP_bb->DDSIP_step == dual && DDSIP_bb->dualitcnt))
     {
         status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 0);
@@ -1616,14 +1616,6 @@ DDSIP_LowerBound (void)
                     if (DDSIP_param->outlev)
                         fprintf (DDSIP_bb->moreoutfile, "ERROR:                                scenario %d.(LowerBound) subproblem status=%d\n", scen + 1, optstatus);
                 }
-                // shift the infeasible scenario to first place
-                if (iscen)
-                {
-                    i_scen = DDSIP_bb->lb_scen_order[iscen];
-                    for(j = iscen; j>0; j--)
-                        DDSIP_bb->lb_scen_order[j] = DDSIP_bb->lb_scen_order[j-1];
-                    DDSIP_bb->ub_scen_order[0] = i_scen;
-                }
                 status = optstatus;
                 goto TERMINATE;
             }
@@ -1637,11 +1629,11 @@ DDSIP_LowerBound (void)
                     time (&DDSIP_bb->cur_time);
                     DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                     fprintf (DDSIP_bb->moreoutfile,
-                             "%4d Scenario %4.0d:                          \tinfeasible               \t         \tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f\n",
+                             "%4d Scenario %4.0d:                          \tinfeasible               \t             \tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f\n",
                              iscen + 1, scen + 1, mipstatus, wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs);
                     if (DDSIP_param->outlev > 7)
                     {
-                        printf ("%4d Scenario %4.0d:                          \tinfeasible               \t         \tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f\n",
+                        printf ("%4d Scenario %4.0d:                          \tinfeasible               \t             \tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f\n",
                                 iscen + 1, scen + 1, mipstatus, wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs);
                         if (DDSIP_param->cpxscr)
                             printf ("\n");
@@ -1667,15 +1659,23 @@ DDSIP_LowerBound (void)
                     time (&DDSIP_bb->cur_time);
                     DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                     fprintf (DDSIP_bb->moreoutfile,
-                             "%4d Scenario %4.0d:                          \tinfeasible               \t         \tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f\n",
+                             "%4d Scenario %4.0d:                          \tinfeasible               \t             \tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f\n",
                              iscen + 1, scen + 1, mipstatus, wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs);
                     if (DDSIP_param->outlev>7)
                     {
-                        printf ("%4d Scenario %4.0d:                          \tinfeasible               \t         \tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f\n",
+                        printf ("%4d Scenario %4.0d:                          \tinfeasible               \t             \tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f\n",
                                 iscen + 1, scen + 1, mipstatus, wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs);
                         if (DDSIP_param->cpxscr)
                             printf ("\n");
                     }
+                }
+                // shift the infeasible scenario to be solved first
+                if (iscen)
+                {
+                    i_scen = DDSIP_bb->lb_scen_order[iscen];
+                    for(j = iscen; j>0; j--)
+                        DDSIP_bb->lb_scen_order[j] = DDSIP_bb->lb_scen_order[j-1];
+                    DDSIP_bb->lb_scen_order[0] = i_scen;
                 }
                 DDSIP_node[DDSIP_bb->curnode]->bound = DDSIP_infty;
                 DDSIP_bb->skip = 1;
@@ -2314,7 +2314,7 @@ if (DDSIP_param->outlev > 5)
                     if (DDSIP_param->outlev > 7)
                     {
                         printf ("\tNumber of violations of nonanticipativity of first-stage variables:  %d, max: %g\n", DDSIP_bb->violations, maxdispersion);
-                        printf ("\tLower bound of node %d = %.16g          \t(upper bound = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
+                        printf ("\tLower bound of node %d = %.16g          \t(ub = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
                                 DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestvalue, meanGap);
                     }
                 }
@@ -2328,12 +2328,12 @@ if (DDSIP_param->outlev > 5)
                     if (DDSIP_param->outlev > 7)
                     {
                         printf ("\tNumber of violations of nonanticipativity of first-stage variables:  %d\n", DDSIP_bb->violations);
-                        printf ("\tLower bound of node %d = %.16g          \t(upper bound = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
+                        printf ("\tLower bound of node %d = %.16g          \t(ub = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
                                 DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestvalue, meanGap);
                     }
                 }
             }
-            fprintf (DDSIP_bb->moreoutfile, "\tLower bound of node %d = %.16g          \t(upper bound = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
+            fprintf (DDSIP_bb->moreoutfile, "\tLower bound of node %d = %.16g          \t(ub = %.16g,\tmean MIP gap: %g%%)\n", DDSIP_bb->curnode,
                                            DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestvalue, meanGap);
         }
 
@@ -3938,6 +3938,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         }
     }
     *objective_val = -tmpbestbound;
+    DDSIP_bb->CBIters++;
     if (tmpbestbound > DDSIP_node[DDSIP_bb->curnode]->bound /*- fabs(DDSIP_node[DDSIP_bb->curnode]->bound)*2.e-15*/)
     {
         DDSIP_bb->dualObjVal = tmpbestbound;
@@ -3945,19 +3946,23 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         use_LB_params = 0;
         if (DDSIP_param->outlev > 6)
             fprintf (DDSIP_bb->moreoutfile,
-                     " +++++ dual step     increasing  bound for node: %d, new val: %.16g, old value: %.16g, increase abs %g, rel %g,  weight = %g +++++\n",
+                     " +++++ dual step     increasing  bound for node: %d, new val: %.16g, old value: %.16g, increase abs %g, rel %g%%,  weight = %g +++++\n",
                      DDSIP_bb->curnode, tmpbestbound,  DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestbound - DDSIP_node[DDSIP_bb->curnode]->bound,
-                     (tmpbestbound - DDSIP_node[DDSIP_bb->curnode]->bound)/(fabs(DDSIP_node[DDSIP_bb->curnode]->bound)+1e-6), cb_get_last_weight(DDSIP_bb->dualProblem));
+                     1.e2*(tmpbestbound - DDSIP_node[DDSIP_bb->curnode]->bound)/(fabs(DDSIP_node[DDSIP_bb->curnode]->bound)+1e-6), cb_get_last_weight(DDSIP_bb->dualProblem));
         DDSIP_node[DDSIP_bb->curnode]->violations = DDSIP_bb->violations;
-        // Store the current best multipliers in bestdual
-        memcpy (DDSIP_node[DDSIP_bb->curnode]->bestdual, DDSIP_node[DDSIP_bb->curnode]->dual, sizeof (double) * (DDSIP_bb->dimdual));
-        // the current weight, too
-        DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] = cb_get_last_weight(DDSIP_bb->dualProblem);
-        // for the case of no bound increase, when the initial evaluation (with weight -1) was best, make the weight 0.1
-        if (DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] < 0.)
-            DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] = 0.1;
-        if (DDSIP_param->outlev > 10)
-            fprintf (DDSIP_bb->moreoutfile," +++-> bestdual updated in desc. it. %d  (weight %g)\n", DDSIP_bb->dualdescitcnt, DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual]);
+        if (DDSIP_bb->dualdescitcnt)
+        {
+            // Store the current best multipliers in bestdual
+            memcpy (DDSIP_node[DDSIP_bb->curnode]->bestdual, DDSIP_node[DDSIP_bb->curnode]->dual, sizeof (double) * (DDSIP_bb->dimdual));
+            // the current weight and the node number, too
+            DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] = cb_get_last_weight(DDSIP_bb->dualProblem);
+            DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual + 1] = DDSIP_bb->curnode;
+            // for the case of no bound increase, when the initial evaluation (with weight -1) was best, make the weight 0.1
+            if (DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] < 0.)
+              DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] = 0.1;
+            if (DDSIP_param->outlev > 10)
+              fprintf (DDSIP_bb->moreoutfile," +++-> bestdual updated in desc. it. %d  (weight %g)\n", DDSIP_bb->dualdescitcnt, DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual]);
+        }
         // Set lower bound for the node
         DDSIP_node[DDSIP_bb->curnode]->bound = tmpbestbound;
         // Free previous first stage in best point
@@ -4039,8 +4044,8 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     {
         increase = 0;
         fprintf (DDSIP_bb->moreoutfile,
-                 " -**** dual step not increasing  bound for node: %d, new val: %.16g, old bound: %.16g (upper bound: %.16g) weight = %g ****-\n",
-                 DDSIP_bb->curnode, tmpbestbound, DDSIP_node[DDSIP_bb->curnode]->bound, tmpupper, cb_get_last_weight(DDSIP_bb->dualProblem));
+                 " -**** dual step not increasing  bound for node: %d, new val: %.16g, old bound: %.16g (ub: %.13g, diff: %.6g) weight = %g ****-\n",
+                 DDSIP_bb->curnode, tmpbestbound, DDSIP_node[DDSIP_bb->curnode]->bound, tmpupper, tmpbestbound -  DDSIP_node[DDSIP_bb->curnode]->bound, cb_get_last_weight(DDSIP_bb->dualProblem));
         // even when bound was not increased, store the first-stage solution in initial evaluation
         if (cb_get_last_weight(DDSIP_bb->dualProblem) < 0.)
         {
@@ -4372,8 +4377,8 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         if (DDSIP_param->outlev > 6 && !increase && DDSIP_bb->dualObjVal > -DDSIP_infty)
         {
             fprintf (DDSIP_bb->moreoutfile,
-                     " -**** dual step not increasing objval for node: %d, new val: %.16g, old value: %.16g ****-\n",
-                     DDSIP_bb->curnode, -(*objective_val), DDSIP_bb->dualObjVal);
+                     " -**** dual step not increasing objval for node: %d, new val: %.16g, old value: %.16g (diff %g) ****-\n",
+                     DDSIP_bb->curnode, -(*objective_val), DDSIP_bb->dualObjVal,  -(*objective_val)-DDSIP_bb->dualObjVal);
         }
     }
     DDSIP_bb->dualObjVal =  DDSIP_Dmax(-(*objective_val), DDSIP_bb->dualObjVal);
@@ -4389,7 +4394,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             if (DDSIP_param->outlev > 7)
             {
                 printf ("\tNumber of violations of nonanticipativity of first-stage variables:  %d, max: %g\n", DDSIP_bb->violations, maxdispersion);
-                printf ("\tLower bound of node %-10d           = \t%.16g)\n",
+                printf ("\tLower bound of node %-10d           = \t%.16g\n",
                                         DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound);
                 printf ("\tCurrent dual objective value             = \t%.16g          \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
             }

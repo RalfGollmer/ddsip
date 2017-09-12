@@ -157,6 +157,8 @@ extern "C" {
         int cb_reduceWeight;
         // increase weight for CB if descent steps were unsuccessful or take too many iterations
         int cb_increaseWeight;
+        // check Lagrange multipliers which gave the highest bound
+        int cb_checkBestdual;
 #endif
 
         // 3. Branch-and-bound
@@ -496,6 +498,8 @@ extern "C" {
 
         // Heuristic solution in each node
         sug_t ** sug;
+        // index of scenario giving heuristic suggestion
+        int from_scenario;
 
         // Wait-and-see lower bounds for calculation of 'best target'
         double *btlb;
@@ -546,6 +550,8 @@ extern "C" {
         int heurSuccess;
         int cutoff;
         cb_problemp dualProblem;
+        // count the cb function evaluations
+        int CBIters;
         double correct_bounding;
         // set to 1 when the original is maximization
         int maximization;
@@ -566,6 +572,8 @@ extern "C" {
         double bound_optimal_node;
         // indicator whether the current incumbent is feasible for the current node bounds
         int bestsol_in_curnode;
+        // index of node which gave the highest dual bound
+        double* bestdual;
         //  number of scenarios shifted to begin of the sorted list due to ub infeasibility
         int shifts;
 

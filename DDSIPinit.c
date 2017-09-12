@@ -349,6 +349,8 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->firstcon = DDSIP_data->firstcon;
     DDSIP_bb->seccon = DDSIP_data->seccon;
     DDSIP_bb->correct_bounding = 0.;
+    DDSIP_bb->CBIters = 0;
+    DDSIP_bb->from_scenario = -1;
 
     // Change according to risk model
     if (!DDSIP_param->riskalg && !DDSIP_param->scalarization)
@@ -511,14 +513,14 @@ DDSIP_BbTypeInit (void)
 
     if (DDSIP_param->cb)
     {
-        DDSIP_node[0]->dual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 1, "dual(BbTypeInit)");
-        DDSIP_node[0]->bestdual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 1, "dual(BbTypeInit)");
-        DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual] =DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] = DDSIP_param->cbweight;
+        DDSIP_node[0]->dual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 2, "dual(BbTypeInit)");
+        DDSIP_node[0]->bestdual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 2, "dual(BbTypeInit)");
+        DDSIP_node[0]->dual[DDSIP_bb->dimdual] = DDSIP_node[0]->bestdual[DDSIP_bb->dimdual] = DDSIP_param->cbweight;
+        DDSIP_node[0]->dual[DDSIP_bb->dimdual + 1] = 0.;
         for (i = 0; i < DDSIP_bb->dimdual; i++)
         {
             DDSIP_node[0]->dual[i] = DDSIP_node[0]->bestdual[i] = 0.;
         }
-        DDSIP_node[0]->dual[DDSIP_bb->dimdual] = DDSIP_param->cbweight;
     }
 
     for (i = 0; i < DDSIP_bb->firstvar; DDSIP_bb->bestsol[i++] = 0.0);
@@ -545,6 +547,10 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->meanGapLB = DDSIP_bb->meanGapCBLB = DDSIP_bb->meanGapUB = 0.;
     DDSIP_bb->bestBound = DDSIP_bb->newTry = DDSIP_bb->cutCntr = DDSIP_bb->cutAdded = 0;
     DDSIP_bb->bestsol_in_curnode = 1;
+    if (DDSIP_param->cb)
+        DDSIP_bb->bestdual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 3, "bestdual(BbTypeInit)");
+    else
+        DDSIP_bb->bestdual = NULL;
     DDSIP_bb->shifts = 0;
 
     return status;
@@ -812,10 +818,10 @@ DDSIP_InitStages (void)
     // upper bounds on all variables
     if (ind)
     {
-        printf ("*Warning: Variable(s) unbounded. This may cause problems with dual method (unboundedness of scenario problems due to Lagrangean term).\n");
-        fprintf (DDSIP_outfile, "*Warning: Variable(s) unbounded. This may cause problems with dual method (unboundedness of scenario problems due to Lagrangean term).\n");
+        printf ("*Warning: First-stage variable(s) unbounded. This may cause problems with dual method (unboundedness of scenario problems due to Lagrangean term).\n");
+        fprintf (DDSIP_outfile, "*Warning: First-stage variable(s) unbounded. This may cause problems with dual method (unboundedness of scenario problems due to Lagrangean term).\n");
         if (DDSIP_param->outlev)
-            fprintf (DDSIP_bb->moreoutfile, "*Warning: Variable(s) unbounded. This may cause problems with dual method (unboundedness of scenario problems due to Lagrangean term).\n");
+            fprintf (DDSIP_bb->moreoutfile, "*Warning: First-stage variable(s) unbounded. This may cause problems with dual method (unboundedness of scenario problems due to Lagrangean term).\n");
     }
 
     DDSIP_Free ((void **) &(lb));

@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include <DDSIP.h>
 #include <DDSIPconst.h>
-//#define CHECKINTEGERCUT
+#define CHECKINTEGERCUT
 
 //int DDSIP_RecFun (double *);
 int DDSIP_PrintModFileUb (int);
@@ -302,7 +302,7 @@ DDSIP_SolChk (double* cutViolation)
             {
                 lhs += (DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[i] * currentCut->matval[i];
             }
-            if (lhs < currentCut->rhs - 1.e-7)
+            if (lhs < currentCut->rhs - 1.e-9*fabs(currentCut->rhs))
             {
                 *cutViolation = currentCut->rhs - lhs;
                 if (DDSIP_param->outlev)
@@ -338,7 +338,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     int wall_hrs, wall_mins,cpu_hrs, cpu_mins;
 
     double tmpbestvalue = 0., tmpfeasbound = 0., rest_bound, tmprisk = 0., tmprisk4 = -DDSIP_infty, tmpprob = 0.;
-    double bobjval, objval, fs, time_start, time_end, time_lap, wall_secs, cpu_secs, gap, meanGap;
+    double security_factor = 1.0-2.e-14, bobjval, objval, fs, time_start, time_end, time_lap, wall_secs, cpu_secs, gap, meanGap;
 
     double *mipx, *values;
     double **tmpsecsol;
@@ -799,7 +799,8 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                 }
             }
 #ifdef ADDBENDERSCUTS
-            if (DDSIP_param->addBendersCuts && (DDSIP_param->heuristic > 3 || iscen))
+            if (DDSIP_bb->DDSIP_step != adv && DDSIP_bb->DDSIP_step != eev &&
+                (DDSIP_param->addBendersCuts && (DDSIP_param->heuristic > 3 || iscen)))
             {
                 CPXLPptr     DDSIP_dual_lp  = NULL;
                 cutpool_t * newCut;
@@ -812,7 +813,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                 else
                 {
                     beg = iscen;
-                    end = (DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 7 && DDSIP_param->testOtherScens) || (DDSIP_bb->noiter < 2 && DDSIP_bb->dualitcnt < 3)) ? DDSIP_param->scenarios : DDSIP_Imax(iscen+1, DDSIP_bb->shifts);
+                    end = (DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 8 && DDSIP_param->testOtherScens)) ? DDSIP_param->scenarios : DDSIP_Imax(iscen+1, DDSIP_bb->shifts);
                 }
                 for (Bi = beg; Bi < end; Bi++)
                 {
@@ -856,7 +857,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                             double *ray = (double *) DDSIP_Alloc (sizeof (double), numRows, "ray (UpperBound)");
                             status = CPXdualfarkas (DDSIP_env, DDSIP_dual_lp, ray, &viol);
                             if (DDSIP_param->outlev > 21)
-                                fprintf (DDSIP_bb->moreoutfile," ------------ LP infeasible for scen. %3d, violation %g, oldviol %g (%6.2f) -- noiter %3d -------------\n", Bs+1, viol, oldviol, time_end - time_lap, DDSIP_bb->noiter);
+                                fprintf (DDSIP_bb->moreoutfile," ------------ LP infeasible for scen. %3d, violation %g, oldviol %g (%6.2f) ---------------\n", Bs+1, viol, oldviol, time_end - time_lap);
                             
                             time_lap = DDSIP_GetCpuTime ();
                             if (!status && (viol > 1e-1) && (fabs(viol - oldviol)/viol > 1.1e-8))
@@ -924,7 +925,8 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                     {
                                         lhs += rmatval[k]*values[k];
                                     }
-                                    rhs = lhs + viol*0.999999925;
+                                    //rhs = lhs + viol*0.999999999995;
+                                    rhs = lhs + viol*security_factor;
                                     if ((status = CPXaddrows(DDSIP_env, DDSIP_lp, 0, 1, DDSIP_data->firstvar, &rhs, &sense, &rmatbeg, rmatind, rmatval, NULL, rowname)))
                                     {
                                         fprintf (stdout, "ERROR: Failed to add cut inequality (UpperBound), status=%d \n",status);
@@ -946,10 +948,6 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                     //shift this infeasible scenario to first place, such that next time it is checked first
                                     if (Bi)
                                     {
-if(DDSIP_param->outlev > 20)
-{
-  fprintf (DDSIP_bb->moreoutfile, "###: shifting scenario %d (Bi=%d) to first place, shifts before: %d", Bs+1, Bi, DDSIP_bb->shifts);
-}
                                         if (Bi >= DDSIP_bb->shifts)
                                             DDSIP_bb->shifts++;
                                         k = DDSIP_bb->ub_scen_order[Bi];
@@ -958,10 +956,6 @@ if(DDSIP_param->outlev > 20)
                                         DDSIP_bb->ub_scen_order[0] = k;
                                         iscen = 0;
                                         scen = k;
-if(DDSIP_param->outlev > 20)
-{
-  fprintf (DDSIP_bb->moreoutfile, ", shifts now: %d\n", DDSIP_bb->shifts);
-}
                                     }
                                 }
 
@@ -997,7 +991,8 @@ if(DDSIP_param->outlev > 20)
 #endif
 #ifdef ADDINTEGERCUTS
             //if all first-stage variables are binary ones, we can add an inequality, cutting off this point
-            if (DDSIP_param->addIntegerCuts && !feasCheckOnly && DDSIP_param->heuristic > 3)
+            if (DDSIP_bb->DDSIP_step == adv && DDSIP_bb->DDSIP_step != eev &&
+                (DDSIP_param->addIntegerCuts && !feasCheckOnly && DDSIP_param->heuristic > 3))
             {
                 int rmatbeg;
                 int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_bb->novar), "rmatind(UpperBound)");
@@ -1032,28 +1027,29 @@ if(DDSIP_param->outlev > 20)
                   rmatind[k] = DDSIP_bb->secondindex[k - DDSIP_data->firstvar];
                   rmatval[k] = 0.;
                 }
-                // check whether this cut is dominated
-                status = DDSIP_RestoreBoundAndType ();
-                if (status)
-                {
-                    fprintf (stderr, "ERROR: Failed to change bounds for check, error code %d\n", status);
-                    goto TERMINATE;
-                }
-                status = DDSIP_ChgProb (scen);
-                if (status)
-                {
-                    fprintf (stderr, "ERROR: Failed to change problem for check to scenario %d, error code %d\n", scen + 1, status);
-                    goto TERMINATE;
-                }
 #ifdef CHECKINTEGERCUT
-                DDSIP_dual_lp = CPXcloneprob (DDSIP_env, DDSIP_lp, &status);
-                if (status)
+                // check whether this cut is dominated
+                if (DDSIP_param->addBendersCuts && DDSIP_bb->from_scenario > -1)
                 {
-                    fprintf (stderr, "ERROR: Failed to clone problem for check.\n");
-                    fprintf (DDSIP_outfile, "ERROR: Failed to clone problem for check.\n");
-                }
-                else
-                {
+                    status = DDSIP_RestoreBoundAndType ();
+                    if (status)
+                    {
+                        fprintf (stderr, "ERROR: Failed to change bounds for check, error code %d\n", status);
+                        goto TERMINATE;
+                    }
+                    status = DDSIP_ChgProb (DDSIP_bb->from_scenario);
+                    if (status)
+                    {
+                        fprintf (stderr, "ERROR: Failed to change problem for check to scenario %d, error code %d\n", scen + 1, status);
+                        goto TERMINATE;
+                    }
+                    DDSIP_dual_lp = CPXcloneprob (DDSIP_env, DDSIP_lp, &status);
+                    if (status)
+                    {
+                        fprintf (stderr, "ERROR: Failed to clone problem for check.\n");
+                        fprintf (DDSIP_outfile, "ERROR: Failed to clone problem for check.\n");
+                        return status;
+                    }
                     status = CPXchgprobtype (DDSIP_env, DDSIP_dual_lp, CPXPROB_LP);
                     if (status)
                     {
@@ -1082,71 +1078,67 @@ if(DDSIP_param->outlev > 20)
                         fprintf (DDSIP_outfile, "ERROR: dualopt: getobjval failed.\n");
                         return status;
                     }
-                    if (objv < rhs - 3e-2)
+                }
+                else
+                {
+                    objv = -1.e20;
+                }
+                if (objv < rhs - 3e-2)
+                {
+                    cutpool_t * newCut;
+                    DDSIP_bb->cutCntr++;
+                    sprintf (rowstore, "DDSIPIntegerCut%d",DDSIP_bb->cutCntr);
+                    if (DDSIP_param->outlev)
                     {
-                        cutpool_t * newCut;
-                        DDSIP_bb->cutCntr++;
-                        sprintf (rowstore, "DDSIPIntegerCut%d",DDSIP_bb->cutCntr);
-                        if (DDSIP_param->outlev)
-                        {
-                            fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
-                            printf (" ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
-                        }
+                        fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
+                        printf (" ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
+                    }
 #else
-                        cutpool_t * newCut;
-                        DDSIP_bb->cutCntr++;
-                        sprintf (rowstore, "DDSIPIntegerCut%d",DDSIP_bb->cutCntr);
-                        if (DDSIP_param->outlev)
-                        {
-                            fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s ############\n", rowstore);
-                            printf (" ############ adding cut %s ############\n", rowstore);
-                        }
+                    cutpool_t * newCut;
+                    DDSIP_bb->cutCntr++;
+                    sprintf (rowstore, "DDSIPIntegerCut%d",DDSIP_bb->cutCntr);
+                    if (DDSIP_param->outlev)
+                    {
+                        fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s ############\n", rowstore);
+                        printf (" ############ adding cut %s ############\n", rowstore);
+                    }
 #endif
-                        if ((status = CPXaddrows(DDSIP_env, DDSIP_lp, 0, 1, DDSIP_data->firstvar, &rhs, &sense, &rmatbeg, rmatind, rmatval, NULL, rowname)))
-                        {
-                            fprintf (stderr, "ERROR: Failed to add cut inequality (UpperBound), status=%d \n",status);
-                            if (DDSIP_param->outlev)
-                                fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to add cut inequality (UpperBound) \n");
-                        }
-                        else
-                        {
-                            DDSIP_bb->cutAdded++;
-                        }
-                        //shift this infeasible scenario to first place, such that next time it is checked first
-                        if (iscen)
-                        {
-if(DDSIP_param->outlev > 20)
-{
-  fprintf (DDSIP_bb->moreoutfile, "###: shifting scenario %d (iscen=%d) to first place, shifts before: %d", scen+1, iscen, DDSIP_bb->shifts);
-}
-                            if (iscen >= DDSIP_bb->shifts)
-                                DDSIP_bb->shifts++;
-                            k = DDSIP_bb->ub_scen_order[iscen];
-                            for(j = iscen; j>0; j--)
-                                DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
-                            DDSIP_bb->ub_scen_order[0] = k;
-if(DDSIP_param->outlev > 20)
-{
-  fprintf (DDSIP_bb->moreoutfile, ", shifts now: %d\n", DDSIP_bb->shifts);
-}
-                        }
-                        // store cut in bb->cutpool
-                        newCut = (cutpool_t*) DDSIP_Alloc(sizeof(cutpool_t), 1, "cutpool (DDSIP_UpperBound)");
-                        newCut->prev = DDSIP_bb->cutpool;
-                        newCut->matval = rmatval;
-                        newCut->rhs    = rhs;
-                        newCut->number = DDSIP_bb->cutCntr;
-                        DDSIP_bb->cutpool = newCut;
-                        rmatval = NULL;
-#ifdef CHECKINTEGERCUT
+                    if ((status = CPXaddrows(DDSIP_env, DDSIP_lp, 0, 1, DDSIP_data->firstvar, &rhs, &sense, &rmatbeg, rmatind, rmatval, NULL, rowname)))
+                    {
+                        fprintf (stderr, "ERROR: Failed to add cut inequality (UpperBound), status=%d \n",status);
+                        if (DDSIP_param->outlev)
+                            fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to add cut inequality (UpperBound) \n");
                     }
                     else
                     {
-                        if (DDSIP_param->outlev > 20)
-                        {
-                            fprintf (DDSIP_bb->moreoutfile," ############ integer cut is not effective: objval = %g, rhs = %g ############\n", objv, rhs);
-                            printf (" ############ integer cut is not effective: objval = %g, rhs = %g ############\n", objv, rhs);
-                        }
+                        DDSIP_bb->cutAdded++;
+                    }
+                    //shift this infeasible scenario to first place, such that next time it is checked first
+                    if (iscen)
+                    {
+                        if (iscen >= DDSIP_bb->shifts)
+                            DDSIP_bb->shifts++;
+                        k = DDSIP_bb->ub_scen_order[iscen];
+                        for(j = iscen; j>0; j--)
+                            DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
+                        DDSIP_bb->ub_scen_order[0] = k;
+                    }
+                    // store cut in bb->cutpool
+                    newCut = (cutpool_t*) DDSIP_Alloc(sizeof(cutpool_t), 1, "cutpool (DDSIP_UpperBound)");
+                    newCut->prev = DDSIP_bb->cutpool;
+                    newCut->matval = rmatval;
+                    newCut->rhs    = rhs;
+                    newCut->number = DDSIP_bb->cutCntr;
+                    DDSIP_bb->cutpool = newCut;
+                    rmatval = NULL;
+#ifdef CHECKINTEGERCUT
+                }
+                else
+                {
+                    if (DDSIP_param->outlev > 20)
+                    {
+                        fprintf (DDSIP_bb->moreoutfile," ############ integer cut is not effective: objval = %g, rhs = %g ############\n", objv, rhs);
+                        printf (" ############ integer cut is not effective: objval = %g, rhs = %g ############\n", objv, rhs);
                     }
                 }
                 if (DDSIP_dual_lp != NULL)

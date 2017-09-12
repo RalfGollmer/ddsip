@@ -48,11 +48,14 @@ DDSIP_RoundDown (double *average)
     int j;
 
     for (j = 0; j < DDSIP_bb->firstvar; j++)
+    {
         if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N') {
             ((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval)[j] = floor (average[j] + 0.00001);
         }
         else
             ((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval)[j] = average[j];
+    }
+    DDSIP_bb->from_scenario = -1;
 }
 
 //==========================================================================
@@ -63,11 +66,14 @@ DDSIP_RoundUp (double *average)
     int j;
 
     for (j = 0; j < DDSIP_bb->firstvar; j++)
+    {
         if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N') {
             (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = ceil (average[j]-0.00001);
         }
         else
             (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = average[j];
+    }
+    DDSIP_bb->from_scenario = -1;
 }
 
 //==========================================================================
@@ -85,6 +91,7 @@ DDSIP_RoundNear (double *average)
         else
             (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = average[j];
     }
+    DDSIP_bb->from_scenario = -1;
 }
 
 //==========================================================================
@@ -102,6 +109,7 @@ DDSIP_Frequent (void)
         fprintf (DDSIP_bb->moreoutfile, "(scen %3d)", k+1);
     for (j = 0; j < DDSIP_bb->firstvar; j++)
         (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[k][j];
+    DDSIP_bb->from_scenario = k;
 }
 
 
@@ -145,6 +153,7 @@ DDSIP_Probable (void)
     for (j = 0; j < DDSIP_bb->firstvar; j++)
         (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[k][j];
     DDSIP_Free((void **) &prob);
+    DDSIP_bb->from_scenario = k;
 }
 
 
@@ -173,6 +182,7 @@ DDSIP_CloseToAverage (double *average)
         fprintf (DDSIP_bb->moreoutfile, "(scen %3d)", minind+1);
     for (j = 0; j < DDSIP_bb->firstvar; j++)
         (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[minind][j];
+    DDSIP_bb->from_scenario = minind;
 }
 
 //==========================================================================
@@ -193,6 +203,7 @@ DDSIP_SmallValue (void)
         fprintf (DDSIP_bb->moreoutfile, "(scen %3d)", i+1);
     for (j = 0; j < DDSIP_bb->firstvar; j++)
         (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][j];
+    DDSIP_bb->from_scenario = i;
 }
 
 //==========================================================================
@@ -213,6 +224,7 @@ DDSIP_LargeValue (void)
         fprintf (DDSIP_bb->moreoutfile, "(scen %3d)", i+1);
     for (j = 0; j < DDSIP_bb->firstvar; j++)
         (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][j];
+    DDSIP_bb->from_scenario = i;
 }
 
 //==========================================================================
@@ -249,6 +261,7 @@ DDSIP_MinSum (void)
         fprintf (DDSIP_bb->moreoutfile, "(scen %3d)", minind+1);
     for (i = 0; i < DDSIP_bb->firstvar; i++)
         (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[minind][i];
+    DDSIP_bb->from_scenario = minind;
 }
 
 //==========================================================================
@@ -285,6 +298,7 @@ DDSIP_MaxSum (void)
         fprintf (DDSIP_bb->moreoutfile, "(scen %3d)", maxind+1);
     for (i = 0; i < DDSIP_bb->firstvar; i++)
         (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[maxind][i];
+    DDSIP_bb->from_scenario = maxind;
 }
 
 //==========================================================================
@@ -380,6 +394,7 @@ DDSIP_All (int nrScenarios, int feasCheckOnly)
             (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[DDSIP_bb->firstvar - 1] = worst_case_lb + DDSIP_param->accuracy;
         }
 
+        DDSIP_bb->from_scenario = unind[i];
         if ((status = DDSIP_UpperBound (nrScenarios, feasCheckOnly)))
         {
             if (status < 100000)
@@ -420,6 +435,7 @@ DDSIP_All (int nrScenarios, int feasCheckOnly)
             fprintf (DDSIP_bb->moreoutfile, "\nHeuristic 12: suggested first stage solution of scen. %3d", unind[i]+1);
         if (DDSIP_param->cpxubscr||DDSIP_param->outlev > 7)
             printf ("Heuristic 12: suggested first stage solution of scen. %3d\n", unind[i]+1);
+        DDSIP_bb->from_scenario = unind[i];
     }
     else
     {

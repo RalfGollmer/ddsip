@@ -197,7 +197,7 @@ DDSIP_Continue (int *noiter, int *boundstat)
                     }
 
                     fprintf (outputfile, "\n2. Bounds\n");
-                    fprintf (outputfile, "Scenario    Lower Bound (root)    Upper Bound\n");
+                    fprintf (outputfile, "Scenario    Dual Bound (root)     Best Value\n");
                     fprintf (outputfile, "------------------------------------------------\n");
                     // 2. Bounds
                     // Some people may find this data file helpful
@@ -207,7 +207,10 @@ DDSIP_Continue (int *noiter, int *boundstat)
                         fprintf (outputfile, "%5d    %13.7g         %13.7g\n", i + 1, DDSIP_bb->btlb[i], DDSIP_bb->subsol[i]);
 
                     fprintf (outputfile, "\nBest Value:        %20.12g (Risk model %d)\n", DDSIP_bb->bestvalue,DDSIP_param->riskmod);
-                    fprintf (outputfile, "Lower Bound:       %20.12g\n", DDSIP_bb->bestbound);
+                    if (DDSIP_bb->maximization)
+                        fprintf (outputfile, "Upper Bound:       %20.12g\n", DDSIP_bb->bestbound);
+                    else
+                        fprintf (outputfile, "Lower Bound:       %20.12g\n", DDSIP_bb->bestbound);
                     // 3. Quantiles
                     fprintf (outputfile, "\n3. Quantiles\n");
                     // Sort index

@@ -1277,7 +1277,7 @@ DDSIP_ReadSpec ()
     DDSIP_param->addBendersCuts = floor (DDSIP_ReadDbl (specfile, "ADDBEN", " ADD BENDERS CUTS", 1., 1, 0., 2.) + 0.1);
     if (DDSIP_param->addBendersCuts)
     {
-        DDSIP_param->alwaysBendersCuts = floor (DDSIP_ReadDbl (specfile, "ALWAYS", " ALWAYS CHECK FOR CUTS", 1., 1, 0., 1.) + 0.1);
+        DDSIP_param->alwaysBendersCuts = 1;
         DDSIP_param->testOtherScens = DDSIP_param->stocmat ? 1. : 0.;
         DDSIP_param->testOtherScens = floor (DDSIP_ReadDbl (specfile, "TESTBE", " TEST FOR FURTHER BENDERS CUTS", DDSIP_param->testOtherScens, 1, 0., 1.) + 0.1);
     }
@@ -1486,7 +1486,7 @@ DDSIP_ReadSpec ()
     {
         //DDSIP_param->prematureStop = 0; // would be safer, but after current changes the lower bound used for premature stoppng is chosen with more caution (should work in many cases)
         DDSIP_param->prematureStop = 1;
-        DDSIP_param->cbitlim = floor (DDSIP_ReadDbl (specfile, "CBITLI", " CB DESCENT ITERATIONS", 25., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->cbitlim = floor (DDSIP_ReadDbl (specfile, "CBITLI", " CB DESCENT ITERATIONS", 20., 1, 0., DDSIP_bigint) + 0.1);
         if (abs(DDSIP_param->riskmod) == 4 || abs(DDSIP_param->riskmod) == 5)
         {
             printf ("     setting CBRITLIM to 0 due risk model.\n");
@@ -1494,7 +1494,7 @@ DDSIP_ReadSpec ()
             DDSIP_param->cbrootitlim = 0;
         }
         else
-            DDSIP_param->cbrootitlim = floor (DDSIP_ReadDbl (specfile, "CBRITL", " CB DESCENT ITERATIONS IN ROOT", DDSIP_param->cbitlim+15, 1, 0., DDSIP_bigint) + 0.1);
+            DDSIP_param->cbrootitlim = floor (DDSIP_ReadDbl (specfile, "CBRITL", " CB DESCENT ITERATIONS IN ROOT", DDSIP_param->cbitlim+10, 1, 0., DDSIP_bigint) + 0.1);
 
         DDSIP_param->cb_maxsteps  = floor (DDSIP_ReadDbl (specfile, "CBSTEP", " CB MAXSTEPS", 12., 1, 1., 10000.) + 0.1);
         DDSIP_param->cbtotalitlim = floor (DDSIP_ReadDbl (specfile, "CBTOTI", " CB ITERATION LIMIT",5000., 1, 0., DDSIP_bigint) + 0.1);

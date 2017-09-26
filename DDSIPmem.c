@@ -127,7 +127,6 @@ DDSIP_FreeNode (int nono)
     if (DDSIP_param->cb)
     {
         DDSIP_Free ((void **) &(DDSIP_node[nono]->dual));
-        DDSIP_Free ((void **) &(DDSIP_node[nono]->bestdual));
         DDSIP_Free ((void **) &(DDSIP_node[nono]->subboundNoLag));
     }
     // DDSIP_node itself is needed till the end for neoind, neolb, neoub !
@@ -299,7 +298,11 @@ DDSIP_FreeBb ()
             DDSIP_Free ((void **) &(DDSIP_bb->curriskval));
         }
         if ((DDSIP_param->scalarization || DDSIP_param->cb))
+        {
             DDSIP_Free ((void **) &(DDSIP_bb->ref_risk));
+            DDSIP_Free ((void **) &(DDSIP_bb->bestdual));
+            DDSIP_Free ((void **) &(DDSIP_bb->local_bestdual));
+        }
         DDSIP_Free ((void **) &(DDSIP_bb->ref_scenobj));
         DDSIP_Free ((void **) &(DDSIP_bb->adv_sol));
         DDSIP_Free ((void **) &(DDSIP_bb->lb_scen_order));

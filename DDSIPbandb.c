@@ -152,15 +152,10 @@ DDSIP_InitNewNodes (void)
     // Initialize multiplier in node
     if (DDSIP_param->cb)
     {
-        DDSIP_node[DDSIP_bb->nonode]->dual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 2, "dual(InitNewNodes)");
-        memcpy (DDSIP_node[DDSIP_bb->nonode]->dual, DDSIP_node[DDSIP_bb->curnode]->bestdual, sizeof (double) * (DDSIP_bb->dimdual + 2));
+        DDSIP_node[DDSIP_bb->nonode]->dual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 3, "dual(InitNewNodes)");
+        memcpy (DDSIP_node[DDSIP_bb->nonode]->dual, DDSIP_node[DDSIP_bb->curnode]->dual, sizeof (double) * (DDSIP_bb->dimdual + 3));
         DDSIP_node[DDSIP_bb->nonode + 1]->dual = DDSIP_node[DDSIP_bb->curnode]->dual;
-        memcpy (DDSIP_node[DDSIP_bb->nonode+1]->dual, DDSIP_node[DDSIP_bb->curnode]->bestdual, sizeof (double) * (DDSIP_bb->dimdual + 2));
         DDSIP_node[DDSIP_bb->curnode]->dual = NULL;
-        DDSIP_node[DDSIP_bb->nonode]->bestdual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 2, "dual(InitNewNodes)");
-        memcpy (DDSIP_node[DDSIP_bb->nonode]->bestdual, DDSIP_node[DDSIP_bb->curnode]->bestdual, sizeof (double) * (DDSIP_bb->dimdual + 2));
-        DDSIP_node[DDSIP_bb->nonode + 1]->bestdual = DDSIP_node[DDSIP_bb->curnode]->bestdual;
-        DDSIP_node[DDSIP_bb->curnode]->bestdual = NULL;
 
         DDSIP_node[DDSIP_bb->nonode]->subboundNoLag =
             (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "DDSIP_node[nonode]->subbound(InitNewNodes)");

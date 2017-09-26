@@ -53,7 +53,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2017-09-12 (with Benders feasibility cuts) ";
+const char DDSIP_version[] = "2017-09-26 (Github v1.1.3) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -167,12 +167,15 @@ main (void)
 
     setbuf (DDSIP_outfile, 0);
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
-    fprintf (DDSIP_outfile, "Current system time: ");
+    fprintf (DDSIP_outfile, "Current system time:   ");
     fflush (DDSIP_outfile);
 #ifndef _WIN32
     i = system ("date");
     // Print time to output file
     sprintf (astring, "date >> %s\n", DDSIP_outfname);
+    i = system (astring);
+    fprintf (DDSIP_outfile, "Host:                  ");
+    sprintf (astring, "hostname >> %s; lscpu >> %s\n", DDSIP_outfname, DDSIP_outfname);
     i = system (astring);
 #else
     sprintf (astring, "date /T >> %s & time /T >> %s\n", DDSIP_outfname,DDSIP_outfname);
@@ -420,10 +423,10 @@ main (void)
         }
     }				// END if (EV)
 
-    if (DDSIP_bb->cutAdded && DDSIP_param->outlev > 1)
-    {
-        fprintf (DDSIP_outfile, " %6d%101d cuts\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
-    }
+//    if (DDSIP_bb->cutAdded && DDSIP_param->outlev > 1)
+//    {
+//        fprintf (DDSIP_outfile, " %6d%101d cuts\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
+//    }
 
     // Print cplex log to debugfile
     if (DDSIP_param->outlev > 51)
@@ -453,6 +456,8 @@ main (void)
                                          (DDSIP_bb->noiter > DDSIP_param->cbBreakIters &&
                                            ((!(DDSIP_bb->noiter % abs(DDSIP_param->cb))) || (!((DDSIP_bb->noiter+1) % -DDSIP_param->cb)) ||
                                            (DDSIP_bb->noiter < DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters) ||
+                                           ((DDSIP_bb->noiter  >= 2*DDSIP_param->cbBreakIters) &&
+                                            (DDSIP_bb->noiter < DDSIP_param->cbContinuous + 2*DDSIP_param->cbBreakIters)) ||
                                            ((DDSIP_bb->cutoff > 5) && (DDSIP_bb->no_reduced_front < 51) && (DDSIP_bb->noiter % -DDSIP_param->cb) < DDSIP_param->cbContinuous))) ||
                                          (DDSIP_bb->noiter%200 > 199 - DDSIP_param->cbContinuous) ||
                                          (abs(DDSIP_param->riskmod) != 5 && (DDSIP_bb->noiter <= DDSIP_param->cbBreakIters && DDSIP_bb->noiter > DDSIP_param->cbBreakIters*.6 && (DDSIP_node[DDSIP_bb->curnode]->numInheritedSols > (DDSIP_Imin(DDSIP_param->scenarios/20,2)+(DDSIP_param->scenarios+1)/2))))
@@ -603,6 +608,20 @@ main (void)
             if (!DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
                 DDSIP_PrintState (DDSIP_bb->noiter);
         }
+        if (!DDSIP_bb->curnode)
+             DDSIP_bb->cutCntr0 = DDSIP_bb->cutCntr;
+        else if (DDSIP_param->alwaysBendersCuts && DDSIP_bb->curnode == 20)
+        {
+            if (DDSIP_bb->cutCntr0 == DDSIP_bb->cutCntr)
+                DDSIP_param->alwaysBendersCuts = 0;
+            else
+                DDSIP_bb->cutCntr0 = DDSIP_bb->cutCntr;
+        }
+        else if (DDSIP_param->alwaysBendersCuts && DDSIP_bb->curnode == 40)
+        {
+            if (DDSIP_bb->cutCntr0 == DDSIP_bb->cutCntr)
+                DDSIP_param->alwaysBendersCuts = 0;
+        }
 
         // DDSIP_bb->skip indicates that UpperBound calls have been skipped
         // DDSIP_bb->heurval contains the objective value of the heuristic solution
@@ -610,7 +629,7 @@ main (void)
         DDSIP_bb->heurval = DDSIP_infty;
         DDSIP_bb->skip = 0;
 
-        cont = DDSIP_Continue (&DDSIP_bb->noiter, &boundstat);
+      cont = DDSIP_Continue (&DDSIP_bb->noiter, &boundstat);
         if (!cont)
         {
             status = boundstat;

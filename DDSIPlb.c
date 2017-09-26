@@ -101,9 +101,9 @@ DDSIP_GetBranchIndex (double *dispnorm)
 
         if (DDSIP_param->cb && abs (DDSIP_param->riskmod) == 5) {
           if (DDSIP_param->cb < 0 && DDSIP_node[DDSIP_bb->curnode]->depth == 5)
-            DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] = DDSIP_Dmax(DDSIP_param->cbweight, 0.8*dispnorm[DDSIP_bb->firstvar - 1]);
+            DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual] = DDSIP_Dmax(DDSIP_param->cbweight, 0.8*dispnorm[DDSIP_bb->firstvar - 1]);
           else if (DDSIP_param->cb > 0 && DDSIP_node[DDSIP_bb->curnode]->depth == 0)
-            DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] = DDSIP_Dmax(DDSIP_param->cbweight, 0.05*dispnorm[DDSIP_bb->firstvar - 1]);
+            DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual] = DDSIP_Dmax(DDSIP_param->cbweight, 0.05*dispnorm[DDSIP_bb->firstvar - 1]);
         }
 
         // due to the changes in the bounds: do not branch in root node on additional variable for WC
@@ -2135,8 +2135,7 @@ if (DDSIP_param->outlev > 5)
                         fprintf (DDSIP_bb->moreoutfile, "\n     CBWEIGHT less than 0.025*(lb of TVaR), resetting to %g, CBFACTOR to %g.\n", tmp, 3e-1/tmp);
                     }
                     DDSIP_param->cbfactor = 3e-1/tmp;
-                    DDSIP_param->cbweight = DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] = tmp;
-                    DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] = tmp;
+                    DDSIP_param->cbweight = DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual] = DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = tmp;
                 }
                 DDSIP_Free ((void **) &ordind);
                 DDSIP_Free ((void **) &scensol);
@@ -3953,15 +3952,15 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         if (DDSIP_bb->dualdescitcnt)
         {
             // Store the current best multipliers in bestdual
-            memcpy (DDSIP_node[DDSIP_bb->curnode]->bestdual, DDSIP_node[DDSIP_bb->curnode]->dual, sizeof (double) * (DDSIP_bb->dimdual));
+            memcpy (DDSIP_bb->local_bestdual, DDSIP_node[DDSIP_bb->curnode]->dual, sizeof (double) * (DDSIP_bb->dimdual));
             // the current weight and the node number, too
-            DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] = cb_get_last_weight(DDSIP_bb->dualProblem);
-            DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual + 1] = DDSIP_bb->curnode;
+            DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = cb_get_last_weight(DDSIP_bb->dualProblem);
+            DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 1] = DDSIP_bb->curnode;
             // for the case of no bound increase, when the initial evaluation (with weight -1) was best, make the weight 0.1
-            if (DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] < 0.)
-              DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual] = 0.1;
+            if (DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] < 0.)
+              DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = 0.1;
             if (DDSIP_param->outlev > 10)
-              fprintf (DDSIP_bb->moreoutfile," +++-> bestdual updated in desc. it. %d  (weight %g)\n", DDSIP_bb->dualdescitcnt, DDSIP_node[DDSIP_bb->curnode]->bestdual[DDSIP_bb->dimdual]);
+              fprintf (DDSIP_bb->moreoutfile," +++-> bestdual for node updated in desc. it. %d  (weight %g)\n", DDSIP_bb->dualdescitcnt, DDSIP_bb->local_bestdual[DDSIP_bb->dimdual]);
         }
         // Set lower bound for the node
         DDSIP_node[DDSIP_bb->curnode]->bound = tmpbestbound;
@@ -4044,8 +4043,8 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     {
         increase = 0;
         fprintf (DDSIP_bb->moreoutfile,
-                 " -**** dual step not increasing  bound for node: %d, new val: %.16g, old bound: %.16g (ub: %.13g, diff: %.6g) weight = %g ****-\n",
-                 DDSIP_bb->curnode, tmpbestbound, DDSIP_node[DDSIP_bb->curnode]->bound, tmpupper, tmpbestbound -  DDSIP_node[DDSIP_bb->curnode]->bound, cb_get_last_weight(DDSIP_bb->dualProblem));
+                 " -**** dual step not increasing  bound for node: %d, new val: %.16g, old bound: %.16g (diff: %.6g, ub: %.13g) weight = %g ****-\n",
+                 DDSIP_bb->curnode, tmpbestbound, DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestbound -  DDSIP_node[DDSIP_bb->curnode]->bound, tmpupper, cb_get_last_weight(DDSIP_bb->dualProblem));
         // even when bound was not increased, store the first-stage solution in initial evaluation
         if (cb_get_last_weight(DDSIP_bb->dualProblem) < 0.)
         {
@@ -4367,7 +4366,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         if (DDSIP_param->outlev > 6 && !increase && DDSIP_bb->dualObjVal > -DDSIP_infty)
         {
             fprintf (DDSIP_bb->moreoutfile,
-                     " *++++ dual step     increasing objval for node: %d, new val: %.16g, old value: %.16g, increase: %g ++++*\n",
+                     " *++++ dual step     increasing objval for node: %d, new val: %.16g, old value: %.16g (incr: %g) ++++*\n",
                      DDSIP_bb->curnode, -(*objective_val), DDSIP_bb->dualObjVal,  -(*objective_val)-DDSIP_bb->dualObjVal);
         }
     }
@@ -4377,7 +4376,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         if (DDSIP_param->outlev > 6 && !increase && DDSIP_bb->dualObjVal > -DDSIP_infty)
         {
             fprintf (DDSIP_bb->moreoutfile,
-                     " -**** dual step not increasing objval for node: %d, new val: %.16g, old value: %.16g (diff %g) ****-\n",
+                     " -**** dual step not increasing objval for node: %d, new val: %.16g, old value: %.16g (diff: %g) ****-\n",
                      DDSIP_bb->curnode, -(*objective_val), DDSIP_bb->dualObjVal,  -(*objective_val)-DDSIP_bb->dualObjVal);
         }
     }

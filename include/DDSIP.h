@@ -561,9 +561,11 @@ extern "C" {
         int bestBound;
         // info whether a next try with higher weight should be done
         int newTry;
-        // counter for cuts introduced for all-binary first stage
+        // counter for cuts introduced
         int cutCntr;
-        // indicator, whether cuts were added
+        // counter for cuts introduced in root node
+        int cutCntr0;
+        // number of cuts added
         int cutAdded;
         // store cuts of the UB steps for testing proposals
         cutpool_t* cutpool;
@@ -572,8 +574,10 @@ extern "C" {
         double bound_optimal_node;
         // indicator whether the current incumbent is feasible for the current node bounds
         int bestsol_in_curnode;
-        // index of node which gave the highest dual bound
+        // multipliers which gave the highest dual bound
         double* bestdual;
+        // multipliers which gave the highest dual bound in the current dual step
+        double* local_bestdual;
         //  number of scenarios shifted to begin of the sorted list due to ub infeasibility
         int shifts;
 
@@ -648,9 +652,6 @@ extern "C" {
 
         // Cost coefficients when dual method is in use
         double *dual;
-
-        // Best cost coefficients when dual method is in use
-        double *bestdual;
 
         //was there a cut added in the meantime?
         int cutAdded;

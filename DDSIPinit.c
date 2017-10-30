@@ -349,6 +349,7 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->firstcon = DDSIP_data->firstcon;
     DDSIP_bb->seccon = DDSIP_data->seccon;
     DDSIP_bb->correct_bounding = 0.;
+    DDSIP_bb->LBIters = 0;
     DDSIP_bb->CBIters = 0;
     DDSIP_bb->from_scenario = -1;
 
@@ -742,9 +743,6 @@ DDSIP_InitStages (void)
         }
     }
 
-    DDSIP_Free ((void **) &(colstore));
-    DDSIP_Free ((void **) &(colname));
-
     // Initialize b&b variables
     if ((status = DDSIP_BbInit ()))
     {
@@ -806,24 +804,34 @@ DDSIP_InitStages (void)
     }
 
     ind = 0;
-    for (i = 0; i < DDSIP_bb->firstvar; i++)
+    if (DDSIP_param->cb)
     {
-        DDSIP_bb->lborg[i] = lb[DDSIP_bb->firstindex[i]];
-        DDSIP_bb->uborg[i] = ub[DDSIP_bb->firstindex[i]];
+        for (i = 0; i < DDSIP_bb->firstvar; i++)
+        {
+            DDSIP_bb->lborg[i] = lb[DDSIP_bb->firstindex[i]];
+            DDSIP_bb->uborg[i] = ub[DDSIP_bb->firstindex[i]];
 
-        if (DDSIP_param->cb && !(DDSIP_bb->uborg[i] < DDSIP_infty))
-            ind++;
+            if (!(DDSIP_bb->lborg[i] > -DDSIP_infty) || !(DDSIP_bb->uborg[i] < DDSIP_infty))
+            {
+                if (DDSIP_param->outlev > 2)
+                    fprintf (DDSIP_bb->moreoutfile, "!!!! unbounded variable %25s [%g,%g]\n", colname[DDSIP_bb->firstindex[i]], DDSIP_bb->lborg[i], DDSIP_bb->uborg[i]);
+                ind++;
+            }
+        }
     }
 
-    // Cplex does not tell us whether a problem is infeasible or unbounded.
+    DDSIP_Free ((void **) &(colstore));
+    DDSIP_Free ((void **) &(colname));
+
+    // Cplex does not always tell us whether a problem is infeasible or unbounded.
     // We treat both as infeasible. Unboundedness should be removed by imposing
     // upper bounds on all variables
     if (ind)
     {
-        printf ("*Warning: First-stage variable(s) unbounded. This may cause problems with dual method (unboundedness of scenario problems due to Lagrangean term).\n");
-        fprintf (DDSIP_outfile, "*Warning: First-stage variable(s) unbounded. This may cause problems with dual method (unboundedness of scenario problems due to Lagrangean term).\n");
+        printf ("*Warning: %d first-stage variable(s) unbounded. This may cause problems with dual method (unboundedness of scenario problems due to Lagrangean term).\n", ind);
+        fprintf (DDSIP_outfile, "*Warning: %d first-stage variable(s) unbounded. This may cause problems with dual method (unboundedness of scenario problems due to Lagrangean term).\n", ind);
         if (DDSIP_param->outlev)
-            fprintf (DDSIP_bb->moreoutfile, "*Warning: First-stage variable(s) unbounded. This may cause problems with dual method (unboundedness of scenario problems due to Lagrangean term).\n");
+            fprintf (DDSIP_bb->moreoutfile, "*Warning: %d first-stage variable(s) unbounded. This may cause problems with dual method (unboundedness of scenario problems due to Lagrangean term).\n", ind);
     }
 
     DDSIP_Free ((void **) &(lb));
@@ -1175,18 +1183,6 @@ DDSIP_BbInit (void)
             return status;
         }
     }
-    // Arrange branching order
-    if (DDSIP_param->order)
-    {
-        status = DDSIP_BranchOrder ();
-        if (status)
-        {
-            fprintf (stderr, "ERROR: Failed to arrange branching order (BbInit)\n");
-            return status;
-        }
-    }
-
-
 
     // Initialisation, no meaning
     (DDSIP_node[0])->neolb = DDSIP_bb->lborg[0];

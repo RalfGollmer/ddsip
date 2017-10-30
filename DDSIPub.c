@@ -393,7 +393,8 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     for (j = 0; j < DDSIP_bb->secvar; j++)
         tmpsecsol[j] = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "tmpsecsol[j](UpperBound)");
 
-    DDSIP_bb->neobjcnt++;
+    if (!feasCheckOnly)
+        DDSIP_bb->neobjcnt++;
 
     if (DDSIP_param->outlev)
     {
@@ -1126,7 +1127,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                     DDSIP_bb->cutpool = newCut;
                                     rmatval = NULL;
                                     //shift this infeasible scenario to first place, such that next time it is checked first
-                                    if (Bi)
+                                    if (Bi != iscen)
                                     {
                                         if (Bi >= DDSIP_bb->shifts)
                                             DDSIP_bb->shifts++;
@@ -1293,16 +1294,6 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     {
                         DDSIP_bb->cutAdded++;
                     }
-                    //shift this infeasible scenario to first place, such that next time it is checked first
-                    if (iscen)
-                    {
-                        if (iscen >= DDSIP_bb->shifts)
-                            DDSIP_bb->shifts++;
-                        k = DDSIP_bb->ub_scen_order[iscen];
-                        for(j = iscen; j>0; j--)
-                            DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
-                        DDSIP_bb->ub_scen_order[0] = k;
-                    }
                     // store cut in bb->cutpool
                     newCut = (cutpool_t*) DDSIP_Alloc(sizeof(cutpool_t), 1, "cutpool (DDSIP_UpperBound)");
                     newCut->prev = DDSIP_bb->cutpool;
@@ -1334,6 +1325,16 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                 DDSIP_Free ((void *) &rowstore);
             }
 #endif
+            //shift this infeasible scenario to first place, such that next time it is checked first
+            if (iscen || !DDSIP_bb->shifts)
+            {
+                if (iscen >= DDSIP_bb->shifts)
+                    DDSIP_bb->shifts++;
+                k = DDSIP_bb->ub_scen_order[iscen];
+                for(j = iscen; j>0; j--)
+                    DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
+                DDSIP_bb->ub_scen_order[0] = k;
+            }
             if (feasCheckOnly)
                 continue;
             goto TERMINATE;
@@ -1622,6 +1623,15 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
             sort_array[DDSIP_bb->ub_scen_order[i_scen]] = DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]] * (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]];
         }
         DDSIP_qsort_ins_D (sort_array, DDSIP_bb->ub_scen_order, DDSIP_bb->shifts, DDSIP_param->scenarios-1);
+        // insert the least-cost scenario after the first bb->shifts +1 scenarios - to be sure to check that for feasibility, too
+        if (DDSIP_bb->shifts < DDSIP_param->scenarios - 2)
+        {
+            int j;
+            i_scen = DDSIP_bb->ub_scen_order[DDSIP_param->scenarios - 1];
+            for (j = DDSIP_param->scenarios - 1; j>DDSIP_bb->shifts + 1; j--)
+                DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
+            DDSIP_bb->ub_scen_order[DDSIP_bb->shifts + 1] = i_scen;
+        }
 
         if (DDSIP_param->outlev > 20)
         {

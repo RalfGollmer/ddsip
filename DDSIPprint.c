@@ -93,6 +93,7 @@ DDSIP_Print2 (char b[], char e[], double d, int what)
 void
 DDSIP_PrintState (int noiter)
 {
+    char astring[DDSIP_ln_fname];
     //  char    state[DDSIP_max_str_ln];
     double wall_secs, cpu_secs;
     int    f_long, wall_hrs, wall_mins, cpu_hrs, cpu_mins, print_violations = 1;
@@ -110,8 +111,13 @@ DDSIP_PrintState (int noiter)
     // A headline is printed every 20th call
     if (!((noiter) % (DDSIP_param->logfreq * 20)) || (DDSIP_param->cb && !(noiter % DDSIP_Imax(DDSIP_param->cb,10)) && DDSIP_param->outlev > 1))
     {
+#ifndef _WIN32
+        fprintf (DDSIP_outfile, "__ ");
+        sprintf (astring, "lscpu|grep 'CPU MHz' >> %s\n", DDSIP_outfname);
+        cpu_hrs = system (astring);
+#endif
         printf ("\n   Node   Nodes   Left   Objective         Heuristic");
-        fprintf (DDSIP_outfile, "\n   Node   Nodes   Left  Objective           Heuristic");
+        fprintf (DDSIP_outfile, "   Node   Nodes   Left  Objective           Heuristic");
         printf ("         Best Value       Bound            Viol./Dispersion          Gap   Wall Time    CPU Time  Father Depth\n");
         fprintf (DDSIP_outfile, "         Best Value       Bound            Viol./Dispersion          Gap   Wall Time    CPU Time  Father Depth\n");
     }

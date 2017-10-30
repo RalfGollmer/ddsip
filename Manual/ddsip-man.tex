@@ -387,7 +387,9 @@ The CPLEX parameter section has to end with the identifier {\it CPLEXEND}.
 Parameters not present in the mentioned chapters are set according to their CPLEX default values,
 cf. \cite{cp}. \\
 Note that in the section between {\it CPLEXBEGIN} and  {\it CPLEXEND} there could be comments following the pair of numerical parameter identifier and value, but not whole lines could be comments, ie.e. 
-no line should start with an asterisk.
+no line should start with an asterisk.\\[0.5em]
+Since at each node all scenario problems have to be solved for the dual bound and in every heuristic for finding/the improvement of the primal bound solving the single-scenario problems should be as fast as possible. So tuning the CPLEX paramaters (especially for scenarios difficult to solve) and specifying adapted parameter settings in the specs file is strongly encouraged, it can later on save a lot of solution time.\\
+The tuning process is facilitated by setting the parameter OUTFIL to 4, CBFREQ to 0, NODELIM to 0, and HEURIST e.g. to 1. All the single-scenario problems for dual bounds (lb$\ldots$) and primal bounds (ub$\ldots$) are then written to the directory sipout for use in determining good CPLEX settings.
 
 %
 \subsection{Parameters for the decomposition procedure}
@@ -412,6 +414,19 @@ Section~\ref{S:START}, the use of priority order information in Section~\ref{S:O
 parameter RELAXL effects the relaxation levels during the evaluation of lower bounds. It relates to
 the scenario subproblems. 
 
+The two types of the deterministic equivalent specified by DETEQT differ only in the objective.
+In both cases additional variables with names DDSIP\_objSC001 etc. are added plus equations assigning the corresponding scenario objective values.
+In the type 0 equivalent the objective is the sum of these additional variables multiplied by the scenario probability.
+In the type 1 file the objective is formed using the original first-stage variables.
+
+The {\it branching value} is used to create two new subproblems as described in {\em STEP 5} of the
+decomposition algorithm. For continuous components it depends on the parameter EPSILON.
+
+The dispersion norm of a node is calculated as $\max_{j}  \{  \max_{i}
+x_{ij} - \min_{i} x_{ij}\}$ where $x_j$, $j=1,\ldots,S$, are the (first-stage part of the) solutions
+of the $S$ subproblems and $x_{ij}$, $i=1,\ldots,n$, are their i-th components.
+Nodes with a dispersion norm smaller than NULLDISP are considered as leaves of the 
+B\&B tree (i.e. no further branching on them).
 %\begin{table}[ht]
 \begin{center}
 \begin{tabular}{|llllp{6.4cm}|} 
@@ -438,21 +453,6 @@ DETEQT&Int&0..1&0&Determines the form of the obj. of\\&&&& the deterministic equ
 %\end{center} \caption{Output and termination parameters} \label{T:OUT}
 %\end{table}
 %
-The two types of the deterministic equivalent differ only in the objective.
-In both cases additional variables with names DDSIP\_objSC001 etc. are added plus equations assigning the corresponding scenario objective values.
-In the type 0 equivalent the objective is the sum of these additional variables multiplied by the scenario probability.
-In the type 1 file the objective is formed using the original first-stage variables.
-
-The {\it branching value} is used to create two new subproblems as described in {\em STEP 5} of the
-decomposition algorithm. For continuous components it depends on the parameter EPSILON.
-
-The dispersion norm of a node is calculated as $\max_{j}  \{  \max_{i}
-x_{ij} - \min_{i} x_{ij}\}$ where $x_j$, $j=1,\ldots,S$, are the (first-stage part of the) solutions
-of the $S$ subproblems and $x_{ij}$, $i=1,\ldots,n$, are their i-th components.
-Nodes with a dispersion norm smaller than NULLDISP are considered as leaves of the 
-B\&B tree (i.e. no further branching on them).
-
-%\newpage
 %\begin{table}[h]
 \begin{center}
 \tablefirsthead{%
@@ -561,12 +561,14 @@ If conic bundle is used, the lower bound for each scenario is not fully reliable
 The parameter PREMATURE (default 1) to allow/disallow premature stopping in upper bounding can be set to 0 when conic bundle is used.
 
 \subsection{Heuristic}
-The decomposition algorithm uses a heuristic to guess feasible first-stage solutions based on the
-solutions of the subproblems in the current node. The heuristic is set by means of the parameter
+The decomposition algorithm uses a number of heuristic to guess feasible first-stage solutions based on the
+solutions of the scenario subproblems in the current node. The heuristic is set by means of the parameter
 HEURIS. The possible values of HEURIS are listed in the following table.\\
 More than one of the heuristics could be used sequentially in every node when specifying the value 99, followed by a
 list of heuristics to be used, the specs file line could look like this:\\[0.5em]
-HEURISTIC  99 2 3 12 * heuristics 2, 3, {\bf and} 12 are specified
+HEURISTIC  99 2 3 12 * heuristics 2, 3, {\bf and} 12 are specified\\[0.5em]
+The default is the value 100, which applies all heuristics 1 to 10 in every node plus heuristic 12 (test all scenario solutions) in the first 11 nodes,
+in other nodes under certain conditions, and every 200th node.
 %
 %\begin{table}[ht]
 \begin{center}
@@ -580,6 +582,19 @@ next integer.\medskip\\
 4&The solution occurring most frequently is used.\medskip\\
 5&Use the solution of a scenario that is closest ($l_1$ norm) to average.\medskip\\
 6&The first-stage solution with highest probability is chosen (adding probabilities in case of identical first-stage scenario solutions)\medskip\\
+The two types of the deterministic equivalent specified by DETEQT differ only in the objective.
+In both cases additional variables with names DDSIP\_objSC001 etc. are added plus equations assigning the corresponding scenario objective values.
+In the type 0 equivalent the objective is the sum of these additional variables multiplied by the scenario probability.
+In the type 1 file the objective is formed using the original first-stage variables.
+
+The {\it branching value} is used to create two new subproblems as described in {\em STEP 5} of the
+decomposition algorithm. For continuous components it depends on the parameter EPSILON.
+
+The dispersion norm of a node is calculated as $\max_{j}  \{  \max_{i}
+x_{ij} - \min_{i} x_{ij}\}$ where $x_j$, $j=1,\ldots,S$, are the (first-stage part of the) solutions
+of the $S$ subproblems and $x_{ij}$, $i=1,\ldots,n$, are their i-th components.
+Nodes with a dispersion norm smaller than NULLDISP are considered as leaves of the 
+B\&B tree (i.e. no further branching on them).
 7&Solution with best objective value\medskip\\
 8&Solution with worst objective value\medskip\\
 9&Solution with minimal sum of first-stage variables\medskip\\
@@ -597,7 +612,7 @@ next integer.\medskip\\
 \setcounter{table}{4}
 %
 In order to save time the order of evaluation of the scenario problems is changed if an infeasible one is encountered.
-Since often the same scenarios gives infeasibility these ones are evaluated first in the sequel.
+Since often the same scenarios give infeasibility these ones are evaluated first in the sequel.
 \subsection{Parameters for the risk model}
 The parameters for the risk models are displayed below. Some parameter settings lead to
 ill-posed models, cf. \cite{diss}. \texttt{ddsip} provides only limited consistency checks with this
@@ -681,11 +696,11 @@ By default this feature is turned on and could be deactivated by parameters.
 \hline
 Name&Type&Range&\multicolumn{2}{l|}{Default/Description}\\ \hline
 CBFREQ&Int&..&-16&Use \texttt{ConicBundle} in every $i$th node. Negative numbers are interpreted as |i|th node plus preceding one.\medskip\\
-CBITLI&Int&0..&20&Iteration limit: descent steps.\medskip\\
-CBRITLI&Int&0..&{\footnotesize CBITLIM+10}&Iteration limit in root node: descent steps.\medskip\\
+CBITLI&Int&0..&25&Iteration limit: descent steps.\medskip\\
+CBRITLI&Int&0..&{\footnotesize CBITLIM+7}&Iteration limit in root node: descent steps.\medskip\\
 CBSTEP&Int&0..&12&Maximal number of iterations within one descent step.\medskip\\
 CBTOTI&Int&0..&5000&Iteration limit: total iterations, i.e. descent and null steps.\medskip\\
-CBCONT &Int&1..&4&Used when CBFREQ$<$0: number of nodes with invocation of \texttt{ConicBundle} in every node after CBBREAK.\medskip\\
+CBCONT &Int&1..&6&Used when CBFREQ$<$0: number of nodes with invocation of \texttt{ConicBundle} in every node after CBBREAK.\medskip\\
 CBBREA &Int&1..&24&Used when CBFREQ$<$0: invocation of \texttt{ConicBundle} in nodes 1..CBBREAK only for nodes, which inherited more than half of the scenario solutions.\medskip\\
 CBPREC&Dbl&0..&1e-14&Precision of bundle method.\medskip\\
 CBPRIN&Int&0..&0&\texttt{ConicBundle} output level.\medskip\\
@@ -781,10 +796,9 @@ The user has to care for the consistency of the data.
 If indicated by setting the CPLEX parameter CPX\_PARAM\_MIPORDIND, the name of a CPLEX branching order file to be used for the scenario
 problems has to be specified following the name of the model file (named model.ord in Figure~2). Its format is described in the CPLEX manual.
 
-{\it not functional by now, function is still to be adapted to the usage of names!}\\
 If the parameter PORDER is set, a file with branching order information for the master problem has to be given (named order.dat in Figure~2).
 The file has two columns whereby the first one contains {\bf names} of first-stage variables and
-the second one integer values. High values lead to early branching. 
+the second one integer values greater than 1 (1 is the default, variable with default priority need not be specified). High values lead to early branching. 
 
 \section{Output} \label{S:OUT}
 \subsection{Output on screen}
@@ -1077,7 +1091,7 @@ OUTLEVEL &5 & * Print info to more.out\\
 &&\\
 TIMELIMI &  345600 & * Time limit 96h\\
 CBITLIM       & 15 & * Number of CB descent steps\\
-              &    & * {\small (default in root node: CBITLIM+10)}\\
+              &    & * {\small (default in root node: CBITLIM+7)}\\
 RELATIVEGAP & 1e-5 & * Relative duality gap\\
 &&\\
 END&&\\

@@ -550,6 +550,8 @@ extern "C" {
         int heurSuccess;
         int cutoff;
         cb_problemp dualProblem;
+        // count the lb calls
+        int LBIters;
         // count the cb function evaluations
         int CBIters;
         double correct_bounding;

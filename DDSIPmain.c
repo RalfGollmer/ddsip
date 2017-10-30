@@ -27,6 +27,7 @@
 #include <DDSIPconst.h>
 #include <sys/resource.h>
 
+#define CBFORALL 0
 
 CPXENVptr    DDSIP_env = NULL;
 CPXLPptr     DDSIP_lp  = NULL;
@@ -53,7 +54,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2017-09-26 (Github v1.1.3) ";
+const char DDSIP_version[] = "2017-10-29 (Github v1.1.3) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -167,15 +168,18 @@ main (void)
 
     setbuf (DDSIP_outfile, 0);
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
-    fprintf (DDSIP_outfile, "Current system time:   ");
+    fprintf (DDSIP_outfile, "current system time: ");
     fflush (DDSIP_outfile);
 #ifndef _WIN32
     i = system ("date");
     // Print time to output file
     sprintf (astring, "date >> %s\n", DDSIP_outfname);
     i = system (astring);
-    fprintf (DDSIP_outfile, "Host:                  ");
-    sprintf (astring, "hostname >> %s; lscpu >> %s\n", DDSIP_outfname, DDSIP_outfname);
+    fprintf (DDSIP_outfile, "host            : ");
+    //sprintf (astring, "hostname >> %s; lscpu >> %s\n", DDSIP_outfname, DDSIP_outfname);
+    sprintf (astring, "hostname >> %s; cat /proc/cpuinfo | sed '/processor.*: 0/,/^$/!d' >> %s\n", DDSIP_outfname, DDSIP_outfname);
+    for (i = 0; i < 100; i++)
+        exp(1.11*(-i-2));
     i = system (astring);
 #else
     sprintf (astring, "date /T >> %s & time /T >> %s\n", DDSIP_outfname,DDSIP_outfname);
@@ -326,6 +330,10 @@ main (void)
         printf ("\t Total initialization time: %4.2f seconds.\n", DDSIP_GetCpuTime ());
         fprintf (DDSIP_bb->moreoutfile, " Total initialization time: %4.2f seconds.\n", DDSIP_GetCpuTime ());
     }
+#ifndef _WIN32
+    sprintf (astring, "lscpu|grep MHz >> %s\n", DDSIP_outfname);
+    i = system (astring);
+#endif
 
     // at the start there is no solution
     status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 0);
@@ -460,7 +468,8 @@ main (void)
                                             (DDSIP_bb->noiter < DDSIP_param->cbContinuous + 2*DDSIP_param->cbBreakIters)) ||
                                            ((DDSIP_bb->cutoff > 5) && (DDSIP_bb->no_reduced_front < 51) && (DDSIP_bb->noiter % -DDSIP_param->cb) < DDSIP_param->cbContinuous))) ||
                                          (DDSIP_bb->noiter%200 > 199 - DDSIP_param->cbContinuous) ||
-                                         (abs(DDSIP_param->riskmod) != 5 && (DDSIP_bb->noiter <= DDSIP_param->cbBreakIters && DDSIP_bb->noiter > DDSIP_param->cbBreakIters*.6 && (DDSIP_node[DDSIP_bb->curnode]->numInheritedSols > (DDSIP_Imin(DDSIP_param->scenarios/20,2)+(DDSIP_param->scenarios+1)/2))))
+                                         (abs(DDSIP_param->riskmod) != 5 && (DDSIP_bb->noiter <= DDSIP_param->cbBreakIters && DDSIP_bb->noiter > DDSIP_param->cbBreakIters*.6 && (CBFORALL || (DDSIP_node[DDSIP_bb->curnode]->numInheritedSols > (DDSIP_Imin(DDSIP_param->scenarios/20,2)+(DDSIP_param->scenarios+1)/2)))))
+                                         //(abs(DDSIP_param->riskmod) != 5 && (DDSIP_bb->noiter <= DDSIP_param->cbBreakIters && DDSIP_bb->noiter > DDSIP_param->cbBreakIters*.6))
                                         )
                 )
            )

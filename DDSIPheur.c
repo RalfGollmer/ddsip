@@ -114,7 +114,7 @@ DDSIP_Frequent (void)
 
 
 //==========================================================================
-// Most probable scenario solution  Heur. 5
+// Most probable scenario solution  Heur. 6
 void
 DDSIP_Probable (void)
 {
@@ -123,7 +123,7 @@ DDSIP_Probable (void)
     prob = (double *) DDSIP_Alloc(sizeof (double), DDSIP_param->scenarios, "prob(All)");
 
     //sum up probabilities of (equal) scenario solutions
-    prob[0] += DDSIP_data->prob[0];
+    prob[0] = DDSIP_data->prob[0];
     for (i = 1; i < DDSIP_param->scenarios; i++)
     {
         k = i;
@@ -158,7 +158,7 @@ DDSIP_Probable (void)
 
 
 //==========================================================================
-// Scenario solution closest to average  Heur. 6
+// Scenario solution closest to average  Heur. 5
 void
 DDSIP_CloseToAverage (double *average)
 {
@@ -621,7 +621,7 @@ DDSIP_BoundConsistent (void)
 int i;
     for (i = 0; i < DDSIP_bb->firstvar; i++)
     {
-        if (((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i] - DDSIP_bb->uborg[i])/(fabs(DDSIP_bb->uborg[i])+ 1.)) > DDSIP_param->accuracy)
+        if (((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i] - DDSIP_bb->uborg[i])/(fabs(DDSIP_bb->uborg[i])+ 1.)) > 1.e-9)
         {
             printf ("   high suggestion for variable %d: sug=%20.18f ub=%20.18f, difference=%lg\n",i,
                     (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->uborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->uborg[i]);
@@ -633,7 +633,7 @@ int i;
             }
             DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i] = DDSIP_bb->uborg[i];
         }
-        if (((DDSIP_bb->lborg[i] - DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i])/(fabs(DDSIP_bb->lborg[i])+ 1.)) > DDSIP_param->accuracy)
+        if (((DDSIP_bb->lborg[i] - DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i])/(fabs(DDSIP_bb->lborg[i])+ 1.)) > 1.e-9)
         {
             // in the root node the lower bound for the additional variable for worst case costs was updated
             if (DDSIP_bb->curnode || !(i == DDSIP_data->firstvar && (abs(DDSIP_param->riskmod) != 4 || abs(DDSIP_param->riskmod) != 5)))

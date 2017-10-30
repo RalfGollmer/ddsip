@@ -284,7 +284,6 @@ DDSIP_Continue (int *noiter, int *boundstat)
         fprintf (DDSIP_outfile, "------------------------------------------\n");
         fprintf (DDSIP_outfile, "Status           %6d\t ", solstat);
         fprintf (DDSIP_outfile, "Time             %6.2f\n", DDSIP_GetCpuTime ());
-        fprintf (DDSIP_outfile, "Upper bounds     %6d\t ", DDSIP_bb->neobjcnt);
         fprintf (DDSIP_outfile, "Tree depth       %6d\n", DDSIP_bb->depth);
         fprintf (DDSIP_outfile, "Nodes            %6d\n", DDSIP_bb->nonode);
         fprintf (DDSIP_outfile, "Cuts             %6d\n", DDSIP_bb->cutCntr);
@@ -295,6 +294,8 @@ DDSIP_Continue (int *noiter, int *boundstat)
             fprintf (DDSIP_outfile, "max. mean MIP gap CB  %g%%\n", DDSIP_bb->meanGapCBLB);
             fprintf (DDSIP_outfile, "CB function eval %6d\n", DDSIP_bb->CBIters);
         }
+        fprintf (DDSIP_outfile, "Lower Bound eval %6d\n", DDSIP_bb->LBIters);
+        fprintf (DDSIP_outfile, "Upper Bound eval %6d\t ", DDSIP_bb->neobjcnt);
 
         // Risk Model
         if (DDSIP_param->riskmod && feas)

@@ -1197,7 +1197,7 @@ DDSIP_ReadSpec ()
     DDSIP_param->logfreq   = floor (DDSIP_ReadDbl (specfile, "LOGFRE", " LOG FREQUENCY", 1., 1, 0., DDSIP_bigint) + 0.1);
     DDSIP_param->nodelim   = floor (DDSIP_ReadDbl (specfile, "NODELI", " NODE LIMIT", DDSIP_bigint, 1, 1., INT_MAX-1) + 0.1);
     // Accuracy, e.g. for the  comparison of double numbers
-    DDSIP_param->accuracy  = DDSIP_ReadDbl (specfile, "ACCURA", " ACCURACY", 2.0e-13, 0, 1.e-13, 1.);
+    DDSIP_param->accuracy  = DDSIP_ReadDbl (specfile, "ACCURA", " ACCURACY", 1.0e-12, 0, 1.e-13, 1.);
     DDSIP_param->brancheps = DDSIP_ReadDbl (specfile, "EPSILO", " EPSILON", 1.5e-11, 0, 1.e-11, 1.);
     DDSIP_param->nulldisp  = DDSIP_ReadDbl (specfile, "NULLDI", " NULL DISPERSION", 1.6e-11, 0, 1.6e-11, DDSIP_infty);
     DDSIP_param->absgap    = DDSIP_ReadDbl (specfile, "ABSOLU", " ABSOLUTE GAP", 0., 0, 0., DDSIP_infty);
@@ -1486,7 +1486,7 @@ DDSIP_ReadSpec ()
     {
         //DDSIP_param->prematureStop = 0; // would be safer, but after current changes the lower bound used for premature stoppng is chosen with more caution (should work in many cases)
         DDSIP_param->prematureStop = 1;
-        DDSIP_param->cbitlim = floor (DDSIP_ReadDbl (specfile, "CBITLI", " CB DESCENT ITERATIONS", 20., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->cbitlim = floor (DDSIP_ReadDbl (specfile, "CBITLI", " CB DESCENT ITERATIONS", 25., 1, 0., DDSIP_bigint) + 0.1);
         if (abs(DDSIP_param->riskmod) == 4 || abs(DDSIP_param->riskmod) == 5)
         {
             printf ("     setting CBRITLIM to 0 due risk model.\n");
@@ -1494,11 +1494,11 @@ DDSIP_ReadSpec ()
             DDSIP_param->cbrootitlim = 0;
         }
         else
-            DDSIP_param->cbrootitlim = floor (DDSIP_ReadDbl (specfile, "CBRITL", " CB DESCENT ITERATIONS IN ROOT", DDSIP_param->cbitlim+10, 1, 0., DDSIP_bigint) + 0.1);
+            DDSIP_param->cbrootitlim = floor (DDSIP_ReadDbl (specfile, "CBRITL", " CB DESCENT ITERATIONS IN ROOT", DDSIP_param->cbitlim+7, 1, 0., DDSIP_bigint) + 0.1);
 
         DDSIP_param->cb_maxsteps  = floor (DDSIP_ReadDbl (specfile, "CBSTEP", " CB MAXSTEPS", 12., 1, 1., 10000.) + 0.1);
         DDSIP_param->cbtotalitlim = floor (DDSIP_ReadDbl (specfile, "CBTOTI", " CB ITERATION LIMIT",5000., 1, 0., DDSIP_bigint) + 0.1);
-        DDSIP_param->cbContinuous = floor (DDSIP_ReadDbl (specfile, "CBCONT", " CONTINUOUS CB CALLS", 4., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->cbContinuous = floor (DDSIP_ReadDbl (specfile, "CBCONT", " CONTINUOUS CB CALLS", 6., 1, 0., DDSIP_bigint) + 0.1);
         DDSIP_param->cbBreakIters = floor (DDSIP_ReadDbl (specfile, "CBBREA", " BREAK FOR CB CALLS", abs(DDSIP_param->cb) > 28?1.*abs(DDSIP_param->cb):28., 1, 0., DDSIP_bigint) + 0.1);
         if (DDSIP_param->cbBreakIters < abs(DDSIP_param->cb))
         {
@@ -1614,7 +1614,7 @@ DDSIP_ReadModel ()
         fprintf (DDSIP_outfile, "ERROR: Failed to read problem file %s.\n", fname);
         return status;
     }
-    fprintf (DDSIP_outfile, "\nMODEL READ FROM `%s': \n", fname);
+    fprintf (DDSIP_outfile, "\nMODEL READ FROM `%s'.\n", fname);
     DDSIP_bb->novar = DDSIP_data->novar = CPXgetnumcols (DDSIP_env, DDSIP_lp);
     DDSIP_bb->nocon = DDSIP_data->nocon = CPXgetnumrows (DDSIP_env, DDSIP_lp);
     printf ("\t\t No. of variables:   %d\n", DDSIP_data->novar);
@@ -1812,7 +1812,7 @@ DDSIP_ReadData ()
         }
 
     }
-    fprintf (DDSIP_outfile, "\nSTOCHASTIC RHS DATA READ FROM `%s': \n", fname);
+    fprintf (DDSIP_outfile, "\nSTOCHASTIC RHS DATA READ FROM `%s'.\n", fname);
 
     if (fabs (1. - probsum) > DDSIP_param->accuracy)
     {
@@ -1944,7 +1944,7 @@ DDSIP_ReadData ()
                     if (k ==  (DDSIP_data->novar))
                     {
                         printf ("XXX ERROR: column name '%s' specified in the stochastic cost data file not found in the problem.\n", tmpdata);
-                        fprintf (DDSIP_outfile, "XXX ERROR: rowumn name '%s' specified in the stochastic cost data file not found in the problem.\n", tmpdata);
+                        fprintf (DDSIP_outfile, "XXX ERROR: column name '%s' specified in the stochastic cost data file not found in the problem.\n", tmpdata);
                         exit(1);
                     }
                 }
@@ -1982,7 +1982,7 @@ DDSIP_ReadData ()
         }
 
         fclose (datafile);
-        fprintf (DDSIP_outfile, "\nSTOCHASTIC OBJECTIVE DATA READ FROM `%s': \n", fname);
+        fprintf (DDSIP_outfile, "\nSTOCHASTIC OBJECTIVE DATA READ FROM `%s'.\n", fname);
 
         if (DDSIP_param->files > 1)
         {
@@ -2071,7 +2071,7 @@ DDSIP_ReadData ()
                     if (k ==  (DDSIP_data->novar))
                     {
                         printf ("XXX ERROR: column name '%s' specified in the stochastic matrix data file not found in the problem.\n", tmpdata);
-                        fprintf (DDSIP_outfile, "XXX ERROR: rowumn name '%s' specified in the stochastic matrix data file not found in the problem.\n", tmpdata);
+                        fprintf (DDSIP_outfile, "XXX ERROR: column name '%s' specified in the stochastic matrix data file not found in the problem.\n", tmpdata);
                         exit(1);
                     }
                 }
@@ -2113,7 +2113,7 @@ DDSIP_ReadData ()
         }
 
         fclose (datafile);
-        fprintf (DDSIP_outfile, "\nSTOCHASTIC MATRIX DATA READ FROM `%s': \n", fname);
+        fprintf (DDSIP_outfile, "\nSTOCHASTIC MATRIX DATA READ FROM `%s'.\n", fname);
 
         if (DDSIP_param->files > 1)
         {
@@ -2157,28 +2157,65 @@ DDSIP_ReadData ()
         }
         for (i = 0; i < DDSIP_data->firstvar; i++)
         {
-            if (fscanf (datafile, "%d", &ind) == EOF)
+            ind = -1;
+            if((k = DDSIP_ReadWord (datafile, tmpdata, maxVarNameLength)))
+            {
+                for (k = 0; k < (DDSIP_data->novar); k++)
+                {
+                    if (!strcmp(tmpdata, colname[k]))
+                    {
+                        if (DDSIP_bb->firstindex_reverse[k] < 0)
+                        {
+                            fprintf (DDSIP_outfile, "XXX ERROR: column name '%s' specified in the order file is no first-stage variable.\n", tmpdata);
+                            return 1;
+                        }
+                        else
+                        {
+                            ind = DDSIP_bb->firstindex_reverse[k];
+                        }
+                        break;
+                    }
+                }
+                if (k ==  (DDSIP_data->novar))
+                {
+                    printf ("XXX ERROR: column name '%s' specified in the order file not found in the problem.\n", tmpdata);
+                    fprintf (DDSIP_outfile, "XXX ERROR: column name '%s' specified in the order file not found in the problem.\n", tmpdata);
+                    exit(1);
+                }
+            }
+            else
                 break;
             if (ind < 0 || ind >= DDSIP_data->firstvar)
             {
-                printf ("ERROR: Wrong DDSIP_index (%d) in priority order file.\n", ind);
-                fprintf (DDSIP_outfile, "ERROR: Wrong DDSIP_index (%d) in priority order file.\n", ind);
+                printf ("ERROR: Wrong index (%d) in priority order file.\n", ind);
+                fprintf (DDSIP_outfile, "ERROR: Wrong index (%d) in priority order file.\n", ind);
                 return 1;
             }
             if (fscanf (datafile, "%d", &DDSIP_data->order[ind]) < 1)
                 break;
         }
+        fprintf (DDSIP_outfile, "\nPRIORITY ORDER FOR DDSIP BRANCHING READ FROM `%s'.\n", fname);
         fclose (datafile);
 
-        if (DDSIP_param->files)
+        if (DDSIP_param->files > 1)
         {
             sprintf (fname, "%s/order.out", DDSIP_outdir);
             if ((checkfile = fopen (fname, "w")) == NULL)
                 printf ("*Warning: Failed to open '%s'\n.", fname);
 
             for (i = 0; i < DDSIP_data->firstvar; i++)
-                fprintf (checkfile, "%d \t %d\n", i + 1, DDSIP_data->order[i]);
+                fprintf (checkfile, "%s \t %d\n", colname[DDSIP_bb->firstindex[i]], DDSIP_data->order[i]);
             fclose (checkfile);
+        }
+        // Arrange branching order
+        if (DDSIP_param->order)
+        {
+            status = DDSIP_BranchOrder ();
+            if (status)
+            {
+                fprintf (stderr, "ERROR: Failed to arrange branching order (BbInit)\n");
+                return status;
+            }
         }
     }
 

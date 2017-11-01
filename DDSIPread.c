@@ -1526,6 +1526,7 @@ DDSIP_ReadSpec ()
         DDSIP_param->cb_reduceWeight = floor (DDSIP_ReadDbl (specfile, "CBREDU", " CB REDUCE WEIGHT", 1., 1, 0., 1.) + 0.1);
         DDSIP_param->cb_increaseWeight = floor (DDSIP_ReadDbl (specfile, "CBINCR", " CB INCREASE WEIGHT", 1., 1, 0., 1.) + 0.1);
         DDSIP_param->cb_checkBestdual = floor (DDSIP_ReadDbl (specfile, "CBCHEC", " CB CHECK BESTDUAL", 1., 1, 0., 1.) + 0.1);
+        DDSIP_param->cb_checkShift = floor (DDSIP_ReadDbl (specfile, "CBSHIF", " CB CHECK SHIFTED MULTIPLIERS", 0., 1, 0., 1.) + 0.1);
     }
 #else
 //if (DDSIP_param->cb){

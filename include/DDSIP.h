@@ -159,6 +159,8 @@ extern "C" {
         int cb_increaseWeight;
         // check Lagrange multipliers which gave the highest bound
         int cb_checkBestdual;
+        // check Lagrange multipliers which gave the highest bound
+        int cb_checkShift;
 #endif
 
         // 3. Branch-and-bound

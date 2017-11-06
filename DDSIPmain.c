@@ -54,7 +54,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2017-10-29 (Github v1.1.3) ";
+const char DDSIP_version[] = "2017-11-01 (Github v1.1.3) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -397,7 +397,7 @@ main (void)
         DDSIP_node[DDSIP_bb->curnode]->step = DDSIP_bb->DDSIP_step = eev;
 
         // status = 1 -> ExpValProb infeasible
-        if ((status = DDSIP_ExpValProb ()) > 1)
+        if ((status = DDSIP_ExpValProb ()) == 1)
         {
             if (DDSIP_param->outlev)
                 fprintf (DDSIP_bb->moreoutfile, "    exp. val. prob: INFEASIBLE\n");
@@ -519,7 +519,7 @@ main (void)
                 double lhs;
                 cutpool_t *currentCut;
                 DDSIP_PrintState (DDSIP_bb->noiter);
-                if (DDSIP_bb->cutAdded && DDSIP_param->outlev > 1)
+                if (DDSIP_bb->cutAdded && DDSIP_param->outlev)
                 {
                     fprintf (DDSIP_outfile, " %6d%101d cuts\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
                 }
@@ -588,12 +588,12 @@ main (void)
                     DDSIP_EvaluateScenarioSolutions (&comb);
                     cntr++;
                     DDSIP_bb->bestbound = DDSIP_node[0]->bound;
+                    DDSIP_bb->noiter++;
                     DDSIP_PrintState (1);
-                    if (DDSIP_bb->cutAdded && DDSIP_param->outlev > 1)
+                    if (DDSIP_bb->cutAdded && DDSIP_param->outlev)
                     {
                         fprintf (DDSIP_outfile, " %6d %82d. reinit: %8d cuts\n", 0, cntr, DDSIP_bb->cutAdded);
                     }
-                    DDSIP_bb->noiter++;
                     if ((DDSIP_node[0]->bound - old_bound)/(fabs(old_bound) + 1e-16) < 1.e-7 ||
                         (DDSIP_bb->bestvalue - DDSIP_node[0]->bound)/(fabs(DDSIP_bb->bestvalue) + 1e-16) < 0.5*DDSIP_param->relgap)
                         break;
@@ -602,7 +602,7 @@ main (void)
             else
             {
                 // Print a line of output at the first, the last and each `ith' node
-                if (!DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
+                if (!DDSIP_bb->noiter || (!((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq)) || (DDSIP_param->outlev && (DDSIP_node[DDSIP_bb->curnode])->step == dual))
                         DDSIP_PrintState (DDSIP_bb->noiter);
                 if (DDSIP_bb->cutAdded && DDSIP_param->outlev > 1)
                 {
@@ -614,7 +614,7 @@ main (void)
         {
             boundstat = DDSIP_Bound ();
             // Print a line of output at the first, the last and each `ith' node
-            if (!DDSIP_bb->noiter || !((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq))
+            if (!DDSIP_bb->noiter || (!((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq)) || (DDSIP_param->outlev && (DDSIP_node[DDSIP_bb->curnode])->step == dual))
                 DDSIP_PrintState (DDSIP_bb->noiter);
         }
         if (!DDSIP_bb->curnode)

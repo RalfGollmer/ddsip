@@ -1187,7 +1187,7 @@ DDSIP_ReadSpec ()
     DDSIP_param->files     = floor (DDSIP_ReadDbl (specfile, "OUTFIL", " OUTPUT FILES LEVEL", 1., 1, 0., 1.) + 0.1);
     DDSIP_param->timelim   = DDSIP_ReadDbl (specfile, "TIMELI", " TIME LIMIT", 7000., 0, 0., DDSIP_infty);
 #else
-    DDSIP_param->outlev    = floor (DDSIP_ReadDbl (specfile, "OUTLEV", " OUTPUT LEVEL", 0., 1, 0.,100.) + 0.1);
+    DDSIP_param->outlev    = floor (DDSIP_ReadDbl (specfile, "OUTLEV", " OUTPUT LEVEL", 1., 1, 0.,100.) + 0.1);
     DDSIP_param->files     = floor (DDSIP_ReadDbl (specfile, "OUTFIL", " OUTPUT FILES LEVEL", 1., 1, 0., 6.) + 0.1);
     // uncomment for default timelimit: 24h
     //DDSIP_param->timelim   = DDSIP_ReadDbl (specfile, "TIMELI", " TIME LIMIT", 86400., 0, 0., DDSIP_infty);
@@ -1526,7 +1526,7 @@ DDSIP_ReadSpec ()
         DDSIP_param->cb_reduceWeight = floor (DDSIP_ReadDbl (specfile, "CBREDU", " CB REDUCE WEIGHT", 1., 1, 0., 1.) + 0.1);
         DDSIP_param->cb_increaseWeight = floor (DDSIP_ReadDbl (specfile, "CBINCR", " CB INCREASE WEIGHT", 1., 1, 0., 1.) + 0.1);
         DDSIP_param->cb_checkBestdual = floor (DDSIP_ReadDbl (specfile, "CBCHEC", " CB CHECK BESTDUAL", 1., 1, 0., 1.) + 0.1);
-        DDSIP_param->cb_checkShift = floor (DDSIP_ReadDbl (specfile, "CBSHIF", " CB CHECK SHIFTED MULTIPLIERS", 0., 1, 0., 1.) + 0.1);
+        DDSIP_param->cb_bestdualListLength= floor (DDSIP_ReadDbl (specfile, "CBLIST", " CB BESTDUAL LIST LENGTH", 3., 1, 1., 50.) + 0.1);
     }
 #else
 //if (DDSIP_param->cb){

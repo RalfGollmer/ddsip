@@ -1604,11 +1604,11 @@ DDSIP_LowerBound (void)
             // We handle some errors separately (blatant infeasible, error in scenario problem)
             if (DDSIP_Error (optstatus))
             {
-                fprintf (stderr, "ERROR: Failed to optimize problem for scenario %d.(LowerBound), status=%d\n", scen + 1, optstatus);
-                fprintf (DDSIP_outfile, "ERROR: Failed to optimize problem for scenario %d.(LowerBound), status=%d\n", scen + 1, optstatus);
+                fprintf (stderr, "ERROR: Failed to optimize problem for scenario %d in node %d.(LowerBound), status=%d\n", scen + 1, optstatus, DDSIP_bb->curnode);
+                fprintf (DDSIP_outfile, "ERROR: Failed to optimize problem for scenario %d in node %d.(LowerBound), status=%d\n", scen + 1, optstatus, DDSIP_bb->curnode);
                 if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to optimize problem for scenario %d.(LowerBound) status=%d\n",
-                             scen + 1, optstatus);
+                    fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to optimize problem for scenario %d in node %d.(LowerBound) status=%d\n",
+                             scen + 1, optstatus, DDSIP_bb->curnode);
                 if (optstatus == CPXERR_SUBPROB_SOLVE)
                 {
                     optstatus = CPXgetsubstat(DDSIP_env, DDSIP_lp);
@@ -3505,11 +3505,11 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             // We handle some errors separately (blatant infeasible, error in scenario problem)
             if (DDSIP_Error (optstatus))
             {
-                fprintf (stderr, "WARNING: Failed to optimize problem for scenario %d.(CBLowerBound), status = %d\n", scen + 1,
-                         optstatus);
+                fprintf (stderr, "WARNING: Failed to optimize problem for scenario %d.(CBLowerBound) in node %d, status = %d\n",
+                             scen + 1, DDSIP_bb->curnode, optstatus);
                 if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile, "WARNING: Failed to optimize problem for scenario %d.(CBLowerBound) status=%d\n",
-                             scen + 1, optstatus);
+                    fprintf (DDSIP_bb->moreoutfile, "WARNING: Failed to optimize problem for scenario %d in node %d.(CBLowerBound) status=%d\n",
+                             scen + 1, DDSIP_bb->curnode, optstatus);
                 if (optstatus == CPXERR_SUBPROB_SOLVE)
                 {
                     optstatus = CPXgetsubstat(DDSIP_env, DDSIP_lp);
@@ -3542,11 +3542,11 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 DDSIP_bb->skip = 1;
                 DDSIP_bb->solstat[scen] = 0;
                 status = mipstatus;
-                fprintf (DDSIP_outfile, "WARNING: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
+                fprintf (DDSIP_outfile, "WARNING: Problem infeasible for scenario %d in node %d (CBLowerBound)\n", scen + 1, DDSIP_bb->curnode);
                 if (DDSIP_param->outlev)
                 {
-                    printf ("WARNING: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
-                    fprintf (DDSIP_bb->moreoutfile, "WARNING: Problem infeasible for scenario %d (CBLowerBound)\n", scen + 1);
+                    printf ("WARNING: Problem infeasible for scenario %d in node %d (CBLowerBound)\n", scen + 1, DDSIP_bb->curnode);
+                    fprintf (DDSIP_bb->moreoutfile, "WARNING: Problem infeasible for scenario %d in node %d (CBLowerBound)\n", scen + 1, DDSIP_bb->curnode);
                 }
                 if ((DDSIP_bb->dualitcnt && DDSIP_bb->newTry < 6) || (!DDSIP_bb->dualitcnt && DDSIP_bb->newTry < 3))
                 {

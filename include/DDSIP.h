@@ -159,8 +159,6 @@ extern "C" {
         int cb_increaseWeight;
         // check Lagrange multipliers which gave the highest bound
         int cb_checkBestdual;
-        // check Lagrange multipliers which gave the highest bound
-        int cb_checkShift;
 #endif
 
         // 3. Branch-and-bound
@@ -290,6 +288,8 @@ extern "C" {
 #endif
         // annotation file name if Benders decomposition within CPLEX should be used
         char *annotationFile;
+        // maximal number of multiplier to be stored and tested
+        int cb_bestdualListLength;
     } para_t;
 
     typedef struct
@@ -356,6 +356,15 @@ extern "C" {
         int    number;
         struct cut_tt *prev;
     } cutpool_t;
+
+    typedef struct bbest_l
+    {
+        double* dual;
+        double  bound;
+        double  weight;
+        int     node_nr;
+        struct bbest_l *next;
+    } bbest_t;
 
     typedef struct
     {
@@ -579,7 +588,9 @@ extern "C" {
         // indicator whether the current incumbent is feasible for the current node bounds
         int bestsol_in_curnode;
         // multipliers which gave the highest dual bound
-        double* bestdual;
+        bbest_t* bestdual;
+        // number of multiplier vectors in the list
+        int bestdual_cnt;
         // multipliers which gave the highest dual bound in the current dual step
         double* local_bestdual;
         //  number of scenarios shifted to begin of the sorted list due to ub infeasibility

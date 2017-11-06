@@ -545,8 +545,8 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->bestsol_in_curnode = 1;
     if (DDSIP_param->cb)
     {
-        DDSIP_bb->bestdual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 3, "bestdual(BbTypeInit)");
-        DDSIP_bb->bestdual[DDSIP_bb->dimdual] = -DDSIP_infty;
+        DDSIP_bb->bestdual = NULL;
+        DDSIP_bb->bestdual_cnt = 0;
         DDSIP_bb->local_bestdual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 3, "bestdual(BbTypeInit)");
     }
     else
@@ -804,13 +804,13 @@ DDSIP_InitStages (void)
     }
 
     ind = 0;
-    if (DDSIP_param->cb)
+    for (i = 0; i < DDSIP_bb->firstvar; i++)
     {
-        for (i = 0; i < DDSIP_bb->firstvar; i++)
-        {
-            DDSIP_bb->lborg[i] = lb[DDSIP_bb->firstindex[i]];
-            DDSIP_bb->uborg[i] = ub[DDSIP_bb->firstindex[i]];
+        DDSIP_bb->lborg[i] = lb[DDSIP_bb->firstindex[i]];
+        DDSIP_bb->uborg[i] = ub[DDSIP_bb->firstindex[i]];
 
+        if (DDSIP_param->cb)
+        {
             if (!(DDSIP_bb->lborg[i] > -DDSIP_infty) || !(DDSIP_bb->uborg[i] < DDSIP_infty))
             {
                 if (DDSIP_param->outlev > 2)

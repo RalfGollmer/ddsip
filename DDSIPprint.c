@@ -88,7 +88,7 @@ DDSIP_Print2 (char b[], char e[], double d, int what)
 
 //==========================================================================
 // Function prints status of optimization
-// A headline is printed at every 10th printout
+// A headline is printed regularly
 
 void
 DDSIP_PrintState (int noiter)
@@ -108,8 +108,7 @@ DDSIP_PrintState (int noiter)
     rgap = DDSIP_Dmin (rgap, 100.0);
     factor = (DDSIP_bb->bestvalue < 0.)? 1.-DDSIP_param->accuracy :  1.+DDSIP_param->accuracy;
 
-    // A headline is printed every 20th call
-    if (!((noiter) % (DDSIP_param->logfreq * 20)) || (DDSIP_param->cb && !(noiter % DDSIP_Imax(DDSIP_param->cb,10)) && DDSIP_param->outlev > 1))
+    if (!(DDSIP_bb->curnode) && (DDSIP_param->cb || !DDSIP_bb->cutAdded || !DDSIP_bb->noiter))
     {
 #ifndef _WIN32
         fprintf (DDSIP_outfile, "__ ");
@@ -258,6 +257,22 @@ DDSIP_PrintState (int noiter)
     DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
     printf ("  %3dh %02d:%02.0f  %3dh %02d:%02.0f %7d %5d\n", wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs,DDSIP_node[DDSIP_bb->curnode]->father,DDSIP_node[DDSIP_bb->curnode]->depth);
     fprintf (DDSIP_outfile,"  %3dh %02d:%02.0f  %3dh %02d:%02.0f %7d %5d\n" ,wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs,DDSIP_node[DDSIP_bb->curnode]->father,DDSIP_node[DDSIP_bb->curnode]->depth);
+    // A headline is printed every 20th call
+    if (DDSIP_bb->curnode &&
+        ((DDSIP_param->cb && ((DDSIP_param->outlev  && !(noiter % (DDSIP_param->logfreq * DDSIP_Imax(abs(DDSIP_param->cb),15)))) ||
+                              (!DDSIP_param->outlev && !(noiter % (DDSIP_param->logfreq * 20))))) ||
+         (!DDSIP_param->cb && !(noiter % (DDSIP_param->logfreq * 20)))))
+    {
+#ifndef _WIN32
+        fprintf (DDSIP_outfile, "__ ");
+        sprintf (astring, "lscpu|grep 'CPU MHz' >> %s\n", DDSIP_outfname);
+        cpu_hrs = system (astring);
+#endif
+        printf ("\n   Node   Nodes   Left   Objective         Heuristic");
+        fprintf (DDSIP_outfile, "   Node   Nodes   Left  Objective           Heuristic");
+        printf ("         Best Value       Bound            Viol./Dispersion          Gap   Wall Time    CPU Time  Father Depth\n");
+        fprintf (DDSIP_outfile, "         Best Value       Bound            Viol./Dispersion          Gap   Wall Time    CPU Time  Father Depth\n");
+    }
 }
 
 //==========================================================================

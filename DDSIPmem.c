@@ -300,7 +300,6 @@ DDSIP_FreeBb ()
         if ((DDSIP_param->scalarization || DDSIP_param->cb))
         {
             DDSIP_Free ((void **) &(DDSIP_bb->ref_risk));
-            DDSIP_Free ((void **) &(DDSIP_bb->bestdual));
             DDSIP_Free ((void **) &(DDSIP_bb->local_bestdual));
         }
         DDSIP_Free ((void **) &(DDSIP_bb->ref_scenobj));
@@ -314,6 +313,18 @@ DDSIP_FreeBb ()
         DDSIP_Free ((void **) &(DDSIP_bb->firstrowind_reverse));
         DDSIP_Free ((void **) &(DDSIP_bb->secondrowind_reverse));
         DDSIP_FreeCutpool();
+        if (DDSIP_bb->bestdual)
+        {
+            bbest_t * tmp_bestdual, * tmp_next;
+            tmp_bestdual = DDSIP_bb->bestdual;
+            while (tmp_bestdual)
+            {
+                tmp_next = tmp_bestdual->next;
+                DDSIP_Free ((void **) &(tmp_bestdual->dual));
+                DDSIP_Free ((void **) &(tmp_bestdual));
+                tmp_bestdual = tmp_next;
+            }
+        }
     }
     if (DDSIP_bb->moreoutfile != NULL)
     {

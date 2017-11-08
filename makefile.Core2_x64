@@ -90,7 +90,7 @@ clean:
 #Tarfile
 tar: 
 	@echo "Building ../DDSIP_`date +%y-%m-%d-%H%M`.tar.bz2 ..."
-	@rm -rf $(OBJDIR) *~ include/*~
+	@rm -rf *~ include/*~
 	@tar cjf ../DDSIP_`date +%y-%m-%d-%H%M`.tar.bz2 --exclude-from=./exclude .
 	@ls -ltr ../DDSIP_*.tar.bz2
 

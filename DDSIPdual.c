@@ -1852,7 +1852,10 @@ NEXT_TRY:
             tmp_bestdual->dual = DDSIP_Alloc(sizeof (double), DDSIP_bb->dimdual, "bestdual entry (DDSIP_DualOpt)");
             memcpy (tmp_bestdual->dual, DDSIP_bb->local_bestdual, sizeof (double) * (DDSIP_bb->dimdual));
             tmp_bestdual->node_nr = DDSIP_bb->curnode;
-            tmp_bestdual->bound   = DDSIP_node[DDSIP_bb->curnode]->bound;
+            if (DDSIP_bb->bestdual && obj > DDSIP_bb->bestvalue)
+                tmp_bestdual->bound   = DDSIP_Dmin(DDSIP_bb->bestdual->bound - 1e-12, DDSIP_node[DDSIP_bb->curnode]->bound);
+            else
+                tmp_bestdual->bound   = DDSIP_node[DDSIP_bb->curnode]->bound;
             tmp_bestdual->weight  = DDSIP_bb->local_bestdual[DDSIP_bb->dimdual];
             DDSIP_bb->bestdual_cnt++;
             tmp_bestdual->next = DDSIP_bb->bestdual;

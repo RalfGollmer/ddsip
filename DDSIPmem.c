@@ -219,7 +219,7 @@ DDSIP_FreeData ()
 void
 DDSIP_FreeBb ()
 {
-    int i;
+    int i, k1, cnt;
     sug_t *tmp, *next;
 
     if (DDSIP_bb != NULL)
@@ -267,6 +267,24 @@ DDSIP_FreeBb ()
         }
         if (DDSIP_param->cb)
         {
+            for (i = 0; i < DDSIP_param->scenarios; i++)
+            {
+                if (DDSIP_bb->bestfirst[i].first_sol)
+                {
+                    if ((cnt=DDSIP_bb->bestfirst[i].first_sol[DDSIP_bb->firstvar] -1))
+                    {
+                        for (k1 = i + 1; cnt && k1 < DDSIP_param->scenarios; k1++)
+                        {
+                            if (DDSIP_bb->bestfirst[i].first_sol == DDSIP_bb->bestfirst[k1].first_sol)
+                            {
+                                DDSIP_bb->bestfirst[k1].first_sol = NULL;
+                                cnt--;
+                            }
+                        }
+                    }
+                    DDSIP_Free ((void **) &(DDSIP_bb->bestfirst[i].first_sol));
+                }
+            }
             DDSIP_Free ((void **) &(DDSIP_bb->bestfirst));
         }
 

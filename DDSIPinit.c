@@ -955,6 +955,16 @@ DDSIP_DetectStageRows (void)
         fprintf (DDSIP_outfile, "\t\tNo. of second-stage constraints:  %10d\n", DDSIP_bb->seccon);
     }
     fprintf (DDSIP_outfile, "------------------------------------------------------------\n");
+    printf ("in input model file:\n");
+    printf ("\t\tNo. of              constraints:  %10d\n", DDSIP_data->nocon);
+    printf ("\t\tNo. of  first-stage constraints:  %10d\n", DDSIP_data->firstcon);
+    printf ("\t\tNo. of second-stage constraints:  %10d\n", DDSIP_data->seccon);
+    if (DDSIP_param->riskmod)
+    {
+        printf ("with risk model: \n");
+        printf ("\t\tNo. of              constraints:  %10d\n", DDSIP_bb->nocon);
+        printf ("\t\tNo. of second-stage constraints:  %10d\n", DDSIP_bb->seccon);
+    }
     DDSIP_Free ((void **) &(RowSecondStage));
     DDSIP_Free ((void **) &(rmatbeg));
     DDSIP_Free ((void **) &(rmatind));

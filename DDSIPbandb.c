@@ -24,7 +24,7 @@
     along with DDSIP; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#define MDEBUG
+//#define MDEBUG
 
 #include <DDSIP.h>
 #include <DDSIPconst.h>
@@ -711,11 +711,13 @@ DDSIP_Bound (void)
             // debug info
             if (DDSIP_param->outlev > 19)
             {
+#ifdef DEBUG
                 printf (" Bounding: delete node %d, bound: %.16g, bestvalue: %.16g, bestvalue*factor= %.16g, previous bestbound: %.16g\n", DDSIP_bb->front[i],
                         DDSIP_node[DDSIP_bb->front[i]]->bound, DDSIP_bb->bestvalue, DDSIP_bb->bestvalue*factor, DDSIP_bb->bestbound);
                 printf ("                  node %d, bound - bestvalue = %.16g, bound - (bestvalue*factor(%.17g) + DDSIP_bb->correct_bounding(%g)) = %.16g, accuracy= %g\n", DDSIP_bb->front[i],
                         DDSIP_node[DDSIP_bb->front[i]]->bound- DDSIP_bb->bestvalue, DDSIP_bb->bestvalue*factor,
                         DDSIP_node[DDSIP_bb->front[i]]->bound- (DDSIP_bb->bestvalue*factor), DDSIP_bb->correct_bounding, DDSIP_param->accuracy);
+#endif
                 fprintf (DDSIP_bb->moreoutfile, " Bounding: delete node %d, bound: %.16g, bestvalue: %.16g, previous bestbound: %.16g\n", DDSIP_bb->front[i],
                          DDSIP_node[DDSIP_bb->front[i]]->bound, DDSIP_bb->bestvalue, DDSIP_bb->bestbound);
                 fprintf (DDSIP_bb->moreoutfile, "                  node %d, bound - bestvalue = %.16g, bound - (bestvalue*factor) = %.16g, accuracy= %g\n", DDSIP_bb->front[i],

@@ -54,7 +54,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2017-11-01 (Github v1.1.3) ";
+const char DDSIP_version[] = "2017-11-17 (Github v1.1.4) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -253,9 +253,11 @@ main (void)
             status = 109;
             goto TERMINATE;
         }
-        // Buffer size = 0
-        if (DDSIP_param->outlev > 21)
+        if (DDSIP_param->outlev > 20)
+        {
+            // Buffer size = 0
             setbuf (DDSIP_bb->moreoutfile, 0);
+        }
 #ifndef _WIN32
         // Print time to output file
         sprintf (astring, "date > %s\n", DDSIP_moreoutfname);
@@ -431,11 +433,6 @@ main (void)
         }
     }				// END if (EV)
 
-//    if (DDSIP_bb->cutAdded && DDSIP_param->outlev > 1)
-//    {
-//        fprintf (DDSIP_outfile, " %6d%101d cuts\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
-//    }
-
     // Print cplex log to debugfile
     if (DDSIP_param->outlev > 51)
         if ((status = CPXsetlogfile (DDSIP_env, DDSIP_bb->moreoutfile)))
@@ -543,8 +540,10 @@ main (void)
                                     }
                                     if (lhs < currentCut->rhs - 1.e-7)
                                     {
+#ifdef DEBUG
                                         if (DDSIP_param->outlev > 50)
                                             fprintf (DDSIP_bb->moreoutfile, "scen %d solution violates cut %d.\n", i+1, currentCut->number);
+#endif
                                         if ((cnt = (((DDSIP_node[0])->first_sol)[i])[DDSIP_bb->firstvar] - 1))
                                         for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
                                         {
@@ -695,7 +694,7 @@ TERMINATE:
             char errmsg[1024];
             fprintf (stderr, "ERROR: Failed to close CPLEX environment.\n");
             CPXgeterrorstring (DDSIP_env, status, errmsg);
-            printf ("%s\n", errmsg);
+            fprintf (stderr, "%s\n", errmsg);
         }
     }
 

@@ -362,7 +362,9 @@ DDSIP_DetEqu ()
     }
     CPXgetrows(DDSIP_env, DDSIP_lp, &nzcnt, rmatbeg, rmatind, rmatval, nzcnt, &rowsurplus, 0, DDSIP_data->nocon-1);
 
+#ifdef DEBUG
     printf(" got %d elements of the matrix\n", nzcnt);
+#endif
 
     k = DDSIP_Imax(nzcnt + DDSIP_param->stocmat, DDSIP_param->scenarios*(DDSIP_data->novar+1));
     if (!(rmatbeg_stage = (int *) DDSIP_Alloc (sizeof (int), DDSIP_Imax(DDSIP_param->scenarios, DDSIP_Imax(DDSIP_data->firstcon, DDSIP_data->seccon)), "rmatbeg_stage(DetEqu)")) ||

@@ -140,6 +140,7 @@ DDSIP_Contrib_LB (double *mipx, int scen)
             DDSIP_bb->objcontrib[j] += DDSIP_data->prob[scen] * h;
         (DDSIP_node[DDSIP_bb->curnode]->ref_scenobj)[scen] += h;
     }
+#ifdef DEBUG
     if (DDSIP_param->outlev > 30)
     {
         if (DDSIP_param->cb)
@@ -152,6 +153,7 @@ DDSIP_Contrib_LB (double *mipx, int scen)
         }
         printf ("--\n");
     }
+#endif
 
     DDSIP_Free ((void **) &(obj));
 
@@ -542,6 +544,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     goto TERMINATE;
             }
     
+#ifdef DEBUG
             // query time limit amd mip rel. gap parameters
             if (DDSIP_param->cpxubscr || DDSIP_param->outlev > 21)
             {
@@ -549,6 +552,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                 status = CPXgetdblparam (DDSIP_env,CPX_PARAM_EPGAP,&wr);
                 printf ("   -- 1st optimization time limit: %gs, rel. gap: %g%% --\n",we,wr*100.0);
             }
+#endif
             //
             time_start = DDSIP_GetCpuTime ();
             // Optimize
@@ -568,6 +572,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     mipgap = 1.e+30;
                 }
                 time_lap = DDSIP_GetCpuTime ();
+#ifdef DEBUG
                 if (DDSIP_param->cpxubscr ||  DDSIP_param->outlev > 11)
                 {
                     j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
@@ -575,6 +580,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     if (DDSIP_param->outlev)
                         fprintf (DDSIP_bb->moreoutfile,"      UB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
                 }
+#endif
                 if (DDSIP_param->watchkappa)
                 {
                     double maxkappaval, stablekappaval, suspiciouskappaval, unstablekappaval, illposedkappaval;
@@ -757,7 +763,8 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                 if (DDSIP_param->outlev)
                                                 {
                                                     fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %g ############\n", rowstore, Bs+1, viol);
-                                                    printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
+                                                    if (DDSIP_param->outlev > 8)
+                                                       printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
                                                 }
                                                 rhs = 1.;
                                                 sense = 'G';
@@ -876,12 +883,15 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     // continue if desired gap is not reached yet
                     if (mipgap > wr)
                     {
+#ifdef DEBUG
                         if (DDSIP_param->cpxubscr || DDSIP_param->outlev > 21)
                         {
                             printf ("   -- 2nd optimization time limit: %gs, rel. gap: %g%% --\n",we,wr*100.0);
                         }
+#endif
                         status = CPXmipopt (DDSIP_env, DDSIP_lp);
                         mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
+#ifdef DEBUG
                         if (DDSIP_param->cpxubscr || DDSIP_param->outlev > 11)
                         {
                             if (CPXgetmiprelgap(DDSIP_env, DDSIP_lp, &mipgap))
@@ -899,6 +909,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                     fprintf (DDSIP_bb->moreoutfile,"      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
                             }
                         }
+#endif
                         if (DDSIP_param->watchkappa)
                         {
                             double maxkappaval, stablekappaval, suspiciouskappaval, unstablekappaval, illposedkappaval;
@@ -1070,7 +1081,8 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                     if (DDSIP_param->outlev)
                                     {
                                         fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %g ############\n", rowstore, Bs+1, viol);
-                                        printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
+                                        if (DDSIP_param->outlev > 8)
+                                            printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
                                     }
                                     rhs = 1.;
                                     sense = 'G';
@@ -1272,7 +1284,8 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     if (DDSIP_param->outlev)
                     {
                         fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
-                        printf (" ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
+                        if (DDSIP_param->outlev > 8)
+                            printf (" ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
                     }
 #else
                     cutpool_t * newCut;
@@ -1281,7 +1294,8 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     if (DDSIP_param->outlev)
                     {
                         fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s ############\n", rowstore);
-                        printf (" ############ adding cut %s ############\n", rowstore);
+                        if (DDSIP_param->outlev > 8)
+                            printf (" ############ adding cut %s ############\n", rowstore);
                     }
 #endif
                     if ((status = CPXaddrows(DDSIP_env, DDSIP_lp, 0, 1, DDSIP_data->firstvar, &rhs, &sense, &rmatbeg, rmatind, rmatval, NULL, rowname)))
@@ -1373,7 +1387,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                          "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
                          iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
                          wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
-                if (DDSIP_param->outlev>7)
+                if (DDSIP_param->outlev>8)
                 {
                     printf ("%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
                             iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,

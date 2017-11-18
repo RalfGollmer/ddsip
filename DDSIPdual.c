@@ -1059,7 +1059,7 @@ DDSIP_DualOpt (void)
                 && cycleCnt < 2)
         {
             if ((DDSIP_bb->nofront == 1) &&
-                    (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue) * DDSIP_param->relgap - 1.e-14))
+                    (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue) * DDSIP_param->relgap))
             {
                 break;
             }
@@ -1940,7 +1940,7 @@ while (tmp_bestdual)
             }
             else if (!DDSIP_bb->violations)
                 DDSIP_Print2 ("termination status: optimal. --------------------------------------------------------------", "\n", 0, 0);
-            else if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 0.5*fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap)
+            else if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap)
             {
                 if (DDSIP_node[DDSIP_bb->curnode]->violations > 0.3*DDSIP_param->scenarios && (DDSIP_bb->nofront > 1)
                         && !DDSIP_bb->bestsol_in_curnode)

@@ -470,16 +470,6 @@ DDSIP_SemDevGetNodeTarget (void)
         if (DDSIP_param->cpxscr)
             printf ("--->\n");
 
-//  if (DDSIP_param->cpxtime > DDSIP_param->timelim - GetCpuTime ()) {
-//    status = CPXsetdblparam (DDSIP_env, CPX_PARAM_TILIM, DDSIP_Dmax (0, DDSIP_param->timelim - GetCpuTime ()));
-//    if (status) {
-//      fprintf (stderr, "ERROR: Failed to set cplex parameter (LowerBound) \n");
-//      return status;
-//    }
-//    else{
-//      printf ("   time limit nearly reached, set time limit for current CPLEX call to %g.\n",DDSIP_Dmax (0, DDSIP_param->timelim - GetCpuTime ()));
-//    }
-//  }
 
         status = CPXmipopt (DDSIP_env, DDSIP_lp);
         // We handle some errors separately (blatant infeasible, error in scenario problem)
@@ -1208,10 +1198,6 @@ DDSIP_RiskLb (double *scensol)
         else
             DDSIP_bb->ref_max = 0;
         risk = d + DDSIP_param->ref_eps * (we + wr);
-// if (DDSIP_bb->violations){
-//  DDSIP_bb->currisk = 0.;
-//  risk = (1.+DDSIP_param->ref_eps) * we;
-// }
 
     }
     else
@@ -1303,8 +1289,6 @@ DDSIP_RiskObjective (double *scensol)
     double sumprob;
 
     int *ordind = (int *) DDSIP_Alloc(sizeof (int), DDSIP_param->scenarios, "ordind(RiskObjective)");
-//double *tmpscensol = (double *) malloc (sizeof (double) * DDSIP_param->scenarios);
-
     // Initialize
     DDSIP_bb->currisk = 0.0;
     for (i = 0; i < DDSIP_maxrisk; i++)
@@ -1389,12 +1373,6 @@ DDSIP_RiskObjective (double *scensol)
         // Tail Value-at-Risk
     case 5:
         DDSIP_bb->currisk = DDSIP_bb->curriskval[4];
-// Last first-stage variable is the value-at-risk
-// but why should the heuristics value enter the sol. from lower bounds?? And this variable is not fixed...so the action doesn't do anything
-//    if (!DDSIP_param->riskalg){
-//      for (i = 0; i < DDSIP_param->scenarios; i++)
-//        (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][DDSIP_bb->firstvar - 1] = DDSIP_bb->curriskval[5];
-//    }
         break;
         // VaR
     case 6:

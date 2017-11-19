@@ -29,10 +29,6 @@
 #endif
 
 #define THRESHOLD 5
-//int DDSIP_Partition (double *, int *, int, int, int);
-//void DDSIP_QuickSortRe (double *, int *, int, int, int);
-
-// DDSIP_Quicksort (descending) combined with insertion sort - for an indexed array, sorting just the index
 void DDSIP_qsort_ins_D (const double * a, int * ind, int l, int r)
 {
     int i, j, k;
@@ -100,58 +96,7 @@ void DDSIP_qsort_ins_A (const double * a, int * ind, int l, int r)
         }
     }
 }
-// Quicksort and Partition from
-// http://ciips.ee.uwa.edu.au/~morris/Year2/PLDS210/qsort.html
-// Modified to sort array and indices
-//==========================================================================
-//int
-//Partition (double *a, int *ind, int low, int high, int length)
-//{
-//  int left, right, pivot;
-//  double pivot_item, tmp;
-//  pivot_item = a[low];
-//  pivot = low;
-//  left = low;
-//  right = high;
-//  while (left < right) {
-//    /* Move left while item < pivot */
-//    while (left < length && a[left] <= pivot_item)
-//      left++;
-//    /* Move right while item > pivot */
-//    while (right && a[right] > pivot_item)
-//      right--;
-//    if (left < right) {
-//      DDSIP_SWAP (a[left], a[right]);
-//      DDSIP_SWAP (ind[left], ind[right]);
-//    }
-//  }
-//  /* right is final position for the pivot */
-//  a[low] = a[right];
-//  a[right] = pivot_item;
-//  DDSIP_SWAP (ind[low], ind[right]);
-//  return right;
-//}
-//
-////==========================================================================
-//void
-//QuickSortRe (double *val, int *ind, int low, int high, int length)
-//{
-//  int pivot;
-//  /* Termination condition! */
-//  if (high > low) {
-//    pivot = DDSIP_Partition (val, ind, low, high, length);
-//    DDSIP_QuickSortRe (val, ind, low, pivot - 1, length);
-//    DDSIP_QuickSortRe (val, ind, pivot + 1, high, length);
-//  }
-//}
-//
-////==========================================================================
-//// For sorting the whole arrays, this one is shorter
-//void
-//QuickSort (double *val, int *ind, int length)
-//{
-//  DDSIP_QuickSortRe (val, ind, 0, length - 1, length);
-//}
+
 
 //==========================================================================
 // Signal handling

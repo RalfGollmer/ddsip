@@ -181,13 +181,7 @@ DDSIP_ReadDbl (FILE * specfile, char *pattern, char *text, double defval, int is
     if (!find)
     {
         // Two-stage parameters can be read from the time file, too. Some parameters are hidden.
-        if (DDSIP_param->outlev
-//      && strncmp (pattern, "FIRSTV", DDSIP_unique)
-//      && strncmp (pattern, "FIRSTC", DDSIP_unique)
-//      && strncmp (pattern, "SECVAR", DDSIP_unique)
-//      && strncmp (pattern, "SECVAR", DDSIP_unique)
-//      && strncmp (pattern, "ACCURA", DDSIP_unique)
-           )
+        if (DDSIP_param->outlev)
         {
             fprintf (DDSIP_outfile, " %-8s  %-31s(default) ", pattern, text);
             if (isint)
@@ -1128,11 +1122,6 @@ DDSIP_ReadSpec ()
     // Two-stage stochastic programming parameters
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
     fprintf (DDSIP_outfile, "-TWO-STAGE STOCHASTIC PROGRAM\n\n");
-
-//    DDSIP_param->firstcon = floor (DDSIP_ReadDbl (specfile, "FIRSTC", " FIRST STAGE CONSTRAINTS", 0., 1, 0., DDSIP_bigint) + 0.1);
-//    DDSIP_param->firstvar = floor (DDSIP_ReadDbl (specfile, "FIRSTV", " FIRST STAGE VARIABLES", 1., 1, 1., DDSIP_bigint) + 0.1);
-//    DDSIP_param->seccon = floor (DDSIP_ReadDbl (specfile, "SECCON", " SECOND STAGE CONSTRAINTS", 0., 1, 0., DDSIP_bigint) + 0.1);
-//    DDSIP_param->secvar = floor (DDSIP_ReadDbl (specfile, "SECVAR", " SECOND STAGE VARIABLES", 1., 1, 0., DDSIP_bigint) + 0.1);
     DDSIP_param->prefix = DDSIP_ReadString (specfile, "PREFIX", " PREFIX FOR FIRST STAGE VARIABLE NAMES");
     DDSIP_param->postfix = DDSIP_ReadString (specfile, "POSTFIX", " POSTFIX FOR FIRST STAGE VARIABLE NAMES");
 #ifdef EXPLICITPOSTFIX
@@ -1529,10 +1518,6 @@ DDSIP_ReadSpec ()
         DDSIP_param->cb_bestdualListLength= floor (DDSIP_ReadDbl (specfile, "CBLIST", " CB BESTDUAL LIST LENGTH", 6., 1, 1., 50.) + 0.1);
     }
 #else
-//if (DDSIP_param->cb){
-//  printf ("\n XXX Found CBFREQ %d with ConicBundle being not avaliable, resetting to 0.\n\n", DDSIP_param->cb);
-//  fprintf (DDSIP_outfile, "\n XXX Found CBFREQ %d with ConicBundle being not avaliable, resetting to 0.\n\n", DDSIP_param->cb);
-//}
     DDSIP_param->cb = 0;
     DDSIP_param->prematureStop = 1;
 #endif
@@ -2275,9 +2260,6 @@ DDSIP_AdvStart (void)
         for (i = 0; i < DDSIP_data->firstvar; i++)
         {
             k = fscanf (advfile, "%lf", DDSIP_bb->adv_sol + i);
-//      fprintf (DDSIP_outfile, "  %14.8g", DDSIP_bb->adv_sol[i]);
-//      if (!((i+1)%10))
-//        fprintf (DDSIP_outfile, "\n");
         }
     }
 
@@ -2287,11 +2269,7 @@ DDSIP_AdvStart (void)
         for (i = 0; i < DDSIP_bb->dimdual; i++)
         {
             k = fscanf (advfile, "%lf", &DDSIP_node[0]->dual[i]);
-//      fprintf (DDSIP_outfile, "  %14.8g", DDSIP_node[0]->dual[i]);
-//      if (!((i+1)%10))
-//        fprintf (DDSIP_outfile, "\n");
         }
-//    fprintf (DDSIP_outfile, "\n");
     }
     fclose (advfile);
 

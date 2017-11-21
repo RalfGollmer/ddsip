@@ -847,9 +847,10 @@ DDSIP_DualOpt (void)
         if (DDSIP_param->cb_checkBestdual && DDSIP_bb->bestdual_cnt &&
             (DDSIP_bb->dualObjVal < DDSIP_bb->bestvalue - DDSIP_Dmax(1.e-11,0.5*DDSIP_param->relgap)*fabs(DDSIP_bb->bestvalue)))
         {
-            struct bbest_l * tmp_bestdual;
-            double max_weight;
-            tmp_bestdual = DDSIP_bb->bestdual;
+            bbest_t * tmp_bestdual, * tmp_maxbound, * tmp_previous;
+            double max_weight, max_bound, inherited_bound;
+            tmp_bestdual = tmp_maxbound = tmp_previous = DDSIP_bb->bestdual;
+            max_bound = inherited_bound = DDSIP_bb->dualObjVal;
             max_weight = start_weight;
             if (DDSIP_param->outlev)
             {
@@ -861,11 +862,10 @@ DDSIP_DualOpt (void)
             }
             old_obj = obj = DDSIP_bb->dualObjVal;
             // test Lagrange multipliers from DDSIP_bb->bestdual
-            bbest_t * tmp_previous;
-            tmp_previous = tmp_bestdual;
             cnt = 0;
             while (tmp_bestdual)
             {
+                tmp_bestdual->bound = DDSIP_Dmin (tmp_bestdual->bound, 0.7*DDSIP_bb->bestbound + 0.3*DDSIP_bb->bestvalue); 
                 if (tmp_bestdual->node_nr != DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual + 1])
                 {
                     // check whether the inherited multiplier is different from tmp_bestdual
@@ -899,10 +899,9 @@ DDSIP_DualOpt (void)
                         return status;
                     }
                     obj = DDSIP_bb->dualObjVal;
-                    diff = obj - old_obj;
+                    diff = obj - inherited_bound;
                     if (diff > 0.)
                     {
-                        //obj = -cb_get_objval (p);
                         if (DDSIP_param->outlev)
                         {
                             DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
@@ -912,6 +911,11 @@ DDSIP_DualOpt (void)
                                      DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, tmp_bestdual->node_nr,
                                      obj, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                         }
+                        if (obj > max_bound)
+                        {
+                            max_bound = obj;
+                            tmp_maxbound = tmp_bestdual;
+                        }
                         // put this one at the top of the list
                         if (tmp_bestdual != DDSIP_bb->bestdual)
                         {
@@ -919,9 +923,16 @@ DDSIP_DualOpt (void)
                             tmp_bestdual->next = DDSIP_bb->bestdual;
                             DDSIP_bb->bestdual = tmp_bestdual;
                         }
-                        old_obj = obj;
-                        cnt = 0;
-                        break;
+                        if (max_bound > DDSIP_bb->bestvalue ||
+                            diff/fabs(obj + 1.e-14) > 1.e+2*DDSIP_param->relgap ||
+                            (DDSIP_bb->bestvalue < DDSIP_infty && diff > 1.e-3*(DDSIP_bb->bestvalue - DDSIP_bb->bestbound)))
+                        {
+                            // cutoff or sufficient increase reached
+                            old_obj = obj;
+                            cnt = 0;
+                            break;
+                        }
+                        tmp_bestdual = tmp_previous;
                     }
                     else
                     {
@@ -940,13 +951,18 @@ DDSIP_DualOpt (void)
                 tmp_previous = tmp_bestdual;
                 tmp_bestdual = tmp_bestdual->next;
             }
-            if (cnt)
+            if (cnt && tmp_previous != tmp_maxbound)
             {
-                //last_weight = next_weight = DDSIP_Dmax(DDSIP_Dmin(max_weight, 5e+2), start_weight);
+                // go back to the multipliers which gave the best bound - either from bestdual or the inherited one
                 last_weight = next_weight = 0.6*DDSIP_Dmin(max_weight, 5e+2) + 0.4*start_weight;
                 cb_set_next_weight (p, next_weight);
-                memcpy (DDSIP_node[DDSIP_bb->curnode]->dual, DDSIP_bb->local_bestdual, sizeof (double) * (DDSIP_bb->dimdual + 3));
-                if ((status = cb_set_new_center_point (p, DDSIP_node[DDSIP_bb->curnode]->dual)))
+                if (max_bound > inherited_bound)
+                {
+                    memcpy (DDSIP_bb->local_bestdual, tmp_maxbound->dual, sizeof (double) * (DDSIP_bb->dimdual));
+                    DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = max_bound;
+                    DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 1] = tmp_maxbound->node_nr;
+                }
+                if ((status = cb_set_new_center_point (p, DDSIP_bb->local_bestdual)))
                 {
                     fprintf (stderr, "set_new_center_point returned %d\n", status);
                     if (DDSIP_param->outlev)
@@ -957,17 +973,17 @@ DDSIP_DualOpt (void)
                     DDSIP_Free ((void **) &(center_point));
                     return status;
                 }
+                old_obj = obj = DDSIP_bb->dualObjVal;
                 if (DDSIP_param->outlev)
                 {
                     DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
                     time (&DDSIP_bb->cur_time);
                     DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                     fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  mult. node %5g  %-20.14g %30dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                             DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
-                             DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 1], DDSIP_bb->dualObjVal,
+                             DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, obj, last_weight,
+                             DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 1], obj,
                              wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                 }
-                old_obj = obj = DDSIP_bb->dualObjVal;
             }
         }
         last_dualitcnt = DDSIP_bb->dualitcnt;
@@ -1887,7 +1903,7 @@ NEXT_TRY:
                 if (DDSIP_bb->bestdual && obj > DDSIP_bb->bestvalue)
                     tmp_bestdual->bound   = DDSIP_bb->bestdual->bound + 1e-09;
                 else
-                    tmp_bestdual->bound   = DDSIP_node[DDSIP_bb->curnode]->bound;
+                    tmp_bestdual->bound   = DDSIP_Dmin (DDSIP_bb->bestvalue - 1e-6, DDSIP_node[DDSIP_bb->curnode]->bound);
                 tmp_bestdual->weight  = DDSIP_bb->local_bestdual[DDSIP_bb->dimdual];
                 DDSIP_bb->bestdual_cnt++;
                 tmp_bestdual->next = DDSIP_bb->bestdual;

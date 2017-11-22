@@ -177,7 +177,7 @@ main (void)
     i = system (astring);
     fprintf (DDSIP_outfile, "host            : ");
     //sprintf (astring, "hostname >> %s; lscpu >> %s\n", DDSIP_outfname, DDSIP_outfname);
-    sprintf (astring, "hostname >> %s; cat /proc/cpuinfo | sed '/processor.*: 0/,/^$/!d' >> %s\n", DDSIP_outfname, DDSIP_outfname);
+    sprintf (astring, "hostname >> %s; cat /proc/cpuinfo | sed '/processor.*: 0/,/^$/!d' |grep -E 'vendor|cpu |model|stepping|MHz|cache |cores' >> %s\n", DDSIP_outfname, DDSIP_outfname);
     for (i = 0; i < 100; i++)
         exp(1.11*(-i-2));
     i = system (astring);

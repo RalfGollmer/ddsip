@@ -3618,7 +3618,6 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 DDSIP_bb->skip = 1;
                 DDSIP_bb->solstat[scen] = 0;
                 status = mipstatus;
-                fprintf (DDSIP_outfile, "WARNING: Problem infeasible for scenario %d in node %d (CBLowerBound)\n", scen + 1, DDSIP_bb->curnode);
                 if (DDSIP_param->outlev)
                 {
                     printf ("WARNING: Problem infeasible for scenario %d in node %d (CBLowerBound)\n", scen + 1, DDSIP_bb->curnode);
@@ -3635,6 +3634,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 {
                     DDSIP_bb->newTry = 0;
                     DDSIP_node[DDSIP_bb->curnode]->bound = DDSIP_infty;
+                    fprintf (DDSIP_outfile, "         Problem infeasible for scenario %d in node %d (CBLowerBound)\n", scen + 1, DDSIP_bb->curnode);
                 }
                 goto TERMINATE;
             }

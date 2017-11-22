@@ -1475,7 +1475,7 @@ DDSIP_ReadSpec ()
     {
         //DDSIP_param->prematureStop = 0; // would be safer, but after current changes the lower bound used for premature stoppng is chosen with more caution (should work in many cases)
         DDSIP_param->prematureStop = 1;
-        DDSIP_param->cbitlim = floor (DDSIP_ReadDbl (specfile, "CBITLI", " CB DESCENT ITERATIONS", 25., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->cbitlim = floor (DDSIP_ReadDbl (specfile, "CBITLI", " CB DESCENT ITERATIONS", 18., 1, 0., DDSIP_bigint) + 0.1);
         if (abs(DDSIP_param->riskmod) == 4 || abs(DDSIP_param->riskmod) == 5)
         {
             printf ("     setting CBRITLIM to 0 due risk model.\n");
@@ -1515,7 +1515,7 @@ DDSIP_ReadSpec ()
         DDSIP_param->cb_reduceWeight = floor (DDSIP_ReadDbl (specfile, "CBREDU", " CB REDUCE WEIGHT", 1., 1, 0., 1.) + 0.1);
         DDSIP_param->cb_increaseWeight = floor (DDSIP_ReadDbl (specfile, "CBINCR", " CB INCREASE WEIGHT", 1., 1, 0., 1.) + 0.1);
         DDSIP_param->cb_checkBestdual = floor (DDSIP_ReadDbl (specfile, "CBCHEC", " CB CHECK BESTDUAL", 1., 1, 0., 1.) + 0.1);
-        DDSIP_param->cb_bestdualListLength= floor (DDSIP_ReadDbl (specfile, "CBLIST", " CB BESTDUAL LIST LENGTH", 6., 1, 1., 50.) + 0.1);
+        DDSIP_param->cb_bestdualListLength= floor (DDSIP_ReadDbl (specfile, "CBLIST", " CB BESTDUAL LIST LENGTH", 8., 1, 1., 50.) + 0.1);
     }
 #else
     DDSIP_param->cb = 0;

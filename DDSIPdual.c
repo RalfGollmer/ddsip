@@ -907,7 +907,7 @@ DDSIP_DualOpt (void)
                             DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
                             time (&DDSIP_bb->cur_time);
                             DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
-                            fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  mult. node %5d  %-20.14g incr. %10.3g %13dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                            fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  mult. node %5d  %-20.14g incr. %13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                                      DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, tmp_bestdual->node_nr,
                                      obj, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                         }
@@ -941,7 +941,7 @@ DDSIP_DualOpt (void)
                             DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
                             time (&DDSIP_bb->cur_time);
                             DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
-                            fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  mult. node %5d  %-20.14g diff. %10.3g %13dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                            fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  mult. node %5d  %-20.14g diff. %13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                                      DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, tmp_bestdual->node_nr,
                                      DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                         }

@@ -21,7 +21,8 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-//#define MDEBUG
+//#define DEBUG
+//#define SHIFT
 
 #include <DDSIP.h>
 #include <DDSIPconst.h>
@@ -1159,6 +1160,9 @@ DDSIP_LowerBound (void)
     double sumprob, maxdispersion, rest_bound, factor, nfactor;
     char **colname;
     char *colstore;
+#ifdef SHIFT
+    double * time_sort_array = NULL;
+#endif
 
     DDSIP_bb->heurSuccess = -1;
     DDSIP_bb->skip = 0;
@@ -1275,6 +1279,13 @@ DDSIP_LowerBound (void)
     else
         rest_bound = -DDSIP_param->scenarios*DDSIP_infty;
 
+#ifdef SHIFT
+    if (DDSIP_param->hot == 4)
+    {
+        // prepare for shifting difficult scenarios to the end such that they can make use of more mipstarts
+        time_sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "time_sort_array(LowerBound)");
+    }
+#endif
     // LowerBound problem for each scenario
     //****************************************************************************
     meanGap = 0.;
@@ -1470,6 +1481,10 @@ DDSIP_LowerBound (void)
                 // Optimize MIP
                 optstatus = CPXmipopt (DDSIP_env, DDSIP_lp);
                 mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
+///////////////////////////////////////////
+if (DDSIP_param->outlev)
+   fprintf (DDSIP_bb->moreoutfile, "1st lb: optstatus= %d, mipstatus= %d\n", optstatus, mipstatus);
+///////////////////////////////////////////
                 if (!optstatus && !DDSIP_Error(optstatus) && !DDSIP_Infeasible (mipstatus))
                 {
                     if (CPXgetmiprelgap(DDSIP_env, DDSIP_lp, &mipgap))
@@ -1649,8 +1664,8 @@ DDSIP_LowerBound (void)
             // We handle some errors separately (blatant infeasible, error in scenario problem)
             if (DDSIP_Error (optstatus))
             {
-                fprintf (stderr, "ERROR: Failed to optimize problem for scenario %d in node %d.(LowerBound), status=%d\n", scen + 1, optstatus, DDSIP_bb->curnode);
-                fprintf (DDSIP_outfile, "ERROR: Failed to optimize problem for scenario %d in node %d.(LowerBound), status=%d\n", scen + 1, optstatus, DDSIP_bb->curnode);
+                fprintf (stderr, "ERROR: Failed to optimize problem for scenario %d in node %d.(LowerBound), status=%d\n", scen + 1, DDSIP_bb->curnode, optstatus);
+                fprintf (DDSIP_outfile, "ERROR: Failed to optimize problem for scenario %d in node %d.(LowerBound), status=%d\n", scen + 1, DDSIP_bb->curnode, optstatus);
                 if (DDSIP_param->outlev)
                     fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to optimize problem for scenario %d in node %d.(LowerBound) status=%d\n",
                              scen + 1, optstatus, DDSIP_bb->curnode);
@@ -1813,11 +1828,18 @@ DDSIP_LowerBound (void)
             // Debugging information
             gap = 100.0*(objval-bobjval)/(fabs(objval)+1e-4);
             meanGap += DDSIP_data->prob[scen] * gap;
+            time_end = DDSIP_GetCpuTime ();
+            time_start = time_end-time_start;
+#ifdef SHIFT
+            if (DDSIP_param->hot == 4)
+            {
+                // prepare for shifting difficult scenarios to the end such that they can make use of more mipstarts
+                time_sort_array[iscen] = time_start;
+            }
+#endif
             if (DDSIP_param->outlev)
             {
                 time (&DDSIP_bb->cur_time);
-                time_end = DDSIP_GetCpuTime ();
-                time_start = time_end-time_start;
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                 DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
                 fprintf (DDSIP_bb->moreoutfile,
@@ -2197,6 +2219,45 @@ DDSIP_LowerBound (void)
         }
         DDSIP_bb->lb_sorted = 1;
     }
+#ifdef SHIFT
+    else if (DDSIP_param->hot == 4)
+    {
+        // shifting difficult scenarios to the end such that they can make use of more mipstarts
+        wall_secs = cpu_secs = time_sort_array[0];
+        for (wall_hrs = 1; wall_hrs < DDSIP_param->scenarios; wall_hrs++)
+        {
+            wall_secs += time_sort_array[wall_hrs];
+            if (wall_hrs < DDSIP_param->scenarios - 3)
+                cpu_secs = DDSIP_Dmax (cpu_secs, time_sort_array[wall_hrs]);
+        }
+        wall_secs /= (0.01 + DDSIP_param->scenarios);
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "### max time %g, mean %g, max>4*mean: %d ###\n", cpu_secs, wall_secs, cpu_secs > 4.*wall_secs);
+        if (cpu_secs > 2.*wall_secs)
+        {
+            cpu_hrs = 0;
+            for (wall_hrs = 0; wall_hrs < DDSIP_param->scenarios-cpu_hrs; wall_hrs++)
+            {
+                if (time_sort_array[wall_hrs] > 4.*wall_secs)
+                {
+                     cpu_mins = DDSIP_bb->lb_scen_order[wall_hrs];
+                     cpu_secs = time_sort_array[wall_hrs];
+                     if (DDSIP_param->outlev)
+                         fprintf (DDSIP_bb->moreoutfile, "### shifting scenario %d with time %g to the end of lb_scen_order ###\n", cpu_mins+1, time_sort_array[wall_hrs]);
+                     for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
+                     {
+                         DDSIP_bb->lb_scen_order[wall_mins-1] = DDSIP_bb->lb_scen_order[wall_mins];
+                         time_sort_array[wall_mins-1] = time_sort_array[wall_mins];
+                     }
+                     DDSIP_bb->lb_scen_order[DDSIP_param->scenarios-1] = cpu_mins; 
+                     time_sort_array[DDSIP_param->scenarios-1] = cpu_secs; 
+                     cpu_hrs++;
+                     wall_hrs--;
+                }
+            }
+        }
+    }
+#endif
 
     if (DDSIP_param->riskmod || DDSIP_param->riskalg || DDSIP_param->scalarization)
     {
@@ -3096,6 +3157,12 @@ TERMINATE:
     DDSIP_Free ((void **) &(maxfirst));
     DDSIP_Free ((void **) &(type));
     DDSIP_Free ((void **) &(tmpsecsol));
+#ifdef SHIFT
+    if (DDSIP_param->hot == 4)
+    {
+        DDSIP_Free ((void **) &(time_sort_array));
+    }
+#endif
     return status;
 } // DDSIP_LowerBound
 
@@ -3134,6 +3201,9 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     char *type = (char *) DDSIP_Alloc (sizeof (char), DDSIP_bb->firstvar, "type(CBLowerBound)");
     char **colname;
     char *colstore;
+#ifdef SHIFT
+    double * time_sort_array = NULL;
+#endif
 
     DDSIP_bb->DDSIP_step = dual;
     DDSIP_bb->skip = 0;
@@ -3154,6 +3224,13 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         else
             fprintf (DDSIP_bb->moreoutfile, "Solving (dual opt. function eval) in node %d, desc. it. %d, tot. it. %d (limits: %d, %d), weight = %g :\n", DDSIP_bb->curnode, DDSIP_bb->dualdescitcnt,DDSIP_bb->dualitcnt+1,DDSIP_param->cbrootitlim,DDSIP_param->cbtotalitlim, cb_get_last_weight(DDSIP_bb->dualProblem));
     }
+#ifdef SHIFT
+    if (DDSIP_param->hot == 4)
+    {
+        // prepare for shifting difficult scenarios to the end such that they can make use of more mipstarts
+        time_sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "time_sort_array(LowerBound)");
+    }
+#endif
     // Initialization of indices, minfirst, and maxfirst
     for (j = 0; j < DDSIP_bb->firstvar + DDSIP_bb->secvar; j++)
         indices[j] = j;
@@ -3367,6 +3444,10 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 // Optimize MIP
                 optstatus = CPXmipopt (DDSIP_env, DDSIP_lp);
                 mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
+///////////////////////////////////////////
+//if (DDSIP_param->outlev)
+//   fprintf (DDSIP_bb->moreoutfile, "                      1st lb: optstatus= %d, mipstatus= %d\n", optstatus, mipstatus);
+///////////////////////////////////////////
                 if (!optstatus && !DDSIP_Error(optstatus) && !DDSIP_Infeasible (mipstatus))
                 {
                     if (CPXgetmiprelgap(DDSIP_env, DDSIP_lp, &mipgap))
@@ -3763,12 +3844,19 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] = mipstatus;
             gap = 100.0*(objval-bobjval)/(fabs(objval)+1e-4);
             meanGap += DDSIP_data->prob[scen] * gap;
+            time_end = DDSIP_GetCpuTime ();
+            time_start = time_end-time_start;
+#ifdef SHIFT
+            if (DDSIP_param->hot == 4)
+            {
+                // prepare for shifting difficult scenarios to the end such that they can make use of more mipstarts
+                time_sort_array[iscen] = time_start;
+            }
+#endif
             // Debugging information
             if (DDSIP_param->outlev)
             {
                 time (&DDSIP_bb->cur_time);
-                time_end = DDSIP_GetCpuTime ();
-                time_start = time_end-time_start;
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                 DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
                 fprintf (DDSIP_bb->moreoutfile,
@@ -3974,6 +4062,47 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         }
 
     }				// end for iscen
+#ifdef SHIFT
+    if (DDSIP_param->hot == 4)
+    {
+        // shifting difficult scenarios to the end such that they can make use of more mipstarts
+        wall_secs = cpu_secs = time_sort_array[0];
+        for (wall_hrs = 1; wall_hrs < DDSIP_param->scenarios; wall_hrs++)
+        {
+            wall_secs += time_sort_array[wall_hrs];
+            if (wall_hrs < DDSIP_param->scenarios - 3)
+                cpu_secs = DDSIP_Dmax (cpu_secs, time_sort_array[wall_hrs]);
+        }
+        wall_secs /= (0.01 + DDSIP_param->scenarios - DDSIP_bb->shifts);
+#ifdef DEBUG
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "### max time %g, mean %g, max>4.5*mean: %d ###\n", cpu_secs, wall_secs, cpu_secs > 4.5*wall_secs);
+#endif
+        if (cpu_secs > 4.5*wall_secs)
+        {
+            cpu_hrs = 0;
+            for (wall_hrs = DDSIP_bb->shifts; wall_hrs < DDSIP_param->scenarios-cpu_hrs; wall_hrs++)
+            {
+                if (time_sort_array[wall_hrs] > 4.5*wall_secs)
+                {
+                     cpu_mins = DDSIP_bb->lb_scen_order[wall_hrs];
+                     cpu_secs = time_sort_array[wall_hrs];
+                     if (DDSIP_param->outlev)
+                         fprintf (DDSIP_bb->moreoutfile, "### shifting scenario %d with time %g to the end of lb_scen_order ###\n", cpu_mins+1, time_sort_array[wall_hrs]);
+                     for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
+                     {
+                         DDSIP_bb->lb_scen_order[wall_mins-1] = DDSIP_bb->lb_scen_order[wall_mins];
+                         time_sort_array[wall_mins-1] = time_sort_array[wall_mins];
+                     }
+                     DDSIP_bb->lb_scen_order[DDSIP_param->scenarios-1] = cpu_mins; 
+                     time_sort_array[DDSIP_param->scenarios-1] = cpu_mins; 
+                     cpu_hrs++;
+                     wall_hrs--;
+                }
+            }
+        }
+    }
+#endif
 
     // Count number of differences within first stage solution in current node
     // DDSIP_bb->violations=k means differences in k components
@@ -4029,7 +4158,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         use_LB_params = 0;
         if (DDSIP_param->outlev > 6)
             fprintf (DDSIP_bb->moreoutfile,
-                     " +++++ dual step     increasing  bound for node %3d, new val: %-18.16g, old value: %-18.16g, increase abs %g, rel %g%%,  weight = %g +++++\n",
+                     " +++++ dual step     increasing  bound for node %3d, new val: %-18.16g, old value: %-18.16g  incr.  %g, rel %g%%,  weight = %g +++++\n",
                      DDSIP_bb->curnode, tmpbestbound,  DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestbound - DDSIP_node[DDSIP_bb->curnode]->bound,
                      1.e2*(tmpbestbound - DDSIP_node[DDSIP_bb->curnode]->bound)/(fabs(DDSIP_node[DDSIP_bb->curnode]->bound)+1e-6), cb_get_last_weight(DDSIP_bb->dualProblem));
         DDSIP_node[DDSIP_bb->curnode]->violations = DDSIP_bb->violations;
@@ -4438,9 +4567,9 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             if (DDSIP_param->outlev > 7)
             {
                 printf ("\tNumber of violations of nonanticipativity of first-stage variables:  %d, max: %g\n", DDSIP_bb->violations, maxdispersion);
-                printf ("\tLower bound of node %-10d           = \t%18.16g\n",
+                printf ("\tDual bound of node  %-10d           = \t%-18.16g\n",
                                         DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound);
-                printf ("\tCurrent dual objective value             = \t%18.16g          \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
+                printf ("\tCurrent dual objective value             = \t%-18.16g          \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
             }
         }
         else
@@ -4451,16 +4580,16 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             if (DDSIP_param->outlev > 7)
             {
                 printf ("\tNumber of violations of nonanticipativity of first-stage variables:  %d\n", DDSIP_bb->violations);
-                printf ("\tLower bound of node %-10d           = \t%18.16g\n",
+                printf ("\tDual bound of node %-10d            = \t%-18.16g\n",
                                         DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound);
-                printf ("\tCurrent dual objective value             = \t%18.16g          \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
-                printf ("\tBest dual objective value in descent step= \t%18.16g\n", DDSIP_bb->dualObjVal);
+                printf ("\tCurrent dual objective value             = \t%-18.16g          \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
+                printf ("\tBest dual objective value in descent step= \t%-18.16g\n", DDSIP_bb->dualObjVal);
             }
         }
-        fprintf (DDSIP_bb->moreoutfile, "\tLower bound of node %-10d           = \t%18.16g\n",
+        fprintf (DDSIP_bb->moreoutfile, "\tDual bound of node %-10d            = \t%-18.16g\n",
                                         DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound);
-        fprintf (DDSIP_bb->moreoutfile, "\tCurrent dual objective value             = \t%18.16g          \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
-        fprintf (DDSIP_bb->moreoutfile, "\tBest dual objective value in descent step= \t%18.16g\n", DDSIP_bb->dualObjVal);
+        fprintf (DDSIP_bb->moreoutfile, "\tCurrent dual objective value             = \t%-18.16g          \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
+        fprintf (DDSIP_bb->moreoutfile, "\tBest dual objective value in descent step= \t%-18.16g\n", DDSIP_bb->dualObjVal);
     }
     // determine most frequent scenario solution
     DDSIP_bb->heurSuccess = -1;
@@ -4492,7 +4621,12 @@ TERMINATE:
     DDSIP_Free ((void **) &(maxfirst));
     DDSIP_Free ((void **) &(type));
     DDSIP_Free ((void **) &(tmpsecsol));
-    //    DDSIP_Free ((void **) &(cb_scenrisk));
+#ifdef SHIFT
+    if (DDSIP_param->hot == 4)
+    {
+        DDSIP_Free ((void **) &(time_sort_array));
+    }
+#endif
     return status;
 #else
     return 0;

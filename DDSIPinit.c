@@ -547,6 +547,7 @@ DDSIP_BbTypeInit (void)
     {
         DDSIP_bb->bestdual = NULL;
         DDSIP_bb->bestdual_cnt = 0;
+        DDSIP_bb->bestdual_max = -DDSIP_infty;
         DDSIP_bb->local_bestdual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 3, "bestdual(BbTypeInit)");
     }
     else

@@ -107,7 +107,7 @@ DDSIP_Continue (int *noiter, int *boundstat)
     // Maximal dispersion norm of front nodes is zero
     else if (*boundstat == 1)
     {
-        sprintf (message, "\nMaximal dispersion equals zero.\n");
+        sprintf (message, "\nMaximal dispersion less than NULLDISPERSION.\n");
         solstat = 4;
     }
     // Continue

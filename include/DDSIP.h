@@ -591,6 +591,8 @@ extern "C" {
         bbest_t* bestdual;
         // number of multiplier vectors in the list
         int bestdual_cnt;
+        // highest bound from multipliers in the list (except cutoffs)
+        double bestdual_max;
         // multipliers which gave the highest dual bound in the current dual step
         double* local_bestdual;
         //  number of scenarios shifted to begin of the sorted list due to ub infeasibility

@@ -111,8 +111,7 @@ DDSIP_PrintState (int noiter)
     if (!(DDSIP_bb->curnode) && (DDSIP_param->cb || !DDSIP_bb->cutAdded || !DDSIP_bb->noiter))
     {
 #ifndef _WIN32
-        fprintf (DDSIP_outfile, "__ ");
-        sprintf (astring, "lscpu|grep 'CPU MHz' >> %s\n", DDSIP_outfname);
+        sprintf (astring, "lscpu|grep 'MHz' >> %s\n", DDSIP_outfname);
         cpu_hrs = system (astring);
 #endif
         printf ("\n   Node   Nodes   Left   Objective         Heuristic");
@@ -264,9 +263,13 @@ DDSIP_PrintState (int noiter)
          (!DDSIP_param->cb && !(noiter % (DDSIP_param->logfreq * 20)))))
     {
 #ifndef _WIN32
-        fprintf (DDSIP_outfile, "__ ");
-        sprintf (astring, "lscpu|grep 'CPU MHz' >> %s\n", DDSIP_outfname);
-        cpu_hrs = system (astring);
+        if (!(noiter % (DDSIP_param->logfreq * 40)) || !(noiter % (2 * DDSIP_param->logfreq * DDSIP_Imax(abs(DDSIP_param->cb),15))))
+        {
+            sprintf (astring, "lscpu|grep 'CPU MHz' >> %s\n", DDSIP_outfname);
+            cpu_hrs = system (astring);
+        }
+        else
+            fprintf (DDSIP_outfile, "\n");
 #endif
         printf ("\n   Node   Nodes   Left   Objective         Heuristic");
         fprintf (DDSIP_outfile, "   Node   Nodes   Left  Objective           Heuristic");

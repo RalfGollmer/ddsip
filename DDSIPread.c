@@ -1187,10 +1187,10 @@ DDSIP_ReadSpec ()
     DDSIP_param->nodelim   = floor (DDSIP_ReadDbl (specfile, "NODELI", " NODE LIMIT", DDSIP_bigint, 1, 1., INT_MAX-1) + 0.1);
     // Accuracy, e.g. for the  comparison of double numbers
     DDSIP_param->accuracy  = DDSIP_ReadDbl (specfile, "ACCURA", " ACCURACY", 1.0e-12, 0, 1.e-13, 1.);
-    DDSIP_param->brancheps = DDSIP_ReadDbl (specfile, "EPSILO", " EPSILON", 1.5e-11, 0, 1.e-11, 1.);
-    DDSIP_param->nulldisp  = DDSIP_ReadDbl (specfile, "NULLDI", " NULL DISPERSION", 1.6e-11, 0, 1.6e-11, DDSIP_infty);
+    DDSIP_param->brancheps = DDSIP_ReadDbl (specfile, "EPSILO", " EPSILON", 1.e-11, 0, 5.e-12, 1.);
+    DDSIP_param->nulldisp  = DDSIP_ReadDbl (specfile, "NULLDI", " NULL DISPERSION", 1.6e-11, 0, 5.e-12, DDSIP_infty);
     DDSIP_param->absgap    = DDSIP_ReadDbl (specfile, "ABSOLU", " ABSOLUTE GAP", 0., 0, 0., DDSIP_infty);
-    DDSIP_param->relgap    = DDSIP_ReadDbl (specfile, "RELATI", " RELATIVE GAP", 1.0e-5, 0, 1.2*DDSIP_param->brancheps, 1.);
+    DDSIP_param->relgap    = DDSIP_ReadDbl (specfile, "RELATI", " RELATIVE GAP", 1.0e-6, 0, 1.1*DDSIP_param->brancheps, 1.);
     DDSIP_param->expected  = floor (DDSIP_ReadDbl (specfile, "EEVPRO", " EXPECTED VALUE PROBLEM", 0., 1, 0., 1.) + 0.1);
     // Write deterministic DDSIP_equivalent (only expectation-based case so far)
     DDSIP_param->write_detequ = floor (DDSIP_ReadDbl (specfile, "DETEQU", " WRITE DETERMINISTIC EQUIVALENT", 0., 1, 0., 1.) + 0.1);
@@ -1282,7 +1282,7 @@ DDSIP_ReadSpec ()
 #endif
     if (DDSIP_param->addBendersCuts || DDSIP_param->addIntegerCuts)
     {
-        DDSIP_param->numberReinits  = floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 20., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->numberReinits  = floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 25., 1, 0., DDSIP_bigint) + 0.1);
     }
     
     DDSIP_param->redundancyCheck = floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", 0., 1, 0., 1.) + 0.1);
@@ -1488,7 +1488,7 @@ DDSIP_ReadSpec ()
         DDSIP_param->cb_maxsteps  = floor (DDSIP_ReadDbl (specfile, "CBSTEP", " CB MAXSTEPS", 12., 1, 1., 10000.) + 0.1);
         DDSIP_param->cbtotalitlim = floor (DDSIP_ReadDbl (specfile, "CBTOTI", " CB ITERATION LIMIT",5000., 1, 0., DDSIP_bigint) + 0.1);
         DDSIP_param->cbContinuous = floor (DDSIP_ReadDbl (specfile, "CBCONT", " CONTINUOUS CB CALLS", 6., 1, 0., DDSIP_bigint) + 0.1);
-        DDSIP_param->cbBreakIters = floor (DDSIP_ReadDbl (specfile, "CBBREA", " BREAK FOR CB CALLS", abs(DDSIP_param->cb) > 28?1.*abs(DDSIP_param->cb):28., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->cbBreakIters = floor (DDSIP_ReadDbl (specfile, "CBBREA", " BREAK FOR CB CALLS", abs(DDSIP_param->cb) > 30?1.*abs(DDSIP_param->cb):30., 1, 0., DDSIP_bigint) + 0.1);
         if (DDSIP_param->cbBreakIters < abs(DDSIP_param->cb))
         {
             DDSIP_param->cbBreakIters = abs(DDSIP_param->cb);

@@ -21,6 +21,8 @@ You should have received a copy of the GNU General Public License
 along with DDSIP; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
+//#define DEBUG
+
 #include <DDSIP.h>
 #include <DDSIPconst.h>
 #define CHECKINTEGERCUT
@@ -349,6 +351,8 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     double rhs;
     //  double         *Tx;
 
+    double * sort_array;
+
     DDSIP_bb->skip = 0;
 
     // if the user has supplied a start point, there is no useful information for additional variables
@@ -365,6 +369,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     if (!DDSIP_SolChk (&oldviol))
         return 0;
 
+    sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "sort_array(UpperBound)");
     if (DDSIP_param->outlev >= DDSIP_suggested_first_stage_outlev && DDSIP_param->outlev < 50)
         // Print output
     {
@@ -683,6 +688,43 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                      "Lower bound for suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk +rest_bound);
                         }
                         prematureStop = 1;
+                        if (iscen > DDSIP_bb->shifts + 3)
+                        {
+                            wall_secs = cpu_secs = sort_array[DDSIP_bb->shifts];
+                            for (wall_hrs = DDSIP_bb->shifts+1; wall_hrs <= iscen; wall_hrs++)
+                            {
+                                wall_secs += sort_array[wall_hrs];
+                                cpu_secs = DDSIP_Dmax (cpu_secs, sort_array[wall_hrs]);
+                            }
+                            wall_secs /= (0.01 + iscen - DDSIP_bb->shifts);
+#ifdef DEBUG
+                            if (DDSIP_param->outlev)
+                                fprintf (DDSIP_bb->moreoutfile, "### max time %g, mean %g, max>8.5*mean: %d ###\n", cpu_secs, wall_secs, cpu_secs > 8.5*wall_secs);
+#endif
+                            if (cpu_secs > 8.5*wall_secs)
+                            {
+                                cpu_hrs = 0;
+                                for (wall_hrs = DDSIP_bb->shifts; wall_hrs <= iscen-cpu_hrs; wall_hrs++)
+                                {
+                                    if (sort_array[wall_hrs] > 8.5*wall_secs)
+                                    {
+                                         cpu_mins = DDSIP_bb->ub_scen_order[wall_hrs];
+                                         cpu_secs = sort_array[wall_hrs];
+                                         if (DDSIP_param->outlev)
+                                             fprintf (DDSIP_bb->moreoutfile, "### shifting scenario %d with time %g to the end of ub_scen_order ###\n", cpu_mins+1, sort_array[wall_hrs]);
+                                         for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
+                                         {
+                                             DDSIP_bb->ub_scen_order[wall_mins-1] = DDSIP_bb->ub_scen_order[wall_mins];
+                                             sort_array[wall_mins-1] = sort_array[wall_mins];
+                                         }
+                                         DDSIP_bb->ub_scen_order[DDSIP_param->scenarios-1] = cpu_mins; 
+                                         sort_array[DDSIP_param->scenarios-1] = cpu_secs; 
+                                         cpu_hrs++;
+                                         wall_hrs--;
+                                    }
+                                }
+                            }
+                        }
                         // in the first nodes check the remaining scenarios whether they give rise to cut
                         if (DDSIP_param->addBendersCuts && DDSIP_param->testOtherScens && DDSIP_param->heuristic > 3 && DDSIP_bb->curnode < 8)
                         {
@@ -1375,12 +1417,14 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
 
             gap = 100.0*(objval-bobjval)/(fabs(objval)+1e-4);
             meanGap += DDSIP_data->prob[scen] * gap;
+            time_end = DDSIP_GetCpuTime ();
+            time_start = time_end-time_start;
+            // in order to sort the scenarios which take much longer to the end (hopefully often not to be evaluated due to premature stop)
+            sort_array[iscen] = time_start;
             // Debugging information
             if (DDSIP_param->outlev)
             {
                 time (&DDSIP_bb->cur_time);
-                time_end = DDSIP_GetCpuTime ();
-                time_start = time_end-time_start;
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                 DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
                 fprintf (DDSIP_bb->moreoutfile,
@@ -1413,6 +1457,46 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         "Suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue,tmpbestvalue+rest_bound);
                     fprintf (DDSIP_bb->moreoutfile,
                              "Suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue,tmpbestvalue+rest_bound);
+                    // evaluate solution times in order to see whether there are very difficult ones
+                }
+if (DDSIP_param->outlev)
+fprintf (DDSIP_bb->moreoutfile, "### iscen(%d) > DDSIP_bb->shifts(%d) + 2 ? %d\n", iscen, DDSIP_bb->shifts, iscen > DDSIP_bb->shifts + 2);
+                if (iscen > DDSIP_bb->shifts + 2)
+                {
+                    wall_secs = cpu_secs = sort_array[0];
+                    for (wall_hrs = 1; wall_hrs <= iscen; wall_hrs++)
+                    {
+                        wall_secs += sort_array[wall_hrs];
+                        cpu_secs = DDSIP_Dmax (cpu_secs, sort_array[wall_hrs]);
+                    }
+                    wall_secs /= (0.01 + iscen);
+#ifdef DEBUG
+                    if (DDSIP_param->outlev)
+                        fprintf (DDSIP_bb->moreoutfile, "### max time %g, mean %g, max>4.2*mean: %d ###\n", cpu_secs, wall_secs, cpu_secs > 4.2*wall_secs);
+#endif
+                    if (cpu_secs > 4.2*wall_secs)
+                    {
+                        cpu_hrs = 0;
+                        for (wall_hrs = DDSIP_bb->shifts; wall_hrs <= iscen-cpu_hrs; wall_hrs++)
+                        {
+                            if (sort_array[wall_hrs] > 4.2*wall_secs)
+                            {
+                                 cpu_mins = DDSIP_bb->ub_scen_order[wall_hrs];
+                                 cpu_secs = sort_array[wall_hrs];
+                                 if (DDSIP_param->outlev)
+                                     fprintf (DDSIP_bb->moreoutfile, "### shifting scenario %d with time %g to the end of ub_scen_order ###\n", cpu_mins+1, sort_array[wall_hrs]);
+                                 for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
+                                 {
+                                     DDSIP_bb->ub_scen_order[wall_mins-1] = DDSIP_bb->ub_scen_order[wall_mins];
+                                     sort_array[wall_mins-1] = sort_array[wall_mins];
+                                 }
+                                 DDSIP_bb->ub_scen_order[DDSIP_param->scenarios-1] = cpu_mins; 
+                                 sort_array[DDSIP_param->scenarios-1] = cpu_secs; 
+                                 cpu_hrs++;
+                                 wall_hrs--;
+                            }
+                        }
+                    }
                 }
                 goto TERMINATE;
             }
@@ -1551,9 +1635,45 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
         DDSIP_bb->heurSuccess++;
     }
 
+    // evaluate solution times in order to see whether there are very difficult ones
+    wall_secs = cpu_secs = sort_array[DDSIP_bb->shifts];
+    for (wall_hrs = DDSIP_bb->shifts+1; wall_hrs < DDSIP_param->scenarios; wall_hrs++)
+    {
+        wall_secs += sort_array[wall_hrs];
+        cpu_secs = DDSIP_Dmax (cpu_secs, sort_array[wall_hrs]);
+    }
+    wall_secs /= (0.01 + DDSIP_param->scenarios - DDSIP_bb->shifts);
+#ifdef DEBUG
+    if (DDSIP_param->outlev)
+        fprintf (DDSIP_bb->moreoutfile, "### max time %g, mean %g, max>4.2*mean: %d ###\n", cpu_secs, wall_secs, cpu_secs > 4.2*wall_secs);
+#endif
+    if (cpu_secs > 4.2*wall_secs)
+    {
+        cpu_hrs = 0;
+        for (wall_hrs = DDSIP_bb->shifts; wall_hrs < DDSIP_param->scenarios-cpu_hrs; wall_hrs++)
+        {
+            if (sort_array[wall_hrs] > 4.2*wall_secs)
+            {
+                 cpu_mins = DDSIP_bb->ub_scen_order[wall_hrs];
+                 cpu_secs = sort_array[wall_hrs];
+                 if (DDSIP_param->outlev)
+                     fprintf (DDSIP_bb->moreoutfile, "### shifting scenario %d with time %g to the end of ub_scen_order ###\n", cpu_mins+1, sort_array[wall_hrs]);
+                 for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
+                 {
+                     DDSIP_bb->ub_scen_order[wall_mins-1] = DDSIP_bb->ub_scen_order[wall_mins];
+                     sort_array[wall_mins-1] = sort_array[wall_mins];
+                 }
+                 DDSIP_bb->ub_scen_order[DDSIP_param->scenarios-1] = cpu_mins; 
+                 sort_array[DDSIP_param->scenarios-1] = cpu_secs; 
+                 cpu_hrs++;
+                 wall_hrs--;
+            }
+        }
+    }
 
 TERMINATE:
 
+    DDSIP_Free ((void **) &(sort_array));
     // if not only feasibility was tested, add the suggested first-stage to the list of suggested solutions
     if (!feasCheckOnly)
     {
@@ -1637,14 +1757,14 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
             sort_array[DDSIP_bb->ub_scen_order[i_scen]] = DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]] * (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]];
         }
         DDSIP_qsort_ins_D (sort_array, DDSIP_bb->ub_scen_order, DDSIP_bb->shifts, DDSIP_param->scenarios-1);
-        // insert the least-cost scenario after the first bb->shifts +1 scenarios - to be sure to check that for feasibility, too
+        // insert the least-cost scenario after the first bb->shifts scenarios - to be sure to check that for feasibility, too
         if (DDSIP_bb->shifts < DDSIP_param->scenarios - 2)
         {
             int j;
             i_scen = DDSIP_bb->ub_scen_order[DDSIP_param->scenarios - 1];
-            for (j = DDSIP_param->scenarios - 1; j>DDSIP_bb->shifts + 1; j--)
+            for (j = DDSIP_param->scenarios - 1; j>DDSIP_bb->shifts; j--)
                 DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
-            DDSIP_bb->ub_scen_order[DDSIP_bb->shifts + 1] = i_scen;
+            DDSIP_bb->ub_scen_order[DDSIP_bb->shifts] = i_scen;
         }
 
         if (DDSIP_param->outlev > 20)

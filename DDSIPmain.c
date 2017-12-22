@@ -54,7 +54,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2017-11-20 (Github v1.2.0) ";
+const char DDSIP_version[] = "2017-12-14 (Github v1.2.0) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -453,20 +453,34 @@ main (void)
         // the cuts from the root node are contained in every following node model, there is no need to check their violation
         // for the scenario solutions. But the rounding heuristics could violate a cut, so keep them.
 #ifdef CONIC_BUNDLE
+////////////////////////////////////////////
+if (DDSIP_bb->curnode && DDSIP_param->outlev)
+{ 
+if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
+  fprintf(DDSIP_bb->moreoutfile, "######## last node %d step=dual, dualdescitcnt = %d, DDSIP_bb->cutoff= %d\n",DDSIP_bb->curnode-1,(DDSIP_bb->dualdescitcnt),DDSIP_bb->cutoff);
+}
+////////////////////////////////////////////
         // Dual method
         if ((DDSIP_param->cb > 0 && (!(DDSIP_bb->noiter % abs(DDSIP_param->cb))) && (abs(DDSIP_param->riskmod) != 4 || DDSIP_bb->noiter)) ||
-                (DDSIP_param->cb < 0 && ((!(DDSIP_bb->noiter) && abs(DDSIP_param->riskmod) != 4 && DDSIP_param->cbrootitlim) ||
-                                         (abs(DDSIP_param->riskmod) == 5 && DDSIP_node[DDSIP_bb->curnode]->depth == 8) ||
-                                         (DDSIP_bb->noiter > DDSIP_param->cbBreakIters &&
-                                           ((!(DDSIP_bb->noiter % abs(DDSIP_param->cb))) || (!((DDSIP_bb->noiter+1) % -DDSIP_param->cb)) ||
-                                           (DDSIP_bb->noiter < DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters) ||
-                                           ((DDSIP_bb->noiter  >= 2*DDSIP_param->cbBreakIters) &&
-                                            (DDSIP_bb->noiter < DDSIP_param->cbContinuous + 2*DDSIP_param->cbBreakIters)) ||
-                                           ((DDSIP_bb->cutoff > 5) && (DDSIP_bb->no_reduced_front < 51) && (DDSIP_bb->noiter % -DDSIP_param->cb) < DDSIP_param->cbContinuous))) ||
+            (DDSIP_param->cb < 0 && ((!(DDSIP_bb->noiter) && abs(DDSIP_param->riskmod) != 4 && DDSIP_param->cbrootitlim) ||
+                                      (abs(DDSIP_param->riskmod) == 5 && DDSIP_node[DDSIP_bb->curnode]->depth == 8) ||
+                                      (DDSIP_bb->noiter > DDSIP_param->cbBreakIters && 
+                                        ((!(DDSIP_bb->noiter % abs(DDSIP_param->cb))) ||
+                                         (!((DDSIP_bb->noiter+1) % -DDSIP_param->cb)) ||
                                          (DDSIP_bb->noiter%200 > 199 - DDSIP_param->cbContinuous) ||
-                                         (abs(DDSIP_param->riskmod) != 5 && (DDSIP_bb->noiter <= DDSIP_param->cbBreakIters && DDSIP_bb->noiter > DDSIP_param->cbBreakIters*.6 && (CBFORALL || (DDSIP_node[DDSIP_bb->curnode]->numInheritedSols > (DDSIP_Imin(DDSIP_param->scenarios/20,2)+(DDSIP_param->scenarios+1)/2)))))
-                                         //(abs(DDSIP_param->riskmod) != 5 && (DDSIP_bb->noiter <= DDSIP_param->cbBreakIters && DDSIP_bb->noiter > DDSIP_param->cbBreakIters*.6))
-                                        )
+                                         (DDSIP_bb->noiter < DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters) ||
+//again cbcont at 2* breakiters?
+                                         ((DDSIP_bb->noiter  >= 2*DDSIP_param->cbBreakIters) && (DDSIP_bb->noiter < DDSIP_param->cbContinuous + 2*DDSIP_param->cbBreakIters)) ||
+                                         ((DDSIP_bb->cutoff > 5) &&
+                                             (((DDSIP_bb->no_reduced_front < 51) && (DDSIP_bb->noiter % -DDSIP_param->cb) < DDSIP_param->cbContinuous)
+                                             || ((DDSIP_node[DDSIP_bb->curnode]-1)->step == dual && !(DDSIP_bb->dualdescitcnt))
+                                             )
+                                         )
+                                       )
+                                     ) ||
+                                     (abs(DDSIP_param->riskmod) != 5 && DDSIP_bb->noiter <= DDSIP_param->cbBreakIters && DDSIP_bb->noiter > DDSIP_param->cbBreakIters*.5 &&
+                                          (CBFORALL || (DDSIP_node[DDSIP_bb->curnode]->numInheritedSols > (DDSIP_Imin(DDSIP_param->scenarios/20,2)+(DDSIP_param->scenarios+1)/2))))
+                                   )
                 )
            )
         {

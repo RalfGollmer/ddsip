@@ -1482,8 +1482,8 @@ DDSIP_LowerBound (void)
                 optstatus = CPXmipopt (DDSIP_env, DDSIP_lp);
                 mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
 ///////////////////////////////////////////
-if (DDSIP_param->outlev)
-   fprintf (DDSIP_bb->moreoutfile, "1st lb: optstatus= %d, mipstatus= %d\n", optstatus, mipstatus);
+//if (DDSIP_param->outlev)
+//   fprintf (DDSIP_bb->moreoutfile, "1st lb: optstatus= %d, mipstatus= %d\n", optstatus, mipstatus);
 ///////////////////////////////////////////
                 if (!optstatus && !DDSIP_Error(optstatus) && !DDSIP_Infeasible (mipstatus))
                 {

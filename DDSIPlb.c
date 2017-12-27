@@ -4540,7 +4540,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         if (DDSIP_param->outlev > 6 && !increase && DDSIP_bb->dualObjVal > -DDSIP_infty)
         {
             fprintf (DDSIP_bb->moreoutfile,
-                     " *++++ dual step     increasing objval for node %3d, new val: %-18.16g, old value: %-18.16g (incr:  %g) ++++*\n",
+                     " ***++ dual step     increasing objval for node %3d, new val: %-18.16g, old value: %-18.16g (incr:  %g) ++***\n",
                      DDSIP_bb->curnode, -(*objective_val), DDSIP_bb->dualObjVal,  -(*objective_val)-DDSIP_bb->dualObjVal);
         }
     }

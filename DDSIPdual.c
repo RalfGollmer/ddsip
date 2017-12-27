@@ -847,9 +847,9 @@ DDSIP_DualOpt (void)
         if (DDSIP_param->cb_checkBestdual && DDSIP_bb->bestdual_cnt &&
             (DDSIP_bb->dualObjVal < DDSIP_bb->bestvalue - DDSIP_Dmax(1.e-11,0.5*DDSIP_param->relgap)*fabs(DDSIP_bb->bestvalue)))
         {
-            bbest_t * tmp_bestdual, * tmp_maxbound, * tmp_previous;
+            bbest_t * tmp_bestdual, * tmp_previous, * tmp_maxbound = NULL;
             double max_weight, max_bound, inherited_bound, sort_bound = - DDSIP_infty;
-            tmp_bestdual = tmp_maxbound = tmp_previous = DDSIP_bb->bestdual;
+            tmp_bestdual = tmp_previous = DDSIP_bb->bestdual;
             max_bound = inherited_bound = DDSIP_bb->dualObjVal;
             max_weight = start_weight;
             if (DDSIP_param->outlev)
@@ -990,12 +990,16 @@ while (tmp_bestdual)
                 tmp_previous = tmp_bestdual;
                 tmp_bestdual = tmp_bestdual->next;
             }
-            if (cnt && tmp_previous != tmp_maxbound)
+//////////////////////////////////////////
+if (DDSIP_param->outlev)
+  fprintf (DDSIP_bb->moreoutfile, "#### go back: cnt= %d, tmp_previous =%p != %p = tmp_maxbound ? %d\n", cnt, tmp_previous, tmp_maxbound, tmp_previous != tmp_maxbound);
+//////////////////////////////////////////
+            if (cnt)
             {
                 // go back to the multipliers which gave the best bound - either from bestdual or the inherited one
                 last_weight = next_weight = 0.2*DDSIP_Dmin(max_weight, 5e+2) + 0.8*start_weight;
                 cb_set_next_weight (p, next_weight);
-                if (max_bound > inherited_bound)
+                if (tmp_maxbound)
                 {
                     memcpy (DDSIP_bb->local_bestdual, tmp_maxbound->dual, sizeof (double) * (DDSIP_bb->dimdual));
                     DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = max_bound;
@@ -1102,7 +1106,7 @@ while (tmp_bestdual)
         noIncreaseCounter = 0;
         many_iters = 0;
         while ((!cb_termination_code (p)) && DDSIP_bb->violations
-                && (DDSIP_GetCpuTime () < DDSIP_param->timelim)
+                && (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time) < DDSIP_param->timelim)
                 && ((DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt < DDSIP_param->cbitlim && (DDSIP_bb->curnode >= DDSIP_param->cbBreakIters || DDSIP_bb->dualdescitcnt < (DDSIP_param->cbitlim+1)/2))
                     || (!DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt < DDSIP_param->cbrootitlim))
                 && DDSIP_bb->dualitcnt < DDSIP_param->cbtotalitlim && !(obj > DDSIP_bb->bestvalue - DDSIP_param->accuracy)
@@ -1914,6 +1918,7 @@ NEXT_TRY:
             }
             last_dualitcnt = DDSIP_bb->dualitcnt;
             last_weight = next_weight;
+            time (&DDSIP_bb->cur_time);
         }
         // store multipliers from node with highest dual bound up to now - if they are different
         if (DDSIP_bb->dualdescitcnt && (!DDSIP_bb->bestdual || DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestdual_max ||
@@ -2045,7 +2050,7 @@ while (tmp_bestdual)
                     DDSIP_Print2 ("termination status: total iteration limit exceeded.", " --------------------------------------------------------------\n", 0, 0);
                 else if (cycleCnt >= 2)
                     DDSIP_Print2 ("termination status: no bound increase achieved.", " --------------------------------------------------------------\n", 0, 0);
-                else if (DDSIP_GetCpuTime () > DDSIP_param->timelim)
+                else if (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time) > DDSIP_param->timelim)
                     DDSIP_Print2 ("Time limit reached.", "\n", 0, 0);
                 else
                     fprintf (DDSIP_outfile, " Unidentified reason for stopping. Termination code of ConicBundle: %d\n", i_scen);
@@ -2073,7 +2078,7 @@ while (tmp_bestdual)
                         fprintf (DDSIP_bb->moreoutfile, "\nMaximum number of failures to increase the augmented model value exceeded in node %d:   changed weight in bestdual to last weight= %g\n", DDSIP_bb->curnode, DDSIP_bb->local_bestdual[DDSIP_bb->dimdual]);
                     }
                 }
-                else if (DDSIP_GetCpuTime () > DDSIP_param->timelim)
+                else if (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time) > DDSIP_param->timelim)
                     fprintf (DDSIP_outfile, "Total time limit exceeded.\n");
                 else
                     fprintf (DDSIP_outfile, "\n");

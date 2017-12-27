@@ -54,7 +54,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2017-12-14 (Github v1.2.0) ";
+const char DDSIP_version[] = "2017-12-26 (Github v1.2.1) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -431,7 +431,9 @@ main (void)
             fprintf (DDSIP_outfile, "-EEV:     No solution found.\n");
         }
     }				// END if (EV)
-
+    // stop here if NODELIM is zero
+     if (!(DDSIP_param->nodelim))
+         goto TERMINATE;
     // Print cplex log to debugfile
     if (DDSIP_param->outlev > 51)
         if ((status = CPXsetlogfile (DDSIP_env, DDSIP_bb->moreoutfile)))

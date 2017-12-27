@@ -48,7 +48,9 @@ DDSIP_Continue (int *noiter, int *boundstat)
     double wall_secs, cpu_secs;
     int    wall_hrs, wall_mins, cpu_hrs, cpu_mins;
     double sum;
-
+    // determine wall time
+    time (&DDSIP_bb->cur_time);
+    
     (*noiter)++;
     // User termination
     // Control C
@@ -93,7 +95,7 @@ DDSIP_Continue (int *noiter, int *boundstat)
         solstat = 1;
     }
     // Timelimit
-    else if (DDSIP_GetCpuTime () > DDSIP_param->timelim)
+    else if (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time) >= DDSIP_param->timelim)
     {
         sprintf (message, "\nTime limit reached.\n");
         solstat = 3;

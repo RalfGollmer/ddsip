@@ -1184,7 +1184,7 @@ DDSIP_ReadSpec ()
     DDSIP_param->timelim   = DDSIP_ReadDbl (specfile, "TIMELI", " TIME LIMIT", 1209600., 0, 0., DDSIP_infty);
 #endif
     DDSIP_param->logfreq   = floor (DDSIP_ReadDbl (specfile, "LOGFRE", " LOG FREQUENCY", 1., 1, 0., DDSIP_bigint) + 0.1);
-    DDSIP_param->nodelim   = floor (DDSIP_ReadDbl (specfile, "NODELI", " NODE LIMIT", DDSIP_bigint, 1, 1., INT_MAX-1) + 0.1);
+    DDSIP_param->nodelim   = floor (DDSIP_ReadDbl (specfile, "NODELI", " NODE LIMIT", DDSIP_bigint, 1, 0., INT_MAX-1) + 0.1);
     // Accuracy, e.g. for the  comparison of double numbers
     DDSIP_param->accuracy  = DDSIP_ReadDbl (specfile, "ACCURA", " ACCURACY", 1.0e-12, 0, 1.e-13, 1.);
     DDSIP_param->brancheps = DDSIP_ReadDbl (specfile, "EPSILO", " EPSILON", 1.e-11, 0, 5.e-12, 1.);

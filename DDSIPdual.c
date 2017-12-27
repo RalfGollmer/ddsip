@@ -924,6 +924,7 @@ DDSIP_DualOpt (void)
                             tmp_bestdual->next = DDSIP_bb->bestdual;
                             DDSIP_bb->bestdual = tmp_bestdual;
 //######################
+#ifdef DEBUG
 if (DDSIP_param->outlev > 10)
 {
 int jj = 1;
@@ -935,6 +936,7 @@ while (tmp_bestdual)
    tmp_bestdual = tmp_bestdual->next;
 }
 }
+#endif
 //######################
                         }
                         if (max_bound > DDSIP_bb->bestvalue ||
@@ -970,6 +972,7 @@ while (tmp_bestdual)
                                 tmp_bestdual->next = DDSIP_bb->bestdual;
                                 DDSIP_bb->bestdual = tmp_bestdual;
 //######################
+#ifdef DEBUG
 if (DDSIP_param->outlev > 10)
 {
 int jj = 1;
@@ -981,6 +984,7 @@ while (tmp_bestdual)
    tmp_bestdual = tmp_bestdual->next;
 }
 }
+#endif
 //######################
                                 tmp_bestdual =  tmp_previous;
                             }
@@ -990,10 +994,6 @@ while (tmp_bestdual)
                 tmp_previous = tmp_bestdual;
                 tmp_bestdual = tmp_bestdual->next;
             }
-//////////////////////////////////////////
-if (DDSIP_param->outlev)
-  fprintf (DDSIP_bb->moreoutfile, "#### go back: cnt= %d, tmp_previous =%p != %p = tmp_maxbound ? %d\n", cnt, tmp_previous, tmp_maxbound, tmp_previous != tmp_maxbound);
-//////////////////////////////////////////
             if (cnt)
             {
                 // go back to the multipliers which gave the best bound - either from bestdual or the inherited one
@@ -1962,6 +1962,7 @@ NEXT_TRY:
                 if (DDSIP_param->outlev > 10)
                     fprintf (DDSIP_bb->moreoutfile, " ## added mult. from node %d to bestdual list, #entries: %d, bestdual_max: %17.14g\n", DDSIP_bb->curnode, DDSIP_bb->bestdual_cnt, DDSIP_bb->bestdual_max);
 //######################
+#ifdef DEBUG
 if (DDSIP_param->outlev > 10)
 {
 int jj = 1;
@@ -1971,6 +1972,7 @@ while (tmp_bestdual)
    tmp_bestdual = tmp_bestdual->next;
 }
 }
+#endif
 //######################
                 if (DDSIP_bb->bestdual_cnt > DDSIP_param->cb_bestdualListLength)
                 {
@@ -1991,6 +1993,7 @@ while (tmp_bestdual)
                     DDSIP_Free ((void **) &(tmp_bestdual->dual));
                     DDSIP_Free ((void **) &(tmp_bestdual));
 //######################
+#ifdef DEBUG
 if (DDSIP_param->outlev > 10)
 {
 int jj = 1;
@@ -2001,6 +2004,7 @@ while (tmp_bestdual)
    tmp_bestdual = tmp_bestdual->next;
 }
 }
+#endif
 //######################
                 }
                 memcpy (DDSIP_node[DDSIP_bb->curnode]->dual, DDSIP_bb->local_bestdual, sizeof (double) * (DDSIP_bb->dimdual + 3));

@@ -2,13 +2,9 @@ BEGIN
 *
 * Specification of the two-stage stochastic program
 *
-FIRSTCON            16 * First stage constraints               
-FIRSTVAR            65 * First stage variables                 
-SECCON           10785 * Second stage constraints              
-SECVAR           11968 * Second stage variables                
-STOCRHS            384 * Number of stochastic rhs elements     
-*SCENARIOS           50 * Number of scenarios                   
+*SCENARIOS           10 * Number of scenarios                   
 SCENARIOS          250 * Number of scenarios                   
+STOCRHS            384 * Number of stochastic rhs elements     
 STOCCOST             0 * Number of stochastic cost coefficients
 STOCMAT              0 * Number of stochastic matrix entries   
 *
@@ -86,18 +82,10 @@ CPLEXEND
 * Parameters for Dual decomposition procedure (master)
 *
 *
-MAXINHERIT         100 * maximal level of solution inheriting
-OUTLEV               7 * Debugging
+OUTLEV              11 * Debugging
 OUTFIL               1 *
-STARTI               0 *
 EEVPROB              1 *
-NODELI	        100000 * Sipdual node limit
-TIMELIMIT       964000 * Sipdual time limit
-*HEURISTIC            99  2 3 4 5 7 8 9 * Heuristics: Down, Up, Near, Common, Byaverage ...(12)
-*                                      99 indicates a list of heuristics to follow
-*                                      (used consecutively in each node)
-ABSOLUTEGAP          0 * Absolute duality gap allowed in DD
-RELATIVEGAP      1e-06 * Relative duality gap allowed in DD
+RELATIVEGAP      1e-08 * Relative duality gap allowed in DD
 
 * Risk modelling
 *
@@ -114,7 +102,5 @@ RISKBM        11000000 * big M in
 *
 CBFREQ             0 * Conic Bundle in every ith node
 
-NONANT             1 * Non-anticipativity representation
-DETEQU             0 * write deterministic equivalent
 END
 

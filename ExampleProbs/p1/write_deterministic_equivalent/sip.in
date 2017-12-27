@@ -1,0 +1,26 @@
+BEGIN
+* These specifications let ddsip write the deterministic equivalent and exit afterwards due to NODELIM 0
+*
+* Specification of the two-stage stochastic program
+*
+*SCENARIOS           10 * Number of scenarios                   
+SCENARIOS          250 * Number of scenarios                   
+STOCRHS            384 * Number of stochastic rhs elements     
+STOCCOST             0 * Number of stochastic cost coefficients
+STOCMAT              0 * Number of stochastic matrix entries   
+*
+*POSTFIX            _01 * suffix for first stage variables (standard: "01")
+PREFIX              F_ * prefix for first stage variables
+*
+*
+* Parameters for Dual decomposition procedure (master)
+*
+*
+OUTLEV               0 * Debugging minimum
+OUTFIL               0 * no additional files
+NODELIM              0 * do not start the decomposition procedure but exit
+DETEQU               1 * write deterministic equivalent to sipout/det_equ.lp.gz
+DETEQT               1 * type of representatiom of the objective in the deterministic equivalent (0 or 1, default: 0)
+
+END
+

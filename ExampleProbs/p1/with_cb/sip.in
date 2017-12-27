@@ -96,7 +96,7 @@ TIMELIMIT       964000 * Sipdual time limit
 *                                      99 indicates a list of heuristics to follow
 *                                      (used consecutively in each node)
 ABSOLUTEGAP          0 * Absolute duality gap allowed in DD
-RELATIVEGAP      1e-06 * Relative duality gap allowed in DD
+RELATIVEGAP      1e-08 * Relative duality gap allowed in DD
 
 * Risk modelling
 *

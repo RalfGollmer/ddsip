@@ -225,10 +225,10 @@ DDSIP_SolChk (double* cutViolation)
             if (DDSIP_bb->firsttype[i] == 'B' || DDSIP_bb->firsttype[i] == 'I' || DDSIP_bb->firsttype[i] == 'N')
             {
                 ih = floor ((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] + 0.5);
-                fprintf (DDSIP_bb->moreoutfile, " %20d,", ih);
+                fprintf (DDSIP_bb->moreoutfile, " %20d", ih);
             }
             else
-                fprintf (DDSIP_bb->moreoutfile, " %20.16g,", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]);
+                fprintf (DDSIP_bb->moreoutfile, " %20.16g", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]);
 
             if (!((i + 1) % 5))
                 fprintf (DDSIP_bb->moreoutfile, "\n");

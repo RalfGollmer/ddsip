@@ -429,10 +429,10 @@ DDSIP_All (int nrScenarios, int feasCheckOnly)
                 printf("\n\n FEHLER: !!!!!!!!!!!!!!!!!!!!! DDSIP_bb->sug[DDSIP_param->nodelim + 2]->next = %p\n\n",DDSIP_bb->sug[DDSIP_param->nodelim + 2]->next);
         }
         for (j = 0; j < DDSIP_bb->firstvar; j++)
-            (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[0][j];
+            (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[unind[0]][j];
 
         if(DDSIP_param->outlev)
-            fprintf (DDSIP_bb->moreoutfile, "\nHeuristic 12: suggested first stage solution of scen. %3d", unind[i]+1);
+            fprintf (DDSIP_bb->moreoutfile, "\nHeuristic 12: suggested first stage solution of scen. %3d", unind[0]+1);
         if (DDSIP_param->cpxubscr||DDSIP_param->outlev > 7)
             printf ("Heuristic 12: suggested first stage solution of scen. %3d\n", unind[i]+1);
         DDSIP_bb->from_scenario = unind[i];

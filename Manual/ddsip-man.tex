@@ -389,7 +389,7 @@ cf. \cite{cp}. \\
 Note that in the section between {\it CPLEXBEGIN} and  {\it CPLEXEND} there could be comments following the pair of numerical parameter identifier and value, but not whole lines could be comments, ie.e. 
 no line should start with an asterisk.\\[0.5em]
 Since at each node all scenario problems have to be solved for the dual bound and in every heuristic for finding/the improvement of the primal bound solving the single-scenario problems should be as fast as possible. So tuning the CPLEX paramaters (especially for scenarios difficult to solve) and specifying adapted parameter settings in the specs file is strongly encouraged, it can later on save a lot of solution time.\\
-The tuning process is facilitated by setting the parameter OUTFIL to 4, CBFREQ to 0, NODELIM to 0, and HEURIST e.g. to 1. All the single-scenario problems for dual bounds (lb$\ldots$) and primal bounds (ub$\ldots$) are then written to the directory sipout for use in determining good CPLEX settings.
+The tuning process is facilitated by setting the parameter OUTFIL to 4, CBFREQ to 0, NODELIM to 0, and HEURIST e.g. to 3. All the single-scenario problems for dual bounds (lb$\ldots$) and primal bounds (ub$\ldots$) are then written to the directory sipout for use in determining good CPLEX settings.
 
 %
 \subsection{Parameters for the decomposition procedure}
@@ -525,7 +525,7 @@ RELAXL&Int&0..2&0*&No integrality relaxation.\\
 &&&2&Relax first- and second-stage variables.\\[0.2em]
 QUANTI&Int&0..&10&Number of Quantiles to be displayed at the end\\[0.2em]
 MAXINH&Int&0..&5&maximal level of inheritance of solutions in lower bounding\\[0.2em]
-HEURIS&Int&0..13,99,100&100&choice of heuristics, cf. Table 5\\[0.2em]
+HEURIS&Int&0..14,99,100&100&choice of heuristics, cf. Table 5\\[0.2em]
 INTHEU&Int&-1..1&&should the evaluation of different heuristics be interrupted when the relative gap is reached?\\
 &&&0& do not interrupt\\
 &&&1& interrupt instantly\\
@@ -567,7 +567,7 @@ HEURIS. The possible values of HEURIS are listed in the following table.\\
 More than one of the heuristics could be used sequentially in every node when specifying the value 99, followed by a
 list of heuristics to be used, the specs file line could look like this:\\[0.5em]
 HEURISTIC  99 2 3 12 * heuristics 2, 3, {\bf and} 12 are specified\\[0.5em]
-The default is the value 100, which applies all heuristics 1 to 10 in every node plus heuristic 12 (test all scenario solutions) in the first 11 nodes,
+The default is the value 100, which applies all heuristics 1 to 11 in every node plus heuristic 12 (test all scenario solutions) in the first 11 nodes,
 in other nodes under certain conditions, and every 200th node.
 %
 %\begin{table}[ht]
@@ -578,7 +578,7 @@ Value&Description\\ \hline
 1&The average of the solutions is used. Integer components are rounded down.\medskip\\
 2&The average of the solutions is used. Integer components are rounded up.\medskip\\
 3&The average of the solutions is used. Integer components are rounded to the
-next integer.\medskip\\
+nearest integer.\medskip\\
 4&The solution occurring most frequently is used.\medskip\\
 5&Use the solution of a scenario that is closest ($l_1$ norm) to average.\medskip\\
 6&The first-stage solution with highest probability is chosen (adding probabilities in case of identical first-stage scenario solutions)\medskip\\
@@ -599,10 +599,12 @@ B\&B tree (i.e. no further branching on them).
 8&Solution with worst objective value\medskip\\
 9&Solution with minimal sum of first-stage variables\medskip\\
 10&Solution with maximal sum of first-stage variables\medskip\\
+11&Try solutions of those scenarios which occur more than scenarios/5 times\medskip\\
 12&Try solutions of all scenarios\medskip\\
-13&Apply heuristic 3 and 5 alternating\medskip\\
+13&Apply heuristic 4 and 5 alternating\medskip\\
+14&Apply heuristic 3 and 5 alternating\medskip\\
 99&Indicates that a list of heuristics is given in the sequel. See the example in the Appendix.\\
-100*&Heuristics 1-10 are applied plus the more expensive heuristic 12, if one of the others found a new incumbent. Heuristic 12 is also applied in the first 11 nodes to facilitate dicovery of an incumbent early in the B\&B tree.\\
+100*&Heuristics 1-11 are applied plus the more expensive heuristic 12, if one of the others found a new incumbent. Heuristic 12 is also applied in the first 11 nodes to facilitate dicovery of an incumbent early in the B\&B tree.\\
 \hline
 \end{tabular}
 \\[0.5em]Table 5:\quad Values of parameter HEURIS\\

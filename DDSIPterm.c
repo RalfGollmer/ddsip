@@ -297,14 +297,14 @@ DDSIP_Continue (int *noiter, int *boundstat)
             fprintf (DDSIP_outfile, "CB function eval %6d\n", DDSIP_bb->CBIters);
         }
         fprintf (DDSIP_outfile, "Lower Bound eval %6d\n", DDSIP_bb->LBIters);
-        fprintf (DDSIP_outfile, "Upper Bound eval %6d\t ", DDSIP_bb->neobjcnt);
+        fprintf (DDSIP_outfile, "Upper Bound eval %6d\n ", DDSIP_bb->neobjcnt);
 
         // Risk Model
         if (DDSIP_param->riskmod && feas)
         {
             printf ("\nExpected value     %25.10f\n", DDSIP_bb->bestexp);
             printf ("Risk measure       %25.10f\n", DDSIP_bb->bestrisk);
-            fprintf (DDSIP_outfile, "Expected value     %25.10f\n", DDSIP_bb->bestexp);
+            fprintf (DDSIP_outfile, "\nExpected value     %25.10f\n", DDSIP_bb->bestexp);
             fprintf (DDSIP_outfile, "Risk measure       %25.10f\n", DDSIP_bb->bestrisk);
 
             fprintf (DDSIP_outfile, "\nRisk measures (for target: %g, probability level: %g):\n", DDSIP_param->risktarget, DDSIP_param->risklevel);

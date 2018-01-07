@@ -89,124 +89,14 @@ DDSIP_ChgProb (int scen)
 {
     int j, i, status = 0;
     int m = DDSIP_Imax (DDSIP_param->stocmat, DDSIP_Imax (DDSIP_param->stocrhs, DDSIP_param->stoccost));
-    //int *index = (int *) DDSIP_Alloc (sizeof (int), m, "index(chgprob)");
+#ifdef DEBUG
     char **colname;
     char *colstore;
+#endif
 
     double *value = (double *) DDSIP_Alloc (sizeof (double), m, "value(chgprob)");
     double *cost = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar, "cost(chgprob)");
 
-    // Use multipliers passed by CB
-    if (DDSIP_param->cb && DDSIP_bb->DDSIP_step != neobj && DDSIP_bb->DDSIP_step != adv && DDSIP_bb->DDSIP_step != eev)
-    {
-        // Original costs
-        for (i = 0; i < DDSIP_bb->firstvar; i++)
-            cost[i] = DDSIP_bb->cost[i];
-
-#ifdef CONIC_BUNDLE
-        if (DDSIP_bb->DDSIP_step == dual)
-            // The additional costs changes for ConicBundle iterations
-        {
-            if (DDSIP_param->outlev >= DDSIP_current_lambda_outlev)
-            {
-                if(!scen)
-                {
-                    fprintf (DDSIP_bb->moreoutfile, "\n Lagrangemult. in OF: in CB from %p ---------------------\n", DDSIP_node[DDSIP_bb->curnode]->dual);
-                    fprintf (DDSIP_bb->moreoutfile, "DDSIP_ChgProb: Current lambda for node %d:\n", DDSIP_bb->curnode);
-                    for (i = 0; i < DDSIP_bb->dimdual; i++)
-                    {
-                        fprintf (DDSIP_bb->moreoutfile, " %14.8g,", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
-                        if (!((i+1)%10))
-                            fprintf (DDSIP_bb->moreoutfile, "\n");
-                    }
-                    fprintf (DDSIP_bb->moreoutfile, "\n");
-                }
-            }
-            if (DDSIP_param->outlev > 74)
-            {
-                colname = (char **) DDSIP_Alloc (sizeof (char *), (DDSIP_bb->firstvar + DDSIP_bb->secvar), "colname(Change)");
-                colstore = (char *) DDSIP_Alloc (sizeof (char), (DDSIP_bb->firstvar + DDSIP_bb->secvar) * DDSIP_ln_varname, "colstore(Change)");
-                status = CPXgetcolname (DDSIP_env, DDSIP_lp, colname, colstore,
-                                        (DDSIP_bb->firstvar + DDSIP_bb->secvar) * DDSIP_ln_varname, &j, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
-                if (status)
-                {
-                    fprintf (stderr, "ERROR: Failed to get column names (Change)\n");
-                    fprintf (DDSIP_outfile, "ERROR: Failed to get column names (Change)\n");
-                    if (DDSIP_param->outlev)
-                        fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get column names (Change)\n");
-                    return 100;
-                }
-            }
-            for (i = 0; i < DDSIP_bb->firstvar; i++)
-            {
-                for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
-                        j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
-                {
-                    if (fabs (DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]]) > 1e-18)
-                    {
-                        if (DDSIP_param->outlev > 74)
-                        {
-                            fprintf (DDSIP_bb->moreoutfile, " first-stage var: %d ", i);
-                            fprintf (DDSIP_bb->moreoutfile, " (%s),", colname[DDSIP_bb->firstindex[i]]);
-                            fprintf (DDSIP_bb->moreoutfile, " scen: %d, j=%d, \tnaind[j]= %d: koeff: %g, dual=%g, \tcost add: %g", scen,j, DDSIP_data->naind[j],  DDSIP_data->naval[j], DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]],  DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen]);
-                            fprintf (DDSIP_bb->moreoutfile, " \t%16.12g changed to", cost[i]);
-                        }
-
-                        cost[i] += DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen];
-                        if (DDSIP_param->outlev > 74)
-                        {
-                            fprintf (DDSIP_bb->moreoutfile, " %16.12g\n", cost[i]);
-                        }
-                    }
-                }
-            }
-            if (DDSIP_param->outlev > 74)
-            {
-                DDSIP_Free ((void**) &(colname));
-                DDSIP_Free ((void **) &(colstore));
-            }
-        }
-        else if (DDSIP_bb->DDSIP_step == solve)
-        {
-            if (DDSIP_param->outlev >= DDSIP_current_lambda_outlev)
-            {
-                if(!scen)
-                {
-                    fprintf (DDSIP_bb->moreoutfile,
-                             "\n Lagrangemult. in OF: in solve from %p ---------------------\n", DDSIP_node[DDSIP_bb->curnode]->dual);
-                    fprintf (DDSIP_bb->moreoutfile, "DDSIP_ChgProb: Current lambda for node %d:\n", DDSIP_bb->curnode);
-                    for (i = 0; i < DDSIP_bb->dimdual; i++)
-                    {
-                        fprintf (DDSIP_bb->moreoutfile, " %14.8g,", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
-                        if (!((i+1)%10))
-                            fprintf (DDSIP_bb->moreoutfile, "\n");
-                    }
-                    fprintf (DDSIP_bb->moreoutfile, "\n");
-                }
-                if (DDSIP_param->outlev > 74)
-                {
-                    for (i = 0; i < DDSIP_bb->firstvar; i++)
-                        for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
-                                j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
-                            if (fabs (DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]]) > 1e-16)
-                                fprintf (DDSIP_bb->moreoutfile, " first-stage var: %d, scen: %d, j=%d, naind[j]= %d: koeff: %g, dual=%g, cost add: %g\n", i, scen,j, DDSIP_data->naind[j],  DDSIP_data->naval[j], DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]],  DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen]);
-                    fprintf (DDSIP_bb->moreoutfile, "\n");
-                }
-            }
-            for (i = 0; i < DDSIP_bb->firstvar; i++)
-                for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
-                        j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
-                    cost[i] += DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen];
-        }
-#endif
-
-        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_bb->firstvar, DDSIP_bb->firstindex, cost);
-        if (status)
-        {
-            fprintf (stderr, "ERROR: Failed to update objective coefficients\n");
-            return status;
-        }
-    }
     // Change rhs
     if (DDSIP_param->stocrhs)
     {
@@ -273,6 +163,165 @@ DDSIP_ChgProb (int scen)
             return status;
         }
     }
+#ifdef CONIC_BUNDLE
+    // Use multipliers passed by CB
+    if (DDSIP_param->cb && DDSIP_bb->DDSIP_step != neobj && DDSIP_bb->DDSIP_step != adv && DDSIP_bb->DDSIP_step != eev)
+    {
+        // Original costs of the first-stage variables - maybe changed by stochstic costs
+        for (i = 0; i < DDSIP_bb->firstvar; i++)
+        {
+            cost[i] = DDSIP_bb->cost[i];
+        }
+        if (DDSIP_param->stoccost)
+        {
+            for (j = 0; j < DDSIP_param->stoccost; j++)
+                if (DDSIP_bb->firstindex_reverse[DDSIP_data->costind[j]] >= 0)
+                {
+                    if (DDSIP_param->riskmod == 3)
+                        cost[DDSIP_bb->firstindex_reverse[DDSIP_data->costind[j]]] = (1 - DDSIP_param->riskweight) * DDSIP_data->cost[scen * DDSIP_param->stoccost + j];
+                    else
+                        cost[DDSIP_bb->firstindex_reverse[DDSIP_data->costind[j]]] = DDSIP_data->cost[scen * DDSIP_param->stoccost + j];
+                }
+        }
+        if (DDSIP_bb->DDSIP_step == dual)
+            // The additional costs changes for ConicBundle iterations
+        {
+            if (DDSIP_param->outlev >= DDSIP_current_lambda_outlev)
+            {
+                if(!scen)
+                {
+                    fprintf (DDSIP_bb->moreoutfile, "\n Lagrangemult. in OF: in CB from %p ---------------------\n", DDSIP_node[DDSIP_bb->curnode]->dual);
+                    fprintf (DDSIP_bb->moreoutfile, "DDSIP_ChgProb: Current lambda for node %d:\n", DDSIP_bb->curnode);
+                    for (i = 0; i < DDSIP_bb->dimdual; i++)
+                    {
+                        fprintf (DDSIP_bb->moreoutfile, " %14.8g,", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
+                        if (!((i+1)%10))
+                            fprintf (DDSIP_bb->moreoutfile, "\n");
+                    }
+                    fprintf (DDSIP_bb->moreoutfile, "\n");
+                }
+            }
+#ifdef DEBUG
+            if (DDSIP_param->outlev > 50)
+            {
+                colname = (char **) DDSIP_Alloc (sizeof (char *), (DDSIP_bb->firstvar + DDSIP_bb->secvar), "colname(Change)");
+                colstore = (char *) DDSIP_Alloc (sizeof (char), (DDSIP_bb->firstvar + DDSIP_bb->secvar) * DDSIP_ln_varname, "colstore(Change)");
+                status = CPXgetcolname (DDSIP_env, DDSIP_lp, colname, colstore,
+                                        (DDSIP_bb->firstvar + DDSIP_bb->secvar) * DDSIP_ln_varname, &j, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
+                if (status)
+                {
+                    fprintf (stderr, "ERROR: Failed to get column names (Change)\n");
+                    fprintf (DDSIP_outfile, "ERROR: Failed to get column names (Change)\n");
+                    if (DDSIP_param->outlev)
+                        fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get column names (Change)\n");
+                    return 100;
+                }
+            }
+#endif
+            for (i = 0; i < DDSIP_bb->firstvar; i++)
+            {
+#ifdef DEBUG
+                if (DDSIP_param->outlev > 50)
+                {
+                    fprintf (DDSIP_bb->moreoutfile, " scen %d: first-stage variable %d nabeg[%d]= %d, nacnt= %d\n", scen+1, i, scen * DDSIP_bb->firstvar + i, DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i], DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]);
+                }
+#endif
+                for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
+                        j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
+                {
+                    if (fabs (DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]]) > 1e-18)
+                    {
+#ifdef DEBUG
+                        if (DDSIP_param->outlev > 50)
+                        {
+                            fprintf (DDSIP_bb->moreoutfile, " first-stage var: %d ", i);
+                            fprintf (DDSIP_bb->moreoutfile, " (%s),", colname[DDSIP_bb->firstindex[i]]);
+                            fprintf (DDSIP_bb->moreoutfile, " scen: %d, \tnaind[%d]= %d: koeff: %g, dual=%g, \tcost add: %g\n", scen,j, DDSIP_data->naind[j],  DDSIP_data->naval[j], DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]],  DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen]);
+                            fprintf (DDSIP_bb->moreoutfile, " \tcost %16.12g changed to", cost[i]);
+                        }
+#endif
+                        cost[i] += DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen];
+#ifdef DEBUG
+                        if (DDSIP_param->outlev > 50)
+                        {
+                            fprintf (DDSIP_bb->moreoutfile, " %16.12g\n", cost[i]);
+                        }
+#endif
+                    }
+                }
+            }
+#ifdef DEBUG
+            if (DDSIP_param->outlev > 50)
+            {
+                DDSIP_Free ((void**) &(colname));
+                DDSIP_Free ((void **) &(colstore));
+            }
+#endif
+        }
+        else if (DDSIP_bb->DDSIP_step == solve)
+        {
+            if (DDSIP_param->outlev >= DDSIP_current_lambda_outlev)
+            {
+                if(!scen)
+                {
+                    fprintf (DDSIP_bb->moreoutfile,
+                             "\n Lagrangemult. in OF: in solve from %p ---------------------\n", DDSIP_node[DDSIP_bb->curnode]->dual);
+                    fprintf (DDSIP_bb->moreoutfile, "DDSIP_ChgProb: Current lambda for node %d:\n", DDSIP_bb->curnode);
+                    for (i = 0; i < DDSIP_bb->dimdual; i++)
+                    {
+                        fprintf (DDSIP_bb->moreoutfile, " %14.8g,", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
+                        if (!((i+1)%10))
+                            fprintf (DDSIP_bb->moreoutfile, "\n");
+                    }
+                    fprintf (DDSIP_bb->moreoutfile, "\n");
+                }
+#ifdef DEBUG
+                if (DDSIP_param->outlev > 50)
+                {
+                    fprintf (DDSIP_bb->moreoutfile, "******* changes to obj coefficients by Lagrangean\n");
+                    for (i = 0; i < DDSIP_bb->firstvar; i++)
+                    {
+                        fprintf (DDSIP_bb->moreoutfile, " scen %d: first-stage variable %d nabeg[%d]= %d, nacnt= %d\n", scen+1, i, scen * DDSIP_bb->firstvar + i, DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i], DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]);
+                        for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
+                                j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
+                            if (fabs (DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]]) > 1e-16)
+                                fprintf (DDSIP_bb->moreoutfile, " first-stage var: %d, scen: %d, naind[%d]= %d: koeff: %g, dual=%g, cost add: %g\n", i, scen,j, DDSIP_data->naind[j],  DDSIP_data->naval[j], DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]],  DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen]);
+                    }
+                    fprintf (DDSIP_bb->moreoutfile, "\n");
+                }
+#endif
+            }
+#ifdef DEBUG
+            if (DDSIP_param->outlev > 50)
+            {
+                fprintf (DDSIP_bb->moreoutfile, "** cost coefficients before and after changes:\n");
+                for (i = 0; i < DDSIP_bb->firstvar; i++)
+                    fprintf (DDSIP_bb->moreoutfile, " %20.14g ", cost[i]);
+                fprintf (DDSIP_bb->moreoutfile, "\n");
+            }
+#endif
+            for (i = 0; i < DDSIP_bb->firstvar; i++)
+                for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
+                        j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
+                    cost[i] += DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen];
+#ifdef DEBUG
+            if (DDSIP_param->outlev > 50)
+            {
+                for (i = 0; i < DDSIP_bb->firstvar; i++)
+                    fprintf (DDSIP_bb->moreoutfile, " %20.14g ", cost[i]);
+                fprintf (DDSIP_bb->moreoutfile, "\n");
+            }
+#endif
+        }
+
+        status = CPXchgobj (DDSIP_env, DDSIP_lp, DDSIP_bb->firstvar, DDSIP_bb->firstindex, cost);
+        if (status)
+        {
+            fprintf (stderr, "ERROR: Failed to update objective coefficients\n");
+            return status;
+        }
+    }
+#endif
     // Change matrix if required
     if (DDSIP_param->stocmat)
     {

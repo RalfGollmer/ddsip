@@ -538,6 +538,7 @@ DDSIP_BbTypeInit (void)
         DDSIP_bb->lb_scen_order[i] = DDSIP_bb->ub_scen_order[i]    = i;
     }
     DDSIP_bb->lb_sorted = 0;
+    DDSIP_bb->ub_sorted = 0;
     DDSIP_bb->front_nodes_sorted = (int *) DDSIP_Alloc (sizeof (int), 1, "DDSIP_bb->front_nodes_sorted(BbInit)");
     DDSIP_bb->front_nodes_sorted[0] = 0;
     DDSIP_bb->meanGapLB = DDSIP_bb->meanGapCBLB = DDSIP_bb->meanGapUB = 0.;

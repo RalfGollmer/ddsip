@@ -182,7 +182,7 @@ DDSIP_DualUpdate (void *function_key, double *dual, double relprec,
 
     if (DDSIP_killsignal)
     {
-        fprintf (DDSIP_outfile, "\nTermination signal received.\n");
+        //fprintf (DDSIP_outfile, "\nTermination signal received.\n");
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "\nTermination signal received.\n");
         *new_subg = 0;
@@ -255,7 +255,7 @@ ONCE_AGAIN:
         for (i = 0; i < DDSIP_bb->firstvar; i++)
             subgradient[scen * DDSIP_bb->firstvar + i] = 0.0;
 
-    if (DDSIP_param->scalarization)
+    if (DDSIP_param->scalarization && DDSIP_bb->skip != 2)
     {
         if (DDSIP_param->outlev > 29)
         {
@@ -284,7 +284,7 @@ ONCE_AGAIN:
             printf ("   curexp=%g, currisk=%g\n", DDSIP_bb->curexp, DDSIP_bb->currisk);
         }
     }
-    else
+    else if (DDSIP_bb->skip != 2)
     {
         if (DDSIP_bb->violations)
         {
@@ -293,15 +293,6 @@ ONCE_AGAIN:
                     for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
                             j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
                     {
-                        if (DDSIP_killsignal)
-                        {
-                            fprintf (stderr, "\nTermination signal received.\n");
-                            fprintf (DDSIP_outfile, "\nTermination signal received.\n");
-                            if (DDSIP_param->outlev)
-                                fprintf (DDSIP_bb->moreoutfile, "\nTermination signal received.\n");
-                            *new_subg = 0;
-                            return -1;
-                        }
                         subgradient[DDSIP_data->naind[j]] -= DDSIP_data->naval[j] * (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][i];
                     }
         }
@@ -348,8 +339,7 @@ ONCE_AGAIN:
         fprintf (DDSIP_outfile, "\nTermination signal received.\n");
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "\nTermination signal received.\n");
-        *new_subg = 0;
-        return -1;
+        DDSIP_bb->skip = 2;
     }
     return 0;
 }
@@ -665,7 +655,11 @@ DDSIP_DualOpt (void)
                 }
             }
         }
-        DDSIP_EvaluateScenarioSolutions (&comb);
+        DDSIP_bb->cutAdded = 0;
+        if (!DDSIP_killsignal)
+        {
+            DDSIP_EvaluateScenarioSolutions (&comb);
+        }
         if (DDSIP_bb->cutAdded)
         {
             if ((obj - old_obj)/(fabs(old_obj) + 1e-16) > 1.e-8)
@@ -739,16 +733,14 @@ DDSIP_DualOpt (void)
                     }
                 }
             }
-            DDSIP_EvaluateScenarioSolutions (&comb);
+            DDSIP_bb->cutAdded = 0;
+            if (!DDSIP_killsignal)
+            {
+                DDSIP_EvaluateScenarioSolutions (&comb);
+            }
             if (DDSIP_bb->cutAdded)
             {
                 cnt = 1;
-                if (DDSIP_bb->dualObjVal > old_obj)
-                {
-                    //next_weight = next_weight * 2.0;
-                    next_weight = next_weight * 20.0;
-                    cb_set_next_weight (p, next_weight);
-                }
                 do
                 {
                     obj = DDSIP_bb->dualObjVal;
@@ -833,8 +825,22 @@ DDSIP_DualOpt (void)
                         old_obj = obj;
                         obj = DDSIP_bb->dualObjVal;
                     }
-                    DDSIP_EvaluateScenarioSolutions (&comb);
+                    DDSIP_bb->cutAdded = 0;
+                    if (!DDSIP_killsignal)
+                    {
+//                        wall_hrs = DDSIP_param->heuristic;
+//                        DDSIP_param->heuristic = 12;
+                        DDSIP_EvaluateScenarioSolutions (&comb);
+//                        DDSIP_param->heuristic = wall_hrs;
+                    }
+                    else
+                        break;
                 } while (DDSIP_bb->cutAdded && (((obj - old_obj)/(fabs(obj)+1e-16) > 4.e-12) || (noIncreaseCounter < 2)) && cnt < DDSIP_param->numberReinits);
+                if (DDSIP_bb->dualObjVal > old_obj)
+                {
+                    next_weight = next_weight * 20.0;
+                    cb_set_next_weight (p, next_weight);
+                }
                 old_obj = obj = DDSIP_bb->dualObjVal;
             }
             last_dualitcnt = DDSIP_bb->dualitcnt;
@@ -1124,14 +1130,15 @@ while (tmp_bestdual)
 
             if (DDSIP_killsignal)
             {
-                fprintf (DDSIP_outfile, "\nTermination signal received.\n");
+                fprintf (DDSIP_outfile, "\nDualOpt: Termination signal received.\n");
                 if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile, "\nTermination signal received.\n");
-                cb_destruct_problem (&p);
-                DDSIP_Free ((void **) &(minfirst));
-                DDSIP_Free ((void **) &(maxfirst));
-                DDSIP_Free ((void **) &(center_point));
-                return 0;
+                    fprintf (DDSIP_bb->moreoutfile, "\nDualOpt: Termination signal received.\n");
+                break;
+//                cb_destruct_problem (&p);
+//                DDSIP_Free ((void **) &(minfirst));
+//                DDSIP_Free ((void **) &(maxfirst));
+//                DDSIP_Free ((void **) &(center_point));
+//                return 0;
             }
             if (DDSIP_param->outlev > 8)
             {
@@ -1173,14 +1180,15 @@ NEXT_TRY:
             if (DDSIP_killsignal )
             {
                 // Killsignal
-                fprintf (DDSIP_outfile, "\nTermination signal received.\n");
+                fprintf (DDSIP_outfile, "\nDualOpt: Termination signal received.\n");
                 if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile, "\nTermination signal received.\n");
-                cb_destruct_problem (&p);
-                DDSIP_Free ((void **) &(minfirst));
-                DDSIP_Free ((void **) &(maxfirst));
-                DDSIP_Free ((void **) &(center_point));
-                return 111;
+                    fprintf (DDSIP_bb->moreoutfile, "\nDualOpt: Termination signal received.\n");
+                break;
+//                cb_destruct_problem (&p);
+//                DDSIP_Free ((void **) &(minfirst));
+//                DDSIP_Free ((void **) &(maxfirst));
+//                DDSIP_Free ((void **) &(center_point));
+//                return 111;
             }
             else if (cb_status)
             {
@@ -2236,7 +2244,7 @@ while (tmp_bestdual)
         }
     }
     //determine variable to branch on
-    if (!DDSIP_node[DDSIP_bb->curnode]->leaf)
+    if (!DDSIP_node[DDSIP_bb->curnode]->leaf && !DDSIP_killsignal)
     {
         for (j = 0; j < DDSIP_bb->firstvar; j++)
         {

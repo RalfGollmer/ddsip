@@ -54,7 +54,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2017-12-26 (Github v1.2.1) ";
+const char DDSIP_version[] = "2018-01-04 (Github v1.2.1) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -471,7 +471,6 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
                                          (!((DDSIP_bb->noiter+1) % -DDSIP_param->cb)) ||
                                          (DDSIP_bb->noiter%200 > 199 - DDSIP_param->cbContinuous) ||
                                          (DDSIP_bb->noiter < DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters) ||
-//again cbcont at 2* breakiters?
                                          ((DDSIP_bb->noiter  >= 2*DDSIP_param->cbBreakIters) && (DDSIP_bb->noiter < DDSIP_param->cbContinuous + 2*DDSIP_param->cbBreakIters)) ||
                                          ((DDSIP_bb->cutoff > 5) &&
                                              (((DDSIP_bb->no_reduced_front < 51) && (DDSIP_bb->noiter % -DDSIP_param->cb) < DDSIP_param->cbContinuous)
@@ -517,6 +516,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
             double old_bound;
             int cntr, maxCntr;
 
+            DDSIP_bb->cutAdded = 0;
             DDSIP_EvaluateScenarioSolutions (&comb);
             cntr = 0;
             if (DDSIP_node[DDSIP_bb->curnode]->step != dual)
@@ -599,6 +599,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
                     // status=1 means there was no solution found to a scenario problem
                     if ((status = DDSIP_LowerBound ()))
                         goto TERMINATE;
+                    DDSIP_bb->cutAdded = 0;
                     DDSIP_EvaluateScenarioSolutions (&comb);
                     cntr++;
                     DDSIP_bb->bestbound = DDSIP_node[0]->bound;
@@ -652,7 +653,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
         DDSIP_bb->heurval = DDSIP_infty;
         DDSIP_bb->skip = 0;
 
-      cont = DDSIP_Continue (&DDSIP_bb->noiter, &boundstat);
+        cont = DDSIP_Continue (&DDSIP_bb->noiter, &boundstat);
         if (!cont)
         {
             status = boundstat;

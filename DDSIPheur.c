@@ -36,6 +36,7 @@ void DDSIP_SmallValue (void);
 void DDSIP_LargeValue (void);
 void DDSIP_MinSum (void);
 void DDSIP_MaxSum (void);
+int  DDSIP_OneFifth (int, int);
 int  DDSIP_All (int, int);
 void DDSIP_BoundConsistent (void);
 
@@ -395,6 +396,11 @@ DDSIP_All (int nrScenarios, int feasCheckOnly)
         }
 
         DDSIP_bb->from_scenario = unind[i];
+        if (DDSIP_killsignal)
+        {
+            DDSIP_Free ((void **) &(unind));
+            return 1;
+        }
         if ((status = DDSIP_UpperBound (nrScenarios, feasCheckOnly)))
         {
             if (status < 100000)
@@ -449,6 +455,132 @@ DDSIP_All (int nrScenarios, int feasCheckOnly)
 }
 
 //==========================================================================
+// OneFifth suggests successively all scenario problem solutions occurring at least scenarios/4 times Heur. 11
+int
+DDSIP_OneFifth (int nrScenarios, int feasCheckOnly)
+{
+    int i, ii, j, status, threshold;
+    int cnt;
+    int *unind = (int *) DDSIP_Alloc (sizeof (int), DDSIP_param->scenarios, "unind(OneFifth)");
+    sug_t *tmp;
+
+    threshold = DDSIP_Imax (1, DDSIP_param->scenarios/5);
+    j = cnt = 0;
+    for (i = DDSIP_param->scenarios-1; i > -1; i--)
+    {
+        if (DDSIP_node[DDSIP_bb->curnode]->first_sol[i][DDSIP_bb->firstvar] <= threshold)
+            continue;
+        if (!DDSIP_param->heuristic_auto)
+        {
+            if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][DDSIP_bb->firstvar + 2] < DDSIP_bb->curnode)
+            {
+                if (DDSIP_param->outlev > 49)
+                    fprintf (DDSIP_bb->moreoutfile, "  Heuristic 11: solution of scenario %3d is from father node\n", i);
+                continue;
+            }
+        }
+        for (j = i - 1; j > -1; j--)
+        {
+            if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i] == (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j])
+            {
+                if (DDSIP_param->outlev > 49)
+                    fprintf (DDSIP_bb->moreoutfile, "  Heuristic 11: solution of scenario %3d is the same as that of scenario %d\n", i, j);
+                break;
+            }
+        }
+        if (j==-1)
+            unind[cnt++] = i;
+    }
+
+    if (!cnt)
+    {
+        if (DDSIP_param->outlev)
+            fprintf(DDSIP_bb->moreoutfile, " no candidate.\n");
+        DDSIP_bb->skip = -4;
+        DDSIP_Free ((void **) &(unind));
+        return 1;
+    }
+    else if (DDSIP_param->outlev)
+            fprintf(DDSIP_bb->moreoutfile, " %d candidates.\n", cnt);
+
+    for (i = cnt-1; i >= 0; i--)
+    {
+        if (DDSIP_killsignal)
+        {
+            DDSIP_Free ((void **) &(unind));
+            return 1;
+        }
+        if (DDSIP_node[DDSIP_bb->curnode]->first_sol[unind[i]][DDSIP_bb->firstvar] > threshold)
+        {
+            tmp = DDSIP_bb->sug[DDSIP_param->nodelim + 2];
+            if (!tmp)
+            {
+                // DDSIP_Allocate memory for heuristics suggestion if there is none yet
+                tmp = (sug_t *)DDSIP_Alloc (sizeof (sug_t), 1, "sug[i](Heuristic)");
+                tmp->firstval = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar, "sug[i]->firstval(Heuristic)");
+                tmp->next = NULL;
+                DDSIP_bb->sug[DDSIP_param->nodelim + 2] = tmp;
+            }
+            else
+            {
+                if (tmp->next != NULL)
+                    printf("\n\n FEHLER: !!!!!!!!!!!!!!!!!!!!! DDSIP_bb->sug[DDSIP_param->nodelim + 2]->next = %p\n\n",DDSIP_bb->sug[DDSIP_param->nodelim + 2]->next);
+            }
+
+            if(DDSIP_param->outlev)
+                fprintf (DDSIP_bb->moreoutfile, "\nHeuristic 11: suggested first stage solution of scen. %3d  (%g identical scen. sols) ", unind[i]+1, DDSIP_node[DDSIP_bb->curnode]->first_sol[unind[i]][DDSIP_bb->firstvar]);
+            for (j = 0; j < DDSIP_bb->firstvar; j++)
+            {
+                (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[unind[i]][j];
+            }
+
+            if (DDSIP_param->relax)
+                for (ii = 0; ii < DDSIP_bb->firstvar; ii++)
+                    if (DDSIP_bb->firsttype[ii] == 'B' || DDSIP_bb->firsttype[ii] == 'I' || DDSIP_bb->firsttype[ii] == 'N')
+                        (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[ii] = floor (((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[ii] + 0.5));
+
+            // Consistent?
+            DDSIP_BoundConsistent ();
+
+            // In case of worst-case risk measure change value of aux var to worst_case_lb for heuristics
+            if (abs(DDSIP_param->riskmod) == 4 && !DDSIP_bb->skip && !DDSIP_param->riskalg && !DDSIP_param->scalarization)
+            {
+                double worst_case_lb = -DDSIP_infty;
+                for (ii=0; ii<DDSIP_param->scenarios; ii++)
+                {
+                    worst_case_lb = DDSIP_Dmax((DDSIP_node[DDSIP_bb->curnode]->first_sol)[ii][DDSIP_bb->firstvar-1], worst_case_lb);
+                }
+                (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[DDSIP_bb->firstvar - 1] = worst_case_lb + DDSIP_param->accuracy;
+            }
+
+            DDSIP_bb->from_scenario = unind[i];
+            if ((status = DDSIP_UpperBound (nrScenarios, feasCheckOnly)))
+            {
+                if (status < 100000)
+                {
+                    fprintf (stderr, "ERROR: Failed to perform UpperBound (OneFifth)\n");
+                    return 1;
+                }
+                else if (DDSIP_param->interrupt_heur)
+                {
+                    if (DDSIP_param->outlev)
+                        fprintf (DDSIP_bb->moreoutfile, "\nGap reached, no further heuristics necessary.\n");
+                    break;
+                }
+            }
+        }
+    }
+
+    DDSIP_Free ((void **) &(unind));
+    if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
+    {
+        DDSIP_Free ((void **) &(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval));
+        DDSIP_Free ((void **) &(DDSIP_bb->sug[DDSIP_param->nodelim + 2]));
+    }
+
+    return 1;
+}
+
 // Function returns a suggestion in the first components of sug[DDSIP_param->nodelim + 2]
 int
 DDSIP_Heuristics (int *comb, int nrScenarios, int feasCheckOnly)
@@ -547,20 +679,10 @@ DDSIP_Heuristics (int *comb, int nrScenarios, int feasCheckOnly)
             fprintf (DDSIP_bb->moreoutfile, "maximal sum         ");
         DDSIP_MaxSum ();
         break;
-    case 11:			// Combined heuristic 3 and 5
-        if (DDSIP_param->outlev)
-            fprintf (DDSIP_bb->moreoutfile, "combine 3 and 5     ");
-        if (*comb == 3)
-        {
-            DDSIP_RoundNear (average);
-            *comb = 5;
-        }
-        else
-        {
-            DDSIP_CloseToAverage (average);
-            *comb = 3;
-        }
-        break;
+    case 11:			// all scen solutions occurring sufficiently often
+        status = DDSIP_OneFifth (nrScenarios, feasCheckOnly);
+        DDSIP_Free ((void **) &(average));
+        return status;
     case 12:
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "all scen. sols ");
@@ -578,6 +700,20 @@ DDSIP_Heuristics (int *comb, int nrScenarios, int feasCheckOnly)
         {
             DDSIP_Frequent ();
             *comb = 5;
+        }
+        break;
+    case 14:			// Combined heuristic 3 and 5
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "combine 3 and 5     ");
+        if (*comb == 3)
+        {
+            DDSIP_RoundNear (average);
+            *comb = 5;
+        }
+        else
+        {
+            DDSIP_CloseToAverage (average);
+            *comb = 3;
         }
         break;
     default:

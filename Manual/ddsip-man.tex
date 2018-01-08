@@ -453,6 +453,20 @@ DETEQT&Int&0..1&0&Determines the form of the obj. of\\&&&& the deterministic equ
 %\end{center} \caption{Output and termination parameters} \label{T:OUT}
 %\end{table}
 %
+
+The two types of the deterministic equivalent specified by DETEQT differ only in the objective.
+In both cases additional variables with names DDSIP\_objSC001 etc. are added plus equations assigning the corresponding scenario objective values.
+In the type 0 equivalent the objective is the sum of these additional variables multiplied by the scenario probability.
+In the type 1 file the objective is formed using the original first-stage variables.
+
+The {\it branching value} is used to create two new subproblems as described in {\em STEP 5} of the
+decomposition algorithm. For continuous components it depends on the parameter EPSILON.
+
+The dispersion norm of a node is calculated as $\max_{j}  \{  \max_{i}
+x_{ij} - \min_{i} x_{ij}\}$ where $x_j$, $j=1,\ldots,S$, are the (first-stage part of the) solutions
+of the $S$ subproblems and $x_{ij}$, $i=1,\ldots,n$, are their i-th components.
+Nodes with a dispersion norm smaller than NULLDISP are considered as leaves of the 
+B\&B tree (i.e. no further branching on them).
 %\begin{table}[h]
 \begin{center}
 \tablefirsthead{%
@@ -582,19 +596,6 @@ nearest integer.\medskip\\
 4&The solution occurring most frequently is used.\medskip\\
 5&Use the solution of a scenario that is closest ($l_1$ norm) to average.\medskip\\
 6&The first-stage solution with highest probability is chosen (adding probabilities in case of identical first-stage scenario solutions)\medskip\\
-The two types of the deterministic equivalent specified by DETEQT differ only in the objective.
-In both cases additional variables with names DDSIP\_objSC001 etc. are added plus equations assigning the corresponding scenario objective values.
-In the type 0 equivalent the objective is the sum of these additional variables multiplied by the scenario probability.
-In the type 1 file the objective is formed using the original first-stage variables.
-
-The {\it branching value} is used to create two new subproblems as described in {\em STEP 5} of the
-decomposition algorithm. For continuous components it depends on the parameter EPSILON.
-
-The dispersion norm of a node is calculated as $\max_{j}  \{  \max_{i}
-x_{ij} - \min_{i} x_{ij}\}$ where $x_j$, $j=1,\ldots,S$, are the (first-stage part of the) solutions
-of the $S$ subproblems and $x_{ij}$, $i=1,\ldots,n$, are their i-th components.
-Nodes with a dispersion norm smaller than NULLDISP are considered as leaves of the 
-B\&B tree (i.e. no further branching on them).
 7&Solution with best objective value\medskip\\
 8&Solution with worst objective value\medskip\\
 9&Solution with minimal sum of first-stage variables\medskip\\

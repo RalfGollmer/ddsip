@@ -1007,6 +1007,8 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
             // Infeasible, unbounded .. ?
             if (!DDSIP_Infeasible (mipstatus))
                 mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
+            else
+                DDSIP_bb->skip = -2;
         }
         else // feasCheckOnly
         {

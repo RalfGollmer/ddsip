@@ -196,10 +196,15 @@ DDSIP_PrintState (int noiter)
             printf ("    multiple     ");
             fprintf (DDSIP_outfile, "    multiple     ");
         }
-        else
+        else if (DDSIP_bb->skip == -2)
         {
             printf ("  infeasible     ");
             fprintf (DDSIP_outfile, "  infeasible     ");
+        }
+        else
+        {
+            printf ("                 ");
+            fprintf (DDSIP_outfile, "                 ");
         }
     }
 

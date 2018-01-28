@@ -496,7 +496,6 @@ DDSIP_OneFifth (int nrScenarios, int feasCheckOnly)
     {
         if (DDSIP_param->outlev)
             fprintf(DDSIP_bb->moreoutfile, " no candidate.\n");
-        DDSIP_bb->skip = -4;
         DDSIP_Free ((void **) &(unind));
         return 1;
     }

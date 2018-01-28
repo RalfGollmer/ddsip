@@ -1243,16 +1243,16 @@ DDSIP_ReadSpec ()
     else if (DDSIP_param->heuristic == 100)
     {
         DDSIP_param->heuristic_vector = (double *) DDSIP_Alloc (sizeof (double), 12, "values(DDSIP_ReadDblVec)");
-        DDSIP_param->heuristic_vector[0] = 100.;
+        DDSIP_param->heuristic_vector[0] = 100;
+        DDSIP_param->heuristic_vector[4] = 11;
         for (i = 1; i< 4; i++)
         {
             DDSIP_param->heuristic_vector[i]     = i + 3;
-            DDSIP_param->heuristic_vector[i + 3] = i;
+            DDSIP_param->heuristic_vector[i + 4] = i;
         }
-        for (i = 7; i< 12; i++)
-            DDSIP_param->heuristic_vector[i] = i;
-        //DDSIP_param->heuristic = 99;
-        DDSIP_param->heuristic_num = 11;
+        for (i = 7; i< 11; i++)
+            DDSIP_param->heuristic_vector[i + 1] = i;
+        DDSIP_param->heuristic_num = 12;
         DDSIP_param->heuristic_auto = 1;
         DDSIP_param->interrupt_heur = floor (DDSIP_ReadDbl (specfile, "INTHEU", " INTERRUPT HEURISTIC LOOP", -1., 1, -1., 1.) + 0.1);
     }

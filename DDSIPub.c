@@ -1831,23 +1831,6 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
 		    }
 		    DDSIP_bb->heurval = tmpbestheur;
 	    }
-	    else
-	    {
-		    DDSIP_param->heuristic = 11;
-		    DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0);
-		    if (DDSIP_param->alwaysBendersCuts && DDSIP_bb->shifts)
-		    {
-			    DDSIP_param->heuristic = 12;
-			    if (!DDSIP_Heuristics (comb, DDSIP_bb->shifts, 1))
-			    {
-				    // Check if the proposed first-stage solution gives a new cut
-				    if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
-				    {
-					    DDSIP_UpperBound (DDSIP_bb->shifts, 1);
-				    }
-			    }
-		    }
-	    }
 	    DDSIP_param->heuristic = 100;
     }
     else if (DDSIP_param->heuristic == 99)  	// use subsequently different heuristics in the same node

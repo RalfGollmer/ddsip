@@ -836,7 +836,7 @@ DDSIP_DualOpt (void)
                     else
                         break;
                 } while (DDSIP_bb->cutAdded && (((obj - old_obj)/(fabs(obj)+1e-16) > 4.e-12) || (noIncreaseCounter < 2)) && cnt < DDSIP_param->numberReinits);
-                if (DDSIP_bb->dualObjVal > old_obj && DDSIP_param->cbrootitlim > 15)
+                if (DDSIP_bb->dualObjVal > old_obj && DDSIP_param->cbrootitlim > 8)
                 {
                     next_weight = next_weight * 5.0;
                     cb_set_next_weight (p, next_weight);

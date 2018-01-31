@@ -1562,10 +1562,11 @@ DDSIP_ReadModel ()
 
     printf ("Enter model file name:  ");
     i = scanf ("%s", fname);
-    if (i == 0)
+    if (i < 1)
     {
         printf ("\nERROR: could not read model file name.\n");
         fprintf (DDSIP_outfile, "\nERROR: could not read model file name.\n");
+        exit(1);
     }
 
     // Set core file type

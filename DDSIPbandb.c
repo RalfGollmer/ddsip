@@ -239,7 +239,6 @@ DDSIP_InitNewNodes (void)
     // Integer or binary variable
     if (DDSIP_bb->firsttype[DDSIP_node[DDSIP_bb->curnode]->branchind] == 'B' || DDSIP_bb->firsttype[DDSIP_node[DDSIP_bb->curnode]->branchind] == 'I' || DDSIP_bb->firsttype[DDSIP_node[DDSIP_bb->curnode]->branchind] == 'N')
     {
-        // Shorter than above:
         DDSIP_node[DDSIP_bb->nonode]->neoub = DDSIP_Dmax (ceil (branchval) - 1, DDSIP_node[DDSIP_bb->nonode]->neolb);
         DDSIP_node[DDSIP_bb->nonode + 1]->neolb = DDSIP_node[DDSIP_bb->nonode]->neoub + 1;
     }
@@ -247,11 +246,13 @@ DDSIP_InitNewNodes (void)
     // Recall that ub (i+1)-lb(i) > eps and lb(i) <= branchval <= ub(i+1)
     else
     {
+        double minus = branchval - DDSIP_Dmax (DDSIP_param->brancheps, fabs(branchval)*1.1102233e-16);
+        double plus  = branchval + DDSIP_Dmax (DDSIP_param->brancheps, fabs(branchval)*1.1102233e-16);
         // Case: lb (i) <= branchval-eps < branchval <= ub(i+1)
         // -->   ub (i):=branchval-eps, lb(i+1)=branchval
-        if (!(branchval - DDSIP_param->brancheps < DDSIP_node[DDSIP_bb->nonode]->neolb))
+        if (!(minus < DDSIP_node[DDSIP_bb->nonode]->neolb))
         {
-            DDSIP_node[DDSIP_bb->nonode]->neoub = branchval - DDSIP_param->brancheps;
+            DDSIP_node[DDSIP_bb->nonode]->neoub = minus;
             //take care for numerical errors with very small DDSIP_param->brancheps
             if (branchval < DDSIP_node[DDSIP_bb->nonode + 1]->neoub)
                 DDSIP_node[DDSIP_bb->nonode + 1]->neolb = branchval;
@@ -260,14 +261,14 @@ DDSIP_InitNewNodes (void)
         }
         // Case: lb (i) <= branchval < branchval+eps <= ub(i+1)
         // -->   ub (i):=branchval, lb(i+1)=branchval+eps
-        else if (!(branchval + DDSIP_param->brancheps > DDSIP_node[DDSIP_bb->nonode + 1]->neoub))
+        else if (!(plus > DDSIP_node[DDSIP_bb->nonode + 1]->neoub))
         {
-            //take care for numerical errors wirh very small DDSIP_param->brancheps
+            //take care for numerical errors with very small DDSIP_param->brancheps
             if (branchval > DDSIP_node[DDSIP_bb->nonode]->neolb)
                 DDSIP_node[DDSIP_bb->nonode]->neoub = branchval;
             else
                 DDSIP_node[DDSIP_bb->nonode]->neoub = DDSIP_node[DDSIP_bb->nonode]->neolb;
-            DDSIP_node[DDSIP_bb->nonode + 1]->neolb = branchval + DDSIP_param->brancheps;
+            DDSIP_node[DDSIP_bb->nonode + 1]->neolb = plus;
         }
         // This is the case when ub-lb < 2*eps
         // Last branch on this variable.

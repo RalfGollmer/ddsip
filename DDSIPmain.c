@@ -54,7 +54,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2018-01-04 (Github v1.2.1) ";
+const char DDSIP_version[] = "2018-02-14 (Github v1.2.2) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -196,9 +196,9 @@ main (void)
         fprintf (DDSIP_outfile, "ERROR: Failed to open cplex environment, CPLEX error code %d.\n",status);
         return status;
     }
-    else
-        printf ("CPLEX version is %s\n", CPXversion (DDSIP_env));
-    fprintf (DDSIP_outfile, "CPLEX version is %s\n\n", CPXversion (DDSIP_env));
+    sprintf (astring, "%s", CPXversion (DDSIP_env));
+    printf ("CPLEX version is %s\n", astring);
+    fprintf (DDSIP_outfile, "CPLEX version is %s\n\n", astring);
 
     // Allocate the structures to hold the information on the problem
     DDSIP_param = (para_t *) DDSIP_Alloc (sizeof (para_t), 1, "param(Main)");
@@ -436,8 +436,15 @@ main (void)
          goto TERMINATE;
     // Print cplex log to debugfile
     if (DDSIP_param->outlev > 51)
-        if ((status = CPXsetlogfile (DDSIP_env, DDSIP_bb->moreoutfile)))
-            goto TERMINATE;
+    {
+#ifdef CPLEX_12_8
+       if ((status = CPXsetlogfilename (DDSIP_env, DDSIP_moreoutfname, "a")))
+           goto TERMINATE;
+#else
+       if ((status = CPXsetlogfile (DDSIP_env, DDSIP_bb->moreoutfile)))
+           goto TERMINATE;
+#endif
+    }
 
     // No of DDSIP iterations
     DDSIP_bb->noiter = 0;

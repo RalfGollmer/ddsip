@@ -28,7 +28,7 @@ HELP      = $(SRCDIR)/ddsiphelp_x64
 # Compiler 
 CC = gcc
 # All warnings, Optimizing level 2
-linux.CFLAGS  =  -std=c99 -O2 -fno-strict-aliasing -Wall -Wextra -Wformat=2 -Wmissing-prototypes  $(PROCESSOR) -DCONIC_BUNDLE
+linux.CFLAGS  =  -std=c99 -O2 -fno-strict-aliasing -Wall -Wextra -Wformat=2 -Wmissing-prototypes  $(PROCESSOR) -DCONIC_BUNDLE -DCPLEX_12_8
 # Header files are here
 CDIRS   = -I./include -I$(CPLEX)/include/ilcplex -I$(CB)/include
 

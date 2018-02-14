@@ -617,28 +617,34 @@ DDSIP_Warm (int iscen)
 
     scen = DDSIP_bb->lb_scen_order[iscen];
 
-    if ((k = CPXgetnummipstarts(DDSIP_env, DDSIP_lp)) > 3)
+    if ((k = CPXgetnummipstarts(DDSIP_env, DDSIP_lp)) > 2)
     {
         status    = CPXdelmipstarts (DDSIP_env, DDSIP_lp, 1, k-2);
     }
-#ifdef DEBUG
-    if (DDSIP_param->outlev > 90)
-        fprintf (DDSIP_bb->moreoutfile, " before adding there are %d mip starts\n", CPXgetnummipstarts(DDSIP_env,DDSIP_lp));
-#endif
-    if ((DDSIP_bb->DDSIP_step == dual || (DDSIP_param->cb < 0 && !DDSIP_bb->curnode)) && DDSIP_bb->dualitcnt)
+    else if (k == 2)
+    {
+        status    = CPXdelmipstarts (DDSIP_env, DDSIP_lp, 1, 1);
+    }
+
+    if (DDSIP_param->hot && DDSIP_bb->DDSIP_step == dual && DDSIP_bb->dualitcnt)
     {
         DDSIP_bb->beg[0]=0;
         DDSIP_bb->effort[0]=3;
 
         // add solution of previous iteration
-        sprintf (DDSIP_bb->Names[0],"PrevIt_%d",scen+1);
+        sprintf (DDSIP_bb->Names[0],"Prev_Iter_%d",scen+1);
+        DDSIP_bb->effort[0]=3;
         // print debugging info
 #ifdef DEBUG
-        if(DDSIP_param->outlev > 99)
+        if(DDSIP_param->outlev > 90)
         {
             fprintf(DDSIP_bb->moreoutfile,"### MIP start values (in CB): %s  \n",DDSIP_bb->Names[0]);
             for (j = 0; j < DDSIP_bb->total_int; j++)
-                fprintf(DDSIP_bb->moreoutfile,"%d:%g, ",DDSIP_bb->intind[j], DDSIP_bb->intsolvals[scen][j]);
+            {
+                fprintf(DDSIP_bb->moreoutfile,"%g, ", DDSIP_bb->intsolvals[scen][j]);
+                if (!((j+1)%20))
+                    fprintf(DDSIP_bb->moreoutfile,"\n");
+            }
             fprintf(DDSIP_bb->moreoutfile,"\n");
         }
 #endif
@@ -647,37 +653,41 @@ DDSIP_Warm (int iscen)
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to copy mip start infos (Warm)\n");
+            fprintf (DDSIP_outfile, "ERROR: Failed to copy mip start infos (Warm)\n");
             return status;
         }
 #ifdef DEBUG
         else if (DDSIP_param->outlev > 90)
             fprintf (DDSIP_bb->moreoutfile, "  Copied mip start info %s of previous iteration (Warm)\n", DDSIP_bb->Names[0]);
 #endif
-
-        if (DDSIP_bb->heurSuccess > -1)
+        if (memcmp(DDSIP_bb->boundIncrease_intsolvals[scen], DDSIP_bb->intsolvals[scen], DDSIP_bb->total_int*sizeof(double)))
         {
-            // add solution of most frequent solution from previous iteration
-            sprintf (DDSIP_bb->Names[0],"Scen_%d",DDSIP_bb->heurSuccess+1);
+            // add solution of previous bound increase
+            sprintf (DDSIP_bb->Names[0],"BoundIncr_%d",scen+1);
 #ifdef DEBUG
-            // print debugging info
-            if(DDSIP_param->outlev > 99)
+        if(DDSIP_param->outlev > 90)
+        {
+            fprintf(DDSIP_bb->moreoutfile,"### MIP start values (in CB): %s  \n",DDSIP_bb->Names[0]);
+            for (j = 0; j < DDSIP_bb->total_int; j++)
             {
-                fprintf(DDSIP_bb->moreoutfile,"### MIP start values (in CB):\n");
-                for (j = 0; j < DDSIP_bb->total_int; j++)
-                    fprintf(DDSIP_bb->moreoutfile,"%d:%g, ",DDSIP_bb->intind[j], DDSIP_bb->intsolvals[DDSIP_bb->heurSuccess][j]);
-                fprintf(DDSIP_bb->moreoutfile,"\n");
+                fprintf(DDSIP_bb->moreoutfile,"%g, ", DDSIP_bb->boundIncrease_intsolvals[scen][j]);
+                if (!((j+1)%20))
+                    fprintf(DDSIP_bb->moreoutfile,"\n");
             }
+            fprintf(DDSIP_bb->moreoutfile,"\n");
+        }
 #endif
             // Copy starting informations to problem
-            status = CPXaddmipstarts (DDSIP_env, DDSIP_lp, 1, DDSIP_bb->total_int, DDSIP_bb->beg, DDSIP_bb->intind, DDSIP_bb->intsolvals[DDSIP_bb->heurSuccess], DDSIP_bb->effort, DDSIP_bb->Names);
+            status = CPXaddmipstarts (DDSIP_env, DDSIP_lp, 1, DDSIP_bb->total_int, DDSIP_bb->beg, DDSIP_bb->intind, DDSIP_bb->boundIncrease_intsolvals[scen], DDSIP_bb->effort, DDSIP_bb->Names);
             if (status)
             {
                 fprintf (stderr, "ERROR: Failed to copy mip start infos (Warm)\n");
+                fprintf (DDSIP_outfile, "ERROR: Failed to copy mip start infos (Warm)\n");
                 return status;
             }
 #ifdef DEBUG
             else if (DDSIP_param->outlev > 90)
-                fprintf (DDSIP_bb->moreoutfile, "  Copied mip start info %s of most frequent solution from previous iteration (Warm)\n", DDSIP_bb->Names[0]);
+                fprintf (DDSIP_bb->moreoutfile, "  Copied mip start info %s of previous bound increase (Warm)\n", DDSIP_bb->Names[0]);
 #endif
         }
 
@@ -686,6 +696,7 @@ DDSIP_Warm (int iscen)
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
+            fprintf (DDSIP_outfile, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
             return status;
         }
     }
@@ -696,6 +707,7 @@ DDSIP_Warm (int iscen)
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
+            fprintf (DDSIP_outfile, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
             return status;
         }
         return 0;
@@ -723,6 +735,7 @@ DDSIP_Warm (int iscen)
                 if (i>DDSIP_bb->total_int-1)
                 {
                     fprintf (stderr,"XXX ERROR: variable %d branched on is of type %c, but not in DDSIP_bb->intind! DDSIP_bb->intind is:\n", k,DDSIP_bb->firsttype[k]);
+                    fprintf (DDSIP_outfile,"XXX ERROR: variable %d branched on is of type %c, but not in DDSIP_bb->intind! DDSIP_bb->intind is:\n", k,DDSIP_bb->firsttype[k]);
                     exit (99);
                 }
                 if (DDSIP_bb->values[i] < DDSIP_node[DDSIP_bb->curnode]->neolb)
@@ -740,6 +753,7 @@ DDSIP_Warm (int iscen)
             if (status)
             {
                 fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
+                fprintf (DDSIP_outfile, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
                 return status;
             }
 #ifdef DEBUG
@@ -801,6 +815,7 @@ DDSIP_Warm (int iscen)
                 {
                     /* if this happens it is an error!!! */
                     fprintf (stderr,"XXX ERROR: variable %d branched on is of type %c, but not in DDSIP_bb->intind! DDSIP_bb->intind is:\n", k,DDSIP_bb->firsttype[kf]);
+                    fprintf (DDSIP_outfile,"XXX ERROR: variable %d branched on is of type %c, but not in DDSIP_bb->intind! DDSIP_bb->intind is:\n", k,DDSIP_bb->firsttype[kf]);
                     exit (99);
                 }
                 for(j=0; j<added; j++)
@@ -883,6 +898,7 @@ DDSIP_Warm (int iscen)
                 if (status)
                 {
                     fprintf (stderr, "ERROR: Failed to add mip start infos (Warm)\n");
+                    fprintf (DDSIP_outfile, "ERROR: Failed to add mip start infos (Warm)\n");
                     return status;
                 }
 #ifdef DEBUG
@@ -896,6 +912,7 @@ DDSIP_Warm (int iscen)
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
+            fprintf (DDSIP_outfile, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
             return status;
         }
     }
@@ -951,6 +968,7 @@ DDSIP_Warm (int iscen)
                 if (status)
                 {
                     fprintf (stderr, "ERROR: Failed to add mip start infos (Warm)\n");
+                    fprintf (DDSIP_outfile, "ERROR: Failed to add mip start infos (Warm)\n");
                     return status;
                 }
 #ifdef DEBUG
@@ -961,6 +979,7 @@ DDSIP_Warm (int iscen)
             if (status)
             {
                 fprintf (stderr, "ERROR: Failed to add mip start infos (Warm)\n");
+                fprintf (DDSIP_outfile, "ERROR: Failed to add mip start infos (Warm)\n");
                 return status;
             }
             // ADVIND must be 2 when using supplied start values
@@ -968,6 +987,7 @@ DDSIP_Warm (int iscen)
             if (status)
             {
                 fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
+                fprintf (DDSIP_outfile, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
                 return status;
             }
         }
@@ -997,6 +1017,7 @@ DDSIP_Warm (int iscen)
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change rhs.(Warm)\n");
+            fprintf (DDSIP_outfile, "ERROR: Failed to change rhs.(Warm)\n");
             return status;
         }
         DDSIP_Free ((void **) &(values));
@@ -1164,7 +1185,6 @@ DDSIP_LowerBound (void)
     double * time_sort_array = NULL;
 #endif
 
-    DDSIP_bb->heurSuccess = -1;
     DDSIP_bb->skip = 0;
     DDSIP_bb->LBIters++;
     // Output
@@ -1249,6 +1269,7 @@ DDSIP_LowerBound (void)
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change bounds \n");
+            fprintf (DDSIP_outfile, "ERROR: Failed to change bounds \n");
             return status;
         }
     }
@@ -1703,6 +1724,7 @@ DDSIP_LowerBound (void)
                 DDSIP_node[DDSIP_bb->curnode]->bound = DDSIP_infty;
                 CPXgetdblparam (DDSIP_env,CPX_PARAM_TILIM,&cpu_secs);
                 printf ("ERROR: Problem infeasible within time limit of %g secs for scenario %d (LowerBound)\n", cpu_secs, scen + 1);
+                fprintf (DDSIP_outfile, "ERROR: Problem infeasible within time limit of %g secs for scenario %d (LowerBound)\n", cpu_secs, scen + 1);
                 if (DDSIP_param->outlev)
                     fprintf (DDSIP_bb->moreoutfile, "ERROR: Problem infeasible within time limit of %g secs for scenario %d (LowerBound)\n", cpu_secs, scen + 1);
                 DDSIP_bb->skip = -2;
@@ -1769,10 +1791,10 @@ DDSIP_LowerBound (void)
                 status = CPXgetobjval (DDSIP_env, DDSIP_lp, &objval);
                 if (status)
                 {
-                    fprintf (stderr, "ERROR*: Failed to get best objective value \n");
-                    fprintf (DDSIP_outfile, "ERROR*: Failed to get best objective value \n");
+                    fprintf (stderr, "ERROR: Failed to get best objective value \n");
+                    fprintf (DDSIP_outfile, "ERROR: Failed to get best objective value \n");
                     if (DDSIP_param->outlev)
-                        fprintf (DDSIP_bb->moreoutfile, "ERROR*: Failed to get best objective value \n");
+                        fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get best objective value \n");
                     goto TERMINATE;
                 }
 
@@ -3231,7 +3253,6 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     // Insurance in case CB doesn't stop as intended
     if (DDSIP_bb->dualitcnt > DDSIP_param->cbtotalitlim + 100)
         return 1;
-    DDSIP_bb->heurSuccess = -1;
     // Output
     if (DDSIP_param->outlev)
     {
@@ -4202,6 +4223,11 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             if (DDSIP_param->outlev > 10)
               fprintf (DDSIP_bb->moreoutfile," +++-> bestdual for node updated in desc. it. %d, tot. it. %g  (weight %g)\n", DDSIP_bb->dualdescitcnt, DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2],  DDSIP_bb->local_bestdual[DDSIP_bb->dimdual]);
         }
+        if (DDSIP_param->hot)
+        {
+            for (j = 0; j < DDSIP_param->scenarios; j++)
+                memcpy (DDSIP_bb->boundIncrease_intsolvals[j], DDSIP_bb->intsolvals[j], DDSIP_bb->total_int*sizeof(double));
+        }
         // Set lower bound for the node
         DDSIP_node[DDSIP_bb->curnode]->bound = tmpbestbound;
         // Free previous first stage in best point
@@ -4624,17 +4650,6 @@ if (DDSIP_param->outlev)
                                         DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound);
         fprintf (DDSIP_bb->moreoutfile, "\tCurrent dual objective value             = \t%-18.16g          \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
         fprintf (DDSIP_bb->moreoutfile, "\tBest dual objective value in descent step= \t%-18.16g\n", DDSIP_bb->dualObjVal);
-    }
-    // determine most frequent scenario solution
-    DDSIP_bb->heurSuccess = -1;
-    k1 = 2;
-    for (j = 0; j < DDSIP_param->scenarios; j++)
-    {
-        if ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])[DDSIP_bb->firstvar] > k1)
-        {
-            k1 = (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])[DDSIP_bb->firstvar];
-            DDSIP_bb->heurSuccess = j;
-        }
     }
 
 TERMINATE:

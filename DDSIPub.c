@@ -65,6 +65,10 @@ int
 DDSIP_WarmUb ()
 {
     int status;
+    if ((status = CPXgetnummipstarts(DDSIP_env, DDSIP_lp)) > 1)
+    {
+        status  = CPXdelmipstarts (DDSIP_env, DDSIP_lp, 1, status-1);
+    }
     if (DDSIP_param->hot)
     {
         // ADVIND must be 2 when using supplied start values or the last incumbent
@@ -557,7 +561,9 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
             status = CPXmipopt (DDSIP_env, DDSIP_lp);
             if (DDSIP_Error (status))
             {
-                fprintf (stderr, "ERROR: Failed to optimize (UB)\n");
+                fprintf (stderr, "ERROR: Failed to optimize (UB), status= %d\n", status);
+                if (DDSIP_param->outlev)
+                    fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to optimize (UB), status= %d\n", status);
                 goto TERMINATE;
             }
             mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
@@ -898,7 +904,10 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                 {
                                     status = CPXfreeprob (DDSIP_env, &DDSIP_dual_lp);
                                     if (status)
+                                    {
                                         fprintf (stderr, "ERROR: CPXfreeprob failed, error code %d\n", status);
+                                        fprintf (DDSIP_outfile, "ERROR: CPXfreeprob failed, error code %d\n", status);
+                                    }
                                 }
                             }
                             if (DDSIP_param->outlev > 20)
@@ -917,6 +926,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     if (status)
                     {
                         fprintf (stderr, "ERROR: Failed to set CPLEX parameters (UpperBound) \n");
+                        fprintf (DDSIP_outfile, "ERROR: Failed to set CPLEX parameters (UpperBound) \n");
                         goto TERMINATE;
                     }
                     // query time limit amd mip rel. gap parameters
@@ -1001,6 +1011,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     if (status)
                     {
                         fprintf (stderr, "ERROR: Failed to set CPLEX parameters (UpperBound) \n");
+                        fprintf (DDSIP_outfile, "ERROR: Failed to set CPLEX parameters (UpperBound) \n");
                         goto TERMINATE;
                     }
                 }
@@ -1059,6 +1070,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     if (status)
                     {
                         fprintf (stderr, "ERROR: Failed to change problem \n");
+                        fprintf (DDSIP_outfile, "ERROR: Failed to change problem \n");
                         goto TERMINATE;
                     }
                     DDSIP_dual_lp = CPXcloneprob (DDSIP_env, DDSIP_lp, &status);

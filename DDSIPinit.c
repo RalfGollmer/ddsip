@@ -1002,6 +1002,9 @@ DDSIP_AdvSolInit (void)
         DDSIP_bb->intsolvals = (double **) DDSIP_Alloc (sizeof (double *), DDSIP_param->scenarios, "intsolvals(AdvSolInit)");
         for (j = 0; j < DDSIP_param->scenarios; j++)
             DDSIP_bb->intsolvals[j] = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->total_int, "intsolvals[j](CBLowerBound)");
+        DDSIP_bb->boundIncrease_intsolvals = (double **) DDSIP_Alloc (sizeof (double *), DDSIP_param->scenarios, "boundIncrease_intsolvals(AdvSolInit)");
+        for (j = 0; j < DDSIP_param->scenarios; j++)
+            DDSIP_bb->boundIncrease_intsolvals[j] = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->total_int, "boundIncrease_intsolvals[j](CBLowerBound)");
     }
 
     DDSIP_Free ((void **) &(ctype));

@@ -469,6 +469,8 @@ extern "C" {
         // Pointer to a vector of all integer variables in the solutions of the scenario problems
         // (for warm starts in CB)
         double **intsolvals;
+        // (for warm starts in CB)
+        double **boundIncrease_intsolvals;
         // Pointer to a vector of structures for the best found first stage variables in the solutions (in CB)
         bestfirst_t *bestfirst;
         // Priority order

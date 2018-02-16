@@ -2,9 +2,11 @@ set thread 1
 set mip display 4
 set mip tol abs 0.
 set mip tol mip 1.e-9
-mip strategy kappastats 2
+set mip strategy kappastats 2
 r sipout/det_equ
 m
 d sol qual
 d sol kappa
 q
+
+set mip str startalg 1

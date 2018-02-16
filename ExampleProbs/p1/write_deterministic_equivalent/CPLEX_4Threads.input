@@ -2,12 +2,8 @@ set thread 4
 set mip display 4
 set mip tol abs 0.
 set mip tol mip 1.e-9
-set mip cut gom 2
-set mip cut gom 2
-set mip cut flo 1
-set mip str pro 1
 r sipout/det_equ
 m
 d sol qual
 w det_equ.sol.gz
-q
+quit

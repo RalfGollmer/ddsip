@@ -1751,7 +1751,19 @@ NEXT_TRY:
                         {
                             if (cpu_hrs > 4)
                             {
-                                if (cpu_hrs > 5)
+                                if (cpu_hrs > 10 && (obj - old_obj)/(fabs(old_obj)+1e-6) < 1e-13 && last_weight > fabs(old_obj))
+                                {
+                                    last_weight = next_weight;
+                                    next_weight = last_weight * 0.1;
+                                    cb_set_next_weight (p, next_weight);
+                                    if (DDSIP_bb->cutoff > 0)
+                                        DDSIP_bb->cutoff--;
+///////////     ///////////
+                                    if (DDSIP_param->outlev > 10)
+                                        fprintf(DDSIP_bb->moreoutfile,"############10. reduced next weight to %g ##################\n",next_weight);
+///////////     ///////////
+                                }
+                                else if (cpu_hrs > 5)
                                 {
                                     many_iters++;
                                     if (weight_decreases)

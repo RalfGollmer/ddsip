@@ -750,6 +750,7 @@ extern "C" {
     int  DDSIP_NoSolution(int);
     int  DDSIP_Infeasible(int);
     void DDSIP_HandleSignal(int );
+    void DDSIP_HandleUserSignal(int );
     void DDSIP_RegisterSignalHandlers(void);
     double DDSIP_GetCpuTime(void);
     void DDSIP_PrintErrorMsg(int);

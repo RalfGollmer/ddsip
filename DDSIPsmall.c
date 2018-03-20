@@ -104,7 +104,34 @@ void
 DDSIP_HandleSignal (int signal_number)
 {
     DDSIP_killsignal = signal_number;
-    printf ("\n");
+    printf ("received signal %d\n", DDSIP_killsignal);
+}
+
+void
+DDSIP_HandleUserSignal (int signal_number)
+{
+    void (*error) (int);
+    printf ("received signal %d\n", signal_number);
+    if (DDSIP_param->files > 2)
+    {
+        DDSIP_param->files = 1;
+        printf ("*** switched writing outfiles to 1\n");
+        error = signal (SIGUSR1, DDSIP_HandleUserSignal);
+        if (error == SIG_ERR)
+            fprintf (stderr, "*Warning: Failed to register handler for 'SIGUSR1'!");
+        if (error == SIG_IGN)
+            signal (SIGUSR1, SIG_IGN);
+    }
+    else
+    {
+        DDSIP_param->files = 6;
+        printf ("*** switched writing outfiles to 6\n");
+        error = signal (SIGUSR1, DDSIP_HandleUserSignal);
+        if (error == SIG_ERR)
+            fprintf (stderr, "*Warning: Failed to register handler for 'SIGUSR1'!");
+        if (error == SIG_IGN)
+            signal (SIGUSR1, SIG_IGN);
+    }
 }
 
 //==========================================================================
@@ -119,6 +146,11 @@ DDSIP_RegisterSignalHandlers (void)
         fprintf (stderr, "*Warning: Failed to register handler for 'SIGINT'!");
     if (error == SIG_IGN)
         signal (SIGINT, SIG_IGN);
+    error = signal (SIGUSR1, DDSIP_HandleUserSignal);
+    if (error == SIG_ERR)
+        fprintf (stderr, "*Warning: Failed to register handler for 'SIGUSR1'!");
+    if (error == SIG_IGN)
+        signal (SIGUSR1, SIG_IGN);
 }
 
 //==========================================================================

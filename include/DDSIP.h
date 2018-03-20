@@ -285,6 +285,7 @@ extern "C" {
         int testOtherScens;
         int numberReinits;
         int redundancyCheck;
+        int deleteRedundantCuts;
 #endif
         // annotation file name if Benders decomposition within CPLEX should be used
         char *annotationFile;
@@ -579,6 +580,8 @@ extern "C" {
         int newTry;
         // counter for cuts introduced
         int cutCntr;
+        // number for cuts introduced
+        int cutNumber;
         // counter for cuts introduced in root node
         int cutCntr0;
         // number of cuts added
@@ -767,7 +770,7 @@ extern "C" {
 
 // Initialisations and stuff
     void DDSIP_DetEqu(void);
-    void DDSIP_CheckRedundancy(void);
+    void DDSIP_CheckRedundancy(int);
     int  DDSIP_BbTypeInit(void);
     int  DDSIP_BranchOrder(void);
     int  DDSIP_InitStages(void);

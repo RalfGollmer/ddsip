@@ -1285,7 +1285,8 @@ DDSIP_ReadSpec ()
         DDSIP_param->numberReinits  = floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 25., 1, 0., DDSIP_bigint) + 0.1);
     }
     
-    DDSIP_param->redundancyCheck = floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", 0., 1, 0., 1.) + 0.1);
+    DDSIP_param->redundancyCheck = floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", 1., 1, 0., 1.) + 0.1);
+    DDSIP_param->deleteRedundantCuts = floor (DDSIP_ReadDbl (specfile, "DELRED", " DELETE REDUNDANT CUTS", 1., 1, 0., 1.) + 0.1);
     DDSIP_param->annotationFile = DDSIP_ReadString (specfile, "ANNOTA", " ANNOTATION FILE FOR CPLEX BENDERS");
     fprintf (DDSIP_outfile, "\n");
 

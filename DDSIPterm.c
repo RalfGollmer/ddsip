@@ -260,6 +260,13 @@ DDSIP_Continue (int *noiter, int *boundstat)
 
         }
 
+        // check if some of the still existing cuts are redundant
+        if (DDSIP_param->redundancyCheck)
+        {
+            DDSIP_CheckRedundancy(0);
+        }
+
+
         if (DDSIP_param->expected)
         {
             fprintf (DDSIP_outfile, "\n----------------------------------------------");
@@ -288,7 +295,9 @@ DDSIP_Continue (int *noiter, int *boundstat)
         fprintf (DDSIP_outfile, "Time             %6.2f\n", DDSIP_GetCpuTime ());
         fprintf (DDSIP_outfile, "Tree depth       %6d\n", DDSIP_bb->depth);
         fprintf (DDSIP_outfile, "Nodes            %6d\n", DDSIP_bb->nonode);
-        fprintf (DDSIP_outfile, "Cuts             %6d\n", DDSIP_bb->cutCntr);
+        fprintf (DDSIP_outfile, "Cuts             %6d\n", DDSIP_bb->cutNumber);
+        if (DDSIP_bb->cutNumber && DDSIP_param->deleteRedundantCuts)
+            fprintf (DDSIP_outfile, "Cuts not redund. %6d\n", DDSIP_bb->cutCntr);
         fprintf (DDSIP_outfile, "max. mean MIP gap LB  %g%%\n", DDSIP_bb->meanGapLB);
         fprintf (DDSIP_outfile, "max. mean MIP gap UB  %g%%\n", DDSIP_bb->meanGapUB);
         if (DDSIP_param->cb)

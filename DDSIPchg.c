@@ -89,6 +89,7 @@ DDSIP_ChgProb (int scen)
 {
     int j, i, status = 0;
     int m = DDSIP_Imax (DDSIP_param->stocmat, DDSIP_Imax (DDSIP_param->stocrhs, DDSIP_param->stoccost));
+    double h;
 #ifdef DEBUG
     char **colname;
     char *colstore;
@@ -194,7 +195,7 @@ DDSIP_ChgProb (int scen)
                     fprintf (DDSIP_bb->moreoutfile, "DDSIP_ChgProb: Current lambda for node %d:\n", DDSIP_bb->curnode);
                     for (i = 0; i < DDSIP_bb->dimdual; i++)
                     {
-                        fprintf (DDSIP_bb->moreoutfile, " %14.8g,", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
+                        fprintf (DDSIP_bb->moreoutfile, " %15.8g", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
                         if (!((i+1)%10))
                             fprintf (DDSIP_bb->moreoutfile, "\n");
                     }
@@ -269,7 +270,7 @@ DDSIP_ChgProb (int scen)
                     fprintf (DDSIP_bb->moreoutfile, "DDSIP_ChgProb: Current lambda for node %d:\n", DDSIP_bb->curnode);
                     for (i = 0; i < DDSIP_bb->dimdual; i++)
                     {
-                        fprintf (DDSIP_bb->moreoutfile, " %14.8g,", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
+                        fprintf (DDSIP_bb->moreoutfile, " %15.8g", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
                         if (!((i+1)%10))
                             fprintf (DDSIP_bb->moreoutfile, "\n");
                     }
@@ -284,7 +285,7 @@ DDSIP_ChgProb (int scen)
                         fprintf (DDSIP_bb->moreoutfile, " scen %d: first-stage variable %d nabeg[%d]= %d, nacnt= %d\n", scen+1, i, scen * DDSIP_bb->firstvar + i, DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i], DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]);
                         for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
                                 j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
-                            if (fabs (DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]]) > 1e-16)
+                            if (fabs (DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]]) > 1e-18)
                                 fprintf (DDSIP_bb->moreoutfile, " first-stage var: %d, scen: %d, naind[%d]= %d: koeff: %g, dual=%g, cost add: %g\n", i, scen,j, DDSIP_data->naind[j],  DDSIP_data->naval[j], DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]],  DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen]);
                     }
                     fprintf (DDSIP_bb->moreoutfile, "\n");
@@ -301,9 +302,14 @@ DDSIP_ChgProb (int scen)
             }
 #endif
             for (i = 0; i < DDSIP_bb->firstvar; i++)
+            {
+                h = 0.;
                 for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
                         j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
-                    cost[i] += DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen];
+                    h += DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen];
+
+                cost[i] += h;
+            }
 #ifdef DEBUG
             if (DDSIP_param->outlev > 50)
             {

@@ -1,13 +1,13 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
-	Copyright to:      University of Duisburg-Essen
+    Copyright to:      University of Duisburg-Essen
     Language:          C
-	Description:
-	The procedure in this file builds a deterministic equivalent and writes
+    Description:
+    The procedure in this file builds a deterministic equivalent and writes
         the lp.gz file via CPLEX calls -- This is implemented only for
         expectation-based models.
 
-	License:
-	This file is part of DDSIP.
+    License:
+    This file is part of DDSIP.
 
     DDSIP is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -119,7 +119,7 @@ DDSIP_DetEqu ()
         if (sense[j] == 'R')
         {
             ranged = 1;
-	    break;
+            break;
         }
     } 
     if (ranged)
@@ -382,17 +382,17 @@ DDSIP_DetEqu ()
         sense_sorted[j] = sense[DDSIP_bb->firstrowind[j]];
         det_equ_rhs[j] = base_rhs[DDSIP_bb->firstrowind[j]];
         scen_spec_rowname[j] = rowname[DDSIP_bb->firstrowind[j]];
-	rmatbeg_stage[j] = k;
-	if (DDSIP_bb->firstrowind[j] == DDSIP_data->nocon -1)
+        rmatbeg_stage[j] = k;
+        if (DDSIP_bb->firstrowind[j] == DDSIP_data->nocon -1)
             nzcnt_row = nzcnt - rmatbeg[DDSIP_data->nocon -1];
         else
             nzcnt_row = rmatbeg[DDSIP_bb->firstrowind[j]+1] - rmatbeg[DDSIP_bb->firstrowind[j]];
-	for (i = 0; i < nzcnt_row; i++)
+        for (i = 0; i < nzcnt_row; i++)
         {
             rmatind_stage[k + i] = DDSIP_bb->firstindex_reverse[rmatind[rmatbeg[DDSIP_bb->firstrowind[j]] + i]];
             rmatval_stage[k + i] = rmatval[rmatbeg[DDSIP_bb->firstrowind[j]] + i];
         }
-	k += nzcnt_row;
+        k += nzcnt_row;
     }
     if ((status = CPXaddrows(DDSIP_env, det_equ, 0, DDSIP_data->firstcon, k, det_equ_rhs, sense_sorted, rmatbeg_stage, rmatind_stage, rmatval_stage, NULL, scen_spec_rowname)))
     {

@@ -54,7 +54,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2018-02-14 (Github v1.2.2) ";
+const char DDSIP_version[] = "2018-03-19 (Github v1.2.2) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -469,6 +469,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
   fprintf(DDSIP_bb->moreoutfile, "######## last node %d step=dual, dualdescitcnt = %d, DDSIP_bb->cutoff= %d\n",DDSIP_bb->curnode-1,(DDSIP_bb->dualdescitcnt),DDSIP_bb->cutoff);
 }
 ////////////////////////////////////////////
+
         // Dual method
         if ((DDSIP_param->cb > 0 && (!(DDSIP_bb->noiter % abs(DDSIP_param->cb))) && (abs(DDSIP_param->riskmod) != 4 || DDSIP_bb->noiter)) ||
             (DDSIP_param->cb < 0 && ((!(DDSIP_bb->noiter) && abs(DDSIP_param->riskmod) != 4 && DDSIP_param->cbrootitlim) ||
@@ -620,6 +621,8 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
                         (DDSIP_bb->bestvalue - DDSIP_node[0]->bound)/(fabs(DDSIP_bb->bestvalue) + 1e-16) < 0.5*DDSIP_param->relgap)
                         break;
                 }
+                if (DDSIP_param->redundancyCheck)
+                    DDSIP_CheckRedundancy(1);
             }
             else
             {
@@ -640,18 +643,40 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
                 DDSIP_PrintState (DDSIP_bb->noiter);
         }
         if (!DDSIP_bb->curnode)
-             DDSIP_bb->cutCntr0 = DDSIP_bb->cutCntr;
-        else if (DDSIP_param->alwaysBendersCuts && DDSIP_bb->curnode == 20)
+             DDSIP_bb->cutCntr0 = DDSIP_bb->cutNumber;
+        else if (DDSIP_param->alwaysBendersCuts)
         {
-            if (DDSIP_bb->cutCntr0 == DDSIP_bb->cutCntr)
-                DDSIP_param->alwaysBendersCuts = 0;
-            else
-                DDSIP_bb->cutCntr0 = DDSIP_bb->cutCntr;
-        }
-        else if (DDSIP_param->alwaysBendersCuts && DDSIP_bb->curnode == 40)
-        {
-            if (DDSIP_bb->cutCntr0 == DDSIP_bb->cutCntr)
-                DDSIP_param->alwaysBendersCuts = 0;
+            if (DDSIP_bb->curnode == 24)
+            {
+                if (DDSIP_bb->cutCntr0 == DDSIP_bb->cutNumber)
+                {
+                    if (DDSIP_param->outlev > 20)
+                        fprintf (DDSIP_bb->moreoutfile, "### setting alwaysBendersCuts to 0\n");
+                    DDSIP_param->alwaysBendersCuts = 0;
+                }
+                else
+                    DDSIP_bb->cutCntr0 = DDSIP_bb->cutNumber;
+            }
+            else if (DDSIP_bb->curnode == 49)
+            {
+                if (DDSIP_bb->cutCntr0 == DDSIP_bb->cutNumber)
+                {
+                    if (DDSIP_param->outlev > 20)
+                        fprintf (DDSIP_bb->moreoutfile, "### setting alwaysBendersCuts to 0\n");
+                    DDSIP_param->alwaysBendersCuts = 0;
+                }
+                else
+                    DDSIP_bb->cutCntr0 = DDSIP_bb->cutNumber;
+            }
+            else if (DDSIP_bb->curnode == 99)
+            {
+                if (DDSIP_bb->cutCntr0 == DDSIP_bb->cutNumber)
+                {
+                    if (DDSIP_param->outlev > 20)
+                        fprintf (DDSIP_bb->moreoutfile, "### setting alwaysBendersCuts to 0\n");
+                    DDSIP_param->alwaysBendersCuts = 0;
+                }
+            }
         }
 
         // DDSIP_bb->skip indicates that UpperBound calls have been skipped
@@ -669,16 +694,13 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
 
         if ((status = DDSIP_Branch ()))
             goto TERMINATE;
+
+        if (DDSIP_param->deleteRedundantCuts && !(DDSIP_bb->curnode % 5))
+            DDSIP_CheckRedundancy(1);
     }
 
     // Termination
 TERMINATE:
-
-    // check if some of the cuts are redundant
-    if (DDSIP_param->redundancyCheck)
-    {
-        DDSIP_CheckRedundancy();
-    }
 
 
     DDSIP_PrintErrorMsg (status);

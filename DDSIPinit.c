@@ -542,7 +542,7 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->front_nodes_sorted = (int *) DDSIP_Alloc (sizeof (int), 1, "DDSIP_bb->front_nodes_sorted(BbInit)");
     DDSIP_bb->front_nodes_sorted[0] = 0;
     DDSIP_bb->meanGapLB = DDSIP_bb->meanGapCBLB = DDSIP_bb->meanGapUB = 0.;
-    DDSIP_bb->bestBound = DDSIP_bb->newTry = DDSIP_bb->cutCntr = DDSIP_bb->cutAdded = 0;
+    DDSIP_bb->bestBound = DDSIP_bb->newTry = DDSIP_bb->cutCntr = DDSIP_bb->cutNumber = DDSIP_bb->cutAdded = 0;
     DDSIP_bb->bestsol_in_curnode = 1;
     if (DDSIP_param->cb)
     {

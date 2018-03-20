@@ -1035,7 +1035,7 @@ DDSIP_LowerBoundWriteLp (int scen)
 {
     int status = 0;
     // LP-files for debugging are written under sophisticated conditions ;-)
-    if ((DDSIP_param->files > 2 && DDSIP_param->files < 5 && ((DDSIP_param->cb && DDSIP_bb->dualitcnt <= 1 && DDSIP_bb->nonode < 2)
+    if ((DDSIP_param->files > 2 && DDSIP_param->files < 5 && ((DDSIP_param->cb && (DDSIP_bb->dualdescitcnt <= 1) && DDSIP_bb->nonode < 2)
             || (DDSIP_param->cb == 0 && DDSIP_bb->nonode == 1)))
             || (DDSIP_bb->DDSIP_step == solve && DDSIP_param->files == 4))
     {
@@ -1049,8 +1049,11 @@ DDSIP_LowerBoundWriteLp (int scen)
             fprintf (stderr, "ERROR: Failed to write problem\n");
             return status;
         }
-        else if (DDSIP_param->outlev > 29)
+        else if (DDSIP_param->outlev > 20)
         {
+#ifdef DEBUG
+            printf ("  LP file %s written.\n",fname);
+#endif
             fprintf (DDSIP_bb->moreoutfile, "      LP file %s written.\n",fname);
         }
     }

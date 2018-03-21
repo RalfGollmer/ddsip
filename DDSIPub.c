@@ -81,7 +81,7 @@ DDSIP_WarmUb ()
             fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
             return status;
         }
-    }				// end if (DDSIP_param->hot>2)
+    }                // end if (DDSIP_param->hot>2)
     return 0;
 }
 
@@ -743,8 +743,8 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                 }
                             }
                         }
-                        // in the first nodes check the remaining scenarios whether they give rise to cut
-                        if (DDSIP_param->alwaysBendersCuts && DDSIP_param->testOtherScens && DDSIP_param->heuristic > 3)
+                        // in the first nodes check all the remaining scenarios whether they give rise to cut
+                        if (DDSIP_param->alwaysBendersCuts && (DDSIP_param->testOtherScens || DDSIP_bb->curnode < 12) && DDSIP_param->heuristic > 3)
                         {
                             time_lap = DDSIP_GetCpuTime ();
                             CPXLPptr     DDSIP_dual_lp  = NULL;
@@ -1678,7 +1678,7 @@ fprintf (DDSIP_bb->moreoutfile, "### iscen(%d) > DDSIP_bb->shifts(%d) + 2 ? %d\n
                 }
             }
         }
-    }				// end for iscen=..
+    }                // end for iscen=..
     if (feasCheckOnly)
         goto TERMINATE;
 
@@ -1948,118 +1948,118 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
         }
         DDSIP_Free ((void**) &sort_array);
     }
-    if (DDSIP_param->heuristic == 100)  	// use subsequently different heuristics in the same node
+    if (DDSIP_param->heuristic == 100)      // use subsequently different heuristics in the same node
     {
-	    for (i = 1; i < DDSIP_param->heuristic_num; i++)
-	    {
-		    DDSIP_param->heuristic = floor (DDSIP_param->heuristic_vector[i] + 0.1);
-		    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
-		    {
-			    // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-			    if (DDSIP_bb->skip != -4 && DDSIP_bb->sug[DDSIP_param->nodelim + 2])
-			    {
-				    if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
-				    {
-					    if (DDSIP_bb->heurval < tmpbestheur)
-						    tmpbestheur = DDSIP_bb->heurval;
-				    }
-				    if (status == 100000)
-				    {
-					    DDSIP_bb->skip = -5;
-					    if (DDSIP_param->interrupt_heur > 0)
-						    break;
-				    }
-			    }
-		    }
-		    if (DDSIP_killsignal)
-		    {
-			    DDSIP_bb->skip = -5;
-			    break;
-		    }
-	    }
-	    // use (expensive) heuristic 12 using all single-scenario solutions as suugestions
-	    if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || DDSIP_bb->curnode < 13 || DDSIP_bb->noiter%250 > 247))
-	    {
-		    DDSIP_param->heuristic = 12;
-		    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
-		    {
-			    // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-			    if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
-			    {
-				    if (!DDSIP_UpperBound (DDSIP_param->scenarios, 0))
-				    {
-					    if (DDSIP_bb->heurval < tmpbestheur)
-						    tmpbestheur = DDSIP_bb->heurval;
-				    }
-			    }
-		    }
-		    DDSIP_bb->heurval = tmpbestheur;
-	    }
+        for (i = 1; i < DDSIP_param->heuristic_num; i++)
+        {
+            DDSIP_param->heuristic = floor (DDSIP_param->heuristic_vector[i] + 0.1);
+            if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
+            {
+                // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
+                if (DDSIP_bb->skip != -4 && DDSIP_bb->sug[DDSIP_param->nodelim + 2])
+                {
+                    if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
+                    {
+                        if (DDSIP_bb->heurval < tmpbestheur)
+                            tmpbestheur = DDSIP_bb->heurval;
+                    }
+                    if (status == 100000)
+                    {
+                        DDSIP_bb->skip = -5;
+                        if (DDSIP_param->interrupt_heur > 0)
+                            break;
+                    }
+                }
+            }
+            if (DDSIP_killsignal)
+            {
+                DDSIP_bb->skip = -5;
+                break;
+            }
+        }
+        // use (expensive) heuristic 12 using all single-scenario solutions as suugestions
+        if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || DDSIP_bb->curnode < 13 || DDSIP_bb->noiter%250 > 247))
+        {
+            DDSIP_param->heuristic = 12;
+            if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
+            {
+                // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
+                if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
+                {
+                    if (!DDSIP_UpperBound (DDSIP_param->scenarios, 0))
+                    {
+                        if (DDSIP_bb->heurval < tmpbestheur)
+                            tmpbestheur = DDSIP_bb->heurval;
+                    }
+                }
+            }
+            DDSIP_bb->heurval = tmpbestheur;
+        }
         else if (DDSIP_param->alwaysBendersCuts)
-	    {
-		    DDSIP_param->heuristic = 12;
+        {
+            DDSIP_param->heuristic = 12;
             if (DDSIP_bb->curnode < 25)
             {
-		        if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 1))
-		        {
-			        // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-			        if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
-			        {
-				        DDSIP_UpperBound (DDSIP_param->scenarios, 1);
-			        }
-		        }
-		    }
+                if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 1))
+                {
+                    // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
+                    if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
+                    {
+                        DDSIP_UpperBound (DDSIP_param->scenarios, 1);
+                    }
+                }
+            }
             else
             {
-		        if (!DDSIP_Heuristics (comb, DDSIP_bb->shifts, 1))
-		        {
-			        // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-			        if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
-			        {
-				        DDSIP_UpperBound (DDSIP_bb->shifts, 1);
-			        }
-		        }
-		    }
-	    }
-	    DDSIP_param->heuristic = 100;
+                if (!DDSIP_Heuristics (comb, DDSIP_bb->shifts, 1))
+                {
+                    // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
+                    if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
+                    {
+                        DDSIP_UpperBound (DDSIP_bb->shifts, 1);
+                    }
+                }
+            }
+        }
+        DDSIP_param->heuristic = 100;
     }
-    else if (DDSIP_param->heuristic == 99)  	// use subsequently different heuristics in the same node
+    else if (DDSIP_param->heuristic == 99)      // use subsequently different heuristics in the same node
     {
-	    for (i = 1; i < DDSIP_param->heuristic_num; i++)
-	    {
-		    DDSIP_param->heuristic = floor (DDSIP_param->heuristic_vector[i] + 0.1);
-		    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
-		    {
-			    // Evaluate the proposed first-stage solution
-			    if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
-			    {
-				    if (DDSIP_bb->heurval < tmpbestheur)
-					    tmpbestheur = DDSIP_bb->heurval;
-			    }
-			    if (status == 100000 || DDSIP_killsignal)
-			    {
-				    DDSIP_bb->skip = -5;
-				    if (DDSIP_param->interrupt_heur > 0)
-					    break;
-			    }
-		    }
-	    }
-	    DDSIP_param->heuristic = 99;
-	    DDSIP_bb->heurval = tmpbestheur;
+        for (i = 1; i < DDSIP_param->heuristic_num; i++)
+        {
+            DDSIP_param->heuristic = floor (DDSIP_param->heuristic_vector[i] + 0.1);
+            if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
+            {
+                // Evaluate the proposed first-stage solution
+                if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
+                {
+                    if (DDSIP_bb->heurval < tmpbestheur)
+                        tmpbestheur = DDSIP_bb->heurval;
+                }
+                if (status == 100000 || DDSIP_killsignal)
+                {
+                    DDSIP_bb->skip = -5;
+                    if (DDSIP_param->interrupt_heur > 0)
+                        break;
+                }
+            }
+        }
+        DDSIP_param->heuristic = 99;
+        DDSIP_bb->heurval = tmpbestheur;
     }
     else
     {
-	    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
-		    // Evaluate the proposed first-stage solution
-		    if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
-		    {
-			    if (DDSIP_bb->heurval < tmpbestheur)
-				    tmpbestheur = DDSIP_bb->heurval;
-		    }
-	    if (status == 100000 || DDSIP_killsignal)
-	    {
-		    DDSIP_bb->skip = -5;
-	    }
+        if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
+            // Evaluate the proposed first-stage solution
+            if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
+            {
+                if (DDSIP_bb->heurval < tmpbestheur)
+                    tmpbestheur = DDSIP_bb->heurval;
+            }
+        if (status == 100000 || DDSIP_killsignal)
+        {
+            DDSIP_bb->skip = -5;
+        }
     }
     DDSIP_bb->DDSIP_step = currentStep;
     return;

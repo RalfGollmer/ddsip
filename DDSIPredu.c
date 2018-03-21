@@ -414,42 +414,31 @@ DDSIP_CheckRedundancy (int automatic)
                        fprintf (DDSIP_outfile, "    ######## %s is redundant\n", rowname[0]);
                  }
              }
-             if (DDSIP_param->deleteRedundantCuts)
+             if (previousCut)
              {
-                 if (previousCut)
+                 previousCut->prev = currentCut->prev;
+                 DDSIP_Free ((void *) &(currentCut->matval));
+                 DDSIP_Free ((void *) &(currentCut));
+                 currentCut = previousCut;
+                 statusget = CPXgetrowname (DDSIP_env, redundancy, rowname, rownamestore, rowstorespace, &rowsurplus, DDSIP_data->firstcon + k - ind, DDSIP_bb->firstcon + k - ind);
+                 status = CPXdelrows (DDSIP_env, redundancy, DDSIP_data->firstcon + k - ind, DDSIP_data->firstcon + k - ind);
+                 if (status)
                  {
-                     previousCut->prev = currentCut->prev;
-                     DDSIP_Free ((void *) &(currentCut->matval));
-                     DDSIP_Free ((void *) &(currentCut));
-                     currentCut = previousCut;
-                     statusget = CPXgetrowname (DDSIP_env, redundancy, rowname, rownamestore, rowstorespace, &rowsurplus, DDSIP_data->firstcon + k - ind, DDSIP_bb->firstcon + k - ind);
-                     status = CPXdelrows (DDSIP_env, redundancy, DDSIP_data->firstcon + k - ind, DDSIP_data->firstcon + k - ind);
-                     if (status)
+                     if (!statusget)
                      {
-                         if (!statusget)
-                         {
-                             printf (" ### ERROR: delrows for row %d (%s) of redundancy check problem failed with status %d\n", DDSIP_bb->firstcon + k - ind,  rowname[0], status);
-                             if (DDSIP_param->outlev)
-                                 fprintf (DDSIP_bb->moreoutfile, " ### ERROR: delrows for row %d (%s) of redundancy check problem failed with status %d\n", DDSIP_bb->firstcon + k - ind,  rowname[0], status);
-                         }
-                         else
-                         {
-                             printf (" ### ERROR: delrows for row %d of redundancy check problem failed with status %d, status of getrowname = %d\n", DDSIP_bb->firstcon + k - ind, status, statusget);
-                             if (DDSIP_param->outlev)
-                                 fprintf (DDSIP_bb->moreoutfile, " ### ERROR: delrows for row %d of redundancy check problem failed with status %d, status of getrowname = %d\n", DDSIP_bb->firstcon + k - ind, status, statusget);
-                         }
+                         printf (" ### ERROR: delrows for row %d (%s) of redundancy check problem failed with status %d\n", DDSIP_bb->firstcon + k - ind,  rowname[0], status);
+                         if (DDSIP_param->outlev)
+                             fprintf (DDSIP_bb->moreoutfile, " ### ERROR: delrows for row %d (%s) of redundancy check problem failed with status %d\n", DDSIP_bb->firstcon + k - ind,  rowname[0], status);
                      }
-                     else if (DDSIP_param->outlev)
+                     else
                      {
-                         if (!statusget)
-                         {
-                             fprintf (DDSIP_bb->moreoutfile, " *** delrows for row %s of redundancy check problem successful\n", rowname[0]);
-                         }
-                         else
-                         {
-                             fprintf (DDSIP_bb->moreoutfile, " *** delrows for row %d of redundancy check problem successful, status of getrowname = %d (DDSIP_bb->firstcon = %d)\n", DDSIP_bb->firstcon + DDSIP_bb->cutCntr - k - ind, status, DDSIP_bb->firstcon);
-                         }
+                         printf (" ### ERROR: delrows for row %d of redundancy check problem failed with status %d, status of getrowname = %d\n", DDSIP_bb->firstcon + k - ind, status, statusget);
+                         if (DDSIP_param->outlev)
+                             fprintf (DDSIP_bb->moreoutfile, " ### ERROR: delrows for row %d of redundancy check problem failed with status %d, status of getrowname = %d\n", DDSIP_bb->firstcon + k - ind, status, statusget);
                      }
+                 }
+                 if (DDSIP_param->deleteRedundantCuts)
+                 {
                      statusget = CPXgetrowname (DDSIP_env, DDSIP_lp, rowname, rownamestore, rowstorespace, &rowsurplus, DDSIP_bb->nocon + DDSIP_bb->cutCntr - k -1, DDSIP_bb->nocon + DDSIP_bb->cutCntr - k -1);
                      status = CPXdelrows (DDSIP_env, DDSIP_lp, DDSIP_bb->nocon + DDSIP_bb->cutCntr - k -1, DDSIP_bb->nocon + DDSIP_bb->cutCntr - k -1);
                      if (status)
@@ -479,13 +468,13 @@ DDSIP_CheckRedundancy (int automatic)
                          }
                      }
                  }
-                 else
-                 {
-                     // The last cut must not be redundant!
-                     fprintf (DDSIP_outfile, "######## ERROR: redundant Cut %d is the last one!!!!!!\n", currentCut->number);
-                     if (DDSIP_param->outlev)
-                         fprintf (DDSIP_bb->moreoutfile, "######## ERROR: redundant Cut %d is the last one!!!!!!\n", currentCut->number);
-                 }
+             }
+             else
+             {
+                 // The last cut must not be redundant!
+                 fprintf (DDSIP_outfile, "######## ERROR: redundant Cut %d is the last one!!!!!!\n", currentCut->number);
+                 if (DDSIP_param->outlev)
+                     fprintf (DDSIP_bb->moreoutfile, "######## ERROR: redundant Cut %d is the last one!!!!!!\n", currentCut->number);
              }
              ind++;
         }
@@ -506,9 +495,12 @@ DDSIP_CheckRedundancy (int automatic)
     }
     if (!ind)
     {
-         fprintf (DDSIP_outfile, "    ++++++++ none of the %d cuts is redundant\n", DDSIP_bb->cutCntr);
          if (DDSIP_param->outlev)
+         {
+             if (DDSIP_param->outlev > 21 || !automatic)
+                 fprintf (DDSIP_outfile, "    ++++++++ none of the %d cuts is redundant\n", DDSIP_bb->cutCntr);
              fprintf (DDSIP_bb->moreoutfile, "++++++++ none of the %d cuts is redundant\n", DDSIP_bb->cutCntr);
+         }
     }
     else
     {

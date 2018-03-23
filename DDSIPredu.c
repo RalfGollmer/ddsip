@@ -416,10 +416,6 @@ DDSIP_CheckRedundancy (int automatic)
              }
              if (previousCut)
              {
-                 previousCut->prev = currentCut->prev;
-                 DDSIP_Free ((void *) &(currentCut->matval));
-                 DDSIP_Free ((void *) &(currentCut));
-                 currentCut = previousCut;
                  statusget = CPXgetrowname (DDSIP_env, redundancy, rowname, rownamestore, rowstorespace, &rowsurplus, DDSIP_data->firstcon + k - ind, DDSIP_bb->firstcon + k - ind);
                  status = CPXdelrows (DDSIP_env, redundancy, DDSIP_data->firstcon + k - ind, DDSIP_data->firstcon + k - ind);
                  if (status)
@@ -439,6 +435,10 @@ DDSIP_CheckRedundancy (int automatic)
                  }
                  if (DDSIP_param->deleteRedundantCuts)
                  {
+                     previousCut->prev = currentCut->prev;
+                     DDSIP_Free ((void *) &(currentCut->matval));
+                     DDSIP_Free ((void *) &(currentCut));
+                     currentCut = previousCut;
                      statusget = CPXgetrowname (DDSIP_env, DDSIP_lp, rowname, rownamestore, rowstorespace, &rowsurplus, DDSIP_bb->nocon + DDSIP_bb->cutCntr - k -1, DDSIP_bb->nocon + DDSIP_bb->cutCntr - k -1);
                      status = CPXdelrows (DDSIP_env, DDSIP_lp, DDSIP_bb->nocon + DDSIP_bb->cutCntr - k -1, DDSIP_bb->nocon + DDSIP_bb->cutCntr - k -1);
                      if (status)

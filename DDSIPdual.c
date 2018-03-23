@@ -1121,7 +1121,7 @@ while (tmp_bestdual)
     }
 
 
-    if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 0.2*fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap)
+    if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 0.1*fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap)
     {
         memcpy (DDSIP_node[DDSIP_bb->curnode]->dual, DDSIP_bb->local_bestdual, sizeof (double) * (DDSIP_bb->dimdual + 3));
         if (DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue >= 0.)
@@ -1170,7 +1170,7 @@ while (tmp_bestdual)
                 && ((DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt < DDSIP_param->cbitlim && (DDSIP_bb->curnode >= DDSIP_param->cbBreakIters || DDSIP_bb->dualdescitcnt < (DDSIP_param->cbitlim+1)/2))
                     || (!DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt < DDSIP_param->cbrootitlim))
                 && DDSIP_bb->dualitcnt < DDSIP_param->cbtotalitlim && !(obj > DDSIP_bb->bestvalue - DDSIP_param->accuracy)
-                && !(DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 0.5*fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap)
+                && !(DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 0.1*fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap)
                 && cycleCnt < 2)
         {
             if ((DDSIP_bb->nofront == 1) &&

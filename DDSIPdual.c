@@ -896,8 +896,8 @@ DDSIP_DualOpt (void)
                                                     DDSIP_param->cbfactor*DDSIP_param->cbweight + (1. - DDSIP_param->cbfactor)*
                                                     last_weight > tmp_bestdual->weight?
                                                     (0.7*last_weight + 0.3*tmp_bestdual->weight):
-                                                    (0.3*last_weight + 0.7*tmp_bestdual->weight);
-                                                )
+                                                    (0.3*last_weight + 0.7*tmp_bestdual->weight)
+                                                );
                     max_weight = DDSIP_Dmax (max_weight, next_weight);
                     cb_set_next_weight (p, next_weight);
                     if ((status = cb_set_new_center_point (p, DDSIP_node[DDSIP_bb->curnode]->dual)))

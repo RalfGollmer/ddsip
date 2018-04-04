@@ -50,7 +50,7 @@ DDSIP_PrintModFileUb (int scen)
             fprintf (stderr, "ERROR: Failed to write problem\n");
             return status;
         }
-        else if (DDSIP_param->outlev > 20)
+        else if (DDSIP_param->outlev > 29)
         {
 #ifdef DEBUG
             printf ("  LP file %s written.\n",fname);
@@ -68,9 +68,9 @@ int
 DDSIP_WarmUb ()
 {
     int status;
-    if ((status = CPXgetnummipstarts(DDSIP_env, DDSIP_lp)) > 1)
+    if ((status = CPXgetnummipstarts(DDSIP_env, DDSIP_lp)) > 2)
     {
-        status  = CPXdelmipstarts (DDSIP_env, DDSIP_lp, 1, status-1);
+        status  = CPXdelmipstarts (DDSIP_env, DDSIP_lp, 1, status-2);
     }
     if (DDSIP_param->hot)
     {
@@ -81,7 +81,7 @@ DDSIP_WarmUb ()
             fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
             return status;
         }
-    }                // end if (DDSIP_param->hot>2)
+    }				// end if (DDSIP_param->hot>2)
     return 0;
 }
 
@@ -233,7 +233,7 @@ DDSIP_SolChk (double* cutViolation)
                 fprintf (DDSIP_bb->moreoutfile, " %20d,", ih);
             }
             else
-                fprintf (DDSIP_bb->moreoutfile, " %20.14g,", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]);
+                fprintf (DDSIP_bb->moreoutfile, " %20.15g,", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]);
 
             if (!((i + 1) % 5))
                 fprintf (DDSIP_bb->moreoutfile, "\n");
@@ -318,7 +318,7 @@ DDSIP_SolChk (double* cutViolation)
                     fprintf (DDSIP_bb->moreoutfile, "... violates cut %d, violation %g.\n", currentCut->number, *cutViolation);
                 if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
                     printf ("... violates cut %d.\n", currentCut->number);
-                if (!(DDSIP_param->testOtherScens) || DDSIP_bb->curnode > 6 || DDSIP_param->heuristic < 3)
+                if (!(DDSIP_param->testOtherScens) || DDSIP_bb->curnode > 6 /* || DDSIP_param->heuristic < 3 */)
                 {
                     DDSIP_bb->skip = 4;
                     return 0;
@@ -389,7 +389,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                 fprintf (DDSIP_bb->moreoutfile, " %20d", ih);
             }
             else
-                fprintf (DDSIP_bb->moreoutfile, " %20.14g", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j]);
+                fprintf (DDSIP_bb->moreoutfile, " %20.15g", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j]);
 
             if (!((j + 1) % 5))
                 fprintf (DDSIP_bb->moreoutfile, "\n");
@@ -479,24 +479,6 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
         goto TERMINATE;
     }
     // Upper bounds - first-stage variables are fixed, so values are the same
-//  for(j=0; j<DDSIP_data->firstvar; j++)
-//  {
-//      if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
-//          values[j] = floor((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[j] + 0.5);
-//      else
-//      {
-//          values[j] = DDSIP_Dmin(DDSIP_bb->uborg[j],(DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[j]);
-//          values[j] = DDSIP_Dmax (DDSIP_bb->lborg[j],values[j]);
-//      }
-//      for (k = 0; k < DDSIP_bb->curbdcnt; k++)
-//      {
-//          if (DDSIP_bb->curind[k] == j)
-//          {
-//              values[j] = DDSIP_Dmax (values[j], DDSIP_bb->curlb[k]);
-//              values[j] = DDSIP_Dmin (values[j], DDSIP_bb->curub[k]);
-//          }
-//      }
-//  }
     status = CPXchgbds (DDSIP_env, DDSIP_lp, fs, DDSIP_bb->firstindex, DDSIP_bb->ubident, values);
     if (status)
     {
@@ -573,7 +555,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
             status = CPXmipopt (DDSIP_env, DDSIP_lp);
             if (DDSIP_Error (status))
             {
-                fprintf (stderr, "ERROR: Failed to optimize (UB), status= %d\n", status);
+                fprintf (stderr, "ERROR: Failed to optimize (UB)\n");
                 if (DDSIP_param->outlev)
                     fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to optimize (UB), status= %d\n", status);
                 goto TERMINATE;
@@ -720,7 +702,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                             if (cpu_secs > viol*wall_secs)
                             {
                                 cpu_hrs = 0;
-                                for (wall_hrs = DDSIP_bb->shifts; wall_hrs < iscen-cpu_hrs; wall_hrs++)
+                                for (wall_hrs = DDSIP_bb->shifts; wall_hrs <= iscen-cpu_hrs; wall_hrs++)
                                 {
                                     if (sort_array[wall_hrs] > viol*wall_secs)
                                     {
@@ -744,7 +726,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                             }
                         }
                         // in the first nodes check all the remaining scenarios whether they give rise to cut
-                        if (DDSIP_param->alwaysBendersCuts && (DDSIP_param->testOtherScens || DDSIP_bb->curnode < 12) && DDSIP_param->heuristic > 3)
+                        if (DDSIP_param->alwaysBendersCuts && (DDSIP_param->testOtherScens || DDSIP_bb->curnode < 12) /* && DDSIP_param->heuristic > 3 */)
                         {
                             time_lap = DDSIP_GetCpuTime ();
                             CPXLPptr     DDSIP_dual_lp  = NULL;
@@ -810,128 +792,128 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                         {
                                             if (DDSIP_param->outlev > 21)
                                                 fprintf (DDSIP_bb->moreoutfile," ------------ LP infeasible for scen. %3d, violation %g, oldviol %g (%6.2f) ---------------\n", Bs+1, viol, oldviol, time_end - time_lap);
-                                            
-                                            time_lap = DDSIP_GetCpuTime ();
-                                            if ((viol > 1e-1) && (fabs(viol - oldviol)/viol > 1.1e-8))
+                                        
+                                        }
+                                        time_lap = DDSIP_GetCpuTime ();
+                                        if (!status && (viol > 1e-1) && (fabs(viol - oldviol)/viol > 1.1e-8))
+                                        {
+                                            int rmatbeg;
+                                            int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->firstvar + 1), "rmatind(UpperBound)");
+                                            double *rmatval = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_data->firstvar + 1), "rmatval (UpperBound)");
+                                            char sense;
+                                            char **rowname = (char **) DDSIP_Alloc (sizeof (char *), 1, "colname(UpperBound)");
+                                            char *rowstore = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_varname, "colstore(UpperBound)");
+                                            int *cmatbeg = (int *) DDSIP_Alloc (sizeof (int*), 1, "cmatbeg(UpperBound)");
+                                            int *cmatind = (int *) DDSIP_Alloc (sizeof (int), numRows, "cmatind(UpperBound)");
+                                            double lhs;
+                                            double *cmatval = (double *) DDSIP_Alloc (sizeof (double), numRows, "cmatval (UpperBound)");
+                                            int col_nonzeros, surplus, ii;
+
+                                            oldviol = viol;
+
+                                            for (k = 0; k < DDSIP_bb->seccon; k++)
                                             {
-                                                int rmatbeg;
-                                                int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->firstvar + 1), "rmatind(UpperBound)");
-                                                double *rmatval = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_data->firstvar + 1), "rmatval (UpperBound)");
-                                                char sense;
-                                                char **rowname = (char **) DDSIP_Alloc (sizeof (char *), 1, "colname(UpperBound)");
-                                                char *rowstore = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_varname, "colstore(UpperBound)");
-                                                int *cmatbeg = (int *) DDSIP_Alloc (sizeof (int*), 1, "cmatbeg(UpperBound)");
-                                                int *cmatind = (int *) DDSIP_Alloc (sizeof (int), numRows, "cmatind(UpperBound)");
-                                                double lhs;
-                                                double *cmatval = (double *) DDSIP_Alloc (sizeof (double), numRows, "cmatval (UpperBound)");
-                                                int col_nonzeros, surplus, ii;
-    
-                                                oldviol = viol;
-    
-                                                for (k = 0; k < DDSIP_bb->seccon; k++)
+                                                if (ray[DDSIP_bb->secondrowind[k]] != 0.)
+                                                    break;
+                                            }
+                                            if (k < DDSIP_bb->seccon)
+                                            {
+                                                DDSIP_bb->cutNumber++;
+                                                DDSIP_bb->cutCntr++;
+                                                rowname[0] = rowstore;
+                                                sprintf (rowstore, "DDSIPBendersCut%.04d",DDSIP_bb->cutNumber);
+                                                if (DDSIP_param->outlev)
                                                 {
-                                                    if (ray[DDSIP_bb->secondrowind[k]] != 0.)
-                                                        break;
+                                                    fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %g ############\n", rowstore, Bs+1, viol);
+                                                    if (DDSIP_param->outlev > 8)
+                                                       printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
                                                 }
-                                                if (k < DDSIP_bb->seccon)
+                                                rhs = 1.;
+                                                sense = 'G';
+                                                rmatbeg = 0;
+                                                for (k = 0; k < DDSIP_data->firstvar; k++)
                                                 {
-                                                    DDSIP_bb->cutNumber++;
-                                                    DDSIP_bb->cutCntr++;
-                                                    rowname[0] = rowstore;
-                                                    sprintf (rowstore, "DDSIPBendersCut%.04d",DDSIP_bb->cutNumber);
-                                                    if (DDSIP_param->outlev)
+                                                    status = CPXgetcols (DDSIP_env, DDSIP_lp, &col_nonzeros, cmatbeg, cmatind, cmatval, DDSIP_bb->nocon+DDSIP_bb->cutCntr+1, &surplus,
+                                                                         DDSIP_bb->firstindex[k], DDSIP_bb->firstindex[k]);
+                                                    if (status)
                                                     {
-                                                        fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %g ############\n", rowstore, Bs+1, viol);
-                                                        if (DDSIP_param->outlev > 8)
-                                                           printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
+                                                        fprintf(stdout, "ERROR getting column %d, surplus= %d\n", DDSIP_bb->firstindex[k], surplus);
+                                                        fprintf(DDSIP_outfile, "ERROR getting column %d, surplus= %d\n", DDSIP_bb->firstindex[k], surplus);
+                                                        exit(111);
                                                     }
-                                                    rhs = 1.;
-                                                    sense = 'G';
-                                                    rmatbeg = 0;
-                                                    for (k = 0; k < DDSIP_data->firstvar; k++)
+                                                    rmatind[k] = DDSIP_bb->firstindex[k];
+                                                    for (i = 0; i < numRows; i++)
                                                     {
-                                                        status = CPXgetcols (DDSIP_env, DDSIP_lp, &col_nonzeros, cmatbeg, cmatind, cmatval, DDSIP_bb->nocon+DDSIP_bb->cutCntr+1, &surplus,
-                                                                             DDSIP_bb->firstindex[k], DDSIP_bb->firstindex[k]);
-                                                        if (status)
+                                                        if (ray[i] != 0.)
                                                         {
-                                                            fprintf(stdout, "ERROR getting column %d, surplus= %d\n", DDSIP_bb->firstindex[k], surplus);
-                                                            fprintf(DDSIP_outfile, "ERROR getting column %d, surplus= %d\n", DDSIP_bb->firstindex[k], surplus);
-                                                            exit(111);
-                                                        }
-                                                        rmatind[k] = DDSIP_bb->firstindex[k];
-                                                        for (i = 0; i < numRows; i++)
-                                                        {
-                                                            if (ray[i] != 0.)
+                                                            for (ii = 0; ii < col_nonzeros; ii++)
                                                             {
-                                                                for (ii = 0; ii < col_nonzeros; ii++)
+                                                                if (cmatind[ii] == i)
                                                                 {
-                                                                    if (cmatind[ii] == i)
-                                                                    {
-                                                                        rmatval[k] += ray[i]*cmatval[ii];
-                                                                        break;
-                                                                    }
+                                                                    rmatval[k] += ray[i]*cmatval[ii];
+                                                                    break;
                                                                 }
                                                             }
                                                         }
                                                     }
-                                                    lhs = 0.;
-                                                    i = 0;
-                                                    for (k = 0; k < DDSIP_data->firstvar; k++)
-                                                    {
-                                                        if (rmatval[k] != 0.)
-                                                        {
-                                                            lhs += rmatval[k]*values[k];
-                                                            i++;
-                                                        }
-                                                    }
-                                                    if (i > 1)
-                                                        rhs = lhs + viol*security_factor;
-                                                    else
-                                                        rhs = lhs + viol;
-                                                    if ((status = CPXaddrows(DDSIP_env, DDSIP_lp, 0, 1, DDSIP_data->firstvar, &rhs, &sense, &rmatbeg, rmatind, rmatval, NULL, rowname)))
-                                                    {
-                                                        fprintf (stdout, "ERROR: Failed to add cut inequality (UpperBound), status=%d \n",status);
-                                                        if (DDSIP_param->outlev)
-                                                            fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to add cut inequality (UpperBound) \n");
-                                                    }
-                                                    else
-                                                    {
-                                                        DDSIP_bb->cutAdded++;
-                                                    }
-                                                    // store cut in bb->cutpool
-                                                    newCut = (cutpool_t*) DDSIP_Alloc(sizeof(cutpool_t), 1, "cutpool (DDSIP_UpperBound)");
-                                                    newCut->prev = DDSIP_bb->cutpool;
-                                                    newCut->matval = rmatval;
-                                                    newCut->rhs    = rhs;
-                                                    newCut->number = DDSIP_bb->cutNumber;
-                                                    DDSIP_bb->cutpool = newCut;
-                                                    rmatval = NULL;
-                                                    //shift this infeasible scenario to first place, such that next time it is checked first
-                                                    if (Bi)
-                                                    {
-                                                        if (Bi >= DDSIP_bb->shifts)
-                                                            DDSIP_bb->shifts++;
-                                                        k = DDSIP_bb->ub_scen_order[Bi];
-                                                        for(j = Bi; j>0; j--)
-                                                            DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
-                                                        DDSIP_bb->ub_scen_order[0] = k;
-                                                        iscen = 0;
-                                                        scen = k;
-                                                    }
                                                 }
-                                                else if (DDSIP_param->outlev)
+                                                lhs = 0.;
+                                                i = 0;
+                                                for (k = 0; k < DDSIP_data->firstvar; k++)
                                                 {
-                                                    fprintf (DDSIP_bb->moreoutfile," ############ ray doesn't contain a coefficient for a second-stage constraint ############\n");
+                                                    if (rmatval[k] != 0.)
+                                                    {
+                                                        lhs += rmatval[k]*values[k];
+                                                        i++;
+                                                    }
                                                 }
-    
-                                                DDSIP_Free ((void *) &rmatind);
-                                                DDSIP_Free ((void *) &rmatval);
-                                                DDSIP_Free ((void *) &cmatbeg);
-                                                DDSIP_Free ((void *) &cmatind);
-                                                DDSIP_Free ((void *) &cmatval);
-                                                DDSIP_Free ((void *) &rowname);
-                                                DDSIP_Free ((void *) &rowstore);
+                                                if (i > 1)
+                                                    rhs = lhs + viol*security_factor;
+                                                else
+                                                    rhs = lhs + viol;
+                                                if ((status = CPXaddrows(DDSIP_env, DDSIP_lp, 0, 1, DDSIP_data->firstvar, &rhs, &sense, &rmatbeg, rmatind, rmatval, NULL, rowname)))
+                                                {
+                                                    fprintf (stdout, "ERROR: Failed to add cut inequality (UpperBound), status=%d \n",status);
+                                                    if (DDSIP_param->outlev)
+                                                        fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to add cut inequality (UpperBound) \n");
+                                                }
+                                                else
+                                                {
+                                                    DDSIP_bb->cutAdded++;
+                                                }
+                                                // store cut in bb->cutpool
+                                                newCut = (cutpool_t*) DDSIP_Alloc(sizeof(cutpool_t), 1, "cutpool (DDSIP_UpperBound)");
+                                                newCut->prev = DDSIP_bb->cutpool;
+                                                newCut->matval = rmatval;
+                                                newCut->rhs    = rhs;
+                                                newCut->number = DDSIP_bb->cutNumber;
+                                                DDSIP_bb->cutpool = newCut;
+                                                rmatval = NULL;
+                                                //shift this infeasible scenario to first place, such that next time it is checked first
+                                                if (Bi)
+                                                {
+                                                    if (Bi >= DDSIP_bb->shifts)
+                                                        DDSIP_bb->shifts++;
+                                                    k = DDSIP_bb->ub_scen_order[Bi];
+                                                    for(j = Bi; j>0; j--)
+                                                        DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
+                                                    DDSIP_bb->ub_scen_order[0] = k;
+                                                    iscen = 0;
+                                                    scen = k;
+                                                }
                                             }
+                                            else if (DDSIP_param->outlev > 20)
+                                            {
+                                                fprintf (DDSIP_bb->moreoutfile," ############ ray doesn't contain a coefficient for a second-stage constraint\n");
+                                            }
+
+                                            DDSIP_Free ((void *) &rmatind);
+                                            DDSIP_Free ((void *) &rmatval);
+                                            DDSIP_Free ((void *) &cmatbeg);
+                                            DDSIP_Free ((void *) &cmatind);
+                                            DDSIP_Free ((void *) &cmatval);
+                                            DDSIP_Free ((void *) &rowname);
+                                            DDSIP_Free ((void *) &rowstore);
                                         }
                                         DDSIP_Free ((void *) &ray);
                                         if (!(DDSIP_param->testOtherScens))
@@ -940,23 +922,20 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                     else
                                     {
                                         if (DDSIP_param->outlev > 21)
-                                            fprintf (DDSIP_bb->moreoutfile," ------------ LP   feasible for scen. %3d status %d  (%6.2f) ---------------\n", Bs+1, status, time_end - time_lap);
+                                            fprintf (DDSIP_bb->moreoutfile," ------------ LP   feasible for scen. %3d  (%6.2f) ---------------\n", Bs+1, time_end - time_lap);
                                     }
+                                }
+                                if (DDSIP_dual_lp != NULL)
+                                {
+                                    status = CPXfreeprob (DDSIP_env, &DDSIP_dual_lp);
+                                    if (status)
+                                        fprintf (stderr, "ERROR: CPXfreeprob failed, error code %d\n", status);
                                 }
                             }
                             if (DDSIP_param->outlev > 20)
                             {
                                 time_end = DDSIP_GetCpuTime ();
                                 fprintf (DDSIP_bb->moreoutfile," ------------ total time for checking for cuts  %6.2fs ---------------\n", time_end-time_lap);
-                            }
-                            if (DDSIP_dual_lp != NULL)
-                            {
-                                status = CPXfreeprob (DDSIP_env, &DDSIP_dual_lp);
-                                if (status)
-                                {
-                                    fprintf (stderr, "ERROR: CPXfreeprob failed, error code %d\n", status);
-                                    fprintf (DDSIP_outfile, "ERROR: CPXfreeprob failed, error code %d\n", status);
-                                }
                             }
                             status = CPXsetintparam (DDSIP_env, CPX_PARAM_PREIND, CPX_ON);
                             if (status)
@@ -975,7 +954,6 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     if (status)
                     {
                         fprintf (stderr, "ERROR: Failed to set CPLEX parameters (UpperBound) \n");
-                        fprintf (DDSIP_outfile, "ERROR: Failed to set CPLEX parameters (UpperBound) \n");
                         goto TERMINATE;
                     }
                     // query time limit amd mip rel. gap parameters
@@ -1104,12 +1082,13 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                 if (feasCheckOnly)
                 {
                     beg = 0;
+                    //end = (DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 7 && DDSIP_param->testOtherScens) || !nrScenarios) ? DDSIP_param->scenarios : nrScenarios;
                     end = (DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 11 && DDSIP_param->testOtherScens) || !nrScenarios) ? DDSIP_param->scenarios : nrScenarios;
                 }
                 else
                 {
                     beg = iscen;
-                    end = ((DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 8 && DDSIP_param->testOtherScens)) && (DDSIP_param->heuristic > 3)) ? DDSIP_param->scenarios : DDSIP_Imax(iscen+1, DDSIP_bb->shifts);
+                    end = ((DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 8 && DDSIP_param->testOtherScens)) /* && (DDSIP_param->heuristic > 3) */) ? DDSIP_param->scenarios : DDSIP_Imax(iscen+1, DDSIP_bb->shifts);
                 }
                 for (Bi = beg; Bi < end; Bi++)
                 {
@@ -1148,8 +1127,8 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         status = CPXdualopt (DDSIP_env, DDSIP_dual_lp);
                         if (status)
                         {
-                            fprintf (stderr, "ERROR: dualopt of LP for Benders failed, status= %d.\n", status);
-                            fprintf (DDSIP_outfile, "ERROR: dualopt of LP for Benders failed, status= %d.\n", status);
+                            fprintf (stderr, "ERROR: dualopt of LP for Benders failed.\n");
+                            fprintf (DDSIP_outfile, "ERROR: dualopt of LP for Benders failed.\n");
                             return status;
                         }
                         status = CPXgetstat (DDSIP_env, DDSIP_dual_lp);
@@ -1174,143 +1153,148 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                             {
                                 if (DDSIP_param->outlev > 21)
                                     fprintf (DDSIP_bb->moreoutfile," ------------ LP infeasible for scen. %3d, violation %g, oldviol %g (%6.2f) ---------------\n", Bs+1, viol, oldviol, time_end - time_lap);
-                                
-                                time_lap = DDSIP_GetCpuTime ();
-                                if ((viol > 1e-1) && (fabs(viol - oldviol)/viol > 1.1e-8))
+                            }
+                            
+                            time_lap = DDSIP_GetCpuTime ();
+                            if (!status && (viol > 1e-1) && (fabs(viol - oldviol)/viol > 1.1e-8))
+                            {
+                                int rmatbeg;
+                                int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->firstvar + 1), "rmatind(UpperBound)");
+                                double *rmatval = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_data->firstvar + 1), "rmatval (UpperBound)");
+                                char sense;
+                                char **rowname = (char **) DDSIP_Alloc (sizeof (char *), 1, "colname(UpperBound)");
+                                char *rowstore = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_varname, "colstore(UpperBound)");
+                                int *cmatbeg = (int *) DDSIP_Alloc (sizeof (int*), 1, "cmatbeg(UpperBound)");
+                                int *cmatind = (int *) DDSIP_Alloc (sizeof (int), numRows, "cmatind(UpperBound)");
+                                double lhs;
+                                double *cmatval = (double *) DDSIP_Alloc (sizeof (double), numRows, "cmatval (UpperBound)");
+                                int col_nonzeros, surplus, ii;
+
+                                oldviol = viol;
+
+                                for (k = 0; k < DDSIP_bb->seccon; k++)
                                 {
-                                    int rmatbeg;
-                                    int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->firstvar + 1), "rmatind(UpperBound)");
-                                    double *rmatval = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_data->firstvar + 1), "rmatval (UpperBound)");
-                                    char sense;
-                                    char **rowname = (char **) DDSIP_Alloc (sizeof (char *), 1, "colname(UpperBound)");
-                                    char *rowstore = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_varname, "colstore(UpperBound)");
-                                    int *cmatbeg = (int *) DDSIP_Alloc (sizeof (int*), 1, "cmatbeg(UpperBound)");
-                                    int *cmatind = (int *) DDSIP_Alloc (sizeof (int), numRows, "cmatind(UpperBound)");
-                                    double lhs;
-                                    double *cmatval = (double *) DDSIP_Alloc (sizeof (double), numRows, "cmatval (UpperBound)");
-                                    int col_nonzeros, surplus, ii;
-    
-                                    oldviol = viol;
-    
-                                    for (k = 0; k < DDSIP_bb->seccon; k++)
+                                    if (ray[DDSIP_bb->secondrowind[k]] != 0.)
+                                        break;
+                                }
+                                if (k < DDSIP_bb->seccon)
+                                {
+                                    DDSIP_bb->cutNumber++;
+                                    DDSIP_bb->cutCntr++;
+                                    rowname[0] = rowstore;
+                                    sprintf (rowstore, "DDSIPBendersCut%.04d",DDSIP_bb->cutNumber);
+                                    if (DDSIP_param->outlev)
                                     {
-                                        if (ray[DDSIP_bb->secondrowind[k]] != 0.)
-                                            break;
+                                        fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %g ############\n", rowstore, Bs+1, viol);
+                                        if (DDSIP_param->outlev > 8)
+                                            printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
                                     }
-                                    if (k < DDSIP_bb->seccon)
+                                    rhs = 1.;
+                                    sense = 'G';
+                                    rmatbeg = 0;
+                                    for (k = 0; k < DDSIP_data->firstvar; k++)
                                     {
-                                        DDSIP_bb->cutNumber++;
-                                        DDSIP_bb->cutCntr++;
-                                        rowname[0] = rowstore;
-                                        sprintf (rowstore, "DDSIPBendersCut%.04d",DDSIP_bb->cutNumber);
-                                        if (DDSIP_param->outlev)
+                                        status = CPXgetcols (DDSIP_env, DDSIP_lp, &col_nonzeros, cmatbeg, cmatind, cmatval, DDSIP_bb->nocon+DDSIP_bb->cutCntr+1, &surplus,
+                                                             DDSIP_bb->firstindex[k], DDSIP_bb->firstindex[k]);
+                                        if (status)
                                         {
-                                            fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %g ############\n", rowstore, Bs+1, viol);
-                                            if (DDSIP_param->outlev > 8)
-                                                printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
+                                            fprintf(stdout, "ERROR getting column %d, surplus= %d\n", DDSIP_bb->firstindex[k], surplus);
+                                            fprintf(DDSIP_outfile, "ERROR getting column %d, surplus= %d\n", DDSIP_bb->firstindex[k], surplus);
+                                            exit(111);
                                         }
-                                        rhs = 1.;
-                                        sense = 'G';
-                                        rmatbeg = 0;
-                                        for (k = 0; k < DDSIP_data->firstvar; k++)
+                                        rmatind[k] = DDSIP_bb->firstindex[k];
+                                        for (i = 0; i < numRows; i++)
                                         {
-                                            status = CPXgetcols (DDSIP_env, DDSIP_lp, &col_nonzeros, cmatbeg, cmatind, cmatval, DDSIP_bb->nocon+DDSIP_bb->cutCntr+1, &surplus,
-                                                                 DDSIP_bb->firstindex[k], DDSIP_bb->firstindex[k]);
-                                            if (status)
+                                            if (ray[i] != 0.)
                                             {
-                                                fprintf(stdout, "ERROR getting column %d, surplus= %d\n", DDSIP_bb->firstindex[k], surplus);
-                                                fprintf(DDSIP_outfile, "ERROR getting column %d, surplus= %d\n", DDSIP_bb->firstindex[k], surplus);
-                                                exit(111);
-                                            }
-                                            rmatind[k] = DDSIP_bb->firstindex[k];
-                                            for (i = 0; i < numRows; i++)
-                                            {
-                                                if (ray[i] != 0.)
+                                                for (ii = 0; ii < col_nonzeros; ii++)
                                                 {
-                                                    for (ii = 0; ii < col_nonzeros; ii++)
+                                                    if (cmatind[ii] == i)
                                                     {
-                                                        if (cmatind[ii] == i)
-                                                        {
-                                                            rmatval[k] += ray[i]*cmatval[ii];
-                                                            break;
-                                                        }
+                                                        rmatval[k] += ray[i]*cmatval[ii];
+                                                        break;
                                                     }
                                                 }
                                             }
                                         }
-                                        lhs = 0.;
-                                        i = 0;
-                                        for (k = 0; k < DDSIP_data->firstvar; k++)
+                                    }
+                                    lhs = 0.;
+                                    i = 0;
+                                    for (k = 0; k < DDSIP_data->firstvar; k++)
+                                    {
+                                        if (rmatval[k] != 0.)
                                         {
-                                            if (rmatval[k] != 0.)
-                                            {
-                                                lhs += rmatval[k]*values[k];
-                                                i++;
-                                            }
-                                        }
-                                        if (i > 1)
-                                            rhs = lhs + viol*security_factor;
-                                        else
-                                            rhs = lhs + viol;
-                                        if ((status = CPXaddrows(DDSIP_env, DDSIP_lp, 0, 1, DDSIP_data->firstvar, &rhs, &sense, &rmatbeg, rmatind, rmatval, NULL, rowname)))
-                                        {
-                                            fprintf (stdout, "ERROR: Failed to add cut inequality (UpperBound), status=%d \n",status);
-                                            if (DDSIP_param->outlev)
-                                                fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to add cut inequality (UpperBound) \n");
-                                        }
-                                        else
-                                        {
-                                            DDSIP_bb->cutAdded++;
-                                        }
-                                        // store cut in bb->cutpool
-                                        newCut = (cutpool_t*) DDSIP_Alloc(sizeof(cutpool_t), 1, "cutpool (DDSIP_UpperBound)");
-                                        newCut->prev = DDSIP_bb->cutpool;
-                                        newCut->matval = rmatval;
-                                        newCut->rhs    = rhs;
-                                        newCut->number = DDSIP_bb->cutNumber;
-                                        DDSIP_bb->cutpool = newCut;
-                                        rmatval = NULL;
-                                        if (DDSIP_param->outlev >= DDSIP_current_lambda_outlev)
-                                        {
-                                            fprintf (DDSIP_bb->moreoutfile, "  Cut RHS= %20.15g,  coefficients of first-stage variables:\n",newCut->rhs);
-                                            for (k = 0; k < DDSIP_data->firstvar; k++)
-                                            {
-                                                fprintf (DDSIP_bb->moreoutfile, "  %20.14g",newCut->matval[k]);
-                                                if (!((k+1)%5))
-                                                    fprintf (DDSIP_bb->moreoutfile, "\n");
-                                            }
-                                            fprintf (DDSIP_bb->moreoutfile, "\n");
-                                        }
-                                        //shift this infeasible scenario to first place, such that next time it is checked first
-                                        if (Bi != iscen)
-                                        {
-                                            if (Bi >= DDSIP_bb->shifts)
-                                                DDSIP_bb->shifts++;
-                                            k = DDSIP_bb->ub_scen_order[Bi];
-                                            for(j = Bi; j>0; j--)
-                                                DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
-                                            DDSIP_bb->ub_scen_order[0] = k;
-                                            iscen = 0;
-                                            scen = k;
+                                            lhs += rmatval[k]*values[k];
+                                            i++;
                                         }
                                     }
-    
-                                    DDSIP_Free ((void *) &rmatind);
-                                    DDSIP_Free ((void *) &rmatval);
-                                    DDSIP_Free ((void *) &cmatbeg);
-                                    DDSIP_Free ((void *) &cmatind);
-                                    DDSIP_Free ((void *) &cmatval);
-                                    DDSIP_Free ((void *) &rowname);
-                                    DDSIP_Free ((void *) &rowstore);
+                                    if (i > 1)
+                                        rhs = lhs + viol*security_factor;
+                                    else
+                                        rhs = lhs + viol;
+                                    if ((status = CPXaddrows(DDSIP_env, DDSIP_lp, 0, 1, DDSIP_data->firstvar, &rhs, &sense, &rmatbeg, rmatind, rmatval, NULL, rowname)))
+                                    {
+                                        fprintf (stdout, "ERROR: Failed to add cut inequality (UpperBound), status=%d \n",status);
+                                        if (DDSIP_param->outlev)
+                                            fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to add cut inequality (UpperBound) \n");
+                                    }
+                                    else
+                                    {
+                                        DDSIP_bb->cutAdded++;
+                                    }
+                                    // store cut in bb->cutpool
+                                    newCut = (cutpool_t*) DDSIP_Alloc(sizeof(cutpool_t), 1, "cutpool (DDSIP_UpperBound)");
+                                    newCut->prev = DDSIP_bb->cutpool;
+                                    newCut->matval = rmatval;
+                                    newCut->rhs    = rhs;
+                                    newCut->number = DDSIP_bb->cutNumber;
+                                    DDSIP_bb->cutpool = newCut;
+                                    rmatval = NULL;
+                                    //shift this infeasible scenario to first place, such that next time it is checked first
+                                    if (Bi != iscen)
+                                    {
+                                        if (Bi >= DDSIP_bb->shifts)
+                                            DDSIP_bb->shifts++;
+                                        k = DDSIP_bb->ub_scen_order[Bi];
+                                        for(j = Bi; j>0; j--)
+                                            DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
+                                        DDSIP_bb->ub_scen_order[0] = k;
+                                        iscen = 0;
+                                        scen = k;
+                                    }
                                 }
+                                else if (DDSIP_param->outlev > 20)
+                                {
+                                    fprintf (DDSIP_bb->moreoutfile," ############ ray doesn't contain a coefficient for a second-stage constraint\n");
+                                }
+
+                                DDSIP_Free ((void *) &rmatind);
+                                DDSIP_Free ((void *) &rmatval);
+                                DDSIP_Free ((void *) &cmatbeg);
+                                DDSIP_Free ((void *) &cmatind);
+                                DDSIP_Free ((void *) &cmatval);
+                                DDSIP_Free ((void *) &rowname);
+                                DDSIP_Free ((void *) &rowstore);
                             }
                             DDSIP_Free ((void *) &ray);
                         }
                         else
                         {
                             if (DDSIP_param->outlev > 21)
-                                fprintf (DDSIP_bb->moreoutfile," ------------ LP   feasible for scen. %3d, status = %d  (%6.2f) ---------------\n", Bs+1, status, time_end - time_lap);
+                                fprintf (DDSIP_bb->moreoutfile," ------------ LP   feasible for scen. %3d  (%6.2f) ---------------\n", Bs+1, time_end - time_lap);
                         }
+                    }
+                    if (DDSIP_dual_lp != NULL)
+                    {
+                        status = CPXfreeprob (DDSIP_env, &DDSIP_dual_lp);
+                        if (status)
+                            fprintf (stderr, "ERROR: CPXfreeprob failed, error code %d\n", status);
+                    }
+                    status = CPXsetintparam (DDSIP_env, CPX_PARAM_PREIND, CPX_ON);
+                    if (status)
+                    {
+                        fprintf (stderr, "ERROR: Failed to switch preprocessing back to on.\n");
+                        fprintf (DDSIP_outfile, "ERROR: Failed to switch off preprocessing back to on.\n");
                     }
                 }
                 if (DDSIP_param->outlev > 20)
@@ -1318,24 +1302,12 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     time_end = DDSIP_GetCpuTime ();
                     fprintf (DDSIP_bb->moreoutfile," ------------ total time for checking for Benders cuts  %6.2fs ---------------\n", time_end-time_start);
                 }
-                if (DDSIP_dual_lp != NULL)
-                {
-                    status = CPXfreeprob (DDSIP_env, &DDSIP_dual_lp);
-                    if (status)
-                        fprintf (stderr, "ERROR: CPXfreeprob failed, error code %d\n", status);
-                }
-                status = CPXsetintparam (DDSIP_env, CPX_PARAM_PREIND, CPX_ON);
-                if (status)
-                {
-                    fprintf (stderr, "ERROR: Failed to switch preprocessing back to on.\n");
-                    fprintf (DDSIP_outfile, "ERROR: Failed to switch off preprocessing back to on.\n");
-                }
             }
 #endif
 #ifdef ADDINTEGERCUTS
-            //if all first-stage variables are binary ones we can add an inequality, cutting off this point
-            if (DDSIP_bb->DDSIP_step != adv && DDSIP_bb->DDSIP_step != eev &&
-                DDSIP_param->addIntegerCuts && !feasCheckOnly && DDSIP_param->heuristic > 3)
+            //if all first-stage variables are binary ones, we can add an inequality, cutting off this point
+            if (DDSIP_bb->DDSIP_step == adv && DDSIP_bb->DDSIP_step != eev &&
+                (DDSIP_param->addIntegerCuts && !feasCheckOnly /* && DDSIP_param->heuristic > 3 */))
             {
                 int rmatbeg;
                 int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_bb->novar), "rmatind(UpperBound)");
@@ -1678,7 +1650,7 @@ fprintf (DDSIP_bb->moreoutfile, "### iscen(%d) > DDSIP_bb->shifts(%d) + 2 ? %d\n
                 }
             }
         }
-    }                // end for iscen=..
+    }				// end for iscen=..
     if (feasCheckOnly)
         goto TERMINATE;
 
@@ -1939,7 +1911,7 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
             fprintf (DDSIP_bb->moreoutfile,"order of scenarios after sorting ub order (%d shifts)\n", DDSIP_bb->shifts);
             for (i_scen = 0; i_scen < DDSIP_param->scenarios; i_scen++)
             {
-                fprintf(DDSIP_bb->moreoutfile," %3d: Scen %3d  %20.14g =  %10.07g * %20.14g\n",
+                fprintf(DDSIP_bb->moreoutfile," %3d: Scen %3d  %20.15g =  %10.07g * %20.15g\n",
                         i_scen+1, DDSIP_bb->ub_scen_order[i_scen]+1, sort_array[DDSIP_bb->ub_scen_order[i_scen]],
                         DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]],
                         (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]]);
@@ -1948,119 +1920,94 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
         }
         DDSIP_Free ((void**) &sort_array);
     }
-    if (DDSIP_param->heuristic == 100)      // use subsequently different heuristics in the same node
+    if (DDSIP_param->heuristic == 100)  	// use subsequently different heuristics in the same node
     {
-        for (i = 1; i < DDSIP_param->heuristic_num; i++)
-        {
-            DDSIP_param->heuristic = floor (DDSIP_param->heuristic_vector[i] + 0.1);
-            if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
-            {
-                // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-                if (DDSIP_bb->skip != -4 && DDSIP_bb->sug[DDSIP_param->nodelim + 2])
-                {
-                    if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
-                    {
-                        if (DDSIP_bb->heurval < tmpbestheur)
-                            tmpbestheur = DDSIP_bb->heurval;
-                    }
-                    if (status == 100000)
-                    {
-                        DDSIP_bb->skip = -5;
-                        if (DDSIP_param->interrupt_heur > 0)
-                            break;
-                    }
-                }
-            }
-            if (DDSIP_killsignal)
-            {
-                DDSIP_bb->skip = -5;
-                break;
-            }
-        }
-        // use (expensive) heuristic 12 using all single-scenario solutions as suugestions
-        if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || DDSIP_bb->curnode < 13 || DDSIP_bb->noiter%250 > 247))
-        {
-            DDSIP_param->heuristic = 12;
-            if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
-            {
-                // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-                if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
-                {
-                    if (!DDSIP_UpperBound (DDSIP_param->scenarios, 0))
-                    {
-                        if (DDSIP_bb->heurval < tmpbestheur)
-                            tmpbestheur = DDSIP_bb->heurval;
-                    }
-                }
-            }
-            DDSIP_bb->heurval = tmpbestheur;
-        }
-        else if (DDSIP_param->alwaysBendersCuts)
-        {
-            DDSIP_param->heuristic = 12;
-            if (DDSIP_bb->curnode < 25)
-            {
-                if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 1))
-                {
-                    // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-                    if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
-                    {
-                        DDSIP_UpperBound (DDSIP_param->scenarios, 1);
-                    }
-                }
-            }
-            else
-            {
-                if (!DDSIP_Heuristics (comb, DDSIP_bb->shifts, 1))
-                {
-                    // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-                    if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
-                    {
-                        DDSIP_UpperBound (DDSIP_bb->shifts, 1);
-                    }
-                }
-            }
-        }
-        DDSIP_param->heuristic = 100;
+	    for (i = 1; i < DDSIP_param->heuristic_num; i++)
+	    {
+		    DDSIP_param->heuristic = floor (DDSIP_param->heuristic_vector[i] + 0.1);
+		    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
+		    {
+			    // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
+			    if (DDSIP_bb->skip != -4 && DDSIP_bb->sug[DDSIP_param->nodelim + 2])
+			    {
+				    if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
+				    {
+					    if (DDSIP_bb->heurval < tmpbestheur)
+						    tmpbestheur = DDSIP_bb->heurval;
+				    }
+				    if (status == 100000)
+				    {
+					    DDSIP_bb->skip = -5;
+					    if (DDSIP_param->interrupt_heur > 0)
+						    break;
+				    }
+			    }
+		    }
+		    if (DDSIP_killsignal)
+		    {
+			    DDSIP_bb->skip = -5;
+			    break;
+		    }
+	    }
+	    // use (expensive) heuristic 12 using all single-scenario solutions as suugestions
+	    if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || DDSIP_bb->curnode < 13 || DDSIP_bb->noiter%250 > 247))
+	    {
+		    DDSIP_param->heuristic = 12;
+		    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
+		    {
+			    // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
+			    if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
+			    {
+				    if (!DDSIP_UpperBound (DDSIP_param->scenarios, 0))
+				    {
+					    if (DDSIP_bb->heurval < tmpbestheur)
+						    tmpbestheur = DDSIP_bb->heurval;
+				    }
+			    }
+		    }
+		    DDSIP_bb->heurval = tmpbestheur;
+	    }
+	    DDSIP_param->heuristic = 100;
     }
-    else if (DDSIP_param->heuristic == 99)      // use subsequently different heuristics in the same node
+    else if (DDSIP_param->heuristic == 99)  	// use subsequently different heuristics in the same node
     {
-        for (i = 1; i < DDSIP_param->heuristic_num; i++)
-        {
-            DDSIP_param->heuristic = floor (DDSIP_param->heuristic_vector[i] + 0.1);
-            if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
-            {
-                // Evaluate the proposed first-stage solution
-                if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
-                {
-                    if (DDSIP_bb->heurval < tmpbestheur)
-                        tmpbestheur = DDSIP_bb->heurval;
-                }
-                if (status == 100000 || DDSIP_killsignal)
-                {
-                    DDSIP_bb->skip = -5;
-                    if (DDSIP_param->interrupt_heur > 0)
-                        break;
-                }
-            }
-        }
-        DDSIP_param->heuristic = 99;
-        DDSIP_bb->heurval = tmpbestheur;
+	    for (i = 1; i < DDSIP_param->heuristic_num; i++)
+	    {
+		    DDSIP_param->heuristic = floor (DDSIP_param->heuristic_vector[i] + 0.1);
+		    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
+		    {
+			    // Evaluate the proposed first-stage solution
+			    if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
+			    {
+				    if (DDSIP_bb->heurval < tmpbestheur)
+					    tmpbestheur = DDSIP_bb->heurval;
+			    }
+			    if (status == 100000 || DDSIP_killsignal)
+			    {
+				    DDSIP_bb->skip = -5;
+				    if (DDSIP_param->interrupt_heur > 0)
+					    break;
+			    }
+		    }
+	    }
+	    DDSIP_param->heuristic = 99;
+	    DDSIP_bb->heurval = tmpbestheur;
     }
     else
     {
-        if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
-            // Evaluate the proposed first-stage solution
-            if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
-            {
-                if (DDSIP_bb->heurval < tmpbestheur)
-                    tmpbestheur = DDSIP_bb->heurval;
-            }
-        if (status == 100000 || DDSIP_killsignal)
-        {
-            DDSIP_bb->skip = -5;
-        }
+	    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
+		    // Evaluate the proposed first-stage solution
+		    if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
+		    {
+			    if (DDSIP_bb->heurval < tmpbestheur)
+				    tmpbestheur = DDSIP_bb->heurval;
+		    }
+	    if (status == 100000 || DDSIP_killsignal)
+	    {
+		    DDSIP_bb->skip = -5;
+	    }
     }
     DDSIP_bb->DDSIP_step = currentStep;
+    DDSIP_bb->heurSuccess = -1;
     return;
 }

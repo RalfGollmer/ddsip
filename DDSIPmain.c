@@ -54,7 +54,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2018-03-19 (Github v1.2.2) ";
+const char DDSIP_version[] = "2018-04-04 (Github v1.2.3) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";

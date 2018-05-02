@@ -172,6 +172,8 @@ extern "C" {
         int   advstart;
         // Warm starts
         int   hot;
+        // Warm starts in CB
+        int   cbhot;
         // Priority order
         int   order;
         // Pre- or Postfix of first-stage variables
@@ -355,6 +357,7 @@ extern "C" {
         double *matval;
         double rhs;
         int    number;
+        int    Benders;
         struct cut_tt *prev;
     } cutpool_t;
 
@@ -491,8 +494,10 @@ extern "C" {
         double *uborg;
         // Contibution of individual variables to objective value
         double *objcontrib;
-        // Best second-stage solution
+        // Best second-stage solutions
         double **secstage;
+        // current second-stage solutions
+        double **cur_secstage;
         // Objective values of scenario problems for best upper bound
         double *subsol;
         // Lower bounds on variables at current node

@@ -1208,6 +1208,8 @@ DDSIP_ReadSpec ()
         fprintf (DDSIP_outfile, "      HOSTART=2 not implemented for stoch. cost coefficients, resetting to 1.\n");
         DDSIP_param->hot = 1;
     }
+    else
+        DDSIP_param->cbhot   = floor (DDSIP_ReadDbl (specfile, "CBHOTS", " HOT STARTS: PREV SCENS IN CB", 0., 1, 0., 3.) + 0.1);
 
     DDSIP_param->branchdir   = floor (DDSIP_ReadDbl (specfile, "BRADIR", " BRANCHING DIRECTION", -1., 1, -1., 1.) + 0.1);
     DDSIP_param->branchstrat = floor (DDSIP_ReadDbl (specfile, "BRASTR", " BRANCHING STRATEGY", 2., 1, 0., 2.) + 0.1);
@@ -1286,7 +1288,11 @@ DDSIP_ReadSpec ()
     }
     
     DDSIP_param->redundancyCheck = floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", 1., 1, 0., 1.) + 0.1);
-    DDSIP_param->deleteRedundantCuts = floor (DDSIP_ReadDbl (specfile, "DELRED", " DELETE REDUNDANT CUTS", 1., 1, 0., 1.) + 0.1);
+    if (DDSIP_param->redundancyCheck)
+        DDSIP_param->deleteRedundantCuts = floor (DDSIP_ReadDbl (specfile, "DELRED", " DELETE REDUNDANT CUTS", 1., 1, 0., 1.) + 0.1);
+    else
+        DDSIP_param->deleteRedundantCuts = 0;
+
     DDSIP_param->annotationFile = DDSIP_ReadString (specfile, "ANNOTA", " ANNOTATION FILE FOR CPLEX BENDERS");
     fprintf (DDSIP_outfile, "\n");
 

@@ -21,8 +21,10 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#define SHIFT
 //#define DEBUG
+
+#define SHIFT
+#define CBHOTSTART
 
 #include <DDSIP.h>
 #include <DDSIPconst.h>
@@ -37,8 +39,6 @@ int
 DDSIP_SkipUB (void)
 {
     int i, status = 1;
-    double factor;
-    factor = (DDSIP_bb->bestvalue < 0.)? 1.-DDSIP_param->accuracy :  1.+DDSIP_param->accuracy;
 
     // There are some conditions which make a further proceeding unneccessary
     // If solstat=0 for all scenarios skip UB()
@@ -47,15 +47,17 @@ DDSIP_SkipUB (void)
             status = 0;
 
     // Or if the node will be fathomed due to inferiority (bound > bestvalue)
-    if ((!DDSIP_bb->found_optimal_node && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue*factor + DDSIP_bb->correct_bounding) ||
-        (DDSIP_bb->found_optimal_node && (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue + DDSIP_bb->correct_bounding || DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node)))
+    if ((!DDSIP_bb->bestsol_in_curnode && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue + DDSIP_bb->correct_bounding) ||
+        ( DDSIP_bb->bestsol_in_curnode && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 5e-14*fabs(DDSIP_bb->bestvalue)))
     {
+        if (DDSIP_param->outlev > 20)
+            fprintf (DDSIP_bb->moreoutfile, "########## skip=2 for DDSIP_bb->bestsol_in_curnode=%d, DDSIP_node[%d]->bound (%20.15g) - bestvalue = %.8g\n", DDSIP_bb->bestsol_in_curnode, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue);
         return 2;
     }
 
     // Or if the node will be fathomed due to optimality (bound ~ bestvalue)
     //if (fabs(DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue) < DDSIP_param->accuracy)
-    if (fabs(DDSIP_bb->bestvalue - DDSIP_node[DDSIP_bb->curnode]->bound)/(fabs(DDSIP_bb->bestvalue) + 3.e-16) < 5.e-16)
+    if (fabs(DDSIP_bb->bestvalue - DDSIP_node[DDSIP_bb->curnode]->bound)/(fabs(DDSIP_bb->bestvalue) + 3.e-16) < 2.e-14)
     {
         return 3;
     }
@@ -616,6 +618,7 @@ DDSIP_Warm (int iscen)
     static int added, inserted;
 
     scen = DDSIP_bb->lb_scen_order[iscen];
+    added = inserted = 0;
 
     if ((k = CPXgetnummipstarts(DDSIP_env, DDSIP_lp)) > 2)
     {
@@ -638,7 +641,7 @@ DDSIP_Warm (int iscen)
 #ifdef DEBUG
         if(DDSIP_param->outlev > 90)
         {
-            fprintf(DDSIP_bb->moreoutfile,"### MIP start values (in CB): %s  \n",DDSIP_bb->Names[0]);
+            fprintf(DDSIP_bb->moreoutfile,"     ### MIP starts (in CB): %s  \n",DDSIP_bb->Names[0]);
             for (j = 0; j < DDSIP_bb->total_int; j++)
             {
                 fprintf(DDSIP_bb->moreoutfile,"%g, ", DDSIP_bb->intsolvals[scen][j]);
@@ -657,25 +660,26 @@ DDSIP_Warm (int iscen)
             return status;
         }
 #ifdef DEBUG
-        else if (DDSIP_param->outlev > 90)
+        else if (DDSIP_param->outlev > 80)
             fprintf (DDSIP_bb->moreoutfile, "  Copied mip start info %s of previous iteration (Warm)\n", DDSIP_bb->Names[0]);
 #endif
+        added++;
         if (memcmp(DDSIP_bb->boundIncrease_intsolvals[scen], DDSIP_bb->intsolvals[scen], DDSIP_bb->total_int*sizeof(double)))
         {
             // add solution of previous bound increase
             sprintf (DDSIP_bb->Names[0],"BoundIncr_%d",scen+1);
 #ifdef DEBUG
-        if(DDSIP_param->outlev > 90)
-        {
-            fprintf(DDSIP_bb->moreoutfile,"### MIP start values (in CB): %s  \n",DDSIP_bb->Names[0]);
-            for (j = 0; j < DDSIP_bb->total_int; j++)
+            if(DDSIP_param->outlev > 90)
             {
-                fprintf(DDSIP_bb->moreoutfile,"%g, ", DDSIP_bb->boundIncrease_intsolvals[scen][j]);
-                if (!((j+1)%20))
-                    fprintf(DDSIP_bb->moreoutfile,"\n");
+                fprintf(DDSIP_bb->moreoutfile,"     ### MIP starts (in CB): %s  \n",DDSIP_bb->Names[0]);
+                for (j = 0; j < DDSIP_bb->total_int; j++)
+                {
+                    fprintf(DDSIP_bb->moreoutfile,"%g, ", DDSIP_bb->boundIncrease_intsolvals[scen][j]);
+                    if (!((j+1)%20))
+                        fprintf(DDSIP_bb->moreoutfile,"\n");
+                }
+                fprintf(DDSIP_bb->moreoutfile,"\n");
             }
-            fprintf(DDSIP_bb->moreoutfile,"\n");
-        }
 #endif
             // Copy starting informations to problem
             status = CPXaddmipstarts (DDSIP_env, DDSIP_lp, 1, DDSIP_bb->total_int, DDSIP_bb->beg, DDSIP_bb->intind, DDSIP_bb->boundIncrease_intsolvals[scen], DDSIP_bb->effort, DDSIP_bb->Names);
@@ -686,9 +690,10 @@ DDSIP_Warm (int iscen)
                 return status;
             }
 #ifdef DEBUG
-            else if (DDSIP_param->outlev > 90)
+            else if (DDSIP_param->outlev > 80)
                 fprintf (DDSIP_bb->moreoutfile, "  Copied mip start info %s of previous bound increase (Warm)\n", DDSIP_bb->Names[0]);
 #endif
+            added++;
         }
 
         // ADVIND must be 2 when using start values
@@ -701,7 +706,7 @@ DDSIP_Warm (int iscen)
         }
     }
     // Hotstart = 0 --> ADVIND  0 - start values should not be used
-    if (DDSIP_param->hot == 0 && !(DDSIP_bb->DDSIP_step == dual && DDSIP_bb->dualitcnt))
+    if (DDSIP_param->hot == 0 && DDSIP_bb->DDSIP_step != dual)
     {
         status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 0);
         if (status)
@@ -712,73 +717,28 @@ DDSIP_Warm (int iscen)
         }
         return 0;
     }
-    // Hotstart = 1 --> ADVIND  1 - start values of previous optimization should be used
-    else if (DDSIP_param->hot == 1)
-    {
-        DDSIP_bb->effort[0]=2;
-        // If not in the root node add solution of father
-        if (DDSIP_bb->curnode)
-        {
-            // Copy solution from father node to the problem (see initialization of subbound and solut)
-            sprintf (DDSIP_bb->Names[0],"Father_%d",scen+1);
-            for(k=0; k<DDSIP_bb->total_int; k++)
-                DDSIP_bb->values[k] = DDSIP_node[DDSIP_bb->curnode]->solut[scen*DDSIP_bb->total_int + k];
-            // A priori feasibility check (branching may lead to infeasibility)
-            kf= DDSIP_node[DDSIP_bb->curnode]->neoind;
-            k = DDSIP_bb->firstindex[kf];
-            if (DDSIP_bb->firsttype[kf] == 'B' || DDSIP_bb->firsttype[kf] == 'I' || DDSIP_bb->firsttype[kf] == 'N')
-            {
-                for(i=0; i<DDSIP_bb->total_int; i++)
-                    if (k == DDSIP_bb->intind[i])
-                        break;
-                //this should not happen, but for safety ...
-                if (i>DDSIP_bb->total_int-1)
-                {
-                    fprintf (stderr,"XXX ERROR: variable %d branched on is of type %c, but not in DDSIP_bb->intind! DDSIP_bb->intind is:\n", k,DDSIP_bb->firsttype[k]);
-                    fprintf (DDSIP_outfile,"XXX ERROR: variable %d branched on is of type %c, but not in DDSIP_bb->intind! DDSIP_bb->intind is:\n", k,DDSIP_bb->firsttype[k]);
-                    exit (99);
-                }
-                if (DDSIP_bb->values[i] < DDSIP_node[DDSIP_bb->curnode]->neolb)
-                {
-                    DDSIP_bb->values[i] = DDSIP_node[DDSIP_bb->curnode]->neolb;
-                }
-                else if (DDSIP_bb->values[i] > DDSIP_node[DDSIP_bb->curnode]->neoub)
-                {
-                    DDSIP_bb->values[i] = DDSIP_node[DDSIP_bb->curnode]->neolb;
-                }
-            }
-            // Add start informations to problem
-            status = CPXaddmipstarts (DDSIP_env, DDSIP_lp, 1, DDSIP_bb->total_int, DDSIP_bb->beg, DDSIP_bb->intind, DDSIP_bb->values, DDSIP_bb->effort, DDSIP_bb->Names);
-            status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 2);
-            if (status)
-            {
-                fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
-                fprintf (DDSIP_outfile, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
-                return status;
-            }
-#ifdef DEBUG
-            else if (DDSIP_param->outlev > 90)
-                fprintf (DDSIP_bb->moreoutfile, "  Copied mip start info %s of father (Warm)\n", DDSIP_bb->Names[0]);
-#endif
-        }
-        return 0;
-    }
     // Start Value
     // Hotstart = 4 or 6 --> use solutions from father node (from node 1 on), and from previous scenarios
-    else if (DDSIP_param->hot == 4 || DDSIP_param->hot == 6)
+    else if ((DDSIP_param->hot == 4 || DDSIP_param->hot == 6)
+#ifdef CBHOTSTART
+             || (DDSIP_param->cbhot == 1 && !DDSIP_bb->curnode && DDSIP_node[DDSIP_bb->curnode]->step == dual && DDSIP_bb->dualdescitcnt < 4 && DDSIP_bb->dualitcnt)
+             || (DDSIP_param->cbhot == 2 && DDSIP_node[DDSIP_bb->curnode]->step == dual && !DDSIP_bb->dualdescitcnt)
+             || (DDSIP_param->cbhot == 3 && DDSIP_node[DDSIP_bb->curnode]->step == dual)
+#endif
+            )
     {
 #ifdef DEBUG
         // print debugging info
-        if (DDSIP_param->outlev > 99)
+        if (DDSIP_param->outlev > 21)
         {
-            fprintf (DDSIP_bb->moreoutfile,"### %d MIP start values (from father node and previous scenarios):\n",added);
+            fprintf (DDSIP_bb->moreoutfile,"     have %d MIP starts (from previous iters)\n",added);
         }
 #endif
         DDSIP_bb->effort[0]=2;
         added = 0;
         inserted = 0;
         // If not in the root node
-        if (DDSIP_bb->curnode)
+        if (DDSIP_bb->curnode && DDSIP_node[DDSIP_bb->curnode]->step != dual)
         {
             // Copy solutions from father node to the problem (see initialization of subbound and solut)
             for(j=0; j<DDSIP_param->scenarios; j++)
@@ -838,7 +798,7 @@ DDSIP_Warm (int iscen)
             {
                 if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[DDSIP_bb->lb_scen_order[kf]])
                 {
-                    if (!((DDSIP_node[DDSIP_bb->curnode]->first_sol)[DDSIP_bb->lb_scen_order[kf]][DDSIP_bb->firstvar + 1]))
+                    if (!((DDSIP_node[DDSIP_bb->curnode]->first_sol)[DDSIP_bb->lb_scen_order[kf]][DDSIP_bb->firstvar + 1]) || DDSIP_bb->dualitcnt)
                     {
                         // if inherited, the solution is already there from the father
                         already_there = 0;
@@ -861,6 +821,8 @@ DDSIP_Warm (int iscen)
                                 for(k=0; k<DDSIP_bb->total_int; k++)
                                     DDSIP_bb->values [added*DDSIP_bb->total_int+k] = DDSIP_node[DDSIP_bb->curnode]->solut[ (DDSIP_bb->lb_scen_order[kf])*DDSIP_bb->total_int + k];
                                 added++;
+                                if (DDSIP_node[DDSIP_bb->curnode]->step == dual && added > 10)
+                                    break;
                             }
                             else if (inserted < DDSIP_param->scenarios)
                             {
@@ -882,7 +844,6 @@ DDSIP_Warm (int iscen)
         // Add start informations to problem
         if (added)
         {
-            //status = CPXaddmipstarts (DDSIP_env, DDSIP_lp, added, added*DDSIP_bb->total_int, DDSIP_bb->beg, DDSIP_bb->indices, DDSIP_bb->values, DDSIP_bb->effort, DDSIP_bb->Names);
             for (j = 0; j < added; j++)
             {
 #ifdef DEBUG
@@ -902,11 +863,18 @@ DDSIP_Warm (int iscen)
                     return status;
                 }
 #ifdef DEBUG
-                else if (DDSIP_param->outlev > 90)
+                else if (DDSIP_param->outlev > 80)
                     fprintf (DDSIP_bb->moreoutfile, "  Copied mip start info %s (Warm)\n", DDSIP_bb->Names[j]);
 #endif
             }
         }
+#ifdef DEBUG
+        // print debugging info
+        if (DDSIP_param->outlev > 21)
+        {
+            fprintf (DDSIP_bb->moreoutfile,"      added %d MIP starts (from other scens)\n",added);
+        }
+#endif
         // ADVIND must be 2 when using supplied start values
         status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 2);
         if (status)
@@ -915,6 +883,57 @@ DDSIP_Warm (int iscen)
             fprintf (DDSIP_outfile, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
             return status;
         }
+    }
+    // Hotstart = 1 --> ADVIND  1 - start values of previous optimization should be used
+    else if (DDSIP_param->hot == 1)
+    {
+        DDSIP_bb->effort[0]=2;
+        // If not in the root node add solution of father
+        if (DDSIP_bb->curnode)
+        {
+            // Copy solution from father node to the problem (see initialization of subbound and solut)
+            sprintf (DDSIP_bb->Names[0],"Father_%d",scen+1);
+            for(k=0; k<DDSIP_bb->total_int; k++)
+                DDSIP_bb->values[k] = DDSIP_node[DDSIP_bb->curnode]->solut[scen*DDSIP_bb->total_int + k];
+            // A priori feasibility check (branching may lead to infeasibility)
+            kf= DDSIP_node[DDSIP_bb->curnode]->neoind;
+            k = DDSIP_bb->firstindex[kf];
+            if (DDSIP_bb->firsttype[kf] == 'B' || DDSIP_bb->firsttype[kf] == 'I' || DDSIP_bb->firsttype[kf] == 'N')
+            {
+                for(i=0; i<DDSIP_bb->total_int; i++)
+                    if (k == DDSIP_bb->intind[i])
+                        break;
+                //this should not happen, but for safety ...
+                if (i>DDSIP_bb->total_int-1)
+                {
+                    fprintf (stderr,"XXX ERROR: variable %d branched on is of type %c, but not in DDSIP_bb->intind! DDSIP_bb->intind is:\n", k,DDSIP_bb->firsttype[k]);
+                    fprintf (DDSIP_outfile,"XXX ERROR: variable %d branched on is of type %c, but not in DDSIP_bb->intind! DDSIP_bb->intind is:\n", k,DDSIP_bb->firsttype[k]);
+                    exit (99);
+                }
+                if (DDSIP_bb->values[i] < DDSIP_node[DDSIP_bb->curnode]->neolb)
+                {
+                    DDSIP_bb->values[i] = DDSIP_node[DDSIP_bb->curnode]->neolb;
+                }
+                else if (DDSIP_bb->values[i] > DDSIP_node[DDSIP_bb->curnode]->neoub)
+                {
+                    DDSIP_bb->values[i] = DDSIP_node[DDSIP_bb->curnode]->neolb;
+                }
+            }
+            // Add start informations to problem
+            status = CPXaddmipstarts (DDSIP_env, DDSIP_lp, 1, DDSIP_bb->total_int, DDSIP_bb->beg, DDSIP_bb->intind, DDSIP_bb->values, DDSIP_bb->effort, DDSIP_bb->Names);
+            status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 2);
+            if (status)
+            {
+                fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
+                fprintf (DDSIP_outfile, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
+                return status;
+            }
+#ifdef DEBUG
+            else if (DDSIP_param->outlev > 90)
+                fprintf (DDSIP_bb->moreoutfile, "  Copied mip start info %s of father (Warm)\n", DDSIP_bb->Names[0]);
+#endif
+        }
+        return 0;
     }
     // Hotstart = 3 or 5 --> solutions from previous scenarios in this node
     else if (DDSIP_param->hot == 3 || DDSIP_param->hot == 5)
@@ -929,7 +948,7 @@ DDSIP_Warm (int iscen)
             // print debugging info
             if (DDSIP_param->outlev > 99)
             {
-                fprintf (DDSIP_bb->moreoutfile,"### MIP start values (from previous scenarios):\n");
+                fprintf (DDSIP_bb->moreoutfile,"     ### MIP starts (from previous scenarios):\n");
             }
 #endif
             j = DDSIP_bb->lb_scen_order[scen-2];
@@ -951,7 +970,6 @@ DDSIP_Warm (int iscen)
             if (!already_there)
                 added++;
             // Copy starting informations to problem
-            //status = CPXaddmipstarts (DDSIP_env, DDSIP_lp, added, added*DDSIP_bb->total_int, DDSIP_bb->beg, DDSIP_bb->indices, DDSIP_bb->values, DDSIP_bb->effort, DDSIP_bb->Names);
             for (j = 0; j < added; j++)
             {
 #ifdef DEBUG
@@ -1176,8 +1194,6 @@ DDSIP_LowerBound (void)
                        "minfirst (LowerBound)");
     double *maxfirst = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar,
                        "maxfirst (LowerBound)");
-    double *tmpsecsol = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios * DDSIP_bb->secvar,
-                        "secsol (LowerBound)");
     char *type = (char *) DDSIP_Alloc (sizeof (char), DDSIP_bb->firstvar, "type(LowerBound)");
     int    *ordind  = NULL;
     double *scensol = NULL;
@@ -1426,7 +1442,7 @@ DDSIP_LowerBound (void)
             // we don't know the second stage solution after branching
             for (j = 0; j < DDSIP_bb->secvar; j++)
             {
-                tmpsecsol[scen * DDSIP_bb->secvar + j] = DDSIP_infty;
+                DDSIP_bb->cur_secstage[scen][j] = DDSIP_infty;
             }
             if ((DDSIP_param->scalarization || DDSIP_param->cb) && (DDSIP_param->riskmod))
             {
@@ -2087,7 +2103,7 @@ DDSIP_LowerBound (void)
                     fprintf (DDSIP_bb->moreoutfile, "    Second-stage solution:\n");
                 for (j = 0; j < DDSIP_bb->secvar; j++)
                 {
-                    tmpsecsol[scen * DDSIP_bb->secvar + j] = mipx[DDSIP_bb->secondindex[j]];
+                    DDSIP_bb->cur_secstage[scen][j] = mipx[DDSIP_bb->secondindex[j]];
                     if (DDSIP_param->outlev >= DDSIP_second_stage_outlev)
                     {
                         fprintf (DDSIP_bb->moreoutfile, " %20.14g",  mipx[DDSIP_bb->secondindex[j]]);
@@ -2133,13 +2149,13 @@ DDSIP_LowerBound (void)
 
     if (DDSIP_bb->bestvalue < 0.)
     {
-        factor  = 1.-2.e-15;
-        nfactor = 1.+2.e-15;
+        factor  = 1.-2.e-11;
+        nfactor = 1.+DDSIP_Dmin(0.9*DDSIP_param->relgap, 1.e-8);
     }
     else
     {
-        factor  = 1.+2.e-15;
-        nfactor = 1.-2.e-15;
+        factor  = 1.+2.e-11;
+        nfactor = 1.-DDSIP_Dmin(0.9*DDSIP_param->relgap, 1.e-8);
     }
 
     if (!(DDSIP_bb->lb_sorted))
@@ -2258,19 +2274,19 @@ DDSIP_LowerBound (void)
         DDSIP_bb->lb_sorted = 1;
     }
 #ifdef SHIFT
-    else if (DDSIP_param->hot == 4)
+    if (DDSIP_param->hot == 4)
     {
         // shifting difficult scenarios to the end such that they can make use of more mipstarts
         wall_secs = cpu_secs = time_sort_array[0];
         for (wall_hrs = 1; wall_hrs < DDSIP_param->scenarios; wall_hrs++)
         {
             wall_secs += time_sort_array[wall_hrs];
-            if (wall_hrs < DDSIP_param->scenarios - 3)
+            if (wall_hrs < DDSIP_param->scenarios - 2)
                 cpu_secs = DDSIP_Dmax (cpu_secs, time_sort_array[wall_hrs]);
         }
         wall_secs /= (0.01 + DDSIP_param->scenarios);
 #ifdef DEBUG
-        if (DDSIP_param->outlev)
+        if (DDSIP_param->outlev > 20)
             fprintf (DDSIP_bb->moreoutfile, "### max time %g, mean %g, max>4*mean: %d ###\n", cpu_secs, wall_secs, cpu_secs > 4.*wall_secs);
 #endif
         if (cpu_secs > 2.*wall_secs)
@@ -2283,7 +2299,7 @@ DDSIP_LowerBound (void)
                      cpu_mins = DDSIP_bb->lb_scen_order[wall_hrs];
                      cpu_secs = time_sort_array[wall_hrs];
 #ifdef DEBUG
-                     if (DDSIP_param->outlev)
+                     if (DDSIP_param->outlev > 20)
                          fprintf (DDSIP_bb->moreoutfile, "### shifting scenario %d with time %g to the end of lb_scen_order ###\n", cpu_mins+1, time_sort_array[wall_hrs]);
 #endif
                      for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
@@ -2365,9 +2381,15 @@ DDSIP_LowerBound (void)
         if (!DDSIP_bb->violations)
         {
             DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
-            if ((!(DDSIP_bb->found_optimal_node) && (DDSIP_node[DDSIP_bb->curnode]->bound <= DDSIP_bb->bestvalue*factor)) ||
-                ( (DDSIP_bb->found_optimal_node) && (DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_bb->bound_optimal_node*nfactor && DDSIP_node[DDSIP_bb->curnode]->bound <= DDSIP_bb->bestvalue*nfactor)))
+            if ((!(DDSIP_bb->found_optimal_node) && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue*factor) ||
+                ( (DDSIP_bb->found_optimal_node) && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node*nfactor && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue*factor))
             {
+//////////////////////////////////////////////////////////////////
+               if (DDSIP_param->outlev > 20)
+                   fprintf (DDSIP_bb->moreoutfile, "########## setting found_optimal_node: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*factor (%20.15g) = %.8g\n",
+                            DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,
+                            DDSIP_bb->bestvalue*factor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*factor);
+//////////////////////////////////////////////////////////////////
                 DDSIP_bb->found_optimal_node = DDSIP_bb->curnode;
                 DDSIP_bb->bound_optimal_node = DDSIP_node[DDSIP_bb->curnode]->bound;
                 if (DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_bb->bestvalue)
@@ -2376,6 +2398,15 @@ DDSIP_LowerBound (void)
                     DDSIP_bb->skip = -1;
                 }
             }
+//////////////////////////////////////////////////////////////////
+            else
+            {
+               if (DDSIP_param->outlev > 20)
+                   fprintf (DDSIP_bb->moreoutfile, "########## else: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*factor (%20.15g) = %.8g\n",
+                            DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,
+                            DDSIP_bb->bestvalue*factor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*factor);
+            }
+//////////////////////////////////////////////////////////////////
         }
         else
         {
@@ -2445,8 +2476,8 @@ DDSIP_LowerBound (void)
         if (!DDSIP_bb->violations)
         {
             DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
-            if ((!(DDSIP_bb->found_optimal_node) && (DDSIP_node[DDSIP_bb->curnode]->bound <= DDSIP_bb->bestvalue*factor)) ||
-                ( (DDSIP_bb->found_optimal_node) && (DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_bb->bound_optimal_node*nfactor)))
+            if ((!(DDSIP_bb->found_optimal_node) && (DDSIP_node[DDSIP_bb->curnode]->bound >= DDSIP_bb->bestvalue*factor)) ||
+                ( (DDSIP_bb->found_optimal_node) && (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node*nfactor)))
             {
                 DDSIP_bb->found_optimal_node = DDSIP_bb->curnode;
                 DDSIP_bb->bound_optimal_node = DDSIP_node[DDSIP_bb->curnode]->bound;
@@ -3113,7 +3144,7 @@ DDSIP_LowerBound (void)
                                         fprintf (DDSIP_bb->moreoutfile, "    Second-stage solution:\n");
                                     for (j = 0; j < DDSIP_bb->secvar; j++)
                                     {
-                                        tmpsecsol[scen * DDSIP_bb->secvar + j] = mipx[DDSIP_bb->secondindex[j]];
+                                        DDSIP_bb->cur_secstage[scen][j] = mipx[DDSIP_bb->secondindex[j]];
                                         if (DDSIP_param->outlev >= DDSIP_second_stage_outlev)
                                         {
                                             fprintf (DDSIP_bb->moreoutfile, " %20.14g",  mipx[DDSIP_bb->secondindex[j]]);
@@ -3143,13 +3174,15 @@ DDSIP_LowerBound (void)
                                 DDSIP_bb->bestsol[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[0][j];
                             if (DDSIP_param->outlev)
                                 fprintf (DDSIP_bb->moreoutfile, "\t(Current best bound)\n");
-                            for (j = 0; j < DDSIP_bb->secvar; j++)
-                                for (k = 0; k < DDSIP_param->scenarios; k++)
-                                    DDSIP_bb->secstage[j][k] = tmpsecsol[j + DDSIP_bb->secvar * k];
-                            for (j = 0; j < DDSIP_param->scenarios; j++)
-                                DDSIP_bb->subsol[j] = (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j];
+                            // copy second stage solutions of current best
+                            for (k = 0; k < DDSIP_param->scenarios; k++)
+                            {
+                                memcpy(DDSIP_bb->secstage[k], DDSIP_bb->cur_secstage[k], DDSIP_bb->secvar*sizeof(double));
+                                DDSIP_bb->subsol[k] = (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[k];
+                            }
                             // heuristics will all produce the (identical) first stage solution in this point - skip upper bound
                             DDSIP_bb->skip = 4;
+                            DDSIP_bb->bestsol_in_curnode = 1;
                         }
                     }
                 }
@@ -3198,7 +3231,6 @@ TERMINATE:
     DDSIP_Free ((void **) &(minfirst));
     DDSIP_Free ((void **) &(maxfirst));
     DDSIP_Free ((void **) &(type));
-    DDSIP_Free ((void **) &(tmpsecsol));
 #ifdef SHIFT
     if (DDSIP_param->hot == 4)
     {
@@ -3236,15 +3268,17 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                        "minfirst (CBLowerBound)");
     double *maxfirst = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar,
                        "maxfirst (CBLowerBound)");
-    double *tmpsecsol = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios * DDSIP_bb->secvar,
-                        "secsol (CBLowerBound)");
     //    double *cb_scenrisk = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios,
     //                                          "cb_scenrisk (CBLowerBound)");
     char *type = (char *) DDSIP_Alloc (sizeof (char), DDSIP_bb->firstvar, "type(CBLowerBound)");
     char **colname;
     char *colstore;
+    int shift_in_cb = 0;
+#ifdef CBHOTSTART 
 #ifdef SHIFT
     double * time_sort_array = NULL;
+    shift_in_cb = (DDSIP_param->hot == 4) || (DDSIP_param->cbhot && !DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt == 1);
+#endif
 #endif
 
     DDSIP_bb->DDSIP_step = dual;
@@ -3261,12 +3295,12 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     {
         fprintf (DDSIP_bb->moreoutfile, "\n----------------------\n");
         if (DDSIP_bb->curnode)
-            fprintf (DDSIP_bb->moreoutfile, "Solving (dual opt. function eval) in node %d, desc. it. %d, tot. it. %d (limits: %d, %d), weight = %g :\n", DDSIP_bb->curnode, DDSIP_bb->dualdescitcnt,DDSIP_bb->dualitcnt+1,DDSIP_param->cbitlim,DDSIP_param->cbtotalitlim, cb_get_last_weight(DDSIP_bb->dualProblem));
+            fprintf (DDSIP_bb->moreoutfile, "Solving (dual opt. function eval) in node %d, desc. it. %d (limit: %d), tot. it. %d weight = %g :\n", DDSIP_bb->curnode, DDSIP_bb->dualdescitcnt,DDSIP_param->cbitlim,DDSIP_bb->dualitcnt+1, cb_get_last_weight(DDSIP_bb->dualProblem));
         else
-            fprintf (DDSIP_bb->moreoutfile, "Solving (dual opt. function eval) in node %d, desc. it. %d, tot. it. %d (limits: %d, %d), weight = %g :\n", DDSIP_bb->curnode, DDSIP_bb->dualdescitcnt,DDSIP_bb->dualitcnt+1,DDSIP_param->cbrootitlim,DDSIP_param->cbtotalitlim, cb_get_last_weight(DDSIP_bb->dualProblem));
+            fprintf (DDSIP_bb->moreoutfile, "Solving (dual opt. function eval) in node %d, desc. it. %d (limit: %d), tot. it. %d weight = %g :\n", DDSIP_bb->curnode, DDSIP_bb->dualdescitcnt,DDSIP_param->cbrootitlim,DDSIP_bb->dualitcnt+1, cb_get_last_weight(DDSIP_bb->dualProblem));
     }
 #ifdef SHIFT
-    if (DDSIP_param->hot == 4)
+    if (shift_in_cb)
     {
         // prepare for shifting difficult scenarios to the end such that they can make use of more mipstarts
         time_sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "time_sort_array(LowerBound)");
@@ -3884,10 +3918,10 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             time_end = DDSIP_GetCpuTime ();
             time_start = time_end-time_start;
 #ifdef SHIFT
-            if (DDSIP_param->hot == 4)
+            if (shift_in_cb)
             {
                 // prepare for shifting difficult scenarios to the end such that they can make use of more mipstarts
-                time_sort_array[iscen] = time_start;
+                time_sort_array[scen] = time_start;
             }
 #endif
             // Debugging information
@@ -4111,44 +4145,17 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
 
     }				// end for iscen
 #ifdef SHIFT
-    if (DDSIP_param->hot == 4)
+    if (shift_in_cb)
     {
-        // shifting difficult scenarios to the end such that they can make use of more mipstarts
-        wall_secs = cpu_secs = time_sort_array[0];
-        for (wall_hrs = 1; wall_hrs < DDSIP_param->scenarios; wall_hrs++)
+        DDSIP_qsort_ins_A (time_sort_array, DDSIP_bb->lb_scen_order, 0, DDSIP_param->scenarios-1);
+        if (DDSIP_param->outlev > 21)
         {
-            wall_secs += time_sort_array[wall_hrs];
-            if (wall_hrs < DDSIP_param->scenarios - 3)
-                cpu_secs = DDSIP_Dmax (cpu_secs, time_sort_array[wall_hrs]);
-        }
-        wall_secs /= (0.01 + DDSIP_param->scenarios);
-#ifdef DEBUG
-        if (DDSIP_param->outlev)
-            fprintf (DDSIP_bb->moreoutfile, "### max time %g, mean %g, max>4.5*mean: %d ###\n", cpu_secs, wall_secs, cpu_secs > 4.5*wall_secs);
-#endif
-        if (cpu_secs > 4.5*wall_secs)
-        {
-            cpu_hrs = 0;
-            for (wall_hrs = DDSIP_bb->shifts; wall_hrs < DDSIP_param->scenarios-cpu_hrs; wall_hrs++)
+            // debug output
+            fprintf (DDSIP_bb->moreoutfile,"order of scenarios after sorting for lb according to time\n");
+            for (iscen = 0; iscen < DDSIP_param->scenarios; iscen++)
             {
-                if (time_sort_array[wall_hrs] > 4.5*wall_secs)
-                {
-                     cpu_mins = DDSIP_bb->lb_scen_order[wall_hrs];
-                     cpu_secs = time_sort_array[wall_hrs];
-#ifdef DEBUG
-                     if (DDSIP_param->outlev)
-                         fprintf (DDSIP_bb->moreoutfile, "### shifting scenario %d with time %g to the end of lb_scen_order ###\n", cpu_mins+1, time_sort_array[wall_hrs]);
-#endif
-                     for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
-                     {
-                         DDSIP_bb->lb_scen_order[wall_mins-1] = DDSIP_bb->lb_scen_order[wall_mins];
-                         time_sort_array[wall_mins-1] = time_sort_array[wall_mins];
-                     }
-                     DDSIP_bb->lb_scen_order[DDSIP_param->scenarios-1] = cpu_mins; 
-                     time_sort_array[DDSIP_param->scenarios-1] = cpu_mins; 
-                     cpu_hrs++;
-                     wall_hrs--;
-                }
+                fprintf(DDSIP_bb->moreoutfile," %3d: Scen %3d  %20.14g\n",
+                        iscen+1, DDSIP_bb->lb_scen_order[iscen]+1, time_sort_array[DDSIP_bb->lb_scen_order[iscen]]);
             }
         }
     }
@@ -4367,8 +4374,8 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     }
     if (tmpbestbound > DDSIP_bb->bestvalue)
     {
-if (DDSIP_param->outlev)
-   fprintf (DDSIP_bb->moreoutfile, "#### Bound reached %g > bestvalue (%g).\n", tmpbestbound, DDSIP_bb->bestvalue);
+        if (DDSIP_param->outlev)
+           fprintf (DDSIP_bb->moreoutfile, "#### Bound reached %g > bestvalue (%g).\n", tmpbestbound, DDSIP_bb->bestvalue);
         DDSIP_bb->skip = 2;
         DDSIP_bb->cutoff++;
         goto TERMINATE;
@@ -4672,9 +4679,8 @@ TERMINATE:
     DDSIP_Free ((void **) &(minfirst));
     DDSIP_Free ((void **) &(maxfirst));
     DDSIP_Free ((void **) &(type));
-    DDSIP_Free ((void **) &(tmpsecsol));
 #ifdef SHIFT
-    if (DDSIP_param->hot == 4)
+    if (shift_in_cb)
     {
         DDSIP_Free ((void **) &(time_sort_array));
     }

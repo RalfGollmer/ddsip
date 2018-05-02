@@ -408,7 +408,7 @@ DDSIP_All (int nrScenarios, int feasCheckOnly)
                 fprintf (stderr, "ERROR: Failed to perform UpperBound (All)\n");
                 return status;
             }
-            else if (DDSIP_param->interrupt_heur)
+            else if (DDSIP_param->interrupt_heur > 0)
             {
                 if (DDSIP_param->outlev)
                     fprintf (DDSIP_bb->moreoutfile, "\nGap reached, no further heuristics necessary.\n");
@@ -560,7 +560,7 @@ DDSIP_OneFifth (int nrScenarios, int feasCheckOnly)
                     fprintf (stderr, "ERROR: Failed to perform UpperBound (OneFifth)\n");
                     return 1;
                 }
-                else if (DDSIP_param->interrupt_heur)
+                else if (DDSIP_param->interrupt_heur > 0)
                 {
                     if (DDSIP_param->outlev)
                         fprintf (DDSIP_bb->moreoutfile, "\nGap reached, no further heuristics necessary.\n");

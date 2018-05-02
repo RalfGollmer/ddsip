@@ -243,9 +243,13 @@ DDSIP_FreeBb ()
         DDSIP_Free ((void **) &(DDSIP_bb->subsol));
 
         if (DDSIP_bb->secstage != NULL)
-            for (i = 0; i < DDSIP_bb->secvar; i++)
+            for (i = 0; i < DDSIP_param->scenarios; i++)
                 DDSIP_Free ((void **) &(DDSIP_bb->secstage[i]));
+        if (DDSIP_bb->cur_secstage != NULL)
+            for (i = 0; i < DDSIP_param->scenarios; i++)
+                DDSIP_Free ((void **) &(DDSIP_bb->cur_secstage[i]));
         DDSIP_Free ((void **) &(DDSIP_bb->secstage));
+        DDSIP_Free ((void **) &(DDSIP_bb->cur_secstage));
         DDSIP_Free ((void **) &(DDSIP_bb->cost));
         DDSIP_Free ((void **) &(DDSIP_bb->lborg));
         DDSIP_Free ((void **) &(DDSIP_bb->uborg));

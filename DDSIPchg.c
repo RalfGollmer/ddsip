@@ -70,8 +70,11 @@ DDSIP_ChgBounds (int print)
     if (DDSIP_bb->bestvalue < DDSIP_infty)
     {
         for (i = 0; i < DDSIP_bb->curbdcnt; i++)
-            if (DDSIP_bb->bestsol[DDSIP_bb->curind[i]] < DDSIP_bb->curlb[i] || DDSIP_bb->bestsol[DDSIP_bb->curind[i]] > DDSIP_bb->curub[i])
+            if (DDSIP_bb->bestsol[DDSIP_bb->curind[i]] < DDSIP_bb->curlb[i] - (fabs(DDSIP_bb->curlb[i])+1.)*DDSIP_param->accuracy ||
+                DDSIP_bb->bestsol[DDSIP_bb->curind[i]] > DDSIP_bb->curub[i] + (fabs(DDSIP_bb->curub[i])+1.)*DDSIP_param->accuracy)
             {
+                if (DDSIP_param->outlev > 20)
+                    fprintf (DDSIP_bb->moreoutfile, "DDSIPChgBounds: DDSIP_bb->bestsol[%d] = %21.14g outside bounds of node %d [%21.14g, %21.14g]\n", DDSIP_bb->curind[i], DDSIP_bb->bestsol[DDSIP_bb->curind[i]], DDSIP_bb->curnode, DDSIP_bb->curlb[i], DDSIP_bb->curub[i]);
                 DDSIP_bb->bestsol_in_curnode = 0;
                 break;
             }

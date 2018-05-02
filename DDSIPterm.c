@@ -247,7 +247,7 @@ DDSIP_Continue (int *noiter, int *boundstat)
                             fprintf (outputfile, "Scenario %d:\n", i + 1);
 
                             for (j = 0; j < DDSIP_bb->secvar; j++)
-                                fprintf (outputfile, "%20s  %18.12g\n", colname[DDSIP_bb->secondindex[j]], DDSIP_bb->secstage[j][i]);
+                                fprintf (outputfile, "%20s  %18.12g\n", colname[DDSIP_bb->secondindex[j]], DDSIP_bb->secstage[i][j]);
 
                         }
                     }

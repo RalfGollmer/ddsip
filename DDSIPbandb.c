@@ -1080,7 +1080,7 @@ DDSIP_Bound (void)
         if (DDSIP_param->outlev > 4)
         {
             fprintf (DDSIP_bb->moreoutfile,
-                     "No of front nodes: %d (including %d leaves)\n", DDSIP_bb->nofront, DDSIP_bb->nofront - DDSIP_bb->no_reduced_front);
+                     "No of front nodes: %d (including %d leaves)     found_optimal_node: %d\n", DDSIP_bb->nofront, DDSIP_bb->nofront - DDSIP_bb->no_reduced_front, DDSIP_bb->found_optimal_node);
             fprintf (DDSIP_bb->moreoutfile, "     No.   bound             violations dispnorm  branchvar lower bound  upper        range         depth isleaf solved cutAdded\n");
             j = (DDSIP_param->outlev > 21 || !(DDSIP_bb->curnode % 200)) ? DDSIP_bb->nofront : DDSIP_Imin(DDSIP_bb->nofront,25);
             for (i = 0; i < j; i++)

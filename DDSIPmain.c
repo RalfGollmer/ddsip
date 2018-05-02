@@ -54,7 +54,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2018-04-04 (Github v1.2.3) ";
+const char DDSIP_version[] = "2018-05-01 (Github v1.2.4) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -77,7 +77,7 @@ int DDSIP_killsignal = 0;
 
 //==========================================================================
 int
-main (void)
+main (int argc, char * argv[])
 {
     // Temporary variables
     struct stat filestat;
@@ -114,6 +114,7 @@ main (void)
         }
     }
 
+    i = argc;
     //
 
     // Welcome
@@ -167,6 +168,7 @@ main (void)
     }
 
     setbuf (DDSIP_outfile, 0);
+    fprintf (DDSIP_outfile, "%s\n", argv[0]);
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
     fprintf (DDSIP_outfile, "current system time: ");
     fflush (DDSIP_outfile);
@@ -256,6 +258,7 @@ main (void)
         {
             // Buffer size = 0
             setbuf (DDSIP_bb->moreoutfile, 0);
+            setbuf (stdout, 0);
         }
 #ifndef _WIN32
         // Print time to output file
@@ -621,7 +624,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
                         (DDSIP_bb->bestvalue - DDSIP_node[0]->bound)/(fabs(DDSIP_bb->bestvalue) + 1e-16) < 0.5*DDSIP_param->relgap)
                         break;
                 }
-                if (DDSIP_param->redundancyCheck)
+                if (DDSIP_param->deleteRedundantCuts)
                     DDSIP_CheckRedundancy(1);
             }
             else
@@ -695,7 +698,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
         if ((status = DDSIP_Branch ()))
             goto TERMINATE;
 
-        if (DDSIP_param->deleteRedundantCuts && !(DDSIP_bb->curnode % 5))
+        if (DDSIP_param->deleteRedundantCuts && !(DDSIP_bb->curnode % 10))
             DDSIP_CheckRedundancy(1);
     }
 

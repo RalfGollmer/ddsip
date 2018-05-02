@@ -428,14 +428,14 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->uborg = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar, "uborg(BbTypeInit)");
 
     DDSIP_bb->objcontrib = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->novar, "objcontrib(BbTypeInit)");
-    DDSIP_bb->secstage = (double **) DDSIP_Alloc (sizeof (double *), DDSIP_bb->secvar, "secstage(BbTypeInit)");
-    for (i = 0; i < DDSIP_bb->secvar; i++)
-        DDSIP_bb->secstage[i] = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "secstage[i](BbTypeInit)");
-
+    DDSIP_bb->secstage = (double **) DDSIP_Alloc (sizeof (double *), DDSIP_param->scenarios, "secstage(BbTypeInit)");
+    DDSIP_bb->cur_secstage = (double **) DDSIP_Alloc (sizeof (double *), DDSIP_param->scenarios, "cur_secstage(BbTypeInit)");
+    for (i = 0; i < DDSIP_param->scenarios; i++)
+    {
+        DDSIP_bb->secstage[i] = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->secvar, "secstage[i](BbTypeInit)");
+        DDSIP_bb->cur_secstage[i] = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->secvar, "cur_secstage[i](BbTypeInit)");
+    }
     DDSIP_bb->subsol = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "subsol(BbTypeInit)");
-
-    /*    DDSIP_bb->Txph = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->nodelim * (DDSIP_bb->firstcon + DDSIP_bb->seccon),"Txph(BbTypeInit)"); */
-    /*    DDSIP_bb->phiofTxph = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->nodelim,"phiofTxph(BbTypeInit)"); */
 
     // Lower bounds in root node and upper bounds in best node are needed
     // to calculate best target
@@ -485,7 +485,7 @@ DDSIP_BbTypeInit (void)
 
     // Count the number of evaluated upper bounds
     DDSIP_bb->found_optimal_node = 0;
-    DDSIP_bb->bound_optimal_node = DDSIP_infty;
+    DDSIP_bb->bound_optimal_node = -DDSIP_infty;
 
     DDSIP_bb->neobjcnt = 0;
 

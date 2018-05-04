@@ -748,7 +748,7 @@ DDSIP_DualOpt (void)
                     obj = DDSIP_bb->dualObjVal;
                     if (cnt > DDSIP_param->numberReinits)
                         break;
-                    if ((obj - old_obj)/(fabs(old_obj) + 1e-16) > 1.e-8)
+                    if ((obj - old_obj)/(fabs(old_obj) + 2e-15) > 1.e-8)
                     {
                         // reinit model
                         if (cb_reinit_function_model(p, (void *) DDSIP_DualUpdate))
@@ -837,7 +837,7 @@ DDSIP_DualOpt (void)
                     }
                     else
                         break;
-                } while (DDSIP_bb->cutAdded && (((obj - old_obj)/(fabs(obj)+1e-16) > 4.e-12) || (noIncreaseCounter < 2))
+                } while (DDSIP_bb->cutAdded && (((obj - old_obj)/(fabs(obj)+1e-16) > 4.e-12) || (noIncreaseCounter < 3))
                          && cnt < DDSIP_param->numberReinits && rgap > 99.*DDSIP_param->relgap);
                 if (DDSIP_bb->cutCntr > 1 && DDSIP_param->cbrootitlim > 5)
                 {
@@ -965,6 +965,8 @@ while (tmp_bestdual)
                             cnt = 0;
                             break;
                         }
+                        if (obj < max_bound)
+                            cnt = -1;
                         tmp_bestdual = tmp_previous;
                     }
                     else
@@ -1207,7 +1209,7 @@ while (tmp_bestdual)
                 && ((DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt < DDSIP_param->cbitlim && (DDSIP_bb->curnode >= DDSIP_param->cbBreakIters || DDSIP_bb->dualdescitcnt < (DDSIP_param->cbitlim+1)/2))
                     || (!DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt < DDSIP_param->cbrootitlim))
                 && DDSIP_bb->dualitcnt < DDSIP_param->cbtotalitlim && !(obj > DDSIP_bb->bestvalue - DDSIP_param->accuracy)
-                && (DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue) * DDSIP_Dmax (DDSIP_Dmin (0.8*DDSIP_param->relgap, 1.e-8), 2.e-13))
+                && (DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue) * DDSIP_Dmax (DDSIP_Dmin (0.7*DDSIP_param->relgap, 1.e-8), 2.e-13))
                 && cycleCnt < 2)
         {
             if ((DDSIP_bb->nofront == 1) &&

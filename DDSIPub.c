@@ -1403,7 +1403,7 @@ if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
 #ifdef ADDINTEGERCUTS
             //if all first-stage variables are binary ones, we can add an inequality, cutting off this point
             if (DDSIP_bb->DDSIP_step != adv && DDSIP_bb->DDSIP_step != eev &&
-                (DDSIP_param->addIntegerCuts && DDSIP_param->heuristic > 1 /* && !feasCheckOnly */))
+                (DDSIP_param->addIntegerCuts && DDSIP_param->heuristic > 3 /* && !feasCheckOnly */))
             {
                 int rmatbeg;
                 int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_bb->novar), "rmatind(UpperBound)");
@@ -1440,7 +1440,7 @@ if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
                 }
 #ifdef CHECKINTEGERCUT
                 // check whether this cut is dominated
-                if (DDSIP_param->addBendersCuts /* && DDSIP_bb->from_scenario > -1*/)
+                if (DDSIP_param->addBendersCuts  /*&& DDSIP_bb->from_scenario > -1*/)
                 {
                     status = DDSIP_RestoreBoundAndType ();
                     if (status)
@@ -1520,7 +1520,7 @@ if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
                 }
                 else
                 {
-                    objv = +1.e20;
+                    objv = -1.e20;
                 }
                 if (objv < rhs - 3e-2)
                 {
@@ -1530,7 +1530,10 @@ if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
                     sprintf (rowstore, "DDSIPIntegerCut%.04d",DDSIP_bb->cutNumber);
                     if (DDSIP_param->outlev)
                     {
-                        fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
+                        if (objv > -1.e20)
+                            fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
+                        else
+                            fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s ############\n", rowstore);
                         if (DDSIP_param->outlev > 8)
                             printf (" ############ adding cut %s  (objval = %g < %g) ############\n", rowstore, objv, rhs);
                     }

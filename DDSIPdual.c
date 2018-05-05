@@ -1112,16 +1112,16 @@ while (tmp_bestdual)
                 else
                     rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[0]->bound) / (fabs (DDSIP_bb->bestvalue) + DDSIP_param->accuracy);
                 rgap = DDSIP_Dmin (rgap, 100.0);
-                printf ("  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g               %10.4g%%  %3dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                printf ("  | %16d  %7d  %-16.12g %-11.6g  ----------------  %-20.14g               %10.4g%%  %3dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                         DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, rgap, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
-                fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g               %10.4g%%  %3dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  ----------------  %-20.14g               %10.4g%%  %3dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                          DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, rgap, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
             }
             else
             {
-                printf ("  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g %30dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                printf ("  | %16d  %7d  %-16.12g %-11.6g  ----------------  %-20.14g %30dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                         DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
-                fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g %30dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  ----------------  %-20.14g %30dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                          DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
             }
         }

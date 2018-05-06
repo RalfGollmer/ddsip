@@ -485,7 +485,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
                                          ((DDSIP_bb->noiter  >= 2*DDSIP_param->cbBreakIters) && (DDSIP_bb->noiter < DDSIP_param->cbContinuous + 2*DDSIP_param->cbBreakIters)) ||
                                          ((DDSIP_bb->cutoff > 4) &&
                                              (((DDSIP_bb->no_reduced_front < 51) && (DDSIP_bb->noiter % -DDSIP_param->cb) < DDSIP_param->cbContinuous)
-                                             || (((DDSIP_node[DDSIP_bb->curnode-1])->step == dual) && (DDSIP_bb->dualdescitcnt < 11))
+                                             || (((DDSIP_node[DDSIP_bb->curnode-1])->step == dual) && (DDSIP_node[DDSIP_bb->curnode-1])->leaf /*&& (DDSIP_bb->dualdescitcnt < 11)*/)
                                              )
                                          )
                                        )

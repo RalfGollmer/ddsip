@@ -2169,8 +2169,11 @@ while (tmp_bestdual)
                 DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
             }
             else if (!DDSIP_bb->violations)
+            {
                 DDSIP_Print2 ("termination status: optimal. --------------------------------------------------------------", "\n", 0, 0);
-            else if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 0.1*fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap)
+                DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
+            }
+            else if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue) * DDSIP_Dmax (DDSIP_Dmin (0.7*DDSIP_param->relgap, 1.e-8), 2.e-13))
             {
                 if (DDSIP_bb->found_optimal_node && !DDSIP_bb->bestsol_in_curnode &&
                      DDSIP_node[DDSIP_bb->curnode]->violations > 0.4*DDSIP_param->scenarios && (DDSIP_bb->nofront > 1))
@@ -2189,6 +2192,7 @@ while (tmp_bestdual)
                         DDSIP_Print2 ("termination status: within relative gap. Number of violations of nonanticipativity: ", " ------------------------------------------\n", 1.*DDSIP_node[DDSIP_bb->curnode]->violations, 1);
                     }
                 }
+                DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
             }
             else if (!i_scen)
             {

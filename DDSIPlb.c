@@ -1466,7 +1466,7 @@ DDSIP_LowerBound (void)
 #endif
                 //
                 DDSIP_bb->skip = 2;
-                DDSIP_bb->cutoff++;
+                //DDSIP_bb->cutoff++;
                 if (DDSIP_param->outlev)
                 {
                     fprintf (DDSIP_bb->moreoutfile, "\tLower bound of node %d >= %18.16g (-bestvalue = %g) cutoff after evaluation of %d scenarios, skip=%d\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,iscen+1,DDSIP_bb->skip);
@@ -2136,7 +2136,7 @@ DDSIP_LowerBound (void)
 #endif
                 //
                 DDSIP_bb->skip = 2;
-                DDSIP_bb->cutoff++;
+                //DDSIP_bb->cutoff++;
                 if (DDSIP_param->outlev)
                 {
                     fprintf (DDSIP_bb->moreoutfile, "\tLower bound of node %d >= %18.16g (-bestvalue = %g) cutoff after evaluation of %d scenarios, skip=%d\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,iscen+1,DDSIP_bb->skip);
@@ -4377,7 +4377,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         if (DDSIP_param->outlev)
            fprintf (DDSIP_bb->moreoutfile, "#### Bound reached %g > bestvalue (%g).\n", tmpbestbound, DDSIP_bb->bestvalue);
         DDSIP_bb->skip = 2;
-        DDSIP_bb->cutoff++;
+        //DDSIP_bb->cutoff++;
         goto TERMINATE;
     }
     // Evaluate an upper bound if we found a solution for at least one scenario

@@ -1811,8 +1811,6 @@ NEXT_TRY:
                                     last_weight = next_weight;
                                     next_weight = last_weight * 0.1;
                                     cb_set_next_weight (p, next_weight);
-                                    if (DDSIP_bb->cutoff > 0)
-                                        DDSIP_bb->cutoff--;
 ///////////     ///////////
                                     if (DDSIP_param->outlev > 10)
                                         fprintf(DDSIP_bb->moreoutfile,"############10. reduced next weight to %g ##################\n",next_weight);
@@ -2080,7 +2078,8 @@ NEXT_TRY:
                 memcpy (tmp_bestdual->dual, DDSIP_bb->local_bestdual, sizeof (double) * (DDSIP_bb->dimdual));
                 tmp_bestdual->node_nr = DDSIP_bb->curnode;
                 if (DDSIP_bb->curnode)
-                    tmp_bestdual->bound   = DDSIP_Dmin (DDSIP_node[DDSIP_bb->curnode]->bound, 0.5*(DDSIP_bb->bestvalue + DDSIP_bb->bestbound));
+                    //tmp_bestdual->bound   = DDSIP_Dmin (DDSIP_node[DDSIP_bb->curnode]->bound, 0.5*(DDSIP_bb->bestvalue + DDSIP_bb->bestbound));
+                    tmp_bestdual->bound   = DDSIP_Dmin (DDSIP_node[DDSIP_bb->curnode]->bound, 0.2*DDSIP_bb->bestvalue + 0.8*DDSIP_bb->bestbound);
                 else
                     tmp_bestdual->bound   = DDSIP_node[DDSIP_bb->curnode]->bound;
                 tmp_bestdual->weight  = DDSIP_bb->local_bestdual[DDSIP_bb->dimdual];

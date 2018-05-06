@@ -54,7 +54,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2018-05-01 (Github v1.2.4) ";
+const char DDSIP_version[] = "2018-05-06 (Github v1.2.4) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -483,9 +483,9 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
                                          (DDSIP_bb->noiter%200 > 199 - DDSIP_param->cbContinuous) ||
                                          (DDSIP_bb->noiter < DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters) ||
                                          ((DDSIP_bb->noiter  >= 2*DDSIP_param->cbBreakIters) && (DDSIP_bb->noiter < DDSIP_param->cbContinuous + 2*DDSIP_param->cbBreakIters)) ||
-                                         ((DDSIP_bb->cutoff > 5) &&
+                                         ((DDSIP_bb->cutoff > 4) &&
                                              (((DDSIP_bb->no_reduced_front < 51) && (DDSIP_bb->noiter % -DDSIP_param->cb) < DDSIP_param->cbContinuous)
-                                             || ((DDSIP_node[DDSIP_bb->curnode-1])->step == dual && !(DDSIP_bb->dualdescitcnt))
+                                             || (((DDSIP_node[DDSIP_bb->curnode-1])->step == dual) && (DDSIP_bb->dualdescitcnt < 11))
                                              )
                                          )
                                        )

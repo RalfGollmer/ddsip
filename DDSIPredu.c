@@ -380,23 +380,23 @@ DDSIP_CheckRedundancy (int automatic)
                 fprintf (DDSIP_bb->moreoutfile, "ERROR*: Failed to get objective value \n");
             continue;
         }
-#ifdef DEBUG
-        sprintf (probname, "sipout/redundancy%d_%d.lp.gz", callNr,k);
-        status = CPXwriteprob (DDSIP_env, redundancy, probname, NULL);
-        if (status)
-        {
-            fprintf (DDSIP_outfile, " *** redundancy check problem not written successfully, status = %d\n", status);
-            if (DDSIP_param->outlev)
-                fprintf (DDSIP_bb->moreoutfile, " *** redundancy check problem not written successfully, status = %d\n", status);
-            printf  (" *** redundancy check problem not written successfully, status = %d\n", status);
-        }
-        else
-        {
-            if (DDSIP_param->outlev)
-                fprintf (DDSIP_bb->moreoutfile, " *** redundancy check problem %s written successfully\n", probname);
-            printf  (" *** redundancy check problem %s written successfully\n", probname);
-        }
-#endif
+//#ifdef DEBUG
+//        sprintf (probname, "sipout/redundancy%d_%d.lp.gz", callNr,k);
+//        status = CPXwriteprob (DDSIP_env, redundancy, probname, NULL);
+//        if (status)
+//        {
+//            fprintf (DDSIP_outfile, " *** redundancy check problem not written successfully, status = %d\n", status);
+//            if (DDSIP_param->outlev)
+//                fprintf (DDSIP_bb->moreoutfile, " *** redundancy check problem not written successfully, status = %d\n", status);
+//            printf  (" *** redundancy check problem not written successfully, status = %d\n", status);
+//        }
+//        else
+//        {
+//            if (DDSIP_param->outlev)
+//                fprintf (DDSIP_bb->moreoutfile, " *** redundancy check problem %s written successfully\n", probname);
+//            printf  (" *** redundancy check problem %s written successfully\n", probname);
+//        }
+//#endif
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, " *** redundancy check problem objective = %g\n", objval);
         if (DDSIP_param->outlev > 21)

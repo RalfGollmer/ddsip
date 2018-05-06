@@ -870,12 +870,14 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                     {
                                                         if (!DDSIP_Equal (rmatval[k], newCut->matval[k]))
                                                         {
+#ifdef DEBUG
 ////////////////////
 if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
 {
   fprintf(DDSIP_bb->moreoutfile, "### 1 ### check for identical cut: Cut no. %d is different, index %d: %22.16g - %22.16g = %g \n", newCut->number, k, rmatval[k], newCut->matval[k],rmatval[k] - newCut->matval[k]);
 }
 ////////////////////
+#endif
                                                             break;
                                                         }
                                                     }
@@ -883,12 +885,14 @@ if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
                                                         newCut = newCut->prev;
                                                     else
                                                     {
+#ifdef DEBUG
 ////////////////////
 if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
 {
   fprintf(DDSIP_bb->moreoutfile, "### 1 ### check for identical cut: Cut no. %d is identical, rhs was: %g, now: %g ###\n", newCut->number, newCut->rhs, rhs);
 }
 ////////////////////
+#endif
                                                         if (rhs > newCut->rhs)
                                                             newCut->rhs = rhs;
                                                         i = 0;
@@ -930,8 +934,18 @@ if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
                                                     //shift this infeasible scenario to first place, such that next time it is checked first
                                                     if (Bi)
                                                     {
+/////////////////////
+if(DDSIP_param->outlev)
+  fprintf(DDSIP_bb->moreoutfile," ######## shift infeasible scen to top, Bi= %d, shifts= %d\n", Bi, DDSIP_bb->shifts);
+/////////////////////
                                                         if (Bi >= DDSIP_bb->shifts)
+                                                        {
                                                             DDSIP_bb->shifts++;
+/////////////////////
+if(DDSIP_param->outlev)
+  fprintf(DDSIP_bb->moreoutfile," ##### increased shifts= %d\n", DDSIP_bb->shifts);
+/////////////////////
+                                                        }
                                                         k = DDSIP_bb->ub_scen_order[Bi];
                                                         for(j = Bi; j>0; j--)
                                                             DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
@@ -1284,12 +1298,14 @@ if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
                                         {
                                             if (!DDSIP_Equal (rmatval[k], newCut->matval[k]))
                                             {
+#ifdef DEBUG
 ////////////////////
 if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
 {
   fprintf(DDSIP_bb->moreoutfile, "### 2 ### check for identical cut: Cut no. %d is different, index %d: %22.16g - %22.16g = %g \n", newCut->number, k, rmatval[k], newCut->matval[k],rmatval[k] - newCut->matval[k]);
 }
 ////////////////////
+#endif
                                                 break;
                                             }
                                         }
@@ -1297,12 +1313,14 @@ if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
                                             newCut = newCut->prev;
                                         else
                                         {
+#ifdef DEBUG
 ////////////////////
 if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
 {
   fprintf(DDSIP_bb->moreoutfile, "### 2 ### check for identical cut: Cut no. %d is identical, rhs was: %g, now: %g ###\n", newCut->number, newCut->rhs, rhs);
 }
 ////////////////////
+#endif
                                             if (rhs > newCut->rhs)
                                                 newCut->rhs = rhs;
                                             i = 0;
@@ -1346,7 +1364,9 @@ if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
                                     if (Bi != iscen)
                                     {
                                         if (Bi >= DDSIP_bb->shifts)
+                                        {
                                             DDSIP_bb->shifts++;
+                                        }
                                         k = DDSIP_bb->ub_scen_order[Bi];
                                         for(j = Bi; j>0; j--)
                                             DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
@@ -1718,8 +1738,6 @@ if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
                              "Suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue,tmpbestvalue+rest_bound);
                     // evaluate solution times in order to see whether there are very difficult ones
                 }
-if (DDSIP_param->outlev)
-fprintf (DDSIP_bb->moreoutfile, "### iscen(%d) > DDSIP_bb->shifts(%d) + 2 ? %d\n", iscen, DDSIP_bb->shifts, iscen > DDSIP_bb->shifts + 2);
                 if (iscen > DDSIP_bb->shifts + 4)
                 {
                     wall_secs = cpu_secs = sort_array[0];
@@ -1898,41 +1916,44 @@ fprintf (DDSIP_bb->moreoutfile, "### iscen(%d) > DDSIP_bb->shifts(%d) + 2 ? %d\n
         DDSIP_bb->heurSuccess++;
     }
 
-    // evaluate solution times in order to see whether there are very difficult ones
-    wall_secs = cpu_secs = sort_array[DDSIP_bb->shifts];
-    for (wall_hrs = DDSIP_bb->shifts+1; wall_hrs < DDSIP_param->scenarios; wall_hrs++)
+    if (DDSIP_bb->shifts + 2 < DDSIP_param->scenarios)
     {
-        wall_secs += sort_array[wall_hrs];
-        cpu_secs = DDSIP_Dmax (cpu_secs, sort_array[wall_hrs]);
-    }
-    wall_secs /= (0.01 + DDSIP_param->scenarios - DDSIP_bb->shifts);
-    viol = 13.5 - 4.0*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
-#ifdef DEBUG
-    if (DDSIP_param->outlev)
-        fprintf (DDSIP_bb->moreoutfile, "### max time %g, mean %g, max>%g*mean: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs);
-#endif
-    if (cpu_secs > viol*wall_secs)
-    {
-        cpu_hrs = 0;
-        for (wall_hrs = DDSIP_bb->shifts; wall_hrs < DDSIP_param->scenarios-cpu_hrs; wall_hrs++)
+        // evaluate solution times in order to shift very difficult ones to the end
+        wall_secs = cpu_secs = 0.;
+        for (wall_hrs = DDSIP_bb->shifts; wall_hrs < DDSIP_param->scenarios; wall_hrs++)
         {
-            if (sort_array[wall_hrs] > viol*wall_secs)
-            {
-                 cpu_mins = DDSIP_bb->ub_scen_order[wall_hrs];
-                 cpu_secs = sort_array[wall_hrs];
+            wall_secs += sort_array[wall_hrs];
+            cpu_secs = DDSIP_Dmax (cpu_secs, sort_array[wall_hrs]);
+        }
+        wall_secs /= (0.01 + DDSIP_param->scenarios - DDSIP_bb->shifts);
+        viol = 13.5 - 4.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
 #ifdef DEBUG
-                 if (DDSIP_param->outlev)
-                     fprintf (DDSIP_bb->moreoutfile, "### shifting scenario %d with time %g to the end of ub_scen_order ###\n", cpu_mins+1, sort_array[wall_hrs]);
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "### max time %g, mean %g, max>%g*mean: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs);
 #endif
-                 for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
-                 {
-                     DDSIP_bb->ub_scen_order[wall_mins-1] = DDSIP_bb->ub_scen_order[wall_mins];
-                     sort_array[wall_mins-1] = sort_array[wall_mins];
-                 }
-                 DDSIP_bb->ub_scen_order[DDSIP_param->scenarios-1] = cpu_mins; 
-                 sort_array[DDSIP_param->scenarios-1] = cpu_secs; 
-                 cpu_hrs++;
-                 wall_hrs--;
+        if (cpu_secs > viol*wall_secs)
+        {
+            cpu_hrs = 0;
+            for (wall_hrs = DDSIP_bb->shifts; wall_hrs < DDSIP_param->scenarios-cpu_hrs; wall_hrs++)
+            {
+                if (sort_array[wall_hrs] > viol*wall_secs)
+                {
+                     cpu_mins = DDSIP_bb->ub_scen_order[wall_hrs];
+                     cpu_secs = sort_array[wall_hrs];
+#ifdef DEBUG
+                     if (DDSIP_param->outlev)
+                         fprintf (DDSIP_bb->moreoutfile, "### shifting scenario %d with time %g to the end of ub_scen_order ###\n", cpu_mins+1, sort_array[wall_hrs]);
+#endif
+                     for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
+                     {
+                         DDSIP_bb->ub_scen_order[wall_mins-1] = DDSIP_bb->ub_scen_order[wall_mins];
+                         sort_array[wall_mins-1] = sort_array[wall_mins];
+                     }
+                     DDSIP_bb->ub_scen_order[DDSIP_param->scenarios-1] = cpu_mins; 
+                     sort_array[DDSIP_param->scenarios-1] = cpu_secs; 
+                     cpu_hrs++;
+                     wall_hrs--;
+                }
             }
         }
     }

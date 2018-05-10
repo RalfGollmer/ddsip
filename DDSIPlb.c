@@ -3210,7 +3210,7 @@ DDSIP_LowerBound (void)
 #endif
         //
     }
-    else if (!DDSIP_node[DDSIP_bb->curnode]->leaf)
+    else if (!DDSIP_node[DDSIP_bb->curnode]->leaf && DDSIP_bb->skip != 2)
     {
         for (j = 0; j < DDSIP_bb->firstvar; j++)
             maxfirst[j] -= minfirst[j];

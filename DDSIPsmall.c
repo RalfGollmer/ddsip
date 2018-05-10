@@ -105,6 +105,8 @@ DDSIP_HandleSignal (int signal_number)
 {
     DDSIP_killsignal = signal_number;
     printf ("received signal %d\n", DDSIP_killsignal);
+    if (DDSIP_param->outlev)
+        fprintf (DDSIP_bb->moreoutfile, "received signal %d\n", DDSIP_killsignal);
 }
 
 void
@@ -132,6 +134,7 @@ DDSIP_HandleUserSignal (int signal_number)
         if (error == SIG_IGN)
             signal (SIGUSR1, SIG_IGN);
     }
+    return;
 }
 
 //==========================================================================

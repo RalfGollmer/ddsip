@@ -940,7 +940,7 @@ DDSIP_DualOpt (void)
                                 tmp_bestdual->next = DDSIP_bb->bestdual;
                                 DDSIP_bb->bestdual = tmp_bestdual;
 //######################
-//#ifdef DEBUG
+#ifdef DEBUG
 if (DDSIP_param->outlev > 10)
 {
 int jj = 1;
@@ -952,13 +952,13 @@ while (tmp_bestdual)
    tmp_bestdual = tmp_bestdual->next;
 }
 }
-//#endif
+#endif
 //######################
                             }
                         }
                         if (max_bound > DDSIP_bb->bestvalue ||
-                            diff/fabs(obj + 1.e-14) > 2.e+4*DDSIP_param->relgap ||
-                            (DDSIP_bb->bestvalue < DDSIP_infty && diff > 5.e-1*(DDSIP_bb->bestvalue - DDSIP_bb->bestbound)))
+                            diff/fabs(obj + 1.e-14) > 2.e+3*DDSIP_param->relgap ||
+                            (DDSIP_bb->bestvalue < DDSIP_infty && diff > 3.e-1*(DDSIP_bb->bestvalue - DDSIP_bb->bestbound)))
                         {
                             // cutoff or sufficient increase reached
                             old_obj = obj;
@@ -991,7 +991,7 @@ while (tmp_bestdual)
                                 tmp_bestdual->next = DDSIP_bb->bestdual;
                                 DDSIP_bb->bestdual = tmp_bestdual;
 //######################
-//#ifdef DEBUG
+#ifdef DEBUG
 if (DDSIP_param->outlev > 10)
 {
 int jj = 1;
@@ -1003,7 +1003,7 @@ while (tmp_bestdual)
    tmp_bestdual = tmp_bestdual->next;
 }
 }
-//#endif
+#endif
 //######################
                                 tmp_bestdual =  tmp_previous;
                             }
@@ -1044,7 +1044,7 @@ while (tmp_bestdual)
                     }
                 }
 //######################
-//#ifdef DEBUG
+#ifdef DEBUG
 if (DDSIP_param->outlev > 10)
 {
 int jj = 1;
@@ -1056,7 +1056,7 @@ while (tmp_bestdual)
    tmp_bestdual = tmp_bestdual->next;
 }
 }
-//#endif
+#endif
 //######################
             }
             if (cnt)
@@ -1223,15 +1223,10 @@ while (tmp_bestdual)
 
             if (DDSIP_killsignal)
             {
-                fprintf (DDSIP_outfile, "\nDualOpt: Termination signal received.\n");
-                if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile, "\nDualOpt: Termination signal received.\n");
+//                fprintf (DDSIP_outfile, "\nDualOpt: Termination signal received.\n");
+//                if (DDSIP_param->outlev)
+//                    fprintf (DDSIP_bb->moreoutfile, "\nDualOpt: Termination signal received.\n");
                 break;
-//                cb_destruct_problem (&p);
-//                DDSIP_Free ((void **) &(minfirst));
-//                DDSIP_Free ((void **) &(maxfirst));
-//                DDSIP_Free ((void **) &(center_point));
-//                return 0;
             }
             if (DDSIP_param->outlev > 8)
             {
@@ -1273,9 +1268,9 @@ NEXT_TRY:
             if (DDSIP_killsignal )
             {
                 // Killsignal
-                fprintf (DDSIP_outfile, "\nDualOpt: Termination signal received.\n");
-                if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile, "\nDualOpt: Termination signal received.\n");
+//                fprintf (DDSIP_outfile, "\nDualOpt: Termination signal received.\n");
+//                if (DDSIP_param->outlev)
+//                    fprintf (DDSIP_bb->moreoutfile, "\nDualOpt: Termination signal received.\n");
                 break;
 //                cb_destruct_problem (&p);
 //                DDSIP_Free ((void **) &(minfirst));
@@ -1739,7 +1734,7 @@ NEXT_TRY:
                         }
 ///////////////
                         if (DDSIP_param->outlev > 10)
-                            fprintf(DDSIP_bb->moreoutfile,"############### iters in descent step: %d, up to now: many_iters= %d, repeated increase= %d, weight change by CB: %g ##################\n", cpu_hrs, many_iters, repeated_increase,  next_weight - last_weight);
+                            fprintf(DDSIP_bb->moreoutfile,"############### iters in descent step: %d, up to now: repeated increase= %d, many_iters= %d, weight change by CB: %g ##################\n", cpu_hrs, repeated_increase, many_iters,  next_weight - last_weight);
 /////////
                         if (DDSIP_param->cb_reduceWeight && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight &&
                                 (cpu_hrs < 4 || (DDSIP_bb->dualdescitcnt == 1 && cpu_hrs < 10)))
@@ -2206,6 +2201,8 @@ while (tmp_bestdual)
                     DDSIP_Print2 ("termination status: no bound increase achieved.", " --------------------------------------------------------------\n", 0, 0);
                 else if (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time) > DDSIP_param->timelim)
                     DDSIP_Print2 ("Time limit reached.", "\n", 0, 0);
+                else if (DDSIP_killsignal)
+                    DDSIP_Print2 ("termination status: User interrupt.", " --------------------------------------------------------------\n", 0, 0);
                 else
                     fprintf (DDSIP_outfile, " Unidentified reason for stopping. Termination code of ConicBundle: %d\n", i_scen);
             }

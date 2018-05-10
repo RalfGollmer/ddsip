@@ -465,13 +465,15 @@ main (int argc, char * argv[])
         // the cuts from the root node are contained in every following node model, there is no need to check their violation
         // for the scenario solutions. But the rounding heuristics could violate a cut, so keep them.
 #ifdef CONIC_BUNDLE
+#ifdef DEBUG
 ////////////////////////////////////////////
 if (DDSIP_bb->curnode && DDSIP_param->outlev)
 { 
 if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
-  fprintf(DDSIP_bb->moreoutfile, "######## last node %d step=dual, dualdescitcnt = %d, DDSIP_bb->cutoff= %d\n",DDSIP_bb->curnode-1,(DDSIP_bb->dualdescitcnt),DDSIP_bb->cutoff);
+  fprintf(DDSIP_bb->moreoutfile, "######## last node %d step=dual, leaf= %d,  dualdescitcnt = %d, DDSIP_bb->cutoff= %d\n",DDSIP_bb->curnode-1,(DDSIP_node[DDSIP_bb->curnode-1])->leaf,DDSIP_bb->dualdescitcnt,DDSIP_bb->cutoff);
 }
 ////////////////////////////////////////////
+#endif
 
         // Dual method
         if ((DDSIP_param->cb > 0 && (!(DDSIP_bb->noiter % abs(DDSIP_param->cb))) && (abs(DDSIP_param->riskmod) != 4 || DDSIP_bb->noiter)) ||

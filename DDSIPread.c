@@ -1207,6 +1207,7 @@ DDSIP_ReadSpec ()
     {
         fprintf (DDSIP_outfile, "      HOSTART=2 not implemented for stoch. cost coefficients, resetting to 1.\n");
         DDSIP_param->hot = 1;
+        DDSIP_param->cbhot = 1;
     }
     else
         DDSIP_param->cbhot   = floor (DDSIP_ReadDbl (specfile, "CBHOTS", " HOT STARTS: PREV SCENS IN CB", 0., 1, 0., 3.) + 0.1);
@@ -1287,7 +1288,7 @@ DDSIP_ReadSpec ()
         DDSIP_param->numberReinits  = floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 25., 1, 0., DDSIP_bigint) + 0.1);
     }
     
-    DDSIP_param->redundancyCheck = floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", 1., 1, 0., 1.) + 0.1);
+    DDSIP_param->redundancyCheck = floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", 0., 1, 0., 1.) + 0.1);
     if (DDSIP_param->redundancyCheck)
         DDSIP_param->deleteRedundantCuts = floor (DDSIP_ReadDbl (specfile, "DELRED", " DELETE REDUNDANT CUTS", 1., 1, 0., 1.) + 0.1);
     else

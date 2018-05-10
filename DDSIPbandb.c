@@ -725,7 +725,9 @@ DDSIP_Bound (void)
                         DDSIP_node[DDSIP_bb->front[i]]->bound- DDSIP_bb->bestvalue,
                         DDSIP_node[DDSIP_bb->front[i]]->bound- (DDSIP_bb->bestvalue*factor), DDSIP_param->accuracy);
             }
-            // Free the node
+            // mark ist as a leaf
+            DDSIP_node[DDSIP_bb->front[i]]->leaf = 1;
+            // Free the node's allocated arrays
             for (scen = 0; scen < DDSIP_param->scenarios; scen++)
             {
                 if (((DDSIP_node[DDSIP_bb->front[i]])->first_sol)[scen])
@@ -747,7 +749,7 @@ DDSIP_Bound (void)
             }
             DDSIP_FreeNode (DDSIP_bb->front[i]);
 
-            // Delete node
+            // Delete node from the front
             DDSIP_bb->front[i] = DDSIP_bb->front[DDSIP_bb->nofront - 1];
             DDSIP_bb->nofront--;
         }

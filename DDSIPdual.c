@@ -1732,11 +1732,12 @@ NEXT_TRY:
                                 return status;
                             }
                         }
+                        start_weight = next_weight - last_weight;
 ///////////////
                         if (DDSIP_param->outlev > 10)
-                            fprintf(DDSIP_bb->moreoutfile,"############### iters in descent step: %d, up to now: repeated increase= %d, many_iters= %d, weight change by CB: %g ##################\n", cpu_hrs, repeated_increase, many_iters,  next_weight - last_weight);
+                            fprintf(DDSIP_bb->moreoutfile,"############### iters in descent step: %d, up to now: repeated increase= %d, many_iters= %d, weight change by CB: %g ##################\n", cpu_hrs, repeated_increase, many_iters,  start_weight);
 /////////
-                        if (DDSIP_param->cb_reduceWeight && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight &&
+                        if (DDSIP_param->cb_reduceWeight && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight && start_weight == 0. &&
                                 (cpu_hrs < 4 || (DDSIP_bb->dualdescitcnt == 1 && cpu_hrs < 10)))
                         {
                             if (repeated_increase < -1)
@@ -1785,7 +1786,7 @@ NEXT_TRY:
                                     repeated_increase = 0;
                                     if (DDSIP_bb->dualdescitcnt == 1)
                                     {
-                                        next_weight = next_weight * 0.5;
+                                        next_weight = next_weight * 0.6;
                                         weight_decreases++;
                                         repeated_increase = 1;
                                     }
@@ -1797,7 +1798,7 @@ NEXT_TRY:
                                 }
                             }
                         }
-                        else if (DDSIP_param->cb_increaseWeight && DDSIP_bb->dualdescitcnt > 1 && last_weight*8. >= next_weight && last_weight > 0.99*next_weight)
+                        else if (DDSIP_param->cb_increaseWeight && DDSIP_bb->dualdescitcnt > 1 && start_weight == 0. && last_weight*8. >= next_weight && last_weight > 0.99*next_weight)
                         {
                             if (cpu_hrs > 4)
                             {

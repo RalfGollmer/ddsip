@@ -2378,7 +2378,7 @@ DDSIP_LowerBound (void)
         }
         DDSIP_node[DDSIP_bb->curnode]->violations = DDSIP_bb->violations;
         DDSIP_node[DDSIP_bb->curnode]->dispnorm = maxdispersion;
-        if (!DDSIP_bb->violations)
+        if (!DDSIP_bb->violations && DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_bb->bestvalue + DDSIP_param->accuracy)
         {
             DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
             if ((!(DDSIP_bb->found_optimal_node) && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue*factor) ||
@@ -4375,7 +4375,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     if (tmpbestbound > DDSIP_bb->bestvalue)
     {
         if (DDSIP_param->outlev)
-           fprintf (DDSIP_bb->moreoutfile, "#### Bound reached %g > bestvalue (%g).\n", tmpbestbound, DDSIP_bb->bestvalue);
+           fprintf (DDSIP_bb->moreoutfile, "#### Bound reached %20.14g > bestvalue (%20.14g).\n", tmpbestbound, DDSIP_bb->bestvalue);
         DDSIP_bb->skip = 2;
         //DDSIP_bb->cutoff++;
         goto TERMINATE;

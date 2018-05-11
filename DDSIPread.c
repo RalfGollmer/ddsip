@@ -1510,7 +1510,7 @@ DDSIP_ReadSpec ()
         //DDSIP_param->cbmaxsubg = floor (DDSIP_ReadDbl (specfile, "CBMAXS", " CB MAXIMAL NO OF SUBGRADIENTS", 1., 1, 0., DDSIP_bigint) + 0.1);
         DDSIP_param->cbmaxsubg = 1;
         DDSIP_param->cbweight = DDSIP_ReadDbl (specfile, "CBWEIG", " CB START WEIGHT", 1., 0, 0., DDSIP_infty);
-        DDSIP_param->cbfactor = DDSIP_ReadDbl (specfile, "CBFACT", " FACTOR OF CB START WEIGHT", 0.05, 0, 0., 1.);
+        DDSIP_param->cbfactor = DDSIP_ReadDbl (specfile, "CBFACT", " FACTOR OF CB START WEIGHT", 0.075, 0, 0., 1.);
         if (abs(DDSIP_param->riskmod) == 4 && DDSIP_param->cbweight < (tmp = DDSIP_param->riskweight*0.5))
         {
             printf ("\n     CBWEIGHT less than 0.5*(risk weight), resetting to %g, CBFACTOR to %g.\n\n", tmp, 1e-1/tmp);

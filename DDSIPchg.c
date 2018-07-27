@@ -73,8 +73,6 @@ DDSIP_ChgBounds (int print)
             if (DDSIP_bb->bestsol[DDSIP_bb->curind[i]] < DDSIP_bb->curlb[i] - (fabs(DDSIP_bb->curlb[i])+1.)*DDSIP_param->accuracy ||
                 DDSIP_bb->bestsol[DDSIP_bb->curind[i]] > DDSIP_bb->curub[i] + (fabs(DDSIP_bb->curub[i])+1.)*DDSIP_param->accuracy)
             {
-                if (DDSIP_param->outlev > 20)
-                    fprintf (DDSIP_bb->moreoutfile, "DDSIPChgBounds: DDSIP_bb->bestsol[%d] = %21.14g outside bounds of node %d [%21.14g, %21.14g]\n", DDSIP_bb->curind[i], DDSIP_bb->bestsol[DDSIP_bb->curind[i]], DDSIP_bb->curnode, DDSIP_bb->curlb[i], DDSIP_bb->curub[i]);
                 DDSIP_bb->bestsol_in_curnode = 0;
                 break;
             }
@@ -88,7 +86,7 @@ DDSIP_ChgBounds (int print)
 // Function is used to change problem parameters for each scenario
 // scen is the number of the current scenarios
 int
-DDSIP_ChgProb (int scen)
+DDSIP_ChgProb (int scen, int multipliers)
 {
     int j, i, status = 0;
     int m = DDSIP_Imax (DDSIP_param->stocmat, DDSIP_Imax (DDSIP_param->stocrhs, DDSIP_param->stoccost));
@@ -187,7 +185,7 @@ DDSIP_ChgProb (int scen)
                         cost[DDSIP_bb->firstindex_reverse[DDSIP_data->costind[j]]] = DDSIP_data->cost[scen * DDSIP_param->stoccost + j];
                 }
         }
-        if (DDSIP_bb->DDSIP_step == dual)
+        if (DDSIP_bb->DDSIP_step == dual && multipliers)
             // The additional costs changes for ConicBundle iterations
         {
             if (DDSIP_param->outlev >= DDSIP_current_lambda_outlev)

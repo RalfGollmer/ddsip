@@ -43,7 +43,7 @@ DDSIP_ExpValProb (void)
     if (DDSIP_param->outlev)
         fprintf (DDSIP_bb->moreoutfile, "Solving expected value problem...\n");
 
-    status = DDSIP_ChgProb (-1);
+    status = DDSIP_ChgProb (-1, 0);
     if (status)
     {
         fprintf (stderr, "ERROR: Failed to change problem \n");

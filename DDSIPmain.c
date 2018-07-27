@@ -49,12 +49,12 @@ const int DDSIP_maxparam = 64;
 const int DDSIP_maxrisk = 7;
 
 // Large values
-const double DDSIP_bigint   = 1.0e7;	   // Upper bound on integer parameters
+const int DDSIP_bigint      = 10000000;	   // Upper bound on integer parameters
 const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2018-05-10 (Github v1.2.4) ";
+const char DDSIP_version[] = "2018-07-26 (Github v1.2.5) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -90,13 +90,13 @@ main (int argc, char * argv[])
     const rlim_t kStackSize = 128 * 1024 * 1024;   // min stack size = 128 MB
     struct rlimit rl;
     int result;
-    unsigned cur_limit;
+    unsigned long cur_limit;
 
     result = getrlimit(RLIMIT_STACK, &rl);
     if (result == 0)
     {
         cur_limit = rl.rlim_cur;
-        printf ("original stacksize limit %u\n", cur_limit);
+        printf ("original stacksize limit %lu\n", cur_limit);
         if (rl.rlim_cur < kStackSize)
         {
             rl.rlim_cur = kStackSize;
@@ -109,7 +109,7 @@ main (int argc, char * argv[])
             if (result == 0)
             {
                 cur_limit = rl.rlim_cur;
-                printf ("changed  stacksize limit %u\n", cur_limit);
+                printf ("changed  stacksize limit %lu\n", cur_limit);
             }
         }
     }
@@ -281,7 +281,11 @@ main (int argc, char * argv[])
     DDSIP_node[0]->cursubsol = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "node[0]->cursubsol(Main)");
     DDSIP_node[0]->subbound = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "node[0]->subbound(Main)");
     if (DDSIP_param->cb)
-        DDSIP_node[0]->subboundNoLag = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "node[0]->subbound_NoLag(Main)");
+    {
+        DDSIP_node[0]->scenBoundsNoLag = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "node[0]->scenBoundsNoLag(Main)");
+        DDSIP_node[0]->BoundNoLag = -DDSIP_infty;
+
+    }
     DDSIP_node[0]->mipstatus = (int *) DDSIP_Alloc (sizeof (int), DDSIP_param->scenarios, "node[0]->mipstatus(Main)");
     DDSIP_node[0]->ref_scenobj = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "node[0]->ref_scenobj(Main)");
 
@@ -477,7 +481,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
 
         // Dual method
         if ((DDSIP_param->cb > 0 && (!(DDSIP_bb->noiter % abs(DDSIP_param->cb))) && (abs(DDSIP_param->riskmod) != 4 || DDSIP_bb->noiter)) ||
-            (DDSIP_param->cb < 0 && ((!(DDSIP_bb->noiter) && abs(DDSIP_param->riskmod) != 4 && DDSIP_param->cbrootitlim) ||
+            (DDSIP_param->cb < 0 && (((DDSIP_bb->noiter < 3) && abs(DDSIP_param->riskmod) != 4/* && (DDSIP_bb->curnode || DDSIP_param->cbrootitlim)*/) ||
                                       (abs(DDSIP_param->riskmod) == 5 && DDSIP_node[DDSIP_bb->curnode]->depth == 8) ||
                                       (DDSIP_bb->noiter > DDSIP_param->cbBreakIters && 
                                         ((!(DDSIP_bb->noiter % abs(DDSIP_param->cb))) ||
@@ -485,7 +489,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
                                          (DDSIP_bb->noiter%200 > 199 - DDSIP_param->cbContinuous) ||
                                          (DDSIP_bb->noiter < DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters) ||
                                          ((DDSIP_bb->noiter  >= 2*DDSIP_param->cbBreakIters) && (DDSIP_bb->noiter < DDSIP_param->cbContinuous + 2*DDSIP_param->cbBreakIters)) ||
-                                         ((DDSIP_bb->cutoff > 4) &&
+                                         ((DDSIP_bb->cutoff > 6) &&
                                              (((DDSIP_bb->no_reduced_front < 51) && (DDSIP_bb->noiter % -DDSIP_param->cb) < DDSIP_param->cbContinuous)
                                              || (((DDSIP_node[DDSIP_bb->curnode-1])->step == dual) && (DDSIP_node[DDSIP_bb->curnode-1])->leaf /*&& (DDSIP_bb->dualdescitcnt < 11)*/)
                                              )
@@ -524,7 +528,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
             goto TERMINATE;
 #endif
 
-        if (!DDSIP_bb->skip)
+        if (!DDSIP_bb->skip || DDSIP_bb->skip == -1)
         {
             double old_bound;
             int cntr, maxCntr;
@@ -572,7 +576,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
                                         if (DDSIP_param->outlev > 50)
                                             fprintf (DDSIP_bb->moreoutfile, "scen %d solution violates cut %d.\n", i+1, currentCut->number);
 #endif
-                                        if ((cnt = (((DDSIP_node[0])->first_sol)[i])[DDSIP_bb->firstvar] - 1))
+                                        if ((cnt = (int) ((((DDSIP_node[0])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
                                         for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
                                         {
                                             {
@@ -592,7 +596,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
                             }
                             else
                             {
-                               if ((cnt = (((DDSIP_node[0])->first_sol)[i])[DDSIP_bb->firstvar] - 1))
+                               if ((cnt = (int) ((((DDSIP_node[0])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
                                for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
                                {
                                    {
@@ -684,7 +688,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
             }
         }
 
-        // DDSIP_bb->skip indicates that UpperBound calls have been skipped
+        // DDSIP_bb->skip > 0 indicates that UpperBound calls have been skipped
         // DDSIP_bb->heurval contains the objective value of the heuristic solution
         // Reset to initial values
         DDSIP_bb->heurval = DDSIP_infty;

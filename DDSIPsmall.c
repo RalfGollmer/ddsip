@@ -31,7 +31,7 @@
 #define THRESHOLD 5
 void DDSIP_qsort_ins_D (const double * a, int * ind, int l, int r)
 {
-    int i, j, k;
+    int i, j, k, swap;
     double tmp;
     if (r-l > THRESHOLD)  //Quicksort
     {
@@ -43,9 +43,13 @@ void DDSIP_qsort_ins_D (const double * a, int * ind, int l, int r)
             while (i<r && a[ind[++i]]>a[k]);
             while (j>l && a[ind[--j]]<a[k]);
             if (i>=j) break;
-            DDSIP_SWAP (ind[i], ind[j]);
+            swap = ind[i];
+            ind[i] = ind[j];
+            ind[j] = swap;
         }
-        DDSIP_SWAP (ind[i], ind[r]);
+        swap = ind[i];
+        ind[i] = ind[r];
+        ind[r] = swap;
 
         DDSIP_qsort_ins_D (a, ind, l, i-1);
         DDSIP_qsort_ins_D (a, ind, i+1, r);
@@ -65,7 +69,7 @@ void DDSIP_qsort_ins_D (const double * a, int * ind, int l, int r)
 // Quicksort (ascending) combined with insertion sort - for an indexed array, sorting just the index
 void DDSIP_qsort_ins_A (const double * a, int * ind, int l, int r)
 {
-    int i, j, k;
+    int i, j, k, swap;
     double tmp;
     if (r-l > THRESHOLD)  //Quicksort
     {
@@ -77,9 +81,13 @@ void DDSIP_qsort_ins_A (const double * a, int * ind, int l, int r)
             while (i<r && a[ind[++i]]<a[k]);
             while (j>l && a[ind[--j]]>a[k]);
             if (i>=j) break;
-            DDSIP_SWAP (ind[i], ind[j]);
+            swap = ind[i];
+            ind[i] = ind[j];
+            ind[j] = swap;
         }
-        DDSIP_SWAP (ind[i], ind[r]);
+        swap = ind[i];
+        ind[i] = ind[r];
+        ind[r] = swap;
 
         DDSIP_qsort_ins_A (a, ind, l, i-1);
         DDSIP_qsort_ins_A (a, ind, i+1, r);
@@ -101,7 +109,7 @@ void DDSIP_qsort_ins_A (const double * a, int * ind, int l, int r)
 //==========================================================================
 // Signal handling
 void
-DDSIP_HandleSignal (int signal_number)
+DDSIP_HandleKillSignal (int signal_number)
 {
     DDSIP_killsignal = signal_number;
     printf ("received signal %d\n", DDSIP_killsignal);
@@ -110,7 +118,7 @@ DDSIP_HandleSignal (int signal_number)
 }
 
 void
-DDSIP_HandleUserSignal (int signal_number)
+DDSIP_HandleUserSignal1 (int signal_number)
 {
     void (*error) (int);
     printf ("received signal %d\n", signal_number);
@@ -118,7 +126,7 @@ DDSIP_HandleUserSignal (int signal_number)
     {
         DDSIP_param->files = 1;
         printf ("*** switched writing outfiles to 1\n");
-        error = signal (SIGUSR1, DDSIP_HandleUserSignal);
+        error = signal (SIGUSR1, DDSIP_HandleUserSignal1);
         if (error == SIG_ERR)
             fprintf (stderr, "*Warning: Failed to register handler for 'SIGUSR1'!");
         if (error == SIG_IGN)
@@ -128,11 +136,64 @@ DDSIP_HandleUserSignal (int signal_number)
     {
         DDSIP_param->files = 6;
         printf ("*** switched writing outfiles to 6\n");
-        error = signal (SIGUSR1, DDSIP_HandleUserSignal);
+        error = signal (SIGUSR1, DDSIP_HandleUserSignal1);
         if (error == SIG_ERR)
             fprintf (stderr, "*Warning: Failed to register handler for 'SIGUSR1'!");
         if (error == SIG_IGN)
             signal (SIGUSR1, SIG_IGN);
+    }
+    return;
+}
+
+void
+DDSIP_HandleUserSignal2 (int signal_number)
+{
+    int i, i0 = -1;
+    void (*error) (int);
+    printf ("received signal %d\n", signal_number);
+    if (DDSIP_param->cpxwhich)
+    {
+        for (i=0; i < DDSIP_param->cpxno; i++)
+        {
+            if (DDSIP_param->cpxwhich[i] == CPXPARAM_ScreenOutput)
+                i0 = i;
+        }
+        if (i0 < 0 && DDSIP_param->cpxno < DDSIP_maxparam)
+        {
+            i0 = DDSIP_param->cpxno;
+            DDSIP_param->cpxwhich[i0] = CPXPARAM_ScreenOutput;
+            DDSIP_param->cpxwhat[i0] = 0.;
+            DDSIP_param->cpxno++;
+        }
+    }
+    else
+    {
+        DDSIP_param->cpxno = 1;
+        DDSIP_param->cpxwhich = (int *) DDSIP_Alloc (sizeof (int), DDSIP_param->cpxno, "cpxwhich(ReadCpxPara)");
+        DDSIP_param->cpxwhat = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->cpxno, "cpxwhat(ReadCpxPara)");
+        i0 = 0;
+        DDSIP_param->cpxwhich[i0] = CPXPARAM_ScreenOutput;
+        DDSIP_param->cpxwhat[i0]  = 0.;
+    }
+    if (!(DDSIP_param->cpxwhat[i0]))
+    {
+        DDSIP_param->cpxwhat[i0]  = 1.;
+        printf ("*** switched screen output to ON\n");
+        error = signal (SIGUSR2, DDSIP_HandleUserSignal2);
+        if (error == SIG_ERR)
+            fprintf (stderr, "*Warning: Failed to register handler for 'SIGUSR2'!");
+        if (error == SIG_IGN)
+            signal (SIGUSR2, SIG_IGN);
+    }
+    else
+    {
+        DDSIP_param->cpxwhat[i0]  = 0.;
+        printf ("*** switched screen output to OFF\n");
+        error = signal (SIGUSR2, DDSIP_HandleUserSignal2);
+        if (error == SIG_ERR)
+            fprintf (stderr, "*Warning: Failed to register handler for 'SIGUSR2'!");
+        if (error == SIG_IGN)
+            signal (SIGUSR2, SIG_IGN);
     }
     return;
 }
@@ -144,16 +205,21 @@ DDSIP_RegisterSignalHandlers (void)
 {
     void (*error) (int);
 
-    error = signal (SIGINT, DDSIP_HandleSignal);
+    error = signal (SIGINT, DDSIP_HandleKillSignal);
     if (error == SIG_ERR)
         fprintf (stderr, "*Warning: Failed to register handler for 'SIGINT'!");
     if (error == SIG_IGN)
         signal (SIGINT, SIG_IGN);
-    error = signal (SIGUSR1, DDSIP_HandleUserSignal);
+    error = signal (SIGUSR1, DDSIP_HandleUserSignal1);
     if (error == SIG_ERR)
         fprintf (stderr, "*Warning: Failed to register handler for 'SIGUSR1'!");
     if (error == SIG_IGN)
         signal (SIGUSR1, SIG_IGN);
+    error = signal (SIGUSR2, DDSIP_HandleUserSignal2);
+    if (error == SIG_ERR)
+        fprintf (stderr, "*Warning: Failed to register handler for 'SIGUSR2'!");
+    if (error == SIG_IGN)
+        signal (SIGUSR2, SIG_IGN);
 }
 
 //==========================================================================
@@ -166,7 +232,7 @@ DDSIP_GetCpuTime (void)
 #else
     struct tms now;
 #endif
-    int sec, hun;
+    long int sec, hun;
     double total;
 
 #ifndef CLK_TCK
@@ -177,7 +243,7 @@ DDSIP_GetCpuTime (void)
     now = clock ();
 #else
     times (&now);
-    hun = ((now.tms_utime % clocks_per_second) * 100) / clocks_per_second;
+    hun = ((now.tms_utime % clocks_per_second) * 100L) / clocks_per_second;
     sec = (now.tms_utime / clocks_per_second);
 #endif
 
@@ -186,7 +252,7 @@ DDSIP_GetCpuTime (void)
     now = clock ();
 #else
     times (&now);
-    hun = ((now.tms_utime % CLK_TCK) * 100) / CLK_TCK;
+    hun = ((now.tms_utime % CLK_TCK) * 100L) / CLK_TCK;
     sec = (now.tms_utime / CLK_TCK);
 #endif
 
@@ -244,9 +310,19 @@ DDSIP_Infeasible (int stat)
 void
 DDSIP_translate_time (double total, int * hours, int * mins, double * secs)
 {
-    *hours = floor (total/3600.0);
+    *hours = (int) floor (total/3600.0);
     total -= 3600.0* (*hours);
-    *mins  = floor (total/60.0);
+    *mins  = (int) floor (total/60.0);
     *secs  = total - 60.0* (*mins);
     return;
+}
+
+// Accuracy comparison of two double numbers
+int
+DDSIP_Equal(double a, double b)
+{
+    double diff, sum;
+    diff = fabs(a-b);
+    sum = fabs(a)+fabs(b);
+    return (diff > (DDSIP_param->accuracy * 0.5 * (sum))) ? 0 : 1;
 }

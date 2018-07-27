@@ -65,7 +65,7 @@ DDSIP_PrintErrorMsg (int status)
 
 // Print message on stdout and to output file
 void
-DDSIP_Print2 (char b[], char e[], double d, int what)
+DDSIP_Print2 (const char b[], const char e[], double d, int what)
 {
     int ih;
     if (0 == what)
@@ -75,7 +75,7 @@ DDSIP_Print2 (char b[], char e[], double d, int what)
     }
     else if (1 == what)
     {
-        ih = floor (d + 0.01);
+        ih = (int) floor (d + 0.01);
         printf ("%s%d%s", b, ih, e);
         fprintf (DDSIP_outfile, "%s%d%s", b, ih, e);
     }
@@ -108,7 +108,8 @@ DDSIP_PrintState (int noiter)
     rgap = DDSIP_Dmin (rgap, 100.0);
     factor = (DDSIP_bb->bestvalue < 0.)? 1.-DDSIP_param->accuracy :  1.+DDSIP_param->accuracy;
 
-    if (!(DDSIP_bb->curnode) && (DDSIP_param->cb || !DDSIP_bb->cutAdded || !DDSIP_bb->noiter))
+    //if (!(DDSIP_bb->curnode) && (DDSIP_param->cb || !DDSIP_bb->cutAdded || !DDSIP_bb->noiter))
+    if (!(DDSIP_bb->curnode) && !noiter)
     {
 #ifndef _WIN32
         sprintf (astring, "lscpu|grep 'MHz' >> %s\n", DDSIP_outfname);
@@ -320,19 +321,19 @@ DDSIP_PrintStateUB (int heur)
     {
         printf (" %-19.15g", DDSIP_bb->bestvalue);
         fprintf (DDSIP_outfile, " %-19.15g", DDSIP_bb->bestvalue);
+        printf ("                   redu.  %-12.7g      ", DDSIP_bb->last_bestvalue - DDSIP_bb->bestvalue);
+        fprintf (DDSIP_outfile, "                   redu.  %-12.7g      ", DDSIP_bb->last_bestvalue - DDSIP_bb->bestvalue);
+        DDSIP_bb->last_bestvalue = DDSIP_bb->bestvalue;
     }
     else
     {
-        printf ("                  ");
-        fprintf (DDSIP_outfile, "                  ");
+        printf ("                                                        ");
+        fprintf (DDSIP_outfile, "                                                        ");
     }
-
-    printf ("                                            ");
-    fprintf (DDSIP_outfile,"                                            ");
 
     DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
     time (&DDSIP_bb->cur_time);
     DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
-    printf ("  %3dh %02d:%02.0f  %3dh %02d:%02.0f\n", wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs);
+    printf (" %10dh %02d:%02.0f  %3dh %02d:%02.0f\n", wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs);
     fprintf (DDSIP_outfile,"  %3dh %02d:%02.0f  %3dh %02d:%02.0f\n", wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs);
 }

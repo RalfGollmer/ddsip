@@ -26,7 +26,7 @@
 #include <math.h>
 #include <limits.h>
 
-int DDSIP_SortScen (void);
+static int DDSIP_SortScen (void);
 
 //==========================================================================
 // Function sets cplex parameters, different parameters could be used in LB, UB etc.
@@ -66,9 +66,9 @@ DDSIP_SetCpxPara (const int cnt, const int * isdbl, const int * which, const dou
             if (DDSIP_param->cpxisdbl[i] == 1)
                 status = CPXsetdblparam (DDSIP_env, DDSIP_param->cpxwhich[i], DDSIP_param->cpxwhat[i]);
             else if (DDSIP_param->cpxisdbl[i] == 0)
-                status = CPXsetintparam (DDSIP_env, DDSIP_param->cpxwhich[i], floor (DDSIP_param->cpxwhat[i] + 0.1));
+                status = CPXsetintparam (DDSIP_env, DDSIP_param->cpxwhich[i], (int) floor (DDSIP_param->cpxwhat[i] + 0.1));
             else if (DDSIP_param->cpxisdbl[i] == 3)
-                status = CPXsetlongparam (DDSIP_env, DDSIP_param->cpxwhich[i], floor (DDSIP_param->cpxwhat[i] + 0.1));
+                status = CPXsetlongparam (DDSIP_env, DDSIP_param->cpxwhich[i], (long) floor (DDSIP_param->cpxwhat[i] + 0.1));
             else
             {
                 fprintf (stderr,"Error: unexpected parameter type for parameter (general) %d\n", DDSIP_param->cpxwhich[i]);
@@ -87,9 +87,9 @@ DDSIP_SetCpxPara (const int cnt, const int * isdbl, const int * which, const dou
         if (isdbl[i] == 1)
             status = CPXsetdblparam (DDSIP_env, which[i], what[i]);
         else if (isdbl[i] == 0)
-            status = CPXsetintparam (DDSIP_env, which[i], floor (what[i] + 0.1));
+            status = CPXsetintparam (DDSIP_env, which[i], (int) floor (what[i] + 0.1));
         else if (isdbl[i] == 3)
-            status = CPXsetlongparam (DDSIP_env, which[i], floor (what[i] + 0.1));
+            status = CPXsetlongparam (DDSIP_env, which[i], (long) floor (what[i] + 0.1));
         else
         {
             fprintf (stderr,"Error: unexpected parameter type for parameter (section) %d\n", which[i]);
@@ -248,8 +248,8 @@ DDSIP_InitCpxPara (void)
         }
         else if (DDSIP_param->cpxwhich[i] == CPX_PARAM_SCRIND)
         {
-            DDSIP_param->cpxscr = DDSIP_param->cpxwhat[i];
-            DDSIP_param->cpxubscr = DDSIP_param->cpxwhat[i];
+            DDSIP_param->cpxscr = (int) DDSIP_param->cpxwhat[i];
+            DDSIP_param->cpxubscr = (int) DDSIP_param->cpxwhat[i];
         }
         else if (DDSIP_param->cpxwhich[i] == CPX_PARAM_EPGAP)
         {
@@ -263,8 +263,8 @@ DDSIP_InitCpxPara (void)
         }
         else if (DDSIP_param->cpxwhich[i] == CPX_PARAM_NODELIM)
         {
-            DDSIP_param->cpxnodelim = DDSIP_param->cpxwhat[i];
-            DDSIP_param->cpxubnodelim = DDSIP_param->cpxwhat[i];
+            DDSIP_param->cpxnodelim = (long) DDSIP_param->cpxwhat[i];
+            DDSIP_param->cpxubnodelim = (long) DDSIP_param->cpxwhat[i];
         }
     }
 
@@ -349,8 +349,8 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->firstcon = DDSIP_data->firstcon;
     DDSIP_bb->seccon = DDSIP_data->seccon;
     DDSIP_bb->correct_bounding = 0.;
-    DDSIP_bb->LBIters = 0;
-    DDSIP_bb->CBIters = 0;
+    DDSIP_bb->LBIters = DDSIP_bb->CBIters = DDSIP_bb->UBIters = 0;
+    DDSIP_bb->scenLBIters = DDSIP_bb->scenCBIters = DDSIP_bb->scenUBIters = 0;
     DDSIP_bb->from_scenario = -1;
 
     // Change according to risk model
@@ -420,7 +420,7 @@ DDSIP_BbTypeInit (void)
 
     DDSIP_bb->lbident = (char *) DDSIP_Alloc (sizeof (char), DDSIP_bb->firstvar, "lbident(BbTypeInit)");
     DDSIP_bb->ubident = (char *) DDSIP_Alloc (sizeof (char), DDSIP_bb->firstvar, "ubident(BbTypeInit)");
-    j = ceil (0.5 * DDSIP_param->nodelim) + 3;
+    j = (int) ceil (0.5 * DDSIP_param->nodelim) + 3;
     DDSIP_bb->front = (int *) DDSIP_Alloc (sizeof (int), j, "front(BbTypeInit)");
 
     DDSIP_bb->bestsol = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar, "bestsol(BbTypeInit)");
@@ -464,11 +464,13 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->n_buffer = (char *) DDSIP_Alloc (sizeof (char), DDSIP_bb->n_buffer_len, "n_buffer(Main)");
     // Initial settings
     DDSIP_bb->heurval = DDSIP_infty;
-    DDSIP_bb->bestvalue = DDSIP_infty;
+    DDSIP_bb->last_bestvalue = DDSIP_bb->bestvalue = DDSIP_infty;
     DDSIP_bb->expbest = DDSIP_infty;
     DDSIP_bb->bestbound = -DDSIP_infty;
     DDSIP_bb->feasbound = -DDSIP_infty;
     DDSIP_bb->skip = 0;
+    DDSIP_bb->initial_multiplier = 0;
+    DDSIP_bb->multipliers = 0;
     DDSIP_bb->nonode = 1;
     DDSIP_bb->nofront = 1;
     DDSIP_bb->no_reduced_front = 1;
@@ -487,7 +489,6 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->found_optimal_node = 0;
     DDSIP_bb->bound_optimal_node = -DDSIP_infty;
 
-    DDSIP_bb->neobjcnt = 0;
 
 #ifdef CONIC_BUNDLE
     if (DDSIP_param->cb)
@@ -514,6 +515,7 @@ DDSIP_BbTypeInit (void)
 
     if (DDSIP_param->cb)
     {
+        DDSIP_bb->startinfo_multipliers = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 3, "startinfo_multipliers(BbTypeInit)");
         DDSIP_node[0]->dual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 3, "dual(BbTypeInit)");
         DDSIP_node[0]->dual[DDSIP_bb->dimdual] = DDSIP_param->cbweight;
         DDSIP_node[0]->dual[DDSIP_bb->dimdual + 2] = -DDSIP_infty;
@@ -610,7 +612,7 @@ DDSIP_InitStages (void)
         for (seccnt=0; seccnt<DDSIP_bb->novar; seccnt++)
         {
             status = CPXgetcolname (DDSIP_env, DDSIP_lp, colname, colstore, DDSIP_bb->novar * DDSIP_ln_varname, &i, seccnt, seccnt);
-            cnt = DDSIP_Dmax(cnt, strlen(colname[0]));
+            cnt = DDSIP_Imax(cnt, (int) strlen(colname[0]));
         }
         fprintf (stderr, "       maximal variable name length: %d,  reserved for each variable name: %d chars.\n", cnt, DDSIP_ln_varname-1);
         return(cnt);
@@ -638,7 +640,7 @@ DDSIP_InitStages (void)
 
     if (DDSIP_param->prefix)
     {
-        if (!(length = strlen(DDSIP_param->prefix)))
+        if (!(length = (int) strlen(DDSIP_param->prefix)))
         {
             fprintf (stderr," *** ERROR: The prefix for the first stage variables has to have a positive length.\n");
             exit (1);
@@ -675,14 +677,14 @@ DDSIP_InitStages (void)
     }
     else
     {
-        if (!(length = strlen(DDSIP_param->postfix)))
+        if (!(length = (int) strlen(DDSIP_param->postfix)))
         {
             fprintf (stderr," *** ERROR: The postfix for the first stage variables has to have a positive length.\n");
             exit (1);
         }
         while (i < DDSIP_bb->novar)
         {
-            j = strlen (colname[i])-length;
+            j = (int) strlen (colname[i])-length;
             if (j > 0 && !strcmp(DDSIP_param->postfix,colname[i]+j))
             {
                 firindex[cnt] = i;
@@ -1147,7 +1149,7 @@ DDSIP_BbInit (void)
 
         for (i = 0; i < DDSIP_bb->novar; i++)
         {
-            if (DDSIP_data->obj_coef[i] != 0.0)
+            if (DDSIP_data->obj_coef[i])
             {
                 DDSIP_data->obj_coef[i] = -DDSIP_data->obj_coef[i];
             }
@@ -1163,7 +1165,7 @@ DDSIP_BbInit (void)
         // Change problem to minimization
         CPXchgobjsen (DDSIP_env, DDSIP_lp, CPX_MIN);
         for (i = 0; i < DDSIP_data->novar + DDSIP_param->stoccost * DDSIP_param->scenarios; i++)
-            if (DDSIP_data->cost[i] != 0.0)
+            if (DDSIP_data->cost[i])
                 DDSIP_data->cost[i] = -DDSIP_data->cost[i];
 
         DDSIP_Free ((void **) &(index));

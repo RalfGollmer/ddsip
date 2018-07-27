@@ -260,13 +260,6 @@ DDSIP_Continue (int *noiter, int *boundstat)
 
         }
 
-        // check if some of the still existing cuts are redundant
-        if (DDSIP_param->redundancyCheck)
-        {
-            DDSIP_CheckRedundancy(0);
-        }
-
-
         if (DDSIP_param->expected)
         {
             fprintf (DDSIP_outfile, "\n----------------------------------------------");
@@ -303,10 +296,19 @@ DDSIP_Continue (int *noiter, int *boundstat)
         if (DDSIP_param->cb)
         {
             fprintf (DDSIP_outfile, "max. mean MIP gap CB  %g%%\n", DDSIP_bb->meanGapCBLB);
-            fprintf (DDSIP_outfile, "CB function eval %6d\n", DDSIP_bb->CBIters);
+#ifdef _WIN32
+            fprintf (DDSIP_outfile, "CB function eval %6d  (%6I64d scen. probs)\n", DDSIP_bb->CBIters, DDSIP_bb->scenCBIters);
+#else
+            fprintf (DDSIP_outfile, "CB function eval %6d  (%6ld scen. probs)\n", DDSIP_bb->CBIters, DDSIP_bb->scenCBIters);
+#endif
         }
-        fprintf (DDSIP_outfile, "Lower Bound eval %6d\n", DDSIP_bb->LBIters);
-        fprintf (DDSIP_outfile, "Upper Bound eval %6d\n ", DDSIP_bb->neobjcnt);
+#ifdef _WIN32
+        fprintf (DDSIP_outfile, "Lower Bound eval %6d  (%6I64d scen. probs)\n", DDSIP_bb->LBIters, DDSIP_bb->scenLBIters);
+        fprintf (DDSIP_outfile, "Upper Bound eval %6d  (%6I64d scen. probs)\n ", DDSIP_bb->UBIters, DDSIP_bb->scenUBIters);
+#else
+        fprintf (DDSIP_outfile, "Lower Bound eval %6d  (%6ld scen. probs)\n", DDSIP_bb->LBIters, DDSIP_bb->scenLBIters);
+        fprintf (DDSIP_outfile, "Upper Bound eval %6d  (%6ld scen. probs)\n ", DDSIP_bb->UBIters, DDSIP_bb->scenUBIters);
+#endif
 
         // Risk Model
         if (DDSIP_param->riskmod && feas)
@@ -380,34 +382,25 @@ DDSIP_Continue (int *noiter, int *boundstat)
                     printf ("Absolute Gap: %15.8g\n", (DDSIP_bb->bestvalue - DDSIP_bb->bestbound));
                     fprintf (DDSIP_outfile, "Absolute Gap      %15.8g\n", (DDSIP_bb->bestvalue - DDSIP_bb->bestbound));
                     printf ("Relative Gap: %15.8g\n", rgap);
-                    fprintf (DDSIP_outfile, "Relative Gap      %15.8g\n", rgap);
+                    fprintf (DDSIP_outfile, "Relative Gap      %15.8g\n\n", rgap);
                 }
                 else
                 {
                     printf ("Absolute Gap: %15.8g\n", (DDSIP_bb->bestvalue - DDSIP_bb->bestbound));
                     fprintf (DDSIP_outfile, "Absolute Gap      %15.8g\n", (DDSIP_bb->bestvalue - DDSIP_bb->bestbound));
                     printf ("Relative Gap:  %15.8g\n", rgap);
-                    fprintf (DDSIP_outfile, "Relative Gap      %15.8g\n", rgap);
+                    fprintf (DDSIP_outfile, "Relative Gap      %15.8g\n\n", rgap);
                 }
             }
         }
 
-        fprintf (DDSIP_outfile, "\n----------------------------------------------");
-        fprintf (DDSIP_outfile, "------------------------------------------\n");
+        // check if some of the (in case of DELREDU 1: not yet deleted) cuts are redundant
+        if (DDSIP_param->redundancyCheck)
+        {
+            DDSIP_CheckRedundancy(0);
+        }
 
-        // Print recourse function values to separate file
-        /*  	  if (DDSIP_param->outlev) */
-        /*  		{ */
-        /*  		  fprintf (DDSIP_param->recfunfile,"Recourse function evaluations:\n\n"); */
-        /*  		  for (i=0; i<DDSIP_bb->neobjcnt; i++) */
-        /*  			{ */
-        /*  			  fprintf (DDSIP_param->recfunfile,"("); */
-        /*  			  for (j=0; j<DDSIP_bb->firstcon+DDSIP_bb->seccon; j++) */
-        /*  				fprintf (DDSIP_param->recfunfile,"%f, ",DDSIP_bb->Txph[i*(DDSIP_bb->firstcon+DDSIP_bb->seccon)+j]); */
-        /*  			  fprintf (DDSIP_param->recfunfile,"%f)",DDSIP_bb->phiofTxph[i]); */
-        /*  			  fprintf (DDSIP_param->recfunfile,"\n"); */
-        /*  			} */
-        /*  		} */
+        fprintf (DDSIP_outfile, "----------------------------------------------------------------------------------------\n");
 
         return 0;
     }

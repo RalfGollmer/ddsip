@@ -26,19 +26,19 @@
 #include <DDSIPconst.h>
 #include <math.h>
 
-void DDSIP_RoundDown (double *);
-void DDSIP_RoundUp (double *);
-void DDSIP_RoundNear (double *);
-void DDSIP_Frequent (void);
-void DDSIP_Probable (void);
-void DDSIP_CloseToAverage (double *);
-void DDSIP_SmallValue (void);
-void DDSIP_LargeValue (void);
-void DDSIP_MinSum (void);
-void DDSIP_MaxSum (void);
-int  DDSIP_OneFifth (int, int);
-int  DDSIP_All (int, int);
-void DDSIP_BoundConsistent (void);
+static void DDSIP_RoundDown (double *);
+static void DDSIP_RoundUp (double *);
+static void DDSIP_RoundNear (double *);
+static void DDSIP_Frequent (void);
+static void DDSIP_Probable (void);
+static void DDSIP_CloseToAverage (double *);
+static void DDSIP_SmallValue (void);
+static void DDSIP_LargeValue (void);
+static void DDSIP_MinSum (void);
+static void DDSIP_MaxSum (void);
+static int  DDSIP_OneFifth (int, int);
+static int  DDSIP_All (int, int);
+static void DDSIP_BoundConsistent (void);
 
 
 //==========================================================================

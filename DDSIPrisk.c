@@ -24,11 +24,11 @@
 #include <DDSIP.h>
 #include <DDSIPconst.h>
 
-int DDSIP_ExpExcess (void);
-int DDSIP_ExcessProb (void);
-int DDSIP_SemDev (void);
-int DDSIP_WorstCase (void);
-int DDSIP_TVaR (void);
+static int DDSIP_ExpExcess (void);
+static int DDSIP_ExcessProb (void);
+static int DDSIP_SemDev (void);
+static int DDSIP_WorstCase (void);
+static int DDSIP_TVaR (void);
 
 
 //==========================================================================
@@ -447,7 +447,7 @@ DDSIP_SemDevGetNodeTarget (void)
             printf ("Solving scenario problem %d....\n", scen + 1);
         }
 
-        status = DDSIP_ChgProb (scen);
+        status = DDSIP_ChgProb (scen, DDSIP_bb->multipliers);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change problem \n");

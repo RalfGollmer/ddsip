@@ -36,7 +36,7 @@ DDSIP_Free (void **ptr)
 
 //==========================================================================
 void *
-DDSIP_Alloc (int elsize, int nelem, char *name)
+DDSIP_Alloc (int elsize, int nelem, const char *name)
 {
     int status = 0;
     void *ptr = NULL;
@@ -127,7 +127,7 @@ DDSIP_FreeNode (int nono)
     if (DDSIP_param->cb)
     {
         DDSIP_Free ((void **) &(DDSIP_node[nono]->dual));
-        DDSIP_Free ((void **) &(DDSIP_node[nono]->subboundNoLag));
+        DDSIP_Free ((void **) &(DDSIP_node[nono]->scenBoundsNoLag));
     }
     // DDSIP_node itself is needed till the end for neoind, neolb, neoub !
 }
@@ -144,7 +144,7 @@ DDSIP_FreeFrontNodes ()
             for (scen = 0; scen < DDSIP_param->scenarios; scen++)
             {
                 if (((DDSIP_node[DDSIP_bb->front[i]])->first_sol)[scen]
-                        && (cnt = (((DDSIP_node[DDSIP_bb->front[i]])->first_sol)[scen])[DDSIP_data->firstvar] - 1))
+                        && (cnt = (int) ((((DDSIP_node[DDSIP_bb->front[i]])->first_sol)[scen])[DDSIP_data->firstvar] - 0.9)))
                     for (j = scen + 1; cnt && j < DDSIP_param->scenarios; j++)
                     {
                         if (((DDSIP_node[DDSIP_bb->front[i]])->first_sol)[j]
@@ -275,7 +275,7 @@ DDSIP_FreeBb ()
             {
                 if (DDSIP_bb->bestfirst[i].first_sol)
                 {
-                    if ((cnt=DDSIP_bb->bestfirst[i].first_sol[DDSIP_bb->firstvar] -1))
+                    if ((cnt = (int) (DDSIP_bb->bestfirst[i].first_sol[DDSIP_bb->firstvar] - 0.9)))
                     {
                         for (k1 = i + 1; cnt && k1 < DDSIP_param->scenarios; k1++)
                         {
@@ -290,6 +290,7 @@ DDSIP_FreeBb ()
                 }
             }
             DDSIP_Free ((void **) &(DDSIP_bb->bestfirst));
+            DDSIP_Free ((void **) &(DDSIP_bb->startinfo_multipliers));
         }
 
         DDSIP_Free ((void **) &(DDSIP_bb->curind));

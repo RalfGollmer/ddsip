@@ -1,8 +1,6 @@
 #ifndef CBDSIP_H
 #define CBDSIP_H
 
-#define DDSIP_SWAP(a,b) tmp=(a); (a)=(b); (b)=tmp;
-
 #include <cplex.h>
 #include <string.h>
 #include <math.h>
@@ -50,9 +48,9 @@ extern "C" {
         // Priority order
         int    cpxorder;
         // Node limit
-        int    cpxnodelim;
+        long   cpxnodelim;
         // Node limit for upper bounds
-        int    cpxubnodelim;
+        long   cpxubnodelim;
         // Output indicator
         int    cpxscr;
         // Output indicator for upper bounds
@@ -146,7 +144,7 @@ extern "C" {
         // Relative precision
         double cbrelgap;
         // Maximal number of subgradients
-        double cbmaxsubg;
+        int cbmaxsubg;
         // inherit solutions in initial evaluation in CBLowerBound?
         int cb_inherit;
         // change relgap tolerance anf imelimit in CBLowerBound as long as bound is worde than in father node?
@@ -159,6 +157,8 @@ extern "C" {
         int cb_increaseWeight;
         // check Lagrange multipliers which gave the highest bound
         int cb_checkBestdual;
+        // upper bounds plus cuts for solution of initial evaluation in CBLowerBound up to node no
+        int cb_cutnodes;
 #endif
 
         // 3. Branch-and-bound
@@ -400,7 +400,7 @@ extern "C" {
         int    first_bin;
         // Depth of b+b-tree
         int    depth;
-        // Number of nodes
+        // total number of generated nodes
         int    nonode;
         // Number of front nodes
         int    nofront;
@@ -408,14 +408,14 @@ extern "C" {
         int    no_reduced_front;
         // Index of current node
         int    curnode;
-        // Number of evaluetad upper bounds
-        int    neobjcnt;
         // Dimension of dual multipliers
         int    dimdual;
         // Indicator is 1 if a scenario has negative objective values
         int    isneg;
         // Number of dual iterations
         int    dualitcnt;
+        // Number of dual iterations at the end of previous descent step
+        int    last_dualitcnt;
         // Number of decent dual iterations
         int    dualdescitcnt;
         // Index of lower bound constraint when using warm starts
@@ -434,6 +434,8 @@ extern "C" {
         double bestbound;
         // Current best upper bound
         double bestvalue;
+        // Last best upper bound
+        double last_bestvalue;
         // Lower bound in node which yielded best upper bound
         double feasbound;
         // Current upper bound
@@ -566,14 +568,20 @@ extern "C" {
         FILE *moreoutfile;
         int  noiter;
         double dualObjVal;
+        double currentDualObjVal;
         int objIncrease;
         int heurSuccess;
         int cutoff;
         cb_problemp dualProblem;
+        // count evaluations of upper bounds
+        int    UBIters;
+        long int    scenUBIters;
         // count the lb calls
         int LBIters;
+        long int scenLBIters;
         // count the cb function evaluations
         int CBIters;
+        long int scenCBIters;
         double correct_bounding;
         // set to 1 when the original is maximization
         int maximization;
@@ -606,8 +614,14 @@ extern "C" {
         double bestdual_max;
         // multipliers which gave the highest dual bound in the current dual step
         double* local_bestdual;
+        // multipliers from start info
+        double* startinfo_multipliers;
         //  number of scenarios shifted to begin of the sorted list due to ub infeasibility
         int shifts;
+        // an initial multiplier given?
+        int initial_multiplier;
+        // should multipliers be used?
+        int multipliers;
 
     } bb_t;
 
@@ -664,8 +678,9 @@ extern "C" {
         double *cursubsol;
         // Bound for objective values for the scenarios in this node
         double *subbound;
-        // objective values for the scenarios in this node without Lagrangean terms
-        double *subboundNoLag;
+        // objective values for the scenarios in this node with Lagrangean zero (if in cb step)
+        double *scenBoundsNoLag;
+        double BoundNoLag;
         // mipstatus values for the scenarios in this node
         int *mipstatus;
 
@@ -678,7 +693,7 @@ extern "C" {
         // The bounds of the scenario problems
         double *scbound;
 
-        // Cost coefficients when dual method is in use
+        // Lagrange multipliers when dual method is in use
         double *dual;
 
         //was there a cut added in the meantime?
@@ -691,7 +706,7 @@ extern "C" {
     extern CPXENVptr    DDSIP_env;
     extern CPXLPptr     DDSIP_lp;
     extern CPXENVptr    DDSIP_dual_env;
-    extern CPXLPptr     DDSIP_dual_lp;
+    //extern CPXLPptr     DDSIP_dual_lp;
 
     extern FILE         *DDSIP_outfile;
 
@@ -720,11 +735,6 @@ extern "C" {
     {
         return a>b ? a : b;
     }
-// Accuracy comparison of two double numbers
-    static _inline int DDSIP_Equal(double a, double b)
-    {
-        return (fabs(a-b)>DDSIP_param->accuracy * 0.5 * (fabs(a)+fabs(b))) ? 0 : 1;
-    }
 #else
     static inline double DDSIP_Dmin(double a, double b)
     {
@@ -742,24 +752,21 @@ extern "C" {
     {
         return a>b ? a : b;
     }
-// Accuracy comparison of two double numbers
-    static inline int DDSIP_Equal(double a, double b)
-    {
-        return (fabs(a-b)> DDSIP_param->accuracy * 0.5 * (fabs(a)+fabs(b))) ? 0 : 1;
-    }
 #endif
 
+    int DDSIP_Equal(double a, double b);
     void DDSIP_qsort_ins_D(const double *, int *, int, int);
     void DDSIP_qsort_ins_A(const double *, int *, int, int);
     int  DDSIP_Error(int);
     int  DDSIP_NoSolution(int);
     int  DDSIP_Infeasible(int);
-    void DDSIP_HandleSignal(int );
-    void DDSIP_HandleUserSignal(int );
+    void DDSIP_HandleKillSignal(int );
+    void DDSIP_HandleUserSignal1(int );
+    void DDSIP_HandleUserSignal2(int );
     void DDSIP_RegisterSignalHandlers(void);
     double DDSIP_GetCpuTime(void);
     void DDSIP_PrintErrorMsg(int);
-    void DDSIP_Print2(char *, char *, double, int);
+    void DDSIP_Print2(const char *, const char *, double, int);
     void DDSIP_translate_time(double , int *, int *, double *);
 
 // Reading
@@ -801,7 +808,7 @@ extern "C" {
 // B&B
     int  DDSIP_GetBranchIndex (double *);
     int  DDSIP_ChgBounds(int);
-    int  DDSIP_ChgProb(int);
+    int  DDSIP_ChgProb(int, int);
     int  DDSIP_LowerBound(void);
     int  DDSIP_Heuristics(int *, int, int);
     int  DDSIP_SolChk(double *);
@@ -815,7 +822,7 @@ extern "C" {
     int  DDSIP_Continue(int *, int *);
 
 // Memory care
-    void* DDSIP_Alloc(int,int,char *);
+    void* DDSIP_Alloc(int,int,const char *);
     void  DDSIP_Free(void **);
     void  DDSIP_FreeNode(int);
     void  DDSIP_FreeFrontNodes(void);

@@ -32,12 +32,12 @@
 #include <math.h>
 #include <limits.h>
 
-int DDSIP_SkipToEOL (FILE *);
-int DDSIP_Find (FILE *, char *);
-double DDSIP_ReadDbl (FILE *, char *, char *, double, int, double, double);
-double *DDSIP_ReadDblVec (FILE *, char *, char *, double, int, double, double, int, int *);
-char *DDSIP_ReadString (FILE *, char *, char *);
-int DDSIP_ReadWord (FILE *, char *, int);
+static int DDSIP_SkipToEOL (FILE *);
+static int DDSIP_Find (FILE *, const char *);
+static double DDSIP_ReadDbl (FILE *, const char *, const char *, double, int, double, double);
+static double *DDSIP_ReadDblVec (FILE *, const char *, const char *, double, int, double, double, int, int *);
+static char *DDSIP_ReadString (FILE *, const char *, const char *);
+static int DDSIP_ReadWord (FILE *, char *, int);
 
 int
 DDSIP_SkipToEOL (FILE * specfile)
@@ -52,7 +52,7 @@ DDSIP_SkipToEOL (FILE * specfile)
 }
 
 int
-DDSIP_Find (FILE * specfile, char *pattern)
+DDSIP_Find (FILE * specfile, const char *pattern)
 {
     int find = 0, i = 0;
 
@@ -68,14 +68,14 @@ DDSIP_Find (FILE * specfile, char *pattern)
         if (isspace(c)||c=='*')
         {
             str[i] = '\0';
-            if (!strncmp (str, pattern, DDSIP_Imin (DDSIP_unique, strlen (pattern))))
+            if (!strncmp (str, pattern, DDSIP_Imin (DDSIP_unique, (int) strlen (pattern))))
                 find = 1;
             if (c=='*')
                 DDSIP_SkipToEOL (specfile);
             i = 0;
         }
         else
-            str[i++] = c;
+            str[i++] = (char) c;
     }
 
     return find;
@@ -86,9 +86,9 @@ DDSIP_Find (FILE * specfile, char *pattern)
 // It returns defval if there is no such pattern
 
 double
-DDSIP_ReadDbl (FILE * specfile, char *pattern, char *text, double defval, int isint, double lb, double ub)
+DDSIP_ReadDbl (FILE * specfile, const char *pattern, const char *text, double defval, int isint, double lb, double ub)
 {
-    int find, i, ih;
+    int find, i;
 
     double val;
 
@@ -108,7 +108,7 @@ DDSIP_ReadDbl (FILE * specfile, char *pattern, char *text, double defval, int is
         if (isspace (c))
         {
             str[i] = '\0';
-            if (!strncmp (str, pattern, DDSIP_Imin (DDSIP_unique, strlen (pattern))))
+            if (!strncmp (str, pattern, DDSIP_Imin (DDSIP_unique, (int) strlen (pattern))))
             {
                 find = 1;
                 if (fscanf (specfile, "%lf", &val) != 1)
@@ -126,7 +126,7 @@ DDSIP_ReadDbl (FILE * specfile, char *pattern, char *text, double defval, int is
                 i = 0;
             }
             else
-                str[i++] = c;
+                str[i++] = (char) c;
         }
     }
 
@@ -136,14 +136,13 @@ DDSIP_ReadDbl (FILE * specfile, char *pattern, char *text, double defval, int is
         find = 0;
         if (isint)
         {
-            ih = floor (val + 0.1);
-            printf ("*Warning: Illegal parameter setting: %s = %d.\n", text, ih);
+            printf ("*Warning: Illegal parameter setting: %s = %.0f.\n", text, floor (val + 0.1));
             printf ("*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
                     floor (lb + 0.1), floor (lb + 0.1), floor (ub + 0.1));
-            fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting: %s = %d.\n", text, ih);
+            fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting: %s = %.0f.\n", text, floor (val + 0.1));
             fprintf (DDSIP_outfile, "*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
                     floor (lb + 0.1), floor (lb + 0.1), floor (ub + 0.1));
-            val = floor (lb + 0.1);
+            val = (int) floor (lb + 0.1);
         }
         else
         {
@@ -159,14 +158,13 @@ DDSIP_ReadDbl (FILE * specfile, char *pattern, char *text, double defval, int is
         find = 0;
         if (isint)
         {
-            ih = floor (val + 0.1);
-            printf ("*Warning: Illegal parameter setting: %s = %d.\n", text, ih);
+            printf ("*Warning: Illegal parameter setting: %s = %.0f.\n", text, floor (val + 0.1));
             printf ("*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
                     floor (ub + 0.1), floor (lb + 0.1), floor (ub + 0.1));
-            fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting: %s = %d.\n", text, ih);
+            fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting: %s = %.0f.\n", text, floor (val + 0.1));
             fprintf (DDSIP_outfile, "*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
                     floor (ub + 0.1), floor (lb + 0.1), floor (ub + 0.1));
-            val = floor (ub + 0.1);
+            val = (int) floor (ub + 0.1);
         }
         else
         {
@@ -186,7 +184,7 @@ DDSIP_ReadDbl (FILE * specfile, char *pattern, char *text, double defval, int is
             fprintf (DDSIP_outfile, " %-8s  %-31s(default) ", pattern, text);
             if (isint)
             {
-                val = floor (val + 0.1);
+                val = (int) floor (val + 0.1);
                 fprintf (DDSIP_outfile, "    %12.0f\n", val);
             }
             else
@@ -198,7 +196,7 @@ DDSIP_ReadDbl (FILE * specfile, char *pattern, char *text, double defval, int is
         fprintf (DDSIP_outfile, " %-8s  %-40s ", pattern, text);
         if (isint)
         {
-            val = floor (val + 0.1);
+            val = (int) floor (val + 0.1);
             fprintf (DDSIP_outfile, "    %12.0f\n", val);
         }
         else
@@ -213,7 +211,7 @@ DDSIP_ReadDbl (FILE * specfile, char *pattern, char *text, double defval, int is
 // It returns NULL if there is no such pattern
 
 double *
-DDSIP_ReadDblVec (FILE * specfile, char *pattern, char *text, double defval, int isint, double lb, double ub, int maxvals, int *number)
+DDSIP_ReadDblVec (FILE * specfile, const char *pattern, const char *text, double defval, int isint, double lb, double ub, int maxvals, int *number)
 {
     int find, i, ih;
 
@@ -236,7 +234,7 @@ DDSIP_ReadDblVec (FILE * specfile, char *pattern, char *text, double defval, int
         if (isspace (c))
         {
             str[i] = '\0';
-            if (!strncmp (str, pattern, DDSIP_Imin (DDSIP_unique, strlen (pattern))))
+            if (!strncmp (str, pattern, DDSIP_Imin (DDSIP_unique, (int) strlen (pattern))))
             {
                 find = 1;
                 val = (double *) DDSIP_Alloc (sizeof (double), maxvals, "values(DDSIP_ReadDblVec)");
@@ -252,14 +250,13 @@ DDSIP_ReadDblVec (FILE * specfile, char *pattern, char *text, double defval, int
                         {
                             if (isint)
                             {
-                                i = floor (val[ih] + 0.1);
-                                printf ("*Warning: Illegal parameter setting: %s = %d.\n", text, i);
+                                printf ("*Warning: Illegal parameter setting: %s = %.0f.\n", text, floor (val[ih] + 0.1));
                                 printf ("*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
                                         floor (lb + 0.1), floor (lb + 0.1), floor (ub + 0.1));
                                 fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting: %s = %d.\n", text, i);
                                 fprintf (DDSIP_outfile, "*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
                                         floor (lb + 0.1), floor (lb + 0.1), floor (ub + 0.1));
-                                val[ih] = floor (lb + 0.1);
+                                val[ih] = (int) floor (lb + 0.1);
                             }
                             else
                             {
@@ -274,14 +271,13 @@ DDSIP_ReadDblVec (FILE * specfile, char *pattern, char *text, double defval, int
                         {
                             if (isint)
                             {
-                                i = floor (val[ih] + 0.1);
-                                printf ("*Warning: Illegal parameter setting: %s = %d.\n", text, i);
+                                printf ("*Warning: Illegal parameter setting: %s = %.0f.\n", text, floor (val[ih] + 0.1));
                                 printf ("*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
                                         floor (ub + 0.1), floor (lb + 0.1), floor (ub + 0.1));
                                 fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting: %s = %d.\n", text, i);
                                 fprintf (DDSIP_outfile, "*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
                                         floor (ub + 0.1), floor (lb + 0.1), floor (ub + 0.1));
-                                val[ih] = floor (ub + 0.1);
+                                val[ih] = (int) floor (ub + 0.1);
                             }
                             else
                             {
@@ -305,7 +301,7 @@ DDSIP_ReadDblVec (FILE * specfile, char *pattern, char *text, double defval, int
                 i = 0;
             }
             else
-                str[i++] = c;
+                str[i++] = (char) c;
         }
     }
 
@@ -318,7 +314,7 @@ DDSIP_ReadDblVec (FILE * specfile, char *pattern, char *text, double defval, int
         fprintf (DDSIP_outfile, " %-8s  %-31s(default) ", pattern, text);
         if (isint)
         {
-            val[0] = floor (val[0] + 0.1);
+            val[0] = (int) floor (val[0] + 0.1);
             fprintf (DDSIP_outfile, "    %12.0f\n", val[0]);
         }
         else
@@ -330,7 +326,7 @@ DDSIP_ReadDblVec (FILE * specfile, char *pattern, char *text, double defval, int
         for (i = 0; i < *number; i++)
             if (isint)
             {
-                val[i] = floor (val[i] + 0.1);
+                val[i] = (int) floor (val[i] + 0.1);
                 fprintf (DDSIP_outfile, "    %12.0f\n", val[i]);
             }
             else
@@ -345,7 +341,7 @@ DDSIP_ReadDblVec (FILE * specfile, char *pattern, char *text, double defval, int
 // It returns NULL if there is no such pattern
 
 char *
-DDSIP_ReadString (FILE * specfile, char *pattern, char *text)
+DDSIP_ReadString (FILE * specfile, const char *pattern, const char *text)
 {
     int find, i;
 
@@ -366,7 +362,7 @@ DDSIP_ReadString (FILE * specfile, char *pattern, char *text)
         if (isspace (c))
         {
             str[i] = '\0';
-            if (!strncmp (str, pattern, DDSIP_Imin (DDSIP_unique, strlen (pattern))))
+            if (!strncmp (str, pattern, DDSIP_Imin (DDSIP_unique, (int) strlen (pattern))))
             {
                 find = 1;
             }
@@ -380,7 +376,7 @@ DDSIP_ReadString (FILE * specfile, char *pattern, char *text)
                 i = 0;
             }
             else
-                str[i++] = c;
+                str[i++] = (char) c;
         }
     }
     if (find)
@@ -398,14 +394,14 @@ DDSIP_ReadString (FILE * specfile, char *pattern, char *text)
             fprintf (stderr, "XXX ERROR ReadString: found %s, but no following string.\n", pattern);
             exit (1);
         }
-        string[0] = c;
+        string[0] = (char) c;
         i = 1;
         while ((c = fgetc (specfile)) != EOF)
         {
             if (isspace (c))
                 break;
             else
-                string[i++] = c;
+                string[i++] = (char) c;
             if (i >= 255)
             {
                 string[255] = '\0';
@@ -453,14 +449,14 @@ DDSIP_ReadWord (FILE * infile, char *string, int stringlength)
         fprintf (stderr, "XXX Warning ReadWord: no word found up to EOF.\n");
         return (0);
     }
-    string[0] = c;
+    string[0] = (char) c;
     i = 1;
     while ((c = fgetc (infile)) != EOF)
     {
         if (isspace (c))
             break;
         else
-            string[i++] = c;
+            string[i++] = (char) c;
         if (i >= stringlength - 1)
         {
             string[stringlength -1] = '\0';
@@ -490,7 +486,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
         if (c == '\n' || c == ' ' || c == '*' )
         {
             str[i] = '\0';
-            if (!strncmp (str, pattern, strlen (pattern)))
+            if (!strncmp (str, pattern, (int) strlen (pattern)))
                 find = 1;
             i = 0;
             // Read till end of line
@@ -498,7 +494,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 while ((c = fgetc (specfile)) != EOF && c != '\n');
         }
         else
-            str[i++] = c;
+            str[i++] = (char) c;
 
     DDSIP_param->cpxno = 0;
     // If general CPLEX-parameters are specified
@@ -560,7 +556,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
         if (c == '\n' || c == ' ' || c == '*' )
         {
             str[i] = '\0';
-            if (!strncmp (str, pattern, strlen (pattern)))
+            if (!strncmp (str, pattern, (int) strlen (pattern)))
                 find = 1;
             i = 0;
             // Read till end of line
@@ -568,7 +564,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 while ((c = fgetc (specfile)) != EOF && c != '\n');
         }
         else
-            str[i++] = c;
+            str[i++] = (char) c;
     DDSIP_param->cpxnolb = 0;
     // If 'LowerBound'-CPLEX-parameters are specified
     if (find)
@@ -636,7 +632,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
         if (c == '\n' || c == ' ' || c == '*' )
         {
             str[i] = '\0';
-            if (!strncmp (str, pattern, strlen (pattern)))
+            if (!strncmp (str, pattern, (int) strlen (pattern)))
                 find = 1;
             i = 0;
             // Read till end of line
@@ -644,7 +640,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 while ((c = fgetc (specfile)) != EOF && c != '\n');
         }
         else
-            str[i++] = c;
+            str[i++] = (char) c;
 
     DDSIP_param->cpxnolb2 = 0;
     // If 'LowerBound 2'-CPLEX-parameters are specified
@@ -713,7 +709,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
         if (c == '\n' || c == ' ' || c == '*' )
         {
             str[i] = '\0';
-            if (!strncmp (str, pattern, strlen (pattern)))
+            if (!strncmp (str, pattern, (int) strlen (pattern)))
                 find = 1;
             i = 0;
             // Read till end of line
@@ -721,7 +717,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 while ((c = fgetc (specfile)) != EOF && c != '\n');
         }
         else
-            str[i++] = c;
+            str[i++] = (char) c;
     DDSIP_param->cpxnoub = 0;
     // If 'UpperBound'-CPLEX-parameters are specified
     if (find)
@@ -789,7 +785,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
         if (c == '\n' || c == ' ' || c == '*' )
         {
             str[i] = '\0';
-            if (!strncmp (str, pattern, strlen (pattern)))
+            if (!strncmp (str, pattern, (int) strlen (pattern)))
                 find = 1;
             i = 0;
             // Read till end of line
@@ -797,7 +793,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 while ((c = fgetc (specfile)) != EOF && c != '\n');
         }
         else
-            str[i++] = c;
+            str[i++] = (char) c;
 
     DDSIP_param->cpxnoub2 = 0;
     // If 'UpperBound 2'-CPLEX-parameters are specified
@@ -866,7 +862,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
         if (c == '\n' || c == ' ' || c == '*' )
         {
             str[i] = '\0';
-            if (!strncmp (str, pattern, strlen (pattern)))
+            if (!strncmp (str, pattern, (int) strlen (pattern)))
                 find = 1;
             i = 0;
             // Read till end of line
@@ -874,7 +870,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 while ((c = fgetc (specfile)) != EOF && c != '\n');
         }
         else
-            str[i++] = c;
+            str[i++] = (char) c;
 
     DDSIP_param->cpxnoeev = 0;
     // If 'EEV'-CPLEX-parameters are specified
@@ -943,7 +939,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
         if (c == '\n' || c == ' ' || c == '*' )
         {
             str[i] = '\0';
-            if (!strncmp (str, pattern, strlen (pattern)))
+            if (!strncmp (str, pattern, (int) strlen (pattern)))
                 find = 1;
             i = 0;
             // Read till end of line
@@ -951,7 +947,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 while ((c = fgetc (specfile)) != EOF && c != '\n');
         }
         else
-            str[i++] = c;
+            str[i++] = (char) c;
 
     DDSIP_param->cpxnodual = 0;
     // If 'DUAL'-CPLEX-parameters are specified
@@ -1021,7 +1017,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
         if (c == '\n' || c == ' ' || c == '*' )
         {
             str[i] = '\0';
-            if (!strncmp (str, pattern, strlen (pattern)))
+            if (!strncmp (str, pattern, (int) strlen (pattern)))
                 find = 1;
             i = 0;
             // Read till end of line
@@ -1029,7 +1025,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
                 while ((c = fgetc (specfile)) != EOF && c != '\n');
         }
         else
-            str[i++] = c;
+            str[i++] = (char) c;
 
     DDSIP_param->cpxnodual2 = 0;
     // If 'DUAL'-CPLEX-parameters are specified
@@ -1154,55 +1150,55 @@ DDSIP_ReadSpec ()
     }
 #endif
 
-    DDSIP_param->scenarios = floor ( DDSIP_ReadDbl(specfile,"SCENAR"," SCENARIOS",2.,1,2.,DDSIP_bigint) + 0.1);
+    DDSIP_param->scenarios = (int) floor ( DDSIP_ReadDbl(specfile,"SCENAR"," SCENARIOS",2.,1,2.,DDSIP_bigint) + 0.1);
 
-    DDSIP_param->stocrhs = floor (DDSIP_ReadDbl (specfile, "STOCRH", " STOCHASTIC RHS", 0., 1, 0., DDSIP_bigint) + 0.1);
-    DDSIP_param->stoccost = floor (DDSIP_ReadDbl (specfile, "STOCCO", " STOCHASTIC COST COEFFICIENTS", 0., 1, 0., DDSIP_bigint) + 0.1);
-    DDSIP_param->stocmat = floor (DDSIP_ReadDbl (specfile, "STOCMA", " STOCHASTIC MATRIX ENTRIES", 0., 1, 0., DDSIP_bigint) + 0.1);
+    DDSIP_param->stocrhs = (int) floor (DDSIP_ReadDbl (specfile, "STOCRH", " STOCHASTIC RHS", 0., 1, 0., DDSIP_bigint) + 0.1);
+    DDSIP_param->stoccost = (int) floor (DDSIP_ReadDbl (specfile, "STOCCO", " STOCHASTIC COST COEFFICIENTS", 0., 1, 0., DDSIP_bigint) + 0.1);
+    DDSIP_param->stocmat = (int) floor (DDSIP_ReadDbl (specfile, "STOCMA", " STOCHASTIC MATRIX ENTRIES", 0., 1, 0., DDSIP_bigint) + 0.1);
 
 
     // Cplex parameters, output somewhere else
     DDSIP_ReadCpxPara (specfile);
 
     // not implemented: SMPS reading
-    //  DDSIP_param->smps = floor ( DDSIP_ReadDbl(specfile,"SMPSFO"," READ SMPS FORMAT",0.,1,0.,1.) + 0.1);
+    //  DDSIP_param->smps = (int) floor ( DDSIP_ReadDbl(specfile,"SMPSFO"," READ SMPS FORMAT",0.,1,0.,1.) + 0.1);
 
     //b&b parameters
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
     fprintf (DDSIP_outfile, "-DUAL DECOMPOSITION PROCEDURE\n\n");
 
 #ifdef NEOS
-    DDSIP_param->outlev    = floor (DDSIP_ReadDbl (specfile, "OUTLEV", " OUTPUT LEVEL", 0., 1, 0.,3.) + 0.1);
-    DDSIP_param->files     = floor (DDSIP_ReadDbl (specfile, "OUTFIL", " OUTPUT FILES LEVEL", 1., 1, 0., 1.) + 0.1);
+    DDSIP_param->outlev    = (int) floor (DDSIP_ReadDbl (specfile, "OUTLEV", " OUTPUT LEVEL", 0., 1, 0.,3.) + 0.1);
+    DDSIP_param->files     = (int) floor (DDSIP_ReadDbl (specfile, "OUTFIL", " OUTPUT FILES LEVEL", 1., 1, 0., 1.) + 0.1);
     DDSIP_param->timelim   = DDSIP_ReadDbl (specfile, "TIMELI", " TIME LIMIT", 7000., 0, 0., DDSIP_infty);
 #else
-    DDSIP_param->outlev    = floor (DDSIP_ReadDbl (specfile, "OUTLEV", " OUTPUT LEVEL", 1., 1, 0.,100.) + 0.1);
-    DDSIP_param->files     = floor (DDSIP_ReadDbl (specfile, "OUTFIL", " OUTPUT FILES LEVEL", 1., 1, 0., 6.) + 0.1);
+    DDSIP_param->outlev    = (int) floor (DDSIP_ReadDbl (specfile, "OUTLEV", " OUTPUT LEVEL", 1., 1, 0.,100.) + 0.1);
+    DDSIP_param->files     = (int) floor (DDSIP_ReadDbl (specfile, "OUTFIL", " OUTPUT FILES LEVEL", 1., 1, 0., 6.) + 0.1);
     // uncomment for default timelimit: 24h
     //DDSIP_param->timelim   = DDSIP_ReadDbl (specfile, "TIMELI", " TIME LIMIT", 86400., 0, 0., DDSIP_infty);
     // default timelimit: 14 days
     DDSIP_param->timelim   = DDSIP_ReadDbl (specfile, "TIMELI", " TIME LIMIT", 1209600., 0, 0., DDSIP_infty);
 #endif
-    DDSIP_param->logfreq   = floor (DDSIP_ReadDbl (specfile, "LOGFRE", " LOG FREQUENCY", 1., 1, 0., DDSIP_bigint) + 0.1);
-    DDSIP_param->nodelim   = floor (DDSIP_ReadDbl (specfile, "NODELI", " NODE LIMIT", DDSIP_bigint, 1, 0., INT_MAX-1) + 0.1);
+    DDSIP_param->logfreq   = (int) floor (DDSIP_ReadDbl (specfile, "LOGFRE", " LOG FREQUENCY", 1., 1, 0., DDSIP_bigint) + 0.1);
+    DDSIP_param->nodelim   = (int) floor (DDSIP_ReadDbl (specfile, "NODELI", " NODE LIMIT", DDSIP_bigint, 1, 0., INT_MAX-1) + 0.1);
     // Accuracy, e.g. for the  comparison of double numbers
     DDSIP_param->accuracy  = DDSIP_ReadDbl (specfile, "ACCURA", " ACCURACY", 1.0e-12, 0, 1.e-13, 1.);
     DDSIP_param->brancheps = DDSIP_ReadDbl (specfile, "EPSILO", " EPSILON", 1.e-11, 0, 5.e-12, 1.);
     DDSIP_param->nulldisp  = DDSIP_ReadDbl (specfile, "NULLDI", " NULL DISPERSION", 1.6e-11, 0, 5.e-12, DDSIP_infty);
     DDSIP_param->absgap    = DDSIP_ReadDbl (specfile, "ABSOLU", " ABSOLUTE GAP", 0., 0, 0., DDSIP_infty);
     DDSIP_param->relgap    = DDSIP_ReadDbl (specfile, "RELATI", " RELATIVE GAP", 1.0e-6, 0, 1.1*DDSIP_param->brancheps, 1.);
-    DDSIP_param->expected  = floor (DDSIP_ReadDbl (specfile, "EEVPRO", " EXPECTED VALUE PROBLEM", 0., 1, 0., 1.) + 0.1);
+    DDSIP_param->expected  = (int) floor (DDSIP_ReadDbl (specfile, "EEVPRO", " EXPECTED VALUE PROBLEM", 0., 1, 0., 1.) + 0.1);
     // Write deterministic DDSIP_equivalent (only expectation-based case so far)
-    DDSIP_param->write_detequ = floor (DDSIP_ReadDbl (specfile, "DETEQU", " WRITE DETERMINISTIC EQUIVALENT", 0., 1, 0., 1.) + 0.1);
+    DDSIP_param->write_detequ = (int) floor (DDSIP_ReadDbl (specfile, "DETEQU", " WRITE DETERMINISTIC EQUIVALENT", 0., 1, 0., 1.) + 0.1);
     if (DDSIP_param->write_detequ)
-        DDSIP_param->deteqType = floor (DDSIP_ReadDbl (specfile, "DETEQT", " DETERMINISTIC EQUIVALENT TYPE", 0., 1, 0., 1.) + 0.1);
+        DDSIP_param->deteqType = (int) floor (DDSIP_ReadDbl (specfile, "DETEQT", " DETERMINISTIC EQUIVALENT TYPE", 0., 1, 0., 1.) + 0.1);
     else
         DDSIP_param->deteqType = 0;
 
-    DDSIP_param->cpxorder  = floor (DDSIP_ReadDbl (specfile, "CPXORD", " READ CPLEX PRIORITY ORDER", 0., 1, 0., 1.) + 0.1);
-    DDSIP_param->order     = floor (DDSIP_ReadDbl (specfile, "PORDER", " DDSIP PRIORITY ORDER", 0., 1, 0., 1.) + 0.1);
-    DDSIP_param->advstart  = floor (DDSIP_ReadDbl (specfile, "STARTI", " INITIAL SOLUTION/BOUND", 0., 1, 0., 1.) + 0.1);
-    DDSIP_param->hot       = floor (DDSIP_ReadDbl (specfile, "HOTSTA", " HOT STARTS DURING B&B", 1., 1, 0., 6.) + 0.1);
+    DDSIP_param->cpxorder  = (int) floor (DDSIP_ReadDbl (specfile, "CPXORD", " READ CPLEX PRIORITY ORDER", 0., 1, 0., 1.) + 0.1);
+    DDSIP_param->order     = (int) floor (DDSIP_ReadDbl (specfile, "PORDER", " DDSIP PRIORITY ORDER", 0., 1, 0., 1.) + 0.1);
+    DDSIP_param->advstart  = (int) floor (DDSIP_ReadDbl (specfile, "STARTI", " INITIAL SOLUTION/BOUND", 0., 1, 0., 1.) + 0.1);
+    DDSIP_param->hot       = (int) floor (DDSIP_ReadDbl (specfile, "HOTSTA", " HOT STARTS DURING B&B", 1., 1, 0., 6.) + 0.1);
     if (DDSIP_param->stoccost && DDSIP_param->hot == 2)
     {
         fprintf (DDSIP_outfile, "      HOSTART=2 not implemented for stoch. cost coefficients, resetting to 1.\n");
@@ -1210,29 +1206,29 @@ DDSIP_ReadSpec ()
         DDSIP_param->cbhot = 1;
     }
     else
-        DDSIP_param->cbhot   = floor (DDSIP_ReadDbl (specfile, "CBHOTS", " HOT STARTS: PREV SCENS IN CB", 0., 1, 0., 3.) + 0.1);
+        DDSIP_param->cbhot   = (int) floor (DDSIP_ReadDbl (specfile, "CBHOTS", " HOT STARTS: PREV SCENS IN CB", 0., 1, 0., 4.) + 0.1);
 
-    DDSIP_param->branchdir   = floor (DDSIP_ReadDbl (specfile, "BRADIR", " BRANCHING DIRECTION", -1., 1, -1., 1.) + 0.1);
-    DDSIP_param->branchstrat = floor (DDSIP_ReadDbl (specfile, "BRASTR", " BRANCHING STRATEGY", 2., 1, 0., 2.) + 0.1);
-    DDSIP_param->equalbranch = floor (DDSIP_ReadDbl (specfile, "BRAEQU", " EQUAL DIVIDE BRANCHING", 0., 1, -1., 1.) + 0.1);
-    DDSIP_param->intfirst    = floor (DDSIP_ReadDbl (specfile, "INTFIR", " BRANCH INTEGER FIRST", 1., 1, 0., 1.) + 0.1);
-    DDSIP_param->boundstrat  = floor (DDSIP_ReadDbl (specfile, "BOUSTR", " BOUNDING STRATEGY", 10., 1, 0., 10.) + 0.1);
+    DDSIP_param->branchdir   = (int) floor (DDSIP_ReadDbl (specfile, "BRADIR", " BRANCHING DIRECTION", -1., 1, -1., 1.) + 0.1);
+    DDSIP_param->branchstrat = (int) floor (DDSIP_ReadDbl (specfile, "BRASTR", " BRANCHING STRATEGY", 2., 1, 0., 2.) + 0.1);
+    DDSIP_param->equalbranch = (int) floor (DDSIP_ReadDbl (specfile, "BRAEQU", " EQUAL DIVIDE BRANCHING", 0., 1, -1., 1.) + 0.1);
+    DDSIP_param->intfirst    = (int) floor (DDSIP_ReadDbl (specfile, "INTFIR", " BRANCH INTEGER FIRST", 1., 1, 0., 1.) + 0.1);
+    DDSIP_param->boundstrat  = (int) floor (DDSIP_ReadDbl (specfile, "BOUSTR", " BOUNDING STRATEGY", 10., 1, 0., 10.) + 0.1);
     if (DDSIP_param->boundstrat == 10)
-        DDSIP_param->bestboundfreq= floor(DDSIP_ReadDbl (specfile, "BESTFR", " BEST BOUND FREQUENCY", DDSIP_Dmin(30., 2.*DDSIP_param->scenarios), 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->bestboundfreq= (int) floor(DDSIP_ReadDbl (specfile, "BESTFR", " BEST BOUND FREQUENCY", DDSIP_Dmin(30., 2.*DDSIP_param->scenarios), 1, 0., DDSIP_bigint) + 0.1);
     else
         DDSIP_param->bestboundfreq= 80;
         //DDSIP_param->bestboundfreq= 100;
-    DDSIP_param->period = floor (DDSIP_ReadDbl (specfile, "PERIOD", " HEUR PERIOD ITERS", 32., 1, 1., 10000.) + 0.1);
-    DDSIP_param->rgapsmall = floor (DDSIP_ReadDbl (specfile, "TOLSMA", " HEUR SMALL RGAP ITERS", 16., 1, 1., 1.*DDSIP_param->period) + 0.1);
+    DDSIP_param->period = (int) floor (DDSIP_ReadDbl (specfile, "PERIOD", " HEUR PERIOD ITERS", 32., 1, 1., 10000.) + 0.1);
+    DDSIP_param->rgapsmall = (int) floor (DDSIP_ReadDbl (specfile, "TOLSMA", " HEUR SMALL RGAP ITERS", 16., 1, 1., 1.*DDSIP_param->period) + 0.1);
 
-    DDSIP_param->watchkappa  = floor (DDSIP_ReadDbl (specfile, "KAPPA", " GATHER KAPPA INFORMATION", 0., 1, 0., 2.) + 0.1);
-    DDSIP_param->relax       = floor (DDSIP_ReadDbl (specfile, "RELAXL", " RELAXATION LEVEL", 0., 1, 0., DDSIP_bigint) + 0.1);
-    DDSIP_param->noquant     = floor (DDSIP_ReadDbl (specfile, "QUANTI", " NUMBER OF QUANTILES", 10., 1, 0., DDSIP_bigint) + 0.1);
-    DDSIP_param->maxinherit = floor (DDSIP_ReadDbl (specfile, "MAXINH", " MAX. LEVEL OF INHERITANCE", 5., 1, 0., 100000.) + 0.1);
+    DDSIP_param->watchkappa  = (int) floor (DDSIP_ReadDbl (specfile, "KAPPA", " GATHER KAPPA INFORMATION", 0., 1, 0., 2.) + 0.1);
+    DDSIP_param->relax       = (int) floor (DDSIP_ReadDbl (specfile, "RELAXL", " RELAXATION LEVEL", 0., 1, 0., DDSIP_bigint) + 0.1);
+    DDSIP_param->noquant     = (int) floor (DDSIP_ReadDbl (specfile, "QUANTI", " NUMBER OF QUANTILES", 10., 1, 0., DDSIP_bigint) + 0.1);
+    DDSIP_param->maxinherit = (int) floor (DDSIP_ReadDbl (specfile, "MAXINH", " MAX. LEVEL OF INHERITANCE", 5., 1, 0., 100000.) + 0.1);
 
     DDSIP_param->heuristic_vector = NULL;
     DDSIP_param->heuristic_auto = 0;
-    if ((DDSIP_param->heuristic = floor (DDSIP_ReadDbl (specfile, "HEURIS", " HEURISTIC", 100., 1, 0., 100.) + 0.1)) == 99)
+    if ((DDSIP_param->heuristic = (int) floor (DDSIP_ReadDbl (specfile, "HEURIS", " HEURISTIC", 100., 1, 0., 100.) + 0.1)) == 99)
     {
         DDSIP_param->heuristic_vector =
             DDSIP_ReadDblVec (specfile, "HEURIS", " HEURISTICVector", 3., 1, 0., 99., 12, &DDSIP_param->heuristic_num);
@@ -1241,7 +1237,7 @@ DDSIP_ReadSpec ()
             fprintf (DDSIP_outfile, "      missing list of heuristics to be used, resetting to 3.\n");
             DDSIP_param->heuristic = 3;
         }
-        DDSIP_param->interrupt_heur = floor (DDSIP_ReadDbl (specfile, "INTHEU", " INTERRUPT HEURISTIC LOOP", 0., 1, -1., 1.) + 0.1);
+        DDSIP_param->interrupt_heur = (int) floor (DDSIP_ReadDbl (specfile, "INTHEU", " INTERRUPT HEURISTIC LOOP", 0., 1, -1., 1.) + 0.1);
     }
     else if (DDSIP_param->heuristic == 100)
     {
@@ -1257,21 +1253,21 @@ DDSIP_ReadSpec ()
             DDSIP_param->heuristic_vector[i + 1] = i;
         DDSIP_param->heuristic_num = 12;
         DDSIP_param->heuristic_auto = 1;
-        DDSIP_param->interrupt_heur = floor (DDSIP_ReadDbl (specfile, "INTHEU", " INTERRUPT HEURISTIC LOOP", -1., 1, -1., 1.) + 0.1);
+        DDSIP_param->interrupt_heur = (int) floor (DDSIP_ReadDbl (specfile, "INTHEU", " INTERRUPT HEURISTIC LOOP", -1., 1, -1., 1.) + 0.1);
     }
     else
     {
         DDSIP_param->interrupt_heur = 0;
     }
-    //DDSIP_param->prepro = floor (DDSIP_ReadDbl (specfile, "PREPRO", " PREPROCESSING", 0., 1, 0., 3.) + 0.1);
+    //DDSIP_param->prepro = (int) floor (DDSIP_ReadDbl (specfile, "PREPRO", " PREPROCESSING", 0., 1, 0., 3.) + 0.1);
     DDSIP_param->prepro = 0;
 #ifdef ADDBENDERSCUTS
-    DDSIP_param->addBendersCuts = floor (DDSIP_ReadDbl (specfile, "ADDBEN", " ADD BENDERS CUTS", 1., 1, 0., 2.) + 0.1);
+    DDSIP_param->addBendersCuts = (int) floor (DDSIP_ReadDbl (specfile, "ADDBEN", " ADD BENDERS CUTS", 1., 1, 0., 2.) + 0.1);
     if (DDSIP_param->addBendersCuts)
     {
         DDSIP_param->alwaysBendersCuts = 1;
-        DDSIP_param->testOtherScens = DDSIP_param->stocmat ? 1. : 0.;
-        DDSIP_param->testOtherScens = floor (DDSIP_ReadDbl (specfile, "TESTBE", " TEST FOR FURTHER BENDERS CUTS", DDSIP_param->testOtherScens, 1, 0., 1.) + 0.1);
+        tmp = DDSIP_param->stocmat ? 1. : 0.;
+        DDSIP_param->testOtherScens = (int) floor (DDSIP_ReadDbl (specfile, "TESTBE", " TEST FOR FURTHER BENDERS CUTS", tmp, 1, 0., 1.) + 0.1);
     }
     else
     {
@@ -1281,16 +1277,16 @@ DDSIP_ReadSpec ()
     }
 #endif
 #ifdef ADDINTEGERCUTS
-    DDSIP_param->addIntegerCuts = floor (DDSIP_ReadDbl (specfile, "ADDINT", " ADD INTEGER CUTS", 1., 1, 0., 1.) + 0.1);
+    DDSIP_param->addIntegerCuts = (int) floor (DDSIP_ReadDbl (specfile, "ADDINT", " ADD INTEGER CUTS", 1., 1, 0., 1.) + 0.1);
 #endif
     if (DDSIP_param->addBendersCuts || DDSIP_param->addIntegerCuts)
     {
-        DDSIP_param->numberReinits  = floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 25., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->numberReinits  = (int) floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 25., 1, 0., DDSIP_bigint) + 0.1);
     }
     
-    DDSIP_param->redundancyCheck = floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", 0., 1, 0., 1.) + 0.1);
+    DDSIP_param->redundancyCheck = (int) floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", 0., 1, 0., 1.) + 0.1);
     if (DDSIP_param->redundancyCheck)
-        DDSIP_param->deleteRedundantCuts = floor (DDSIP_ReadDbl (specfile, "DELRED", " DELETE REDUNDANT CUTS", 1., 1, 0., 1.) + 0.1);
+        DDSIP_param->deleteRedundantCuts = (int) floor (DDSIP_ReadDbl (specfile, "DELRED", " DELETE REDUNDANT CUTS", 1., 1, 0., 1.) + 0.1);
     else
         DDSIP_param->deleteRedundantCuts = 0;
 
@@ -1302,7 +1298,7 @@ DDSIP_ReadSpec ()
     // A positive parameter riskmod means: LowerBound the mean-risk model DDSIP_min (E + rho * R)
     // A negative parameter riskmod means: LowerBound the risk model  DDSIP_min (R)
     // riskmod=0 means: LowerBound the expected value model  DDSIP_min (E) (default)
-    DDSIP_param->riskmod = floor (DDSIP_ReadDbl (specfile, "RISKMO", " RISK MODEL", 0., 1, -DDSIP_maxrisk, DDSIP_maxrisk) + 0.1);
+    DDSIP_param->riskmod = (int) floor (DDSIP_ReadDbl (specfile, "RISKMO", " RISK MODEL", 0., 1, -DDSIP_maxrisk, DDSIP_maxrisk) + 0.1);
 
     if (DDSIP_param->riskmod)
     {
@@ -1327,9 +1323,9 @@ DDSIP_ReadSpec ()
     if (DDSIP_param->riskmod)
     {
         // Use algorithm for fsd-consistent risk measures: ExpExc, ExcProb, VaR, TVaR, SemDev
-        DDSIP_param->riskalg = DDSIP_ReadDbl (specfile, "RISKAL", " RISK-ALGORITHM", 0., 1, 0., 2.);
+        DDSIP_param->riskalg = (int) floor (DDSIP_ReadDbl (specfile, "RISKAL", " RISK-ALGORITHM", 0., 1, 0., 2.) + 0.1);
 
-        DDSIP_param->scalarization = floor (DDSIP_ReadDbl (specfile, "SCALAR", " SCALARIZATION", 0., 1, 0., 1.) + 0.1);
+        DDSIP_param->scalarization = (int) floor (DDSIP_ReadDbl (specfile, "SCALAR", " SCALARIZATION", 0., 1, 0., 1.) + 0.1);
         if (DDSIP_param->scalarization && (DDSIP_param->riskmod < 0 || DDSIP_param->riskmod > 2))
         {
             fprintf (DDSIP_outfile, "Warning: reference point scalarization implemented only for risk models 1 and 2.\n");
@@ -1395,7 +1391,7 @@ DDSIP_ReadSpec ()
 
         // Worst case costs, Tail value-at-risk: Branch in auxillary variable eta ?
         if (abs (DDSIP_param->riskmod) == 4 || abs (DDSIP_param->riskmod) == 5)
-            DDSIP_param->brancheta = DDSIP_ReadDbl (specfile, "BRAETA", " BRANCH ON ETA", 1., 1, 0., 1.);
+            DDSIP_param->brancheta = (int) floor (DDSIP_ReadDbl (specfile, "BRAETA", " BRANCH ON ETA", 1., 1, 0., 1.) + 0.1);
         // Default DDSIP_value (branch in all variables)
         else
             DDSIP_param->brancheta = 0;
@@ -1448,7 +1444,7 @@ DDSIP_ReadSpec ()
 #ifdef CONIC_BUNDLE
     //conic bundle part
     tmp = (DDSIP_param->riskalg == 1 || DDSIP_param->scalarization) ? 0 : -16;
-    DDSIP_param->cb = floor (DDSIP_ReadDbl (specfile, "CBFREQ", " CB METHOD IN EVERY ITH NODE", tmp, 1, -DDSIP_bigint, DDSIP_bigint) + 0.1);
+    DDSIP_param->cb = (int) floor (DDSIP_ReadDbl (specfile, "CBFREQ", " CB METHOD IN EVERY ITH NODE", tmp, 1, -DDSIP_bigint, DDSIP_bigint) + 0.1);
     if (DDSIP_param->scalarization && DDSIP_param->cb)
     {
         printf ("*Warning: Conic bundle does not work in conjunction with reference point scalarization!\n");
@@ -1483,7 +1479,7 @@ DDSIP_ReadSpec ()
     {
         //DDSIP_param->prematureStop = 0; // would be safer, but after current changes the lower bound used for premature stoppng is chosen with more caution (should work in many cases)
         DDSIP_param->prematureStop = 1;
-        DDSIP_param->cbitlim = floor (DDSIP_ReadDbl (specfile, "CBITLI", " CB DESCENT ITERATIONS", 18., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->cbitlim = (int) floor (DDSIP_ReadDbl (specfile, "CBITLI", " CB DESCENT ITERATIONS", 16., 1, 0., DDSIP_bigint) + 0.1);
         if (abs(DDSIP_param->riskmod) == 4 || abs(DDSIP_param->riskmod) == 5)
         {
             printf ("     setting CBRITLIM to 0 due risk model.\n");
@@ -1491,12 +1487,12 @@ DDSIP_ReadSpec ()
             DDSIP_param->cbrootitlim = 0;
         }
         else
-            DDSIP_param->cbrootitlim = floor (DDSIP_ReadDbl (specfile, "CBRITL", " CB DESCENT ITERATIONS IN ROOT", DDSIP_param->cbitlim+7, 1, 0., DDSIP_bigint) + 0.1);
+            DDSIP_param->cbrootitlim = (int) floor (DDSIP_ReadDbl (specfile, "CBRITL", " CB DESCENT ITERATIONS IN ROOT", DDSIP_Imax (DDSIP_param->cbitlim-8, 12), 1, 0., DDSIP_bigint) + 0.1);
 
-        DDSIP_param->cb_maxsteps  = floor (DDSIP_ReadDbl (specfile, "CBSTEP", " CB MAXSTEPS", 12., 1, 1., 10000.) + 0.1);
-        DDSIP_param->cbtotalitlim = floor (DDSIP_ReadDbl (specfile, "CBTOTI", " CB ITERATION LIMIT",5000., 1, 0., DDSIP_bigint) + 0.1);
-        DDSIP_param->cbContinuous = floor (DDSIP_ReadDbl (specfile, "CBCONT", " CONTINUOUS CB CALLS", 6., 1, 0., DDSIP_bigint) + 0.1);
-        DDSIP_param->cbBreakIters = floor (DDSIP_ReadDbl (specfile, "CBBREA", " BREAK FOR CB CALLS", abs(DDSIP_param->cb) > 30?1.*abs(DDSIP_param->cb):30., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->cb_maxsteps  = (int) floor (DDSIP_ReadDbl (specfile, "CBSTEP", " CB MAXSTEPS", 12., 1, 1., 10000.) + 0.1);
+        DDSIP_param->cbtotalitlim = (int) floor (DDSIP_ReadDbl (specfile, "CBTOTI", " CB ITERATION LIMIT",5000., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->cbContinuous = (int) floor (DDSIP_ReadDbl (specfile, "CBCONT", " CONTINUOUS CB CALLS", 6., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->cbBreakIters = (int) floor (DDSIP_ReadDbl (specfile, "CBBREA", " BREAK FOR CB CALLS", abs(DDSIP_param->cb) > 30?1.*abs(DDSIP_param->cb):30., 1, 0., DDSIP_bigint) + 0.1);
         if (DDSIP_param->cbBreakIters < abs(DDSIP_param->cb))
         {
             DDSIP_param->cbBreakIters = abs(DDSIP_param->cb);
@@ -1504,10 +1500,10 @@ DDSIP_ReadSpec ()
             fprintf (DDSIP_outfile, "     CBBREAK smaller than CBFREQ, setting CBBREAK = %d.\n", DDSIP_param->cbBreakIters);
         }
         DDSIP_param->cbrelgap = DDSIP_ReadDbl (specfile, "CBPREC", " CB PRECISION", 1.e-14, 0, 0., DDSIP_infty);
-        DDSIP_param->nonant = floor (DDSIP_ReadDbl (specfile, "NONANT", " CB NON-ANTICIPATIVITY", 1., 1, 1., 3.) + 0.1);
-        DDSIP_param->cbprint = floor (DDSIP_ReadDbl (specfile, "CBPRIN", " CB PRINT LEVEL", 0., 1, 0., DDSIP_bigint) + 0.1);
-        DDSIP_param->cbbundlesz = floor (DDSIP_ReadDbl (specfile, "CBBUNS", " CB MAXIMAL BUNDLE SIZE", 200., 1, 0., DDSIP_bigint) + 0.1);
-        //DDSIP_param->cbmaxsubg = floor (DDSIP_ReadDbl (specfile, "CBMAXS", " CB MAXIMAL NO OF SUBGRADIENTS", 1., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->nonant = (int) floor (DDSIP_ReadDbl (specfile, "NONANT", " CB NON-ANTICIPATIVITY", 1., 1, 1., 3.) + 0.1);
+        DDSIP_param->cbprint = (int) floor (DDSIP_ReadDbl (specfile, "CBPRIN", " CB PRINT LEVEL", 0., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->cbbundlesz = (int) floor (DDSIP_ReadDbl (specfile, "CBBUNS", " CB MAXIMAL BUNDLE SIZE", 200., 1, 0., DDSIP_bigint) + 0.1);
+        //DDSIP_param->cbmaxsubg = (int) floor (DDSIP_ReadDbl (specfile, "CBMAXS", " CB MAXIMAL NO OF SUBGRADIENTS", 1., 1, 0., DDSIP_bigint) + 0.1);
         DDSIP_param->cbmaxsubg = 1;
         DDSIP_param->cbweight = DDSIP_ReadDbl (specfile, "CBWEIG", " CB START WEIGHT", 1., 0, 0., DDSIP_infty);
         DDSIP_param->cbfactor = DDSIP_ReadDbl (specfile, "CBFACT", " FACTOR OF CB START WEIGHT", 0.075, 0, 0., 1.);
@@ -1518,12 +1514,13 @@ DDSIP_ReadSpec ()
             DDSIP_param->cbweight = tmp;
             DDSIP_param->cbfactor = 1e-1/tmp;
         }
-        DDSIP_param->cb_inherit = floor (DDSIP_ReadDbl (specfile, "CBINHE", " CB INHERIT SOLUTIONS", 0., 1, 0., 1.) + 0.1);
-        DDSIP_param->cb_changetol = floor (DDSIP_ReadDbl (specfile, "CBCHAN", " CB CHANGE TOLERANCE", 0., 1, 0., 1.) + 0.1);
-        DDSIP_param->cb_reduceWeight = floor (DDSIP_ReadDbl (specfile, "CBREDU", " CB REDUCE WEIGHT", 1., 1, 0., 1.) + 0.1);
-        DDSIP_param->cb_increaseWeight = floor (DDSIP_ReadDbl (specfile, "CBINCR", " CB INCREASE WEIGHT", 1., 1, 0., 1.) + 0.1);
-        DDSIP_param->cb_checkBestdual = floor (DDSIP_ReadDbl (specfile, "CBCHEC", " CB CHECK BESTDUAL", 1., 1, 0., 1.) + 0.1);
-        DDSIP_param->cb_bestdualListLength= floor (DDSIP_ReadDbl (specfile, "CBLIST", " CB BESTDUAL LIST LENGTH", 5., 1, 1., 50.) + 0.1);
+        DDSIP_param->cb_inherit = (int) floor (DDSIP_ReadDbl (specfile, "CBINHE", " CB INHERIT SOLUTIONS", 0., 1, 0., 1.) + 0.1);
+        DDSIP_param->cb_changetol = (int) floor (DDSIP_ReadDbl (specfile, "CBCHAN", " CB CHANGE TOLERANCE", 0., 1, 0., 1.) + 0.1);
+        DDSIP_param->cb_reduceWeight = (int) floor (DDSIP_ReadDbl (specfile, "CBREDU", " CB REDUCE WEIGHT", 1., 1, 0., 1.) + 0.1);
+        DDSIP_param->cb_increaseWeight = (int) floor (DDSIP_ReadDbl (specfile, "CBINCR", " CB INCREASE WEIGHT", 1., 1, 0., 1.) + 0.1);
+        DDSIP_param->cb_checkBestdual = (int) floor (DDSIP_ReadDbl (specfile, "CBCHEC", " CB CHECK BESTDUAL", 1., 1, 0., 1.) + 0.1);
+        DDSIP_param->cb_bestdualListLength= (int) floor (DDSIP_ReadDbl (specfile, "CBLIST", " CB BESTDUAL LIST LENGTH", 5., 1, 1., 50.) + 0.1);
+        DDSIP_param->cb_cutnodes = (int) floor (DDSIP_ReadDbl (specfile, "CBCUTN", " CB CUTS UP TO NODE", 3., 1, 0., 100.) + 0.1);
     }
 #else
     DDSIP_param->cb = 0;
@@ -1534,12 +1531,8 @@ DDSIP_ReadSpec ()
     if (DDSIP_param->riskmod < 0)
         DDSIP_param->prematureStop = 0;
     else
-        DDSIP_param->prematureStop=floor (DDSIP_ReadDbl (specfile, "PREMAT", " PREMATURE STOP in UpperBound", DDSIP_param->prematureStop, 1, 0., 1.) + 0.1);
-    if (DDSIP_param->prematureStop && DDSIP_param->cb)
-    {
-        printf ("\n XXX CAUTION XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n XXX Usaging premature stop in UpperBound on the basis of lower bounds together with Conic Bundle.\n XXX Maybe with some problems this could falsely diagnose inferiority of heuristic proposals.\n XXX If unsure whether this is the case with your problem, disable by setting 'PREMATURE  0'\n XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n");
-        fprintf (DDSIP_outfile, "\n XXX CAUTION XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n XXX Usaging premature stop in UpperBound on the basis of lower bounds together with Conic Bundle.\n XXX Maybe with some problems this could falsely diagnose inferiority of heuristic proposals.\n XXX If unsure whether this is the case with your problem, disable by setting 'PREMATURE  0'\n XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n");
-    }
+        DDSIP_param->prematureStop= (int) floor (DDSIP_ReadDbl (specfile, "PREMAT", " PREMATURE STOP in UpperBound", DDSIP_param->prematureStop, 1, 0., 1.) + 0.1);
+
     if (DDSIP_param->brancheps > DDSIP_param->nulldisp)
     {
         printf ("*Warning: Branching EPSILON parameter %g greater than NULLDISPERSION %g", DDSIP_param->brancheps, DDSIP_param->nulldisp);
@@ -2277,8 +2270,12 @@ DDSIP_AdvStart (void)
         fprintf (DDSIP_outfile, " MULTIPLIER\n");
         for (i = 0; i < DDSIP_bb->dimdual; i++)
         {
-            k = fscanf (advfile, "%lf", &DDSIP_node[0]->dual[i]);
+            k = fscanf (advfile, "%lf", &DDSIP_bb->startinfo_multipliers[i]);
+            if (!k)
+                break;
         }
+        DDSIP_bb->initial_multiplier = i > DDSIP_param->scenarios ? k : 0;
+        fprintf (DDSIP_outfile, "   multiplier read successfully: %d\n", DDSIP_bb->initial_multiplier);
     }
     fclose (advfile);
 

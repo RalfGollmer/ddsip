@@ -30,10 +30,10 @@
 #include <DDSIPconst.h>
 
 
-int DDSIP_Leaf (void);
-int DDSIP_GetCurNode (void);
-int DDSIP_InitNewNodes (void);
-int DDSIP_SetBounds (void);
+static int DDSIP_Leaf (void);
+static int DDSIP_GetCurNode (void);
+static int DDSIP_InitNewNodes (void);
+static int DDSIP_SetBounds (void);
 
 //==========================================================================
 // Select node and value for branching
@@ -157,11 +157,12 @@ DDSIP_InitNewNodes (void)
         DDSIP_node[DDSIP_bb->nonode + 1]->dual = DDSIP_node[DDSIP_bb->curnode]->dual;
         DDSIP_node[DDSIP_bb->curnode]->dual = NULL;
 
-        DDSIP_node[DDSIP_bb->nonode]->subboundNoLag =
-            (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "DDSIP_node[nonode]->subbound(InitNewNodes)");
-        memcpy (DDSIP_node[DDSIP_bb->nonode]->subboundNoLag, DDSIP_node[DDSIP_bb->curnode]->subboundNoLag, sizeof (double) * DDSIP_param->scenarios);
-        DDSIP_node[DDSIP_bb->nonode + 1]->subboundNoLag = DDSIP_node[DDSIP_bb->curnode]->subboundNoLag;
-        DDSIP_node[DDSIP_bb->curnode]->subboundNoLag = NULL;
+        DDSIP_node[DDSIP_bb->nonode]->scenBoundsNoLag =
+            (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "DDSIP_node[nonode]->scenBoundsNoLag(InitNewNodes)");
+        memcpy (DDSIP_node[DDSIP_bb->nonode]->scenBoundsNoLag, DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag, sizeof (double) * DDSIP_param->scenarios);
+        DDSIP_node[DDSIP_bb->nonode + 1]->scenBoundsNoLag = DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag;
+        DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag = NULL;
+        DDSIP_node[DDSIP_bb->nonode]->BoundNoLag = DDSIP_node[DDSIP_bb->nonode + 1]->BoundNoLag = DDSIP_node[DDSIP_bb->curnode]->BoundNoLag;
     }
 #endif
     // Absolute semideviation
@@ -311,7 +312,7 @@ DDSIP_InitNewNodes (void)
                     if (DDSIP_param->outlev > 23)
                         fprintf (DDSIP_bb->moreoutfile,"  nodes %d and %d did not inherit solution of scenario %d from node %d due to added cut %d, violation %g.\n",
                                  DDSIP_bb->nonode, DDSIP_bb->nonode + 1, i+1, DDSIP_bb->curnode, currentCut->number, -lhs);
-                    if ((cnt = (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 1))
+                    if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
                         for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
                         {
                             if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
@@ -356,14 +357,14 @@ DDSIP_InitNewNodes (void)
                     (DDSIP_node[DDSIP_bb->nonode]->ref_scenobj)[i] = (DDSIP_node[DDSIP_bb->curnode]->ref_scenobj)[i];
                     //count the level of inheriting
                     (DDSIP_node[DDSIP_bb->nonode]->first_sol)[i][DDSIP_bb->firstvar + 1] += 1.0;
-                    DDSIP_node[DDSIP_bb->nonode]->numInheritedSols += (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar];
+                    DDSIP_node[DDSIP_bb->nonode]->numInheritedSols += (int) (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar];
                     if (DDSIP_param->outlev > 23)
                     {
                         fprintf (DDSIP_bb->moreoutfile,"  node %d inherited solution of scenario %d from node %d (%g identical scen. solutions)\n",
                                  DDSIP_bb->nonode, i + 1, DDSIP_bb->curnode, (DDSIP_node[DDSIP_bb->nonode]->first_sol)[i][DDSIP_bb->firstvar]);
                     }
                     //do the same for identical solutions
-                    if ((cnt = (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 1))
+                    if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
                         for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
                         {
                             if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
@@ -398,14 +399,14 @@ DDSIP_InitNewNodes (void)
                     (DDSIP_node[DDSIP_bb->nonode + 1]->ref_scenobj)[i] = (DDSIP_node[DDSIP_bb->curnode]->ref_scenobj)[i];
                     //count the level of inheriting
                     (DDSIP_node[DDSIP_bb->nonode + 1]->first_sol)[i][DDSIP_bb->firstvar + 1] += 1.0;
-                    DDSIP_node[DDSIP_bb->nonode + 1]->numInheritedSols += (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar];
+                    DDSIP_node[DDSIP_bb->nonode + 1]->numInheritedSols += (int) (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar];
                     if (DDSIP_param->outlev > 23)
                     {
                         fprintf (DDSIP_bb->moreoutfile,"  node %d inherited solution of scenario %d from node %d (%g identical scen. solutions)\n",
                                  DDSIP_bb->nonode+1, i + 1, DDSIP_bb->curnode, (DDSIP_node[DDSIP_bb->nonode+1]->first_sol)[i][DDSIP_bb->firstvar]);
                     }
                     //do the same for identical solutions
-                    if ((cnt = (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 1))
+                    if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
                         for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
                         {
                             if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
@@ -434,7 +435,7 @@ DDSIP_InitNewNodes (void)
                         fprintf (DDSIP_bb->moreoutfile,"##scenario %d solution not passed on (%g identical scen. solutions)\n",
                                  i+1, (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar]);
                     }
-                    if ((cnt = (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 1))
+                    if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
                         for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
                         {
                             if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
@@ -454,7 +455,7 @@ DDSIP_InitNewNodes (void)
                     fprintf (DDSIP_bb->moreoutfile,"##scenario %d solution not passed on due to inheritance level (%g identical scen. solutions)\n",
                              i+1, (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar]);
                 }
-                if ((cnt = (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 1))
+                if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
                     for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
                     {
                         if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
@@ -481,7 +482,7 @@ DDSIP_InitNewNodes (void)
                     fprintf (DDSIP_bb->moreoutfile,"  !!! UNEXPECTED: nodes %d and %d did not inherit solution of scenario %d from node %d.\n",
                              DDSIP_bb->nonode, DDSIP_bb->nonode + 1, i + 1, DDSIP_bb->curnode);
             }
-            if ((cnt = (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 1))
+            if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
                 for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
                 {
                     if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
@@ -702,7 +703,7 @@ DDSIP_Bound (void)
         if ((!(DDSIP_bb->found_optimal_node) && (DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bestvalue*factor + DDSIP_bb->correct_bounding)
             ) ||
             ( (DDSIP_bb->found_optimal_node) && (DDSIP_bb->found_optimal_node != DDSIP_bb->front[i]) &&
-             ((DDSIP_node[DDSIP_bb->front[i]]->violations && (DDSIP_node[DDSIP_bb->front[i]]->bound >= DDSIP_bb->bound_optimal_node)) ||
+             ((DDSIP_node[DDSIP_bb->front[i]]->violations && (DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bound_optimal_node + DDSIP_bb->correct_bounding)) ||
               (!(DDSIP_node[DDSIP_bb->front[i]]->violations) && (DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bestvalue))
              )
             ) ||
@@ -732,7 +733,7 @@ DDSIP_Bound (void)
             {
                 if (((DDSIP_node[DDSIP_bb->front[i]])->first_sol)[scen])
                 {
-                    if ((cnt = (((DDSIP_node[DDSIP_bb->front[i]])->first_sol)[scen])[DDSIP_bb->firstvar] - 1))
+                    if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->front[i]])->first_sol)[scen])[DDSIP_bb->firstvar] - 0.9)))
                     {
                         for (j = scen + 1; cnt && j < DDSIP_param->scenarios; j++)
                         {
@@ -1021,7 +1022,7 @@ DDSIP_Bound (void)
                             if (DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->dispnorm > rgap + 1.e-12)
                                 break;
                         }
-                        j = DDSIP_Dmin(i,cnt);
+                        j = DDSIP_Imin(i,cnt);
                         // DEBUGOUT
                         if (DDSIP_param->outlev > 5)
                             fprintf (DDSIP_bb->moreoutfile, " - small dispersion norm, j= %d\n",j);
@@ -1037,7 +1038,7 @@ DDSIP_Bound (void)
                             if (DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->dispnorm < rgap - 1.e-12)
                                 break;
                         }
-                        j = DDSIP_Dmin(i,cnt);
+                        j = DDSIP_Imin(i,cnt);
                         // DEBUGOUT
                         if (DDSIP_param->outlev > 5)
                             fprintf (DDSIP_bb->moreoutfile, " - big   dispersion norm, j= %d\n",j);
@@ -1059,7 +1060,7 @@ DDSIP_Bound (void)
                         if (DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->violations > rgap + 1)
                             break;
                     }
-                    j = DDSIP_Dmin(i,cnt);
+                    j = DDSIP_Imin(i,cnt);
                     // DEBUGOUT
                     if (DDSIP_param->outlev > 5)
                         fprintf (DDSIP_bb->moreoutfile, " - few   violations, j= %d\n",j);
@@ -1082,7 +1083,7 @@ DDSIP_Bound (void)
         if (DDSIP_param->outlev > 4)
         {
             fprintf (DDSIP_bb->moreoutfile,
-                     "No of front nodes: %d (including %d leaves)     found_optimal_node: %d\n", DDSIP_bb->nofront, DDSIP_bb->nofront - DDSIP_bb->no_reduced_front, DDSIP_bb->found_optimal_node);
+                     "No of front nodes: %d (including %d leaves)     found_optimal_node: %d, bestbound: %18.12g\n", DDSIP_bb->nofront, DDSIP_bb->nofront - DDSIP_bb->no_reduced_front, DDSIP_bb->found_optimal_node, DDSIP_bb->bestbound);
             fprintf (DDSIP_bb->moreoutfile, "     No.   bound             violations dispnorm  branchvar lower bound  upper        range         depth isleaf solved cutAdded\n");
             j = (DDSIP_param->outlev > 21 || !(DDSIP_bb->curnode % 200)) ? DDSIP_bb->nofront : DDSIP_Imin(DDSIP_bb->nofront,25);
             for (i = 0; i < j; i++)

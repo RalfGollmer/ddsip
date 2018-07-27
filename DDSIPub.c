@@ -28,9 +28,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 //#define CHECKIDENTICAL
 //#define DEBUG
 
-int DDSIP_PrintModFileUb (int);
-int DDSIP_WarmUb (void);
-int DDSIP_GetCpxSolution (int, double *, double *, double *);
+static int DDSIP_PrintModFileUb (int);
+static int DDSIP_WarmUb (void);
+static int DDSIP_GetCpxSolution (int, double *, double *, double *);
 
 //==========================================================================
 // Print lp file
@@ -231,7 +231,7 @@ DDSIP_SolChk (double* cutViolation)
         {
             if (DDSIP_bb->firsttype[i] == 'B' || DDSIP_bb->firsttype[i] == 'I' || DDSIP_bb->firsttype[i] == 'N')
             {
-                ih = floor ((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] + 0.5);
+                ih = (int) floor ((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] + 0.5);
                 fprintf (DDSIP_bb->moreoutfile, " %20d,", ih);
             }
             else
@@ -343,12 +343,12 @@ int
 DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
 {
     int status, scen, iscen, mipstatus = 0, nr;
-    int i, j, k, Bi, Bs, prematureStop = 0;
+    int i, j, k, Bi, Bs, fs, prematureStop = 0;
     int *index;
     int wall_hrs, wall_mins,cpu_hrs, cpu_mins;
 
     double tmpbestvalue = 0., tmpfeasbound = 0., rest_bound, tmprisk = 0., tmprisk4 = -DDSIP_infty, tmpprob = 0.;
-    double security_factor = 1.0-2.e-14, bobjval, objval, fs, time_start, time_end, time_lap, wall_secs, cpu_secs, gap, meanGap;
+    double security_factor = 1.0-2.e-14, bobjval, objval, time_start, time_end, time_lap, wall_secs, cpu_secs, gap, meanGap;
 
     double *mipx, *values;
     double *subsol;
@@ -359,7 +359,6 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
 
     double * sort_array;
 
-    DDSIP_bb->skip = 0;
 
     // if the user has supplied a start point, there is no useful information for additional variables
     if (DDSIP_bb->DDSIP_step == adv || DDSIP_bb->DDSIP_step == eev)
@@ -372,8 +371,11 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     }
 
     // Solution occured before ?
-    if (!DDSIP_SolChk (&oldviol))
-        return 0;
+    if (DDSIP_bb->skip != -1)
+        if (!DDSIP_SolChk (&oldviol))
+            return 0;
+
+    DDSIP_bb->skip = 0;
 
     sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "sort_array(UpperBound)");
     if (DDSIP_param->outlev >= DDSIP_suggested_first_stage_outlev && DDSIP_param->outlev < 50)
@@ -386,7 +388,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
         {
             if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
             {
-                ih = floor ((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] + 0.5);
+                ih = (int) floor ((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] + 0.5);
                 fprintf (DDSIP_bb->moreoutfile, " %20d", ih);
             }
             else
@@ -403,7 +405,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     //Tx = (double *) DDSIP_Alloc(sizeof(double), DDSIP_bb->firstcon + DDSIP_bb->seccon,"(UpperBound)");
 
     if (!feasCheckOnly)
-        DDSIP_bb->neobjcnt++;
+        DDSIP_bb->UBIters++;
 
     if (DDSIP_param->outlev)
     {
@@ -454,7 +456,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     for(j=0; j<DDSIP_bb->firstvar; j++)
     {
         if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
-            values[j] = floor((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[j] + 0.5);
+            values[j] = (int) floor((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[j] + 0.5);
         else
         {
             values[j] = DDSIP_Dmax (DDSIP_bb->lborg[j],(DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[j]);
@@ -488,13 +490,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
         rest_bound = -DDSIP_infty;
     else if(DDSIP_param->cb)
     {
-        // CAUTION: subboundNoLag is not really a secure lower bound for the problem without Lagrangean!
-        cpu_secs = 0.0;
-        for (iscen = 0; iscen < DDSIP_param->scenarios; iscen++)
-        {
-            cpu_secs += (DDSIP_node[DDSIP_bb->curnode]->subboundNoLag)[iscen] * DDSIP_data->prob[iscen];
-        }
-        rest_bound = DDSIP_Dmin(cpu_secs, DDSIP_node[DDSIP_bb->curnode]->bound);
+        rest_bound = DDSIP_node[DDSIP_bb->curnode]->BoundNoLag;
     }
     else
     {
@@ -510,7 +506,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
 
         tmpprob += DDSIP_data->prob[scen];
 
-        status = DDSIP_ChgProb (scen);
+        status = DDSIP_ChgProb (scen, 0);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change problem \n");
@@ -549,6 +545,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
             //
             time_start = DDSIP_GetCpuTime ();
             // Optimize
+            DDSIP_bb->scenUBIters++;
             status = CPXmipopt (DDSIP_env, DDSIP_lp);
             if (DDSIP_Error (status))
             {
@@ -622,7 +619,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                 // If even with the lower bounds we would reach a greater value we may stop here and save some time
                 // reduce the sum of the bounds rest_bound by the term for the current scenario
                 if (DDSIP_param->cb)
-                    rest_bound -= (DDSIP_node[DDSIP_bb->curnode]->subboundNoLag)[scen] * DDSIP_data->prob[scen];
+                    rest_bound -= (DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag)[scen] * DDSIP_data->prob[scen];
                 else
                     rest_bound -= (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen] * DDSIP_data->prob[scen];
                 status = CPXgetbestobjval(DDSIP_env, DDSIP_lp, &bobjval);
@@ -732,7 +729,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                             {
                                 time_lap = DDSIP_GetCpuTime ();
                                 Bs = DDSIP_bb->ub_scen_order[Bi];
-                                status = DDSIP_ChgProb (Bs);
+                                status = DDSIP_ChgProb (Bs, 0);
                                 if (status)
                                 {
                                     fprintf (stderr, "ERROR: Failed to change problem \n");
@@ -810,7 +807,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
 
                                             for (k = 0; k < DDSIP_bb->seccon; k++)
                                             {
-                                                if (ray[DDSIP_bb->secondrowind[k]] != 0.)
+                                                if (fabs (ray[DDSIP_bb->secondrowind[k]]) > 1.e-16)
                                                     break;
                                             }
                                             if (k < DDSIP_bb->seccon)
@@ -831,7 +828,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                     rmatind[k] = DDSIP_bb->firstindex[k];
                                                     for (i = 0; i < numRows; i++)
                                                     {
-                                                        if (ray[i] != 0.)
+                                                        if (fabs (ray[i]) > 1.e-16)
                                                         {
                                                             for (ii = 0; ii < col_nonzeros; ii++)
                                                             {
@@ -848,7 +845,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                 i = 0;
                                                 for (k = 0; k < DDSIP_data->firstvar; k++)
                                                 {
-                                                    if (rmatval[k] != 0.)
+                                                    if (rmatval[k])
                                                     {
                                                         lhs += rmatval[k]*values[k];
                                                         i++;
@@ -885,14 +882,12 @@ if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
                                                         newCut = newCut->prev;
                                                     else
                                                     {
-#ifdef DEBUG
 ////////////////////
-if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
+if (DDSIP_param->outlev > 21)
 {
   fprintf(DDSIP_bb->moreoutfile, "### 1 ### check for identical cut: Cut no. %d is identical, rhs was: %g, now: %g ###\n", newCut->number, newCut->rhs, rhs);
 }
 ////////////////////
-#endif
                                                         if (rhs > newCut->rhs)
                                                             newCut->rhs = rhs;
                                                         i = 0;
@@ -962,14 +957,12 @@ if(DDSIP_param->outlev)
                                                     }
                                                 }
                                             }
-#ifdef DEBUG
 /////////////////////////////////
                                             else if (DDSIP_param->outlev > 20)
                                             {
                                                 fprintf (DDSIP_bb->moreoutfile," ####----------ray doesn't contain a coefficient for a second-stage constraint\n");
                                             }
 /////////////////////////////////
-#endif
 
                                             DDSIP_Free ((void *) &rmatind);
                                             DDSIP_Free ((void *) &rmatval);
@@ -1158,7 +1151,7 @@ if(DDSIP_param->outlev)
                 {
                     time_lap = DDSIP_GetCpuTime ();
                     Bs = DDSIP_bb->ub_scen_order[Bi];
-                    status = DDSIP_ChgProb (Bs);
+                    status = DDSIP_ChgProb (Bs, 0);
                     if (status)
                     {
                         fprintf (stderr, "ERROR: Failed to change problem \n");
@@ -1238,7 +1231,7 @@ if(DDSIP_param->outlev)
 
                                 for (k = 0; k < DDSIP_bb->seccon; k++)
                                 {
-                                    if (ray[DDSIP_bb->secondrowind[k]] != 0.)
+                                    if (fabs (ray[DDSIP_bb->secondrowind[k]]) > 1.e-16)
                                         break;
                                 }
                                 if (k < DDSIP_bb->seccon)
@@ -1259,7 +1252,7 @@ if(DDSIP_param->outlev)
                                         rmatind[k] = DDSIP_bb->firstindex[k];
                                         for (i = 0; i < numRows; i++)
                                         {
-                                            if (ray[i] != 0.)
+                                            if (fabs (ray[i]) > 1.e-16)
                                             {
                                                 for (ii = 0; ii < col_nonzeros; ii++)
                                                 {
@@ -1276,7 +1269,7 @@ if(DDSIP_param->outlev)
                                     i = 0;
                                     for (k = 0; k < DDSIP_data->firstvar; k++)
                                     {
-                                        if (rmatval[k] != 0.)
+                                        if (rmatval[k])
                                         {
                                             lhs += rmatval[k]*values[k];
                                             i++;
@@ -1313,14 +1306,12 @@ if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
                                             newCut = newCut->prev;
                                         else
                                         {
-#ifdef DEBUG
 ////////////////////
-if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
+if (DDSIP_param->outlev > 21)
 {
   fprintf(DDSIP_bb->moreoutfile, "### 2 ### check for identical cut: Cut no. %d is identical, rhs was: %g, now: %g ###\n", newCut->number, newCut->rhs, rhs);
 }
 ////////////////////
-#endif
                                             if (rhs > newCut->rhs)
                                                 newCut->rhs = rhs;
                                             i = 0;
@@ -1375,14 +1366,12 @@ if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
                                         scen = k;
                                     }
                                 }
-#ifdef DEBUG
 /////////////////////////////////
                                 else if (DDSIP_param->outlev > 20)
                                 {
                                     fprintf (DDSIP_bb->moreoutfile," ####----------ray doesn't contain a coefficient for a second-stage constraint\n");
                                 }
 /////////////////////////////////
-#endif
 
                                 DDSIP_Free ((void *) &rmatind);
                                 DDSIP_Free ((void *) &rmatval);
@@ -1428,7 +1417,6 @@ if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
                 int rmatbeg;
                 int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_bb->novar), "rmatind(UpperBound)");
                 double *rmatval = (double *) DDSIP_Alloc (sizeof (double), (DDSIP_bb->novar), "rmatval (UpperBound)");
-                double rhs;
                 char sense;
                 char **rowname = (char **) DDSIP_Alloc (sizeof (char *), 1, "colname(UpperBound)");
                 char *rowstore = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_varname, "colstore(UpperBound)");
@@ -1468,7 +1456,7 @@ if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
                         fprintf (stderr, "ERROR: Failed to change bounds for check, error code %d\n", status);
                         goto TERMINATE;
                     }
-                    status = DDSIP_ChgProb (DDSIP_bb->from_scenario);
+                    status = DDSIP_ChgProb (DDSIP_bb->from_scenario, 0);
                     if (status)
                     {
                         fprintf (stderr, "ERROR: Failed to change problem for check to scenario %d, error code %d\n", scen + 1, status);
@@ -2072,7 +2060,7 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
     {
 	    for (i = 1; i < DDSIP_param->heuristic_num; i++)
 	    {
-		    DDSIP_param->heuristic = floor (DDSIP_param->heuristic_vector[i] + 0.1);
+		    DDSIP_param->heuristic = (int) floor (DDSIP_param->heuristic_vector[i] + 0.1);
 		    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
 		    {
 			    // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
@@ -2097,7 +2085,7 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
 			    break;
 		    }
 	    }
-	    // use (expensive) heuristic 12 using all single-scenario solutions as suugestions
+	    // use (expensive) heuristic 12 using all single-scenario solutions as suggestions
 	    if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || DDSIP_bb->curnode < 13 || DDSIP_bb->noiter%250 > 247))
 	    {
 		    DDSIP_param->heuristic = 12;
@@ -2121,7 +2109,7 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
     {
 	    for (i = 1; i < DDSIP_param->heuristic_num; i++)
 	    {
-		    DDSIP_param->heuristic = floor (DDSIP_param->heuristic_vector[i] + 0.1);
+		    DDSIP_param->heuristic = (int) floor (DDSIP_param->heuristic_vector[i] + 0.1);
 		    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
 		    {
 			    // Evaluate the proposed first-stage solution

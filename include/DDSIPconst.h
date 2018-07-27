@@ -42,7 +42,7 @@ extern "C" {
     extern const int DDSIP_maxrisk;
 
 // Large values
-    extern const double DDSIP_bigint ;
+    extern const int    DDSIP_bigint ;
     extern const double DDSIP_bigvalue ;
     extern const double DDSIP_infty ;
 

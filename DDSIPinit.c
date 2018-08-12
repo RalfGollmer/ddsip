@@ -661,7 +661,7 @@ DDSIP_InitStages (void)
                 // Debug output of names of first-stage variables
                 if (DDSIP_param->outlev > 30)
                 {
-                    printf("first-stage variable %3d:  %c  %s\n", cnt, ctype[i], colname[i]);
+                    fprintf(DDSIP_bb->moreoutfile, "first-stage variable %3d:  %c  %s\n", cnt, ctype[i], colname[i]);
                 }
             }
             else
@@ -699,7 +699,7 @@ DDSIP_InitStages (void)
                 // Debug output of names of first-stage variables
                 if (DDSIP_param->outlev > 30)
                 {
-                    printf("first-stage variable %3d:  %c  %s\n", cnt, ctype[i], colname[i]);
+                    fprintf(DDSIP_bb->moreoutfile, "first-stage variable %3d:  %c  %s\n", cnt, ctype[i], colname[i]);
                 }
             }
             else
@@ -1018,14 +1018,13 @@ DDSIP_AdvSolInit (void)
         // DDSIP_Allocate memory for MIP start values
         if (DDSIP_param->hot != 2)
         {
-            DDSIP_bb->values  = (double *)DDSIP_Alloc(sizeof(double), 2*DDSIP_param->scenarios*DDSIP_bb->total_int, "values(AdvSolInit)");
-            DDSIP_bb->Names   = (char **) DDSIP_Alloc(sizeof(char *), 2*DDSIP_param->scenarios, "Names(AdvSolInit)");
-            //DDSIP_bb->beg     = (int *)   DDSIP_Alloc(sizeof(int *),  2*DDSIP_param->scenarios, "beg(AdvSolInit)");
+            DDSIP_bb->values  = (double *)DDSIP_Alloc(sizeof(double), (2*DDSIP_param->scenarios + 5)*DDSIP_bb->total_int, "values(AdvSolInit)");
+            DDSIP_bb->Names   = (char **) DDSIP_Alloc(sizeof(char *), (2*DDSIP_param->scenarios + 5), "Names(AdvSolInit)");
             DDSIP_bb->beg     = (int *)   DDSIP_Alloc(sizeof(int),    1, "beg(AdvSolInit)");
             DDSIP_bb->effort  = (int *)   DDSIP_Alloc(sizeof(int *),  1, "effort(AdvSolInit)");
             DDSIP_bb->effort[0] = 2;
             DDSIP_bb->beg[0] = 0;
-            for(j=0; j<2*DDSIP_param->scenarios; j++)
+            for(j=0; j<2*DDSIP_param->scenarios + 5; j++)
             {
                 DDSIP_bb->Names[j] = (char *) DDSIP_Alloc (sizeof (char), 24, "Names(LowerBound)");
             }

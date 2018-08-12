@@ -408,7 +408,7 @@ DDSIP_GetBranchIndex (double *dispnorm)
             }
             if (!((abs(DDSIP_param->riskmod) == 4) && (index[j] == DDSIP_bb->firstvar - 1)) &&
                 ((DDSIP_param->equalbranch == 1) ||
-                 (!DDSIP_param->equalbranch && ((DDSIP_bb->curnode < 13) || ((DDSIP_bb->curnode > 25) && (DDSIP_bb->curnode%10 >= 6))))
+                 (!DDSIP_param->equalbranch && ((DDSIP_bb->curnode < 11) || ((DDSIP_bb->curnode > 25) && (DDSIP_bb->curnode%10 >= 6))))
                 )
                )
             {
@@ -726,10 +726,11 @@ DDSIP_Warm (int iscen)
     // Hotstart = 4 or 6 --> use solutions from father node (from node 1 on), and from previous scenarios
     else if ((DDSIP_param->hot == 4 || DDSIP_param->hot == 6)
 #ifdef CBHOTSTART
-               || (DDSIP_param->cbhot == 4 && DDSIP_node[DDSIP_bb->curnode]->step == dual) ||
-                  (DDSIP_param->cbhot == 3 && !DDSIP_bb->curnode && DDSIP_node[DDSIP_bb->curnode]->step == dual) ||
-                  (DDSIP_param->cbhot == 2 && !DDSIP_bb->curnode && DDSIP_node[DDSIP_bb->curnode]->step == dual && (DDSIP_bb->dualdescitcnt == 1 || DDSIP_bb->dualdescitcnt > 5)) ||
-                  (DDSIP_param->cbhot == 1 && !DDSIP_bb->curnode && DDSIP_node[DDSIP_bb->curnode]->step == dual && DDSIP_bb->dualdescitcnt && DDSIP_bb->dualdescitcnt < 3)
+               || (DDSIP_node[DDSIP_bb->curnode]->step == dual &&
+                   (DDSIP_param->cbhot > 2  || 
+                    (DDSIP_param->cbhot == 2 && !DDSIP_bb->curnode) ||
+                    (DDSIP_param->cbhot == 1 && !DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt && DDSIP_bb->dualdescitcnt < 3))
+                  )
 #endif
             )
     {
@@ -800,7 +801,7 @@ DDSIP_Warm (int iscen)
         // Add solutions of previous scenarios (the directly preceding scenario's are in m1 etc.)
         if (iscen > 1)
         {
-            for (kf=0; kf<iscen-1; kf++)
+            for (kf=iscen - 2; kf>-1; kf--)
             {
                 if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[DDSIP_bb->lb_scen_order[kf]])
                 {
@@ -827,7 +828,7 @@ DDSIP_Warm (int iscen)
                                 for(k=0; k<DDSIP_bb->total_int; k++)
                                     DDSIP_bb->values [added*DDSIP_bb->total_int+k] = DDSIP_node[DDSIP_bb->curnode]->solut[ (DDSIP_bb->lb_scen_order[kf])*DDSIP_bb->total_int + k];
                                 added++;
-                                if (DDSIP_node[DDSIP_bb->curnode]->step == dual && added > 10)
+                                if (DDSIP_node[DDSIP_bb->curnode]->step == dual && added > 20)
                                     break;
                             }
                             else if (inserted < DDSIP_param->scenarios)
@@ -1317,6 +1318,10 @@ DDSIP_LowerBound (void)
             {
                 rest_bound += (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen] * DDSIP_data->prob[scen];
             }
+//////////////////////////////////////////////////////
+if(DDSIP_param->outlev)
+  fprintf(DDSIP_bb->moreoutfile, "#####  rest_bound: new computed value: %22.14g, father->bound: %22.14g, difference: %g\n", rest_bound, DDSIP_node[DDSIP_node[DDSIP_bb->curnode]->father]->bound,DDSIP_node[DDSIP_node[DDSIP_bb->curnode]->father]->bound-rest_bound);
+//////////////////////////////////////////////////////
             rest_bound = DDSIP_Dmin(rest_bound, DDSIP_node[DDSIP_node[DDSIP_bb->curnode]->father]->bound);
         }
     }
@@ -3207,6 +3212,8 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
 
     int cnt, iscen, i_scen, j, k, k1, status = 0, optstatus, mipstatus, scen, relax = 0, increase = 9;
     int wall_hrs, wall_mins,cpu_hrs, cpu_mins;
+    static int weight_reset = 0;
+    static double original_weight;
     static int use_LB_params = 0;
 
     int *indices = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_bb->firstvar + DDSIP_bb->secvar),
@@ -4263,10 +4270,11 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             DDSIP_bb->bestfirst[j].subbound  = (DDSIP_node[DDSIP_bb->curnode]->subbound)[j];
         }
     }
-    else if (DDSIP_param->outlev > 6)
+    else
     {
         increase = 0;
-        fprintf (DDSIP_bb->moreoutfile,
+        if (DDSIP_param->outlev > 6)
+            fprintf (DDSIP_bb->moreoutfile,
                  " -**** dual step not increasing  bound for node %3d, new val: %-18.16g, old bound: %-18.16g (diff: %.6g, ub: %.13g) weight = %g ****-\n",
                  DDSIP_bb->curnode, tmpbestbound, DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestbound -  DDSIP_node[DDSIP_bb->curnode]->bound, tmpupper, cb_get_last_weight(DDSIP_bb->dualProblem));
         // even when bound was not increased, store the first-stage solution in initial evaluation
@@ -4333,13 +4341,30 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 DDSIP_bb->bestfirst[j].subbound  = (DDSIP_node[DDSIP_bb->curnode]->subbound)[j];
             }
         }
+        else if (DDSIP_bb->dualdescitcnt == 1)
+        {
+            if (!weight_reset && (DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) > 0.1 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 1.))
+            {
+                weight_reset = 1;
+                original_weight = cb_get_last_weight(DDSIP_bb->dualProblem);
+                cb_set_next_weight (DDSIP_bb->dualProblem, 1.8*original_weight);
+                if (DDSIP_param->outlev > 20)
+                    fprintf (DDSIP_bb->moreoutfile, " ### increased weight to %g\n", 1.5*original_weight);
+            }
+        }
+    }
+    if (weight_reset && ((DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) < 5.e-4 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 100.)))
+    {
+        weight_reset = 0;
+        cb_set_next_weight (DDSIP_bb->dualProblem, original_weight);
+        if (DDSIP_param->outlev > 20)
+            fprintf (DDSIP_bb->moreoutfile, " ### reset weight to %g\n", original_weight);
     }
     if (tmpbestbound > DDSIP_bb->bestvalue)
     {
         if (DDSIP_param->outlev)
-           fprintf (DDSIP_bb->moreoutfile, "#### Bound reached %20.14g > bestvalue (%20.14g).\n", tmpbestbound, DDSIP_bb->bestvalue);
+           fprintf (DDSIP_bb->moreoutfile, "#### Bound reached %20.14g > bestvalue (%20.14g), diff= %g.\n", tmpbestbound, DDSIP_bb->bestvalue, tmpbestbound - DDSIP_bb->bestvalue);
         DDSIP_bb->skip = 2;
-        //DDSIP_bb->cutoff++;
         goto TERMINATE;
     }
     // Evaluate an upper bound if we found a solution for at least one scenario

@@ -264,7 +264,7 @@ DDSIP_FreeBb ()
             DDSIP_Free ((void **) &(DDSIP_bb->beg));
             if (DDSIP_bb->Names)
             {
-                for (i = 0; i < 2*DDSIP_param->scenarios; i++)
+                for (i = 0; i < 2*DDSIP_param->scenarios + 5; i++)
                     DDSIP_Free ((void **) &(DDSIP_bb->Names[i]));
                 DDSIP_Free ((void **) &(DDSIP_bb->Names));
             }

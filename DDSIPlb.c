@@ -1307,7 +1307,7 @@ DDSIP_LowerBound (void)
     // prepare for decision about stopping: rest_bound is the expectation of all the lower bounds in the father node
     if (DDSIP_bb->curnode /* && DDSIP_node[DDSIP_node[DDSIP_bb->curnode]->father]->step != dual */)
     {
-        if(!DDSIP_param->cb)
+        if(!DDSIP_param->cb || DDSIP_node[DDSIP_node[DDSIP_bb->curnode]->father]->step != dual)
         {
             rest_bound = DDSIP_node[DDSIP_node[DDSIP_bb->curnode]->father]->bound;
         }
@@ -1318,10 +1318,6 @@ DDSIP_LowerBound (void)
             {
                 rest_bound += (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen] * DDSIP_data->prob[scen];
             }
-//////////////////////////////////////////////////////
-if(DDSIP_param->outlev)
-  fprintf(DDSIP_bb->moreoutfile, "#####  rest_bound: new computed value: %22.14g, father->bound: %22.14g, difference: %g\n", rest_bound, DDSIP_node[DDSIP_node[DDSIP_bb->curnode]->father]->bound,DDSIP_node[DDSIP_node[DDSIP_bb->curnode]->father]->bound-rest_bound);
-//////////////////////////////////////////////////////
             rest_bound = DDSIP_Dmin(rest_bound, DDSIP_node[DDSIP_node[DDSIP_bb->curnode]->father]->bound);
         }
     }
@@ -1526,10 +1522,6 @@ if(DDSIP_param->outlev)
                 DDSIP_bb->scenLBIters++;
                 optstatus = CPXmipopt (DDSIP_env, DDSIP_lp);
                 mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
-///////////////////////////////////////////
-//if (DDSIP_param->outlev)
-//   fprintf (DDSIP_bb->moreoutfile, "1st lb: optstatus= %d, mipstatus= %d\n", optstatus, mipstatus);
-///////////////////////////////////////////
                 if (!optstatus && !DDSIP_Error(optstatus) && !DDSIP_Infeasible (mipstatus))
                 {
                     if (CPXgetmiprelgap(DDSIP_env, DDSIP_lp, &mipgap))
@@ -2330,7 +2322,7 @@ if(DDSIP_param->outlev)
                 ( (DDSIP_bb->found_optimal_node) && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node*nfactor && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue*factor))
             {
 //////////////////////////////////////////////////////////////////
-               if (DDSIP_param->outlev > 20)
+               if (DDSIP_param->outlev > 21)
                    fprintf (DDSIP_bb->moreoutfile, "########## setting found_optimal_node: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*factor (%20.15g) = %.8g\n",
                             DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,
                             DDSIP_bb->bestvalue*factor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*factor);
@@ -2341,7 +2333,7 @@ if(DDSIP_param->outlev)
 //////////////////////////////////////////////////////////////////
             else
             {
-               if (DDSIP_param->outlev > 20)
+               if (DDSIP_param->outlev > 21)
                    fprintf (DDSIP_bb->moreoutfile, "########## else: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*factor (%20.15g) = %.8g\n",
                             DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,
                             DDSIP_bb->bestvalue*factor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*factor);
@@ -2359,7 +2351,6 @@ if(DDSIP_param->outlev)
     }
     else
     {
-        //if ((DDSIP_node[DDSIP_bb->curnode]->bound <  DDSIP_bb->bestvalue + DDSIP_param->accuracy) && ((DDSIP_node[DDSIP_bb->curnode]->bound + 0.008*meanGap * fabs(DDSIP_node[DDSIP_bb->curnode]->bound)) > DDSIP_bb->bestvalue + DDSIP_param->accuracy))
         if ((DDSIP_node[DDSIP_bb->curnode]->bound <  DDSIP_bb->bestvalue + DDSIP_param->accuracy) && (tmpbestvalue > DDSIP_bb->bestvalue + DDSIP_param->accuracy))
         {
             fprintf(DDSIP_outfile, "          WARNING: node %d is possibly not cut off just due to the MIP gaps. mean MIP gap = %g%%, upper bound= %16.12g\n",
@@ -3212,8 +3203,9 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
 
     int cnt, iscen, i_scen, j, k, k1, status = 0, optstatus, mipstatus, scen, relax = 0, increase = 9;
     int wall_hrs, wall_mins,cpu_hrs, cpu_mins;
-    static int weight_reset = 0;
+    static int weight_reset;
     static double original_weight;
+    double weight_reset_factor = 1.8;
     static int use_LB_params = 0;
 
     int *indices = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_bb->firstvar + DDSIP_bb->secvar),
@@ -3243,6 +3235,10 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
 
     DDSIP_bb->DDSIP_step = dual;
     DDSIP_bb->skip = 0;
+    if (DDSIP_bb->dualitcnt == 1)
+    {
+        weight_reset = 0;
+    }
 
     // ConicBundle somtimes gave negative relprec
     relprec = fabs(relprec);
@@ -4347,18 +4343,21 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             {
                 weight_reset = 1;
                 original_weight = cb_get_last_weight(DDSIP_bb->dualProblem);
-                cb_set_next_weight (DDSIP_bb->dualProblem, 1.8*original_weight);
+                cb_set_next_weight (DDSIP_bb->dualProblem, weight_reset_factor*original_weight);
                 if (DDSIP_param->outlev > 20)
-                    fprintf (DDSIP_bb->moreoutfile, " ### increased weight to %g\n", 1.5*original_weight);
+                    fprintf (DDSIP_bb->moreoutfile, " ### increased weight to %g\n", weight_reset_factor*original_weight);
             }
         }
     }
-    if (weight_reset && ((DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) < 5.e-4 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 100.)))
+    if ((weight_reset == 1) && ((DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) < 5.e-4 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 100.)))
     {
-        weight_reset = 0;
-        cb_set_next_weight (DDSIP_bb->dualProblem, original_weight);
-        if (DDSIP_param->outlev > 20)
-            fprintf (DDSIP_bb->moreoutfile, " ### reset weight to %g\n", original_weight);
+        weight_reset = -1;
+        if (fabs (weight_reset_factor*original_weight - cb_get_last_weight(DDSIP_bb->dualProblem)) < DDSIP_param->accuracy)
+        {
+           cb_set_next_weight (DDSIP_bb->dualProblem, original_weight);
+           if (DDSIP_param->outlev > 20)
+               fprintf (DDSIP_bb->moreoutfile, " ### reset weight to %g\n", original_weight);
+       }
     }
     if (tmpbestbound > DDSIP_bb->bestvalue)
     {

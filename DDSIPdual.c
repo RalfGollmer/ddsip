@@ -361,7 +361,7 @@ DDSIP_DualOpt (void)
     double *center_point = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual,
                            "center_point(DualOpt)");
     double obj, old_obj, start_weight, diff;
-    int    wall_hrs, wall_mins, cpu_hrs, cpu_mins, limits_reset, repeated_increase = 2, weight_decreases = 0, many_iters = 0, cycleCnt  = 0;
+    int    wall_hrs, wall_mins, cpu_hrs, cpu_mins, limits_reset, repeated_increase = 2, weight_decreases = 0, many_iters = 0, cycleCnt  = 0, inh_mult_node = 0;
     double wall_secs, cpu_secs, inherited_bound, rgap;
     double old_cpxrelgap = 1.e-16, old_cpxtimelim = 1000000., old_cpxrelgap2 = 1.e-16, old_cpxtimelim2 = 1000000., last_weight, next_weight, reduction_factor = 0.5;
 
@@ -1010,6 +1010,7 @@ DDSIP_DualOpt (void)
     if (DDSIP_bb->curnode)
     {
         diff = obj - inherited_bound;
+        inh_mult_node = DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 1];
         if (obj > inherited_bound)
         {
            inherited_bound = obj;
@@ -1518,6 +1519,7 @@ if(DDSIP_param->outlev)
                             }
                             else
                             {
+                                DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 1] = inh_mult_node;
                                 cnt = 1;
                             }
                         }

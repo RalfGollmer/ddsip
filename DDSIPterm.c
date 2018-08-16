@@ -262,7 +262,8 @@ DDSIP_Continue (int *noiter, int *boundstat)
                         i = system (command);
                         if (DDSIP_param->outlev)
                         {
-                            fprintf (DDSIP_bb->moreoutfile, "  return code of 'gzip -9 %s': %d\n", DDSIP_solfname, i);
+                            if (i)
+                                fprintf (DDSIP_bb->moreoutfile, "  return code of 'gzip -9 %s': %d\n", DDSIP_solfname, i);
                             sprintf(command,"ls -l %s*; gzip -f9 %s; ls -l %s*", DDSIP_moreoutfname, DDSIP_moreoutfname, DDSIP_moreoutfname);
                             i = system (command);
                         }

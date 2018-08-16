@@ -809,8 +809,7 @@ DDSIP_Bound (void)
                         fprintf (DDSIP_bb->moreoutfile, " - selection of next node: depth first\n");
                         if (DDSIP_bb->bestBound)
                         {
-                            fprintf (DDSIP_bb->moreoutfile, " DDSIP_bb->bestBound = %d", DDSIP_bb->bestBound);
-                            fprintf (DDSIP_bb->moreoutfile, " -> select best bound node among all.\n");
+                            fprintf (DDSIP_bb->moreoutfile, " DDSIP_bb->bestBound = %d -> select best bound node among all.\n", DDSIP_bb->bestBound);
                         }
                     }
                     // use depth first
@@ -838,13 +837,13 @@ DDSIP_Bound (void)
                             bestAmongTheLast = DDSIP_Dmin(front_node_bound[DDSIP_bb->front_nodes_sorted[i]], bestAmongTheLast);
                         }
                         DDSIP_qsort_ins_A (front_node_bound, DDSIP_bb->front_nodes_sorted, 0, depth_first_nodes-1);
-                        threshold = 0.95*DDSIP_bb->bestbound + 0.05*worstBound;
+                        threshold = (1. - DDSIP_param->btTolerance)*DDSIP_bb->bestbound + DDSIP_param->btTolerance*worstBound;
                         for (i = depth_first_nodes; i < DDSIP_bb->nofront; i++)
                         {
                             front_node_bound[DDSIP_bb->front_nodes_sorted[i]] =  (DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->leaf) ? DDSIP_infty : DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound;
                         }
                         DDSIP_qsort_ins_A (front_node_bound, DDSIP_bb->front_nodes_sorted, depth_first_nodes, DDSIP_bb->nofront-1);
-                        if (DDSIP_param->outlev > 5)
+                        if (DDSIP_param->outlev > 5 && !DDSIP_bb->bestBound)
                         {
                             fprintf (DDSIP_bb->moreoutfile, "                                least bound among all:  %-16.12g, greatest bound: %-16.12g\n", DDSIP_bb->bestbound, worstBound);
                             fprintf (DDSIP_bb->moreoutfile, "                                least bound among last: %-16.12g, threshold:      %-16.12g", bestAmongTheLast, threshold);
@@ -854,7 +853,7 @@ DDSIP_Bound (void)
                             // use best bound of all nodes if the best bound within the last nodes is too big and more often if
                             // we have at least one feasible point
                             if (bestAmongTheLast > threshold || DDSIP_bb->bestBound ||
-                                ((fabs (DDSIP_bb->bestvalue) < DDSIP_infty) && !(DDSIP_bb->noiter % 35)))
+                                ((fabs (DDSIP_bb->bestvalue) < DDSIP_infty) && !(DDSIP_bb->noiter % 50)))
                             {
                                 for  (i = 0; i < DDSIP_bb->nofront; i++)
                                 {
@@ -876,7 +875,11 @@ DDSIP_Bound (void)
                                 else
                                     DDSIP_bb->bestBound++;
                                 if (DDSIP_param->outlev > 5 && DDSIP_bb->bestBound == 1)
+                                {
+                                    if ((fabs (DDSIP_bb->bestvalue) < DDSIP_infty) && !(DDSIP_bb->noiter % 50))
+                                        fprintf (DDSIP_bb->moreoutfile, " freq: force bestbound ");
                                     fprintf (DDSIP_bb->moreoutfile, " -> select best bound node among all.");
+                                }
                             }
                             for  (i = 0; i < DDSIP_bb->nofront; i++)
                             {

@@ -47,8 +47,7 @@ DDSIP_SkipUB (void)
             status = 0;
 
     // Or if the node will be fathomed due to inferiority (bound > bestvalue)
-    if ((!DDSIP_bb->bestsol_in_curnode && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue + DDSIP_bb->correct_bounding) ||
-        ( DDSIP_bb->bestsol_in_curnode && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 5e-14*fabs(DDSIP_bb->bestvalue)))
+    if (!DDSIP_bb->bestsol_in_curnode && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue + DDSIP_bb->correct_bounding)
     {
         if (DDSIP_param->outlev > 20)
             fprintf (DDSIP_bb->moreoutfile, "########## skip=2 for DDSIP_bb->bestsol_in_curnode=%d, DDSIP_node[%d]->bound (%20.15g) - bestvalue = %.8g\n", DDSIP_bb->bestsol_in_curnode, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue);

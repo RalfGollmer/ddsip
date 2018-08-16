@@ -215,6 +215,8 @@ extern "C" {
         int   boundstrat;
         // for boundstrat 10: frequency of using best bound
         int   bestboundfreq;
+        // Backtracking tolerance
+        double btTolerance;
         // use premature stop in LB?
         int   prematureStop;
         // Update LP base in every i-th iteration

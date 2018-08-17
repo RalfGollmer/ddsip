@@ -511,6 +511,11 @@ HOTSTA&Int&0..6&0&No warm starts during B\&B.\\
 &&&4&Use solutions of all previous scenarios of the same node as well as solutions of all scenarios in father node.\\ 
 &&&5&Uses solution info as in 3 together with the lower bound from father node.\\ 
 &&&6&Uses solution info as in 4 together with the lower bound from father node.\\[0.2em]
+CBHOTS&Int&0..4&0&No warm starts/reordering of scenarios within ConicBundle.\\
+&&&1*&Use scenario solutions as MIP starts in the root node for the first 3 descent steps.\\
+&&&2*&Use scenario solutions as MIP starts in the root node for the all descent steps.\\
+&&&3*&Use scenario solutions as MIP starts in the root node for the all descent steps.\\
+&&&4*&Use scenario solutions as MIP starts in all nodes for the all descent steps.\\[0.2em]
 BRADIR&Int&-1*,1&-1&Branching down is done first.\\
 &&&1&Branching up is done first. \\[0.2em]
 BRASTR&Int&0..2&0&Use the middle between maximal and minimal value for the chosen variable as branching value.\\
@@ -528,7 +533,8 @@ BOUSTR&Int&0..10&0&choose node with best bound as next node\\
 &&&4& heuristic: among nodes with sufficiently small bound choose node with least number of violations\\
 &&&5-9& heuristic: depth first until a incumbent is found, then switch to\\&&&& BOUSTRAT-5\\[0.2em]
 &&&10*& heuristic: among last four generated nodes choose node with best bound (unsolved nodes first) as long as its objective value does not exceed a threshold. Choose the best bound node otherwise and also every 25th node.\\
-BESTFR&Int&1..&30&frequency for choosing the best bound node regardless of the other criteria\\
+BESTFR&Int&1..&24&frequency for choosing the best bound node regardless of the other criteria\\
+BTTOLE&Dbl&0.1&1e-4..1&(with BOUSTR 10): tolerance for using the best bound node in the next 4 nodes\\[0.2em]
 PERIOD&Int&1..&32&for BOUSTRAT$>$0: determines the period of bounding steps with changing tolerances for ''sufficiently small''\\
 TOLSMA&Int&1..{\footnotesize PERIOD}&16&for BOUSTRAT$>$0: determines the number of steps in each period with a small tolerance\\[0.2em]
 KAPPA&Int&0..2&0*&No gathering of kappa values by CPLEX\\
@@ -539,11 +545,11 @@ RELAXL&Int&0..2&0*&No integrality relaxation.\\
 &&&2&Relax first- and second-stage variables.\\[0.2em]
 QUANTI&Int&0..&10&Number of Quantiles to be displayed at the end\\[0.2em]
 MAXINH&Int&0..&5&maximal level of inheritance of solutions in lower bounding\\[0.2em]
-HEURIS&Int&0..14,99,100&100&choice of heuristics, cf. Table 5\\[0.2em]
+HEURIS&Int&1..14,99,&&\\&&\mbox{  }100&100&choice of heuristics, cf. Table 5\\[0.2em]
 INTHEU&Int&-1..1&&should the evaluation of different heuristics be interrupted when the relative gap is reached?\\
 &&&0& do not interrupt\\
 &&&1& interrupt instantly\\
-&&&-1& continue through the list 1-10 if HEURIS is 100, but don't use 12\\
+&&&-1& continue through the list 1-10 if\\&&&& HEURIS is 100, but don't use 12\\
       &   &      &&default: 0 for HEURIS 99, -1 for HEURIS 100\\[0.2em]
 ADDBEN&Int&0..1&1&Should Benders feasibility cuts be added?\\[0.2em]
 TESTBE&Int&0..1&1&Should be tested for further cuts from the remaining scenarios if one cut is violated?\\[0.2em]

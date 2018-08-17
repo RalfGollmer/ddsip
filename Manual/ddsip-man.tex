@@ -534,7 +534,7 @@ BOUSTR&Int&0..10&0&choose node with best bound as next node\\
 &&&5-9& heuristic: depth first until a incumbent is found, then switch to\\&&&& BOUSTRAT-5\\[0.2em]
 &&&10*& heuristic: among last four generated nodes choose node with best bound (unsolved nodes first) as long as its objective value does not exceed a threshold. Choose the best bound node otherwise and also every 25th node.\\
 BESTFR&Int&1..&24&frequency for choosing the best bound node regardless of the other criteria\\
-BTTOLE&Dbl&0.1&1e-4..1&(with BOUSTR 10): tolerance for using the best bound node in the next 4 nodes\\[0.2em]
+BTTOLE&Dbl&1e-4..1&0.2&(with BOUSTR 10): tolerance for using the best bound node in the next 4 nodes\\[0.2em]
 PERIOD&Int&1..&32&for BOUSTRAT$>$0: determines the period of bounding steps with changing tolerances for ''sufficiently small''\\
 TOLSMA&Int&1..{\footnotesize PERIOD}&16&for BOUSTRAT$>$0: determines the number of steps in each period with a small tolerance\\[0.2em]
 KAPPA&Int&0..2&0*&No gathering of kappa values by CPLEX\\

@@ -955,6 +955,10 @@ defining the risk model and solving the expected value problem, respectively.
  In the case of conic bundle use these are written in every dual step, increasing the value after gc (global counter) with each step.
 \end{itemize}
 \end{itemize}
+In order to facilitate debugging/tuning of parameters two possibilities have been included in order to get information in selected stages of the
+run without producing a huge amount of output files for the overall run:\\
+issuing the command 'kill -SIGUSR1 process\_number' once switches the OUTFILE parameter to 6, issuing the same kill command again switches it back.
+Analogously issuing the command 'kill -SIGUSR2 process\_number' once switches the CPLEX iteration log to on, issuing the same kill command again switches it back off.
 %
 \section{License and bugs}
 \subsection{License}

@@ -52,7 +52,7 @@ DDSIP_PrintModFileUb (int scen)
             fprintf (stderr, "ERROR: Failed to write problem\n");
             return status;
         }
-        else if (DDSIP_param->outlev > 29)
+        else if (DDSIP_param->outlev > 21)
         {
 #ifdef DEBUG
             printf ("  LP file %s written.\n",fname);

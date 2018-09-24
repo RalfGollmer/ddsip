@@ -737,7 +737,7 @@ DDSIP_Warm (int iscen)
         // print debugging info
         if (DDSIP_param->outlev > 21)
         {
-            fprintf (DDSIP_bb->moreoutfile,"     have %d MIP starts (from previous iters)\n",added);
+            fprintf (DDSIP_bb->moreoutfile,"      have %3d MIP starts (from previous iters)\n",added);
         }
 #endif
         DDSIP_bb->effort[0]=2;
@@ -878,7 +878,7 @@ DDSIP_Warm (int iscen)
         // print debugging info
         if (DDSIP_param->outlev > 21)
         {
-            fprintf (DDSIP_bb->moreoutfile,"      added %d MIP starts (from other scens)\n",added);
+            fprintf (DDSIP_bb->moreoutfile,"      added %2d MIP starts (from other scens)\n",added);
         }
 #endif
         // ADVIND must be 2 when using supplied start values

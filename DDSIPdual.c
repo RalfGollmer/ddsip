@@ -2226,7 +2226,7 @@ NEXT_TRY:
                             if (repeated_increase < -1)
                                 repeated_increase++;
                             many_iters = 0;
-                            repeated_increase += DDSIP_Imax(0, 4 - cpu_hrs);
+                            repeated_increase += DDSIP_Imax(0, 4 - cur_iters);
                             if (cur_iters > 3)
                             {
                                 repeated_increase++;

@@ -2339,7 +2339,7 @@ NEXT_TRY:
                                             cb_set_next_weight (p, next_weight);
 ///////////     ///////////
                                             if (DDSIP_param->outlev > 10)
-                                                fprintf(DDSIP_bb->moreoutfile,"#############2. increased next weight to %g, current iters = %d,  many_iters = %d ##################\n",next_weight,cpu_hrs,many_iters);
+                                                fprintf(DDSIP_bb->moreoutfile,"#############2. increased next weight to %g, current iters = %d,  many_iters = %d ##################\n",next_weight,cur_iters,many_iters);
 ///////////     ///////////
                                         }
                                     }
@@ -2350,7 +2350,7 @@ NEXT_TRY:
                                         cb_set_next_weight (p, next_weight);
 ///////////     ///////////
                                         if (DDSIP_param->outlev > 10)
-                                            fprintf(DDSIP_bb->moreoutfile,"#############3. increased next weight to %g, current iters = %d,  many_iters = %d ##################\n",next_weight,cpu_hrs,many_iters);
+                                            fprintf(DDSIP_bb->moreoutfile,"#############3. increased next weight to %g, current iters = %d,  many_iters = %d ##################\n",next_weight,cur_iters,many_iters);
 ///////////     ///////////
                                     }
                                     weight_decreases = 0;
@@ -2365,7 +2365,7 @@ NEXT_TRY:
                                     cb_set_next_weight (p, next_weight);
 ///////////     ///////////
                                     if (DDSIP_param->outlev > 10)
-                                        fprintf(DDSIP_bb->moreoutfile,"#############4. increased next weight to %g, current iters = %d,  many_iters = %d ##################\n",next_weight,cpu_hrs,many_iters);
+                                        fprintf(DDSIP_bb->moreoutfile,"#############4. increased next weight to %g, current iters = %d,  many_iters = %d ##################\n",next_weight,cur_iters,many_iters);
 ///////////     ///////////
                                 }
                             }
@@ -2382,7 +2382,7 @@ NEXT_TRY:
                                 many_iters = 0;
                             }
                         }
-                        else if (DDSIP_bb->dualdescitcnt > 1 && DDSIP_param->cb_increaseWeight && (next_weight - last_weight) > 0.2*last_weight && cpu_hrs > 5)
+                        else if (DDSIP_bb->dualdescitcnt > 1 && DDSIP_param->cb_increaseWeight && (next_weight - last_weight) > 0.2*last_weight && cur_iters > 5)
                         {
                             many_iters++;
                             if (repeated_increase > -3)

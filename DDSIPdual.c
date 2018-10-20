@@ -213,7 +213,7 @@ ONCE_AGAIN:
         if (DDSIP_param->outlev)
         {
             printf ("Failed to solve scenario problems: status = %d .\n", status);
-            fprintf (DDSIP_bb->moreoutfile, "Failed to solve scenario problems: status = %d .\n", status);
+            fprintf (DDSIP_bb->moreoutfile, "############ Failed to solve scenario problems: status = %d .\n", status);
         }
         *new_subg = 0;
         if (status != -111)
@@ -1129,12 +1129,12 @@ DDSIP_DualOpt (void)
 if (DDSIP_param->outlev > 10)
 {
 int jj = 1;
-tmp_bestdual = DDSIP_bb->bestdual;
-fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d\n", tmp_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
-while (tmp_bestdual)
+bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
+fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d\n", tmp1_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
+while (tmp1_bestdual)
 {
-   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, (%p next= %p)\n",jj++,tmp_bestdual->node_nr,tmp_bestdual->bound, tmp_bestdual, tmp_bestdual->next);
-   tmp_bestdual = tmp_bestdual->next;
+   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
+   tmp1_bestdual = tmp1_bestdual->next;
 }
 }
 #endif
@@ -1181,12 +1181,12 @@ while (tmp_bestdual)
 if (DDSIP_param->outlev > 10)
 {
 int jj = 1;
-tmp_bestdual = DDSIP_bb->bestdual;
-fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d\n", tmp_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
-while (tmp_bestdual)
+bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
+fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d\n", tmp1_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
+while (tmp1_bestdual)
 {
-   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, (%p next= %p)\n",jj++,tmp_bestdual->node_nr,tmp_bestdual->bound, tmp_bestdual, tmp_bestdual->next);
-   tmp_bestdual = tmp_bestdual->next;
+   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
+   tmp1_bestdual = tmp1_bestdual->next;
 }
 }
 #endif
@@ -1198,6 +1198,12 @@ while (tmp_bestdual)
                 }
                 tmp_previous = tmp_bestdual;
                 tmp_bestdual = tmp_bestdual->next;
+#ifdef DEBUG
+if (DDSIP_param->outlev > 21)
+{
+fprintf (DDSIP_bb->moreoutfile, " ### tmp_bestdual now: %p\n", tmp_bestdual);
+}
+#endif
             }
             // if all were tested put the multiplier which gave the minimal bound at the end of the list
             if (!tmp_bestdual && tmp_minbound && tmp_minbound->next)
@@ -1234,12 +1240,12 @@ while (tmp_bestdual)
 if (DDSIP_param->outlev > 10)
 {
 int jj = 1;
+bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
 fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to end of bestdual list, #entries: %d\n", tmp_minbound->node_nr, DDSIP_bb->bestdual_cnt);
-tmp_bestdual = DDSIP_bb->bestdual;
-while (tmp_bestdual)
+while (tmp1_bestdual)
 {
-   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, (%p next= %p)\n",jj++,tmp_bestdual->node_nr,tmp_bestdual->bound, tmp_bestdual, tmp_bestdual->next);
-   tmp_bestdual = tmp_bestdual->next;
+   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
+   tmp1_bestdual = tmp1_bestdual->next;
 }
 }
 #endif
@@ -1261,8 +1267,8 @@ if(DDSIP_param->outlev)
 #ifdef LINEFORPOS
                         // but first try a point on the line between inherited and best multipliers
                         for (status=0; status < DDSIP_bb->dimdual; status++)
-                            DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.02 * DDSIP_bb->startinfo_multipliers[status]
-                                                                        + 0.98 * tmp_maxbound->dual[status];
+                            DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.016 * DDSIP_bb->startinfo_multipliers[status]
+                                                                        + 0.984 * tmp_maxbound->dual[status];
 #ifdef DEBUG
                         if (DDSIP_param->outlev > 21 && DDSIP_param->outlev < DDSIP_current_lambda_outlev)
                         {
@@ -1318,8 +1324,8 @@ if(DDSIP_param->outlev)
                         {
                             // try a extrapolated point on the line between inherited and best multipliers
                             for (status=0; status < DDSIP_bb->dimdual; status++)
-                                DDSIP_node[DDSIP_bb->curnode]->dual[status] = -0.015 * DDSIP_bb->startinfo_multipliers[status]
-                                                                             + 1.015 * tmp_maxbound->dual[status];
+                                DDSIP_node[DDSIP_bb->curnode]->dual[status] = -0.01 * DDSIP_bb->startinfo_multipliers[status]
+                                                                             + 1.01 * tmp_maxbound->dual[status];
 #ifdef DEBUG
                             if (DDSIP_param->outlev > 21 && DDSIP_param->outlev < DDSIP_current_lambda_outlev)
                             {
@@ -1380,7 +1386,7 @@ if(DDSIP_param->outlev)
                             }
                         }
 #else
-                        if (memcmp(DDSIP_bb->startinfo_multipliers, tmp_bestdual->dual, sizeof (double) * (DDSIP_bb->dimdual)))
+                        if (memcmp(DDSIP_bb->startinfo_multipliers, tmp_maxbound->dual, sizeof (double) * (DDSIP_bb->dimdual)))
                         {
                             memcpy (DDSIP_bb->local_bestdual, tmp_maxbound->dual, sizeof (double) * (DDSIP_bb->dimdual));
                             DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = max_bound;
@@ -1461,8 +1467,8 @@ if(DDSIP_param->outlev)
                         {
                             // try a point on the line between inherited and best multipliers
                             for (status=0; status < DDSIP_bb->dimdual; status++)
-                                DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.99 * DDSIP_bb->startinfo_multipliers[status]
-                                                                            + 0.01 * tmp_maxbound->dual[status];
+                                DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.992 * DDSIP_bb->startinfo_multipliers[status]
+                                                                            + 0.008 * tmp_maxbound->dual[status];
 #ifdef DEBUG
                                 if (DDSIP_param->outlev > 21 && DDSIP_param->outlev < DDSIP_current_lambda_outlev)
                                 {
@@ -2595,16 +2601,17 @@ NEXT_TRY:
                     DDSIP_bb->bestdual_max = DDSIP_Dmax(DDSIP_bb->bestdual_max, tmp_bestdual->bound);
                 }
                 if (DDSIP_param->outlev > 10)
-                    fprintf (DDSIP_bb->moreoutfile, " ## added mult. from node %d to bestdual list, #entries: %d, bestdual_max: %17.14g\n", DDSIP_bb->curnode, DDSIP_bb->bestdual_cnt, DDSIP_bb->bestdual_max);
+                    fprintf (DDSIP_bb->moreoutfile, " ## added mult. from node %d to bestdual list, #entries: %d, bestdual_max: %17.14g, mult.=%g\n", DDSIP_bb->curnode, DDSIP_bb->bestdual_cnt, DDSIP_bb->bestdual_max, DDSIP_bb->bestdual->weight);
 //######################
 #ifdef DEBUG
 if (DDSIP_param->outlev > 10)
 {
 int jj = 1;
-while (tmp_bestdual)
+bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
+while (tmp1_bestdual)
 {
-   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, (%p next= %p)\n",jj++,tmp_bestdual->node_nr,tmp_bestdual->bound, tmp_bestdual, tmp_bestdual->next);
-   tmp_bestdual = tmp_bestdual->next;
+   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
+   tmp1_bestdual = tmp1_bestdual->next;
 }
 }
 #endif
@@ -2632,11 +2639,11 @@ while (tmp_bestdual)
 if (DDSIP_param->outlev > 10)
 {
 int jj = 1;
-tmp_bestdual = DDSIP_bb->bestdual;
-while (tmp_bestdual)
+bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
+while (tmp1_bestdual)
 {
-   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, (%p next= %p)\n",jj++,tmp_bestdual->node_nr,tmp_bestdual->bound, tmp_bestdual, tmp_bestdual->next);
-   tmp_bestdual = tmp_bestdual->next;
+   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
+   tmp1_bestdual = tmp1_bestdual->next;
 }
 }
 #endif

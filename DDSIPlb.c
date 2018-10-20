@@ -3244,7 +3244,11 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
 
     // Insurance in case CB doesn't stop as intended
     if (DDSIP_bb->dualitcnt > DDSIP_param->cbtotalitlim + 100)
+    {
+        if (DDSIP_param->outlev > 11)
+            fprintf (DDSIP_bb->moreoutfile, "######### dualitcnt= %d > %d (cbtotalitlim + 100)\n", DDSIP_bb->dualitcnt, DDSIP_param->cbtotalitlim + 100);
         return 1;
+    }
     // Output
     if (DDSIP_param->outlev)
     {
@@ -3356,6 +3360,9 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to change problem \n");
+
+            if (DDSIP_param->outlev > 11)
+                fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to change problem \n");
             return status;
         }
     }
@@ -4673,6 +4680,11 @@ TERMINATE:
         DDSIP_Free ((void **) &(time_sort_array));
     }
 #endif
+    if (DDSIP_param->outlev > 11)
+    {
+        if (status)
+            fprintf (DDSIP_bb->moreoutfile, "#########§§§§§§§§§  CBLB return value = %d  §§§§§§§§§#########\n", status);
+    }
     return status;
 #else
     return 0;

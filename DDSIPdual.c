@@ -2412,7 +2412,6 @@ NEXT_TRY:
                 }
                 else
                 {
-                    old_obj = DDSIP_bb->dualObjVal;
                     start_weight = next_weight - last_weight;
 ///////////////
                     if (DDSIP_param->outlev > 10)

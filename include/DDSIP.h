@@ -624,6 +624,8 @@ extern "C" {
         int initial_multiplier;
         // should multipliers be used?
         int multipliers;
+        // info about weight increase/reset in descent it. 1
+        int weight_reset;
 
     } bb_t;
 

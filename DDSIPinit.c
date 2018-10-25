@@ -559,6 +559,7 @@ DDSIP_BbTypeInit (void)
         DDSIP_bb->local_bestdual = NULL;
     }
     DDSIP_bb->shifts = 0;
+    DDSIP_bb->weight_reset = 0;
 
     return status;
 } // DDSIP_BbTypeInit

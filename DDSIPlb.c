@@ -3202,7 +3202,6 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
 
     int cnt, iscen, i_scen, j, k, k1, status = 0, optstatus, mipstatus, scen, relax = 0, increase = 9;
     int wall_hrs, wall_mins,cpu_hrs, cpu_mins;
-    static int weight_reset;
     static double original_weight;
     double weight_reset_factor = 1.8;
     static int use_LB_params = 0;
@@ -3236,7 +3235,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     DDSIP_bb->skip = 0;
     if (DDSIP_bb->dualitcnt == 1)
     {
-        weight_reset = 0;
+        DDSIP_bb->weight_reset = 0;
     }
 
     // ConicBundle somtimes gave negative relprec
@@ -4345,9 +4344,9 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         }
         else if (DDSIP_bb->dualdescitcnt == 1)
         {
-            if (!weight_reset && (DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) > 0.1 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 1.))
+            if (!DDSIP_bb->weight_reset && (DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) > 0.1 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 1.))
             {
-                weight_reset = 1;
+                DDSIP_bb->weight_reset = 1;
                 original_weight = cb_get_last_weight(DDSIP_bb->dualProblem);
                 cb_set_next_weight (DDSIP_bb->dualProblem, weight_reset_factor*original_weight);
                 if (DDSIP_param->outlev > 20)
@@ -4355,9 +4354,9 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             }
         }
     }
-    if ((weight_reset == 1) && ((DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) < 1.e-8 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 100.)))
+    if ((DDSIP_bb->weight_reset == 1) && ((DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) < 1.e-8 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 100.)))
     {
-        weight_reset = -1;
+        DDSIP_bb->weight_reset = -1;
         if (fabs (weight_reset_factor*original_weight - cb_get_last_weight(DDSIP_bb->dualProblem)) < DDSIP_param->accuracy)
         {
            cb_set_next_weight (DDSIP_bb->dualProblem, original_weight);

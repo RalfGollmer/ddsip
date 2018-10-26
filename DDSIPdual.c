@@ -2446,8 +2446,6 @@ NEXT_TRY:
             }
             else
             {
-                if (DDSIP_param->outlev > 10)
-                    fprintf(DDSIP_bb->moreoutfile,"############### weight_reset 1\n");
                 DDSIP_bb->weight_reset = 0;
                 start_weight = 0.;
             }

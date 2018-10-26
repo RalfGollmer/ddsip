@@ -4356,9 +4356,9 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     }
     if ((DDSIP_bb->weight_reset == 1) && ((DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) < 1.e-8 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 100.)))
     {
-        DDSIP_bb->weight_reset = -1;
         if (fabs (weight_reset_factor*original_weight - cb_get_last_weight(DDSIP_bb->dualProblem)) < DDSIP_param->accuracy)
         {
+           DDSIP_bb->weight_reset = -1;
            cb_set_next_weight (DDSIP_bb->dualProblem, original_weight);
            if (DDSIP_param->outlev > 20)
                fprintf (DDSIP_bb->moreoutfile, " ### reset weight to %g\n", original_weight);

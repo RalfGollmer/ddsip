@@ -1095,6 +1095,7 @@ int
 DDSIP_ReadSpec ()
 {
     char fname[DDSIP_ln_fname];
+    char command[256];
     FILE *specfile;
     char *ref_point_file;
     FILE *reffile;
@@ -1111,6 +1112,9 @@ DDSIP_ReadSpec ()
         return -1;
     }
     printf ("\n\t Reading specifications from `%s'.\n", fname);
+    // copy specs file to sipout
+    sprintf(command,"cp  %s sipout/", fname);
+    i = system (command);
 
     // Read parameters
     fprintf (DDSIP_outfile, "PARAMETERS READ FROM `%s': \n", fname);

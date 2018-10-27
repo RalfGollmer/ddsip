@@ -697,16 +697,16 @@ representing the objective function. This leads to a stochastic matrix.
 
 The ConicBundle weight is changed between single dual steps under certain conditions by ConicBundle itself.
 \texttt{ddsip} offers the possibility to heuristically change (increase or decrease) the weight between descent steps.
-By default this feature is turned on and could be deactivated by parameters.
+By default this feature is turned on and could be deactivated by parameters.\\[1em]
 
 %\begin{table}[ht]
 \begin{center}
-\begin{tabular}{|llllp{6.6cm}|} 
+\begin{supertabular}{|llllp{6.6cm}|} 
 \hline
 Name&Type&Range&\multicolumn{2}{l|}{Default/Description}\\ \hline
-CBFREQ&Int&..&-16&Use \texttt{ConicBundle} in every $i$th node. Negative numbers are interpreted as |i|th node plus preceding one.\medskip\\
+CBFREQ&Int&..&-16&Use \texttt{ConicBundle} in every $i$th node. Negative numbers are interpreted as $|i|$th node plus preceding one.\medskip\\
 CBITLI&Int&0..&25&Iteration limit: descent steps.\medskip\\
-CBRITLI&Int&0..&{\footnotesize CBITLIM+7}&Iteration limit in root node: descent steps.\medskip\\
+CBRITLI&Int&0..&12&Iteration limit in root node: descent steps.\medskip\\
 CBSTEP&Int&0..&12&Maximal number of iterations within one descent step.\medskip\\
 CBTOTI&Int&0..&5000&Iteration limit: total iterations, i.e. descent and null steps.\medskip\\
 CBCONT &Int&1..&6&Used when CBFREQ$<$0: number of nodes with invocation of \texttt{ConicBundle} in every node after CBBREAK.\medskip\\
@@ -725,8 +725,11 @@ CBINHE &Int&0,1&0&Should the solutions of the father node be inherited in the in
 CBCHAN &Int&0,1&0&Should the tolerances and time limits for CPLEX be temporarily changed after a number of unsuccessful steps?\medskip\\
 CBREDU &Int&0,1&1&Should the weight be decreased after successful steps with no or few null steps?\medskip\\
 CBINCR &Int&0,1&1&Should the weight be increased after steps with too many null steps?\medskip\\
+CBCHEC &Int&0,1&1&Should final multipliers from other nodes be tested?\medskip\\
+CBLIST &Int&1..50&5&Length of the list of multipliers from other nodes to be tested\medskip\\
+CBLINE &Int&0,1&1&Should two points on the line from the inherited multipliers to the best from the other nodes be tested?\medskip\\
 \hline
-\end{tabular}
+\end{supertabular}
 \\[0.5em]{Table 8:\quad \texttt{ConicBundle} parameters}
 \end{center} %\caption{\texttt{ConicBundle} parameters} \label{T:CB}
 %\end{table}

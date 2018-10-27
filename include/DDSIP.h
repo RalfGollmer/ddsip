@@ -295,6 +295,8 @@ extern "C" {
         char *annotationFile;
         // maximal number of multiplier to be stored and tested
         int cb_bestdualListLength;
+        // test points on line between inherited multiplier and tmp_bestdual
+        int cb_test_line;
     } para_t;
 
     typedef struct

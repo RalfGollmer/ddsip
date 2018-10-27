@@ -4354,7 +4354,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             }
         }
     }
-    if ((DDSIP_bb->weight_reset == 1) && ((DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) < 1.e-8 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 100.)))
+    if ((DDSIP_bb->dualdescitcnt == 1) && (DDSIP_bb->weight_reset == 1) && ((DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) < 1.e-8 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 100.)))
     {
         if (fabs (weight_reset_factor*original_weight - cb_get_last_weight(DDSIP_bb->dualProblem)) < DDSIP_param->accuracy)
         {

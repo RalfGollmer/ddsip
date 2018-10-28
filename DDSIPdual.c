@@ -1008,6 +1008,7 @@ DDSIP_DualOpt (void)
         }
         init_iters = DDSIP_bb->dualitcnt;
     }
+    DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2] = 0;
     if (DDSIP_bb->curnode)
     {
         diff = obj - inherited_bound;
@@ -1389,6 +1390,18 @@ if(DDSIP_param->outlev)
                                     cnt = 1;
                                 }
                             }
+                        }
+                        else 
+                        {
+                            if (memcmp(DDSIP_bb->startinfo_multipliers, tmp_maxbound->dual, sizeof (double) * (DDSIP_bb->dimdual)))
+                            {
+                                memcpy (DDSIP_bb->local_bestdual, tmp_maxbound->dual, sizeof (double) * (DDSIP_bb->dimdual));
+                                DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = max_bound;
+                                DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 1] = tmp_maxbound->node_nr;
+                                cnt = 1;
+                            }
+                            else
+                                cnt = 0;
                         }
 #else
                         if (memcmp(DDSIP_bb->startinfo_multipliers, tmp_maxbound->dual, sizeof (double) * (DDSIP_bb->dimdual)))
@@ -1871,7 +1884,7 @@ NEXT_TRY:
                 next_weight = cb_get_last_weight (p);
                 j = (obj <= old_obj);
                 // if the step did not increase the bound, increase the weight
-                if (((next_weight - last_weight  <= 0.5*last_weight) || (DDSIP_bb->dualdescitcnt == 1 && DDSIP_bb->weight_reset == 1)) && (!DDSIP_param->cb_inherit || j || (!j && ((DDSIP_bb->dualdescitcnt == 1 && DDSIP_bb->dualitcnt < 11 + init_iters) || DDSIP_bb->dualdescitcnt > 1))))
+                if (((next_weight - last_weight  <= 0.5*last_weight) || (DDSIP_bb->dualdescitcnt == 1 && DDSIP_bb->weight_reset == 1)) && (!DDSIP_param->cb_inherit || j || (!j && ((DDSIP_bb->dualdescitcnt == 1 && DDSIP_bb->dualitcnt < DDSIP_param->cb_maxsteps + init_iters) || DDSIP_bb->dualdescitcnt > 1))))
                 {
                     DDSIP_bb->weight_reset = 0;
                     if (j || obj <= inherited_bound)
@@ -2214,7 +2227,9 @@ NEXT_TRY:
                         cur_iters = DDSIP_bb->dualitcnt - DDSIP_bb->last_dualitcnt;
 ///////////////
                         // if the center point is not local_bestdual (may occur when maxsteps reached) - set center point to local_bestdual
-                        if (cur_iters > 3 && (int) DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2] != DDSIP_bb->dualitcnt &&
+                        if (cur_iters > 3 && DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2] &&
+                            memcmp(DDSIP_bb->local_bestdual, DDSIP_node[DDSIP_bb->curnode]->dual, sizeof (double) * (DDSIP_bb->dimdual)) &&
+                            (int) DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2] != DDSIP_bb->dualitcnt &&
                             (obj - old_obj)/(fabs(old_obj) + 1.e-10) > 1.e-8)
                         {
                             if (DDSIP_param->outlev > 10)

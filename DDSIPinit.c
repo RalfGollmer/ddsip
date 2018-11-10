@@ -485,7 +485,6 @@ DDSIP_BbTypeInit (void)
 
     DDSIP_bb->cutoff = 0;
 
-    // Count the number of evaluated upper bounds
     DDSIP_bb->found_optimal_node = 0;
     DDSIP_bb->bound_optimal_node = -DDSIP_infty;
 
@@ -560,6 +559,7 @@ DDSIP_BbTypeInit (void)
     }
     DDSIP_bb->shifts = 0;
     DDSIP_bb->weight_reset = 0;
+    DDSIP_bb->Dive = 0;
 
     return status;
 } // DDSIP_BbTypeInit

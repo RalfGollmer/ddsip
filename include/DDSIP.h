@@ -628,6 +628,8 @@ extern "C" {
         int multipliers;
         // info about weight increase/reset in descent it. 1
         int weight_reset;
+        // are we within a dive try?
+        int Dive;
 
     } bb_t;
 

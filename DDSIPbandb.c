@@ -802,11 +802,14 @@ DDSIP_Bound (void)
             if (DDSIP_bb->no_reduced_front > 6)
             {
                 int depth_first_nodes = 6;
-                if (callcnt%DDSIP_param->bestboundfreq < DDSIP_param->bestboundfreq-2)
+                if ((DDSIP_bb->Dive || callcnt%DDSIP_param->bestboundfreq < DDSIP_param->bestboundfreq-2) && (DDSIP_bb->curnode%500 < 439))
                 {
                     if (DDSIP_param->outlev > 5)
                     {
-                        fprintf (DDSIP_bb->moreoutfile, " - selection of next node: depth first\n");
+                        if (DDSIP_bb->Dive)
+                            fprintf (DDSIP_bb->moreoutfile, " - selection of next node: dive\n");
+                        else
+                            fprintf (DDSIP_bb->moreoutfile, " - selection of next node: depth first\n");
                         if (DDSIP_bb->bestBound)
                         {
                             fprintf (DDSIP_bb->moreoutfile, " DDSIP_bb->bestBound = %d -> select best bound node among all.\n", DDSIP_bb->bestBound);
@@ -822,6 +825,7 @@ DDSIP_Bound (void)
                     if (DDSIP_param->boundstrat < 6 || DDSIP_param->boundstrat == 10)
                     {
                         double threshold;
+                        DDSIP_bb->Dive = 0;
                         bestAmongTheLast = DDSIP_infty;
                         // branch the one with best bound among the last generated nodes
                         if (DDSIP_bb->bestBound)
@@ -830,7 +834,13 @@ DDSIP_Bound (void)
                             depth_first_nodes = DDSIP_bb->nofront;
                         }
                         else
-                            depth_first_nodes = 4;
+                        {
+                            DDSIP_bb->Dive = (DDSIP_bb->curnode > 40 && DDSIP_bb->curnode%500 < 61) ? 1: 0;
+                            if (DDSIP_bb->Dive)
+                                depth_first_nodes = 2;
+                            else
+                                depth_first_nodes = 4;
+                        }
                         for (i = 0; i < depth_first_nodes; i++)
                         {
                             front_node_bound[DDSIP_bb->front_nodes_sorted[i]] =  (DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->leaf) ? DDSIP_infty : DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound;
@@ -852,8 +862,11 @@ DDSIP_Bound (void)
                         {
                             // use best bound of all nodes if the best bound within the last nodes is too big and more often if
                             // we have at least one feasible point
-                            if (bestAmongTheLast > threshold || DDSIP_bb->bestBound ||
-                                ((fabs (DDSIP_bb->bestvalue) < DDSIP_infty) && !(DDSIP_bb->noiter % 50)))
+                            if ((!DDSIP_bb->Dive &&
+                                 (bestAmongTheLast > threshold || DDSIP_bb->bestBound ||
+                                 ((fabs (DDSIP_bb->bestvalue) < DDSIP_infty) && !(DDSIP_bb->noiter % 50)))) ||
+                                (DDSIP_bb->Dive && bestAmongTheLast > 0.15*DDSIP_bb->bestbound + 0.85*worstBound)
+                               )
                             {
                                 for  (i = 0; i < DDSIP_bb->nofront; i++)
                                 {
@@ -881,12 +894,22 @@ DDSIP_Bound (void)
                                     fprintf (DDSIP_bb->moreoutfile, " -> select best bound node among all.");
                                 }
                             }
-                            for  (i = 0; i < DDSIP_bb->nofront; i++)
+                            if (!DDSIP_bb->Dive)
                             {
-                                if ((DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound - DDSIP_bb->bestbound) / (fabs(DDSIP_bb->bestbound) + DDSIP_param->accuracy) > 1.e-12)
-                                    break;
-                                front_node_bound[DDSIP_bb->front_nodes_sorted[i]] = !(DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->solved) ?
-                                         -DDSIP_infty : 2*DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->violations - DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->dispnorm - DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->depth;
+                                for  (i = 0; i < DDSIP_bb->nofront; i++)
+                                {
+                                    if ((DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound - DDSIP_bb->bestbound) / (fabs(DDSIP_bb->bestbound) + DDSIP_param->accuracy) > 1.e-12)
+                                        break;
+                                    front_node_bound[DDSIP_bb->front_nodes_sorted[i]] = !(DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->solved) ?
+                                             -DDSIP_infty : 2*DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->violations - DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->dispnorm - DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->depth;
+                                }
+                            }
+                            else
+                            {
+                                for (i = 0; i < depth_first_nodes; i++)
+                                {
+                                    front_node_bound[DDSIP_bb->front_nodes_sorted[i]] =  (DDSIP_node[DDSIP_bb->front[i]]->leaf) ? DDSIP_infty : 10.*DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->dispnorm + DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->violations;
+                                }
                             }
                             DDSIP_qsort_ins_A (front_node_bound, DDSIP_bb->front_nodes_sorted, 0, i-1);
                             // reset the sorting criterion to bound
@@ -1001,10 +1024,8 @@ DDSIP_Bound (void)
                 cnt++;
             }
 
-            // DEBUGOUT
             if (DDSIP_param->outlev > 5)
                 fprintf (DDSIP_bb->moreoutfile, " - selection of next node: rgap=%g, threshold value = %18.13g, cnt = %d  (%d%%%d)=%d (comp. with %d)\n", rgap, threshold,cnt,callcnt,DDSIP_param->period,(callcnt%DDSIP_param->period), DDSIP_param->rgapsmall);
-            // DEBUGOUT
 
             if (cnt > 1)
             {

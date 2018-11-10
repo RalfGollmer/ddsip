@@ -1870,16 +1870,23 @@ if (DDSIP_param->outlev > 21)
         for (j = 0; j < DDSIP_bb->firstvar; j++)
             DDSIP_bb->bestsol[j] = ((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval)[j];
 
+        // compare with bound_optimal_node
+        if (DDSIP_bb->bestvalue < DDSIP_bb->bound_optimal_node)
+        {
+            DDSIP_bb->bound_optimal_node = DDSIP_bb->bestvalue;
+            DDSIP_bb->found_optimal_node = 0;
+        }
+
         rhs = DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestvalue;
         if (rhs > 0.)
         {
             // something's wrong with the accuracy of solutions - the heuristic gave a better value than the lower bound in the same node!
-          printf ("*\t*** WARNING: heuristic value is better than lower bound of the node by %g, MIP gaps or tolerances probably not small enough ***\n", rhs);
+            printf ("*\t*** WARNING: heuristic value is better than lower bound of the node by %g ***\n", rhs);
             if (DDSIP_param->outlev)
             {
                 fprintf (DDSIP_outfile, "*\t*** WARNING: heuristic value is better than lower bound of the current node by %g", rhs);
                 fprintf (DDSIP_bb->moreoutfile, "*\t*** WARNING: heuristic value is better than lower bound of the current node by %g", rhs);
-                if (rhs > 1e-9)
+                if (rhs/(fabs(tmpbestvalue)+1.e-11) > 1e-9)
                 {
                     fprintf (DDSIP_outfile, ", MIP gaps or tolerances probably not small enough ***\n");
                     fprintf (DDSIP_bb->moreoutfile, ", MIP gaps or tolerances probably not small enough ***\n");

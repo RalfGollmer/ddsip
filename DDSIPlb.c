@@ -4344,10 +4344,16 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         }
         else if (DDSIP_bb->dualdescitcnt == 1)
         {
-            if (!DDSIP_bb->weight_reset && (DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) > 0.1 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 1.))
+            double weight;
+            weight = cb_get_last_weight(DDSIP_bb->dualProblem);
+            if (!DDSIP_bb->weight_reset &&
+                 ((weight < 0.95 &&
+                     (DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) > 5.e-3 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 1.)) ||
+                 ((DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) > 0.1 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 1.)))
+               )
             {
+                original_weight = weight;
                 DDSIP_bb->weight_reset = 1;
-                original_weight = cb_get_last_weight(DDSIP_bb->dualProblem);
                 cb_set_next_weight (DDSIP_bb->dualProblem, weight_reset_factor*original_weight);
                 if (DDSIP_param->outlev > 20)
                     fprintf (DDSIP_bb->moreoutfile, " ### increased weight to %g\n", weight_reset_factor*original_weight);

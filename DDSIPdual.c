@@ -1553,16 +1553,19 @@ if(DDSIP_param->outlev)
                 }
                 if (cnt)
                 {
-                    if ((status = cb_set_new_center_point (p, DDSIP_bb->local_bestdual)))
+                    if (memcmp (DDSIP_bb->local_bestdual, DDSIP_node[DDSIP_bb->curnode]->dual, sizeof (double) * (DDSIP_bb->dimdual)))
                     {
-                        fprintf (stderr, "set_new_center_point returned %d\n", status);
-                        if (DDSIP_param->outlev)
-                            fprintf (DDSIP_bb->moreoutfile, "set_new_center_point returned %d\n", status);
-                        cb_destruct_problem (&p);
-                        DDSIP_Free ((void **) &(minfirst));
-                        DDSIP_Free ((void **) &(maxfirst));
-                        DDSIP_Free ((void **) &(center_point));
-                        return status;
+                        if ((status = cb_set_new_center_point (p, DDSIP_bb->local_bestdual)))
+                        {
+                            fprintf (stderr, "set_new_center_point returned %d\n", status);
+                            if (DDSIP_param->outlev)
+                                fprintf (DDSIP_bb->moreoutfile, "set_new_center_point returned %d\n", status);
+                            cb_destruct_problem (&p);
+                            DDSIP_Free ((void **) &(minfirst));
+                            DDSIP_Free ((void **) &(maxfirst));
+                            DDSIP_Free ((void **) &(center_point));
+                            return status;
+                        }
                     }
                     old_obj = obj = DDSIP_bb->dualObjVal;
                     if (DDSIP_param->outlev)
@@ -1625,7 +1628,7 @@ if(DDSIP_param->outlev)
     if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 0.5*(fabs(DDSIP_bb->bestvalue) + 1e-10)*DDSIP_param->relgap)
     {
         memcpy (DDSIP_node[DDSIP_bb->curnode]->dual, DDSIP_bb->local_bestdual, sizeof (double) * (DDSIP_bb->dimdual + 3));
-        if (DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue >= 0.)
+        if (DDSIP_node[DDSIP_bb->curnode]->bound >= DDSIP_bb->bestvalue)
         {
             DDSIP_bb->cutoff++;
             if (DDSIP_bb->dualitcnt == 1)
@@ -1714,7 +1717,7 @@ if(DDSIP_param->outlev)
                     || (!DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt < DDSIP_param->cbrootitlim)
                   )
                 && DDSIP_bb->dualitcnt < DDSIP_param->cbtotalitlim && !(obj > DDSIP_bb->bestvalue - DDSIP_param->accuracy)
-                && (DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue) * DDSIP_Dmax (DDSIP_Dmin (0.7*DDSIP_param->relgap, 1.e-8), 2.e-13))
+                && (DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue) * DDSIP_Dmax (DDSIP_Dmin (0.5*DDSIP_param->relgap, 1.e-9), 2.e-12))
                 && cycleCnt < 2)
         {
             if ((DDSIP_bb->nofront == 1) &&
@@ -2430,7 +2433,7 @@ NEXT_TRY:
                         else if (DDSIP_bb->dualdescitcnt == 1 && DDSIP_param->cb_increaseWeight && (next_weight - last_weight) < 0.1*last_weight && cur_iters > DDSIP_param->cb_maxsteps + 4)
                         {
                                 next_weight *= 1.1;
-                                repeated_increase--;
+                                cb_set_next_weight (p, next_weight);
 ///////////     ///////////
                                 if (DDSIP_param->outlev > 10)
                                     fprintf(DDSIP_bb->moreoutfile,"###############  increased next weight to %g ##################\n",next_weight);
@@ -2736,7 +2739,7 @@ while (tmp1_bestdual)
                 DDSIP_Print2 ("termination status: optimal. --------------------------------------------------------------", "\n", 0, 0);
                 DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
             }
-            else if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - (fabs(DDSIP_bb->bestvalue) + 1e-10) * DDSIP_Dmax (DDSIP_Dmin (0.5*DDSIP_param->relgap, 1.e-9), 1.e-11))
+            else if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - (fabs(DDSIP_bb->bestvalue) + 1e-10) * 0.5*DDSIP_param->relgap)
             {
                 if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue + (fabs(DDSIP_bb->bestvalue) + 1e-10) * DDSIP_Dmax (DDSIP_Dmin (0.5*DDSIP_param->relgap, 1.e-9), 2.e-10))
                 {

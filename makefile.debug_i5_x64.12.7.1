@@ -1,0 +1,97 @@
+# Makefile for gnumake on linux
+# Set OS type
+OSTYPE		:=	$(shell uname -s | tr '[A-Z]' '[a-z]')
+# Adapt the following lines defining the paths to CPLEX and ConicBundle according to your installation
+# for CPLEX 12.6.3
+#CPLEX    = /opt/ibm/ILOG/CPLEX_Enterprise_Server1263/CPLEX_Studio/cplex
+#CPLEX    = /opt/ibm/ILOG/CPLEX_Studio1263/cplex
+CPLEX    = /opt/ibm/ILOG/CPLEX_Studio1271/cplex
+LINUXVAR = x86-64_linux
+CB       = ../ConicBundle
+
+LIBTYPE   = static_pic
+
+PROCESSOR = -mtune=corei7 -march=corei7 -mmmx -msse -msse2 -msse3 -mssse3 -m64
+#PROCESSOR = -mtune=core-avx-i -march=core-avx-i -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx -m64
+
+# Directories and target
+HOME      = .
+# Source files are here
+SRCDIR    = $(HOME)
+# Object files go there
+OBJDIR    = $(SRCDIR)/$(OSTYPE).obj
+# Install here
+BINARY    = $(HOME)
+TARGET    = $(SRCDIR)/DDSIP_x64_debug
+HELP      = $(SRCDIR)/ddsiphelp_x64_debug
+
+# Compiler 
+CC = gcc
+# All warnings, debug info, Optimization level 0
+linux.CFLAGS  =  -std=c99 -O0 -g -fno-strict-aliasing -Wall -Wextra -Wformat=2 -Wmissing-prototypes  $(PROCESSOR) -DCONIC_BUNDLE
+# Header files are here
+CDIRS   = -I./include -I$(CPLEX)/include/ilcplex -I$(CB)/include
+
+# Linker is g++ because of ConicBundle
+LINKER  = g++
+LIBRARIES = -lcplex -lm
+# Needed for CPLEX library
+linux.LIB = -lpthread
+linux.CBLIB = -L$(CB)/lib -lcb
+
+# Linker flags
+linux.LDFLAGS= $(PROCESSOR) -O0 -g
+
+# Linker directories
+LDDIRS = -L./lib 
+# CPLEX library
+linux.CPLEX.LDDIR = -L$(CPLEX)/lib/$(LINUXVAR)/$(LIBTYPE)/
+
+#Objects
+OBJECTS = DDSIPmain.o DDSIPsmall.o DDSIPmem.o DDSIPread.o DDSIPrisk.o DDSIPinit.o DDSIPeev.o DDSIPterm.o DDSIPprint.o \
+			DDSIPdual.o  DDSIPub.o DDSIPlb.o DDSIPheur.o DDSIPbandb.o DDSIPchg.o DDSIPrest.o DDSIPdetequ.o DDSIPredu.o
+
+#Objects with directories
+OBJSWITHDIR = $(addprefix $(OBJDIR)/,$(OBJECTS))
+
+#Rules
+#Compile
+all: $(TARGET)
+
+$(OBJDIR)/%.o: %.c ./include/DDSIP.h ./include/DDSIPconst.h 
+	@if [ ! -d $(OBJDIR) ]; then mkdir $(OBJDIR); fi
+	$(CC) $($(OSTYPE).CFLAGS) $(CDIRS) -c $< -o $@
+
+#Link
+$(TARGET): $(OBJSWITHDIR)
+	$(LINKER) $($(OSTYPE).LDFLAGS) $(LDDIRS) $($(OSTYPE).CPLEX.LDDIR) $(OBJSWITHDIR) $(LIBRARIES) $($(OSTYPE).LIB)  $($(OSTYPE).CBLIB) -o $(TARGET) 
+
+#Link statically
+static: $(OBJSWITHDIR)
+	$(LINKER) -v $($(OSTYPE).LDFLAGS) -static $(LDDIRS) $($(OSTYPE).CPLEX.LDDIR) $(OBJSWITHDIR) $(LIBRARIES) $($(OSTYPE).LIB)  $($(OSTYPE).CBLIB) -o $(TARGET).stat 
+
+$(HELP): $(SRCDIR)/DDSIPhelp.c
+	$(CC) $($(OSTYPE).CFLAGS) $(CDIRS) $(LDDIRS) $($(OSTYPE).CPLEX.LDDIR) $(SRCDIR)/DDSIPhelp.c $(LIBRARIES) $($(OSTYPE).LIB) -o $(HELP) 
+
+#Purify
+pure: $(OBJSWITHDIR)
+	purify $(LINKER) $(LDFLAGS) $(LDDIRS) $($(OSTYPE).CPLEX.LDDIR) $(OBJSWITHDIR) $(LIBRARIES) $($(OSTYPE).LIB)  $($(OSTYPE).CBLIB) \
+		-o $(TARGET) 
+
+#Install
+install:
+	@echo "Installing ..."
+	@mv $(TARGET) $(BINARY)
+
+#Clean
+clean:
+	@echo "Cleaning up ..."
+	@rm -rf $(OBJDIR) $(TARGET) $(HELP) *~ include/*~
+
+#Tarfile
+tar: 
+	@echo "Building ../DDSIP_`date +%y-%m-%d-%H%M`.tar.bz2 ..."
+	@rm -rf $(OBJDIR) *~ include/*~
+	@tar cjf ../DDSIP_`date +%y-%m-%d-%H%M`.tar.bz2 --exclude-from=./exclude .
+	@ls -ltr ../DDSIP_*.tar.bz2
+

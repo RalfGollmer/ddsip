@@ -630,6 +630,8 @@ extern "C" {
         int weight_reset;
         // are we within a dive try?
         int Dive;
+        // could we keep solutions (for reinits)?
+        int keepSols;
 
     } bb_t;
 

@@ -3375,7 +3375,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         {
             if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[iscen] != NULL)
             {
-                if (!DDSIP_bb->curnode && !DDSIP_bb->dualdescitcnt)
+                if (DDSIP_bb->keepSols)
                 {
                     // we are repeating the initial dual evaluation
                     // check whether the scenario solution violates a cut
@@ -3403,8 +3403,8 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                     }
                     if (keepSolution)
                     {
-                        if (DDSIP_param->outlev > 23)
-                            fprintf (DDSIP_bb->moreoutfile, "keeping sol. of scen. %d.\n", iscen + 1);
+                        if (DDSIP_param->outlev > 21)
+                            fprintf (DDSIP_bb->moreoutfile, "## keeping sol. of scen. %d.\n", iscen + 1);
                         continue;
                     }
                 }
@@ -3927,26 +3927,10 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             }
             else
             {
-                int i;
                 tmpbestbound += DDSIP_data->prob[scen] * wr;
                 tmpupper     += DDSIP_data->prob[scen] * objval;
-                // subbound should contain the bound excluding the Lagrangean part - correct the value wr
-                for (i = 0; i < DDSIP_bb->firstvar; i++)
-                    for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
-                            j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
-                    {
-                        wr -= mipx[DDSIP_bb->firstindex[i]] * (DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen]);
-#ifdef DEBUG
-                        if (DDSIP_param->outlev > 50)
-                        {
-                            fprintf (DDSIP_bb->moreoutfile, " first-stage var: %d value %20.14g", i,mipx[i]);
-                            fprintf (DDSIP_bb->moreoutfile, " scen: %d, j=%d, \tnaind[j]= %d: koeff: %g, dual=%g, \tcorrect factor: %g", scen,j, DDSIP_data->naind[j],  DDSIP_data->naval[j], DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]],  DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen]);
-                            fprintf (DDSIP_bb->moreoutfile, " \t%16.12g subbound change\n", -mipx[DDSIP_bb->firstindex[i]] * (DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen]));
-                        }
-#endif
-                    }
             }
-            (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen] = DDSIP_Dmin (bobjval, wr);
+            (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen] =  wr;
 
             // Wait-and-see lower bounds, should be set only once
             // Test if btlb contain still the initial value -DDSIP_infty

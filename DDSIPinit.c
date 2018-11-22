@@ -560,6 +560,7 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->shifts = 0;
     DDSIP_bb->weight_reset = 0;
     DDSIP_bb->Dive = 0;
+    DDSIP_bb->keepSols = 0;
 
     return status;
 } // DDSIP_BbTypeInit

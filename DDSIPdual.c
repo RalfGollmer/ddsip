@@ -304,7 +304,7 @@ ONCE_AGAIN:
     subgval[0] = *objective_value;
     if (!(DDSIP_bb->dualdescitcnt))
         DDSIP_bb->dualObjVal =  -(*objective_value);
-    if (DDSIP_param->outlev > 29)
+    if (DDSIP_param->outlev > DDSIP_first_stage_outlev)
     {
         fprintf (DDSIP_bb->moreoutfile, "\n After scenarios solving: (Total it. %d in node %d) ", DDSIP_bb->dualitcnt, DDSIP_bb->curnode);
         fprintf (DDSIP_bb->moreoutfile, "\n SC  VAR     FIRSTSOL         LAMBDA       returned subgradient (=H*FIRSTSOL)\n");
@@ -773,9 +773,9 @@ DDSIP_DualOpt (void)
             if (DDSIP_bb->bestvalue < DDSIP_infty)
             {
                 if (!DDSIP_Equal (fabs (DDSIP_bb->bestvalue), 0.0))
-                    rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[0]->bound) / fabs (DDSIP_bb->bestvalue);
+                    rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[DDSIP_bb->curnode]->bound) / fabs (DDSIP_bb->bestvalue);
                 else
-                    rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[0]->bound) / (fabs (DDSIP_bb->bestvalue) + DDSIP_param->accuracy);
+                    rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[DDSIP_bb->curnode]->bound) / (fabs (DDSIP_bb->bestvalue) + DDSIP_param->accuracy);
                 rgap = DDSIP_Dmin (rgap, 100.0);
                 if (!DDSIP_bb->cutAdded)
                 {
@@ -814,6 +814,7 @@ DDSIP_DualOpt (void)
         if (!DDSIP_killsignal &&  DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_bb->bestvalue)
         {
             DDSIP_EvaluateScenarioSolutions (&comb);
+            DDSIP_bb->keepSols = 1;
         }
         if (DDSIP_bb->cutAdded)
         {
@@ -851,9 +852,9 @@ DDSIP_DualOpt (void)
                 if (!DDSIP_bb->curnode && DDSIP_bb->bestvalue < DDSIP_infty)
                 {
                     if (!DDSIP_Equal (fabs (DDSIP_bb->bestvalue), 0.0))
-                        rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[0]->bound) / fabs (DDSIP_bb->bestvalue);
+                        rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[DDSIP_bb->curnode]->bound) / fabs (DDSIP_bb->bestvalue);
                     else
-                        rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[0]->bound) / (fabs (DDSIP_bb->bestvalue) + DDSIP_param->accuracy);
+                        rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[DDSIP_bb->curnode]->bound) / (fabs (DDSIP_bb->bestvalue) + DDSIP_param->accuracy);
                     rgap = DDSIP_Dmin (rgap, 100.0);
                     if (!DDSIP_bb->cutAdded)
                     {
@@ -892,6 +893,7 @@ DDSIP_DualOpt (void)
             if (!DDSIP_killsignal)
             {
                 DDSIP_EvaluateScenarioSolutions (&comb);
+                DDSIP_bb->keepSols = 1;
             }
             if (DDSIP_bb->cutAdded)
             {
@@ -939,9 +941,9 @@ DDSIP_DualOpt (void)
                         if (!DDSIP_bb->curnode && DDSIP_bb->bestvalue < DDSIP_infty)
                         {
                             if (!DDSIP_Equal (fabs (DDSIP_bb->bestvalue), 0.0))
-                                rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[0]->bound) / fabs (DDSIP_bb->bestvalue);
+                                rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[DDSIP_bb->curnode]->bound) / fabs (DDSIP_bb->bestvalue);
                             else
-                                rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[0]->bound) / (fabs (DDSIP_bb->bestvalue) + DDSIP_param->accuracy);
+                                rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[DDSIP_bb->curnode]->bound) / (fabs (DDSIP_bb->bestvalue) + DDSIP_param->accuracy);
                             rgap = DDSIP_Dmin (rgap, 100.0);
                             if (!DDSIP_bb->cutAdded)
                             {
@@ -987,6 +989,7 @@ DDSIP_DualOpt (void)
 //                        wall_hrs = DDSIP_param->heuristic;
 //                        DDSIP_param->heuristic = 12;
                         DDSIP_EvaluateScenarioSolutions (&comb);
+                        DDSIP_bb->keepSols = 1;
 //                        DDSIP_param->heuristic = wall_hrs;
                     }
                     else
@@ -1018,6 +1021,7 @@ DDSIP_DualOpt (void)
         {
            fprintf (DDSIP_bb->moreoutfile, " ######## inherited_bound (=%.14g) - obj (=%.14g) = %g #########################\n", inherited_bound, obj, inherited_bound - obj);
         }
+        DDSIP_bb->keepSols = 0;
         if (DDSIP_param->cb_checkBestdual && DDSIP_bb->bestdual_cnt &&
             (DDSIP_bb->bestvalue == DDSIP_infty || diff < 0.95*(DDSIP_bb->bestvalue - DDSIP_bb->bestbound)) &&
             (DDSIP_bb->dualObjVal < DDSIP_bb->bestvalue - DDSIP_Dmax(1.e-11,0.5*DDSIP_param->relgap)*(fabs(DDSIP_bb->bestvalue)+1.e-10)))
@@ -1605,9 +1609,9 @@ if(DDSIP_param->outlev)
             if (!DDSIP_bb->curnode && DDSIP_bb->bestvalue < DDSIP_infty)
             {
                 if (!DDSIP_Equal (fabs (DDSIP_bb->bestvalue), 0.0))
-                    rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[0]->bound) / fabs (DDSIP_bb->bestvalue);
+                    rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[DDSIP_bb->curnode]->bound) / fabs (DDSIP_bb->bestvalue);
                 else
-                    rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[0]->bound) / (fabs (DDSIP_bb->bestvalue) + DDSIP_param->accuracy);
+                    rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[DDSIP_bb->curnode]->bound) / (fabs (DDSIP_bb->bestvalue) + DDSIP_param->accuracy);
                 rgap = DDSIP_Dmin (rgap, 100.0);
                 printf ("  | %16d  %7d  %-16.12g %-11.6g  ----------------  %-20.14g               %10.4g%%  %3dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                         DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, rgap, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
@@ -1738,6 +1742,7 @@ if(DDSIP_param->outlev)
                 printf ("\nDescent step %d    next weight %g\n", DDSIP_bb->dualdescitcnt,next_weight);
                 fprintf (DDSIP_bb->moreoutfile, "\nDescent step %d    next weight %g\n", DDSIP_bb->dualdescitcnt,next_weight);
             }
+            DDSIP_bb->keepSols = 0;
 
 #ifdef DEBUG
             if (DDSIP_param->outlev > 99)
@@ -2577,9 +2582,9 @@ NEXT_TRY:
                 if (!DDSIP_bb->curnode && DDSIP_bb->bestvalue < DDSIP_infty)
                 {
                     if (!DDSIP_Equal (fabs (DDSIP_bb->bestvalue), 0.0))
-                        rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[0]->bound) / fabs (DDSIP_bb->bestvalue);
+                        rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[DDSIP_bb->curnode]->bound) / fabs (DDSIP_bb->bestvalue);
                     else
-                        rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[0]->bound) / (fabs (DDSIP_bb->bestvalue) + DDSIP_param->accuracy);
+                        rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[DDSIP_bb->curnode]->bound) / (fabs (DDSIP_bb->bestvalue) + DDSIP_param->accuracy);
                     rgap = DDSIP_Dmin (rgap, 100.0);
                     printf ("  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g               %10.4g%%  %3dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                             DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, rgap, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
@@ -2850,7 +2855,7 @@ while (tmp1_bestdual)
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                 fprintf (DDSIP_outfile, "  |--------------------- %4d  %-16.12g ----------------- zero mult.   %-20.14g %30dh %02d:%02.0f  %3dh %02d:%02.0f\n   ------------------------------------------------------------------------------------------------------------------------------\n",
                                              DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal,
-                                             obj, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                                             DDSIP_node[DDSIP_bb->curnode]->bound, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
             }
         
             // most probably this never happens...

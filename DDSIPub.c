@@ -658,6 +658,8 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         time (&DDSIP_bb->cur_time);
                         time_end = DDSIP_GetCpuTime ();
                         time_start = time_end-time_start;
+                        // in order to sort the scenarios which take much longer to the end (hopefully often not to be evaluated due to premature stop)
+                        sort_array[iscen] = time_start;
                         DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                         DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
                         status = DDSIP_GetCpxSolution (mipstatus, &objval, &bobjval, mipx);
@@ -2030,13 +2032,13 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
     if (!(DDSIP_bb->ub_sorted))
     {
         // in order to allow for premature cutoff: sort scenarios according to lower bound in root node in descending order
-        double * sort_array;
-        sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "sort_array(LowerBound)");
+        double * bound_sort_array;
+        bound_sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "sort_array(LowerBound)");
         for (i_scen = 0; i_scen < DDSIP_param->scenarios; i_scen++)
         {
-            sort_array[DDSIP_bb->ub_scen_order[i_scen]] = DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]] * (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]];
+            bound_sort_array[DDSIP_bb->ub_scen_order[i_scen]] = DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]] * (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]];
         }
-        DDSIP_qsort_ins_D (sort_array, DDSIP_bb->ub_scen_order, DDSIP_bb->shifts, DDSIP_param->scenarios-1);
+        DDSIP_qsort_ins_D (bound_sort_array, DDSIP_bb->ub_scen_order, DDSIP_bb->shifts, DDSIP_param->scenarios-1);
         // insert the least-cost scenario after the first bb->shifts scenarios - to be sure to check that for feasibility, too
         if (DDSIP_bb->shifts < DDSIP_param->scenarios - 2)
         {
@@ -2055,13 +2057,13 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
             for (i_scen = 0; i_scen < DDSIP_param->scenarios; i_scen++)
             {
                 fprintf(DDSIP_bb->moreoutfile," %3d: Scen %3d  %20.15g =  %10.07g * %20.15g\n",
-                        i_scen+1, DDSIP_bb->ub_scen_order[i_scen]+1, sort_array[DDSIP_bb->ub_scen_order[i_scen]],
+                        i_scen+1, DDSIP_bb->ub_scen_order[i_scen]+1, bound_sort_array[DDSIP_bb->ub_scen_order[i_scen]],
                         DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]],
                         (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]]);
             }
             // debug output
         }
-        DDSIP_Free ((void**) &sort_array);
+        DDSIP_Free ((void**) &bound_sort_array);
     }
     if (DDSIP_param->heuristic == 100)  	// use subsequently different heuristics in the same node
     {

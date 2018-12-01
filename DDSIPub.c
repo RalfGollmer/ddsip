@@ -2033,7 +2033,7 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
     {
         // in order to allow for premature cutoff: sort scenarios according to lower bound in root node in descending order
         double * bound_sort_array;
-        bound_sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "sort_array(LowerBound)");
+        bound_sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "bound_sort_array(LowerBound)");
         for (i_scen = 0; i_scen < DDSIP_param->scenarios; i_scen++)
         {
             bound_sort_array[DDSIP_bb->ub_scen_order[i_scen]] = DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]] * (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]];

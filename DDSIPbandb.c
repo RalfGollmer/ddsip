@@ -685,7 +685,6 @@ DDSIP_Bound (void)
     static int callcnt = 0;
     double * front_node_bound, rgap, factor, worstBound;
     double bestAmongTheLast;
-    //DDSIP_bb->bestBound = 0;
     callcnt++;
     factor = (DDSIP_bb->bestvalue < 0.)? 1.-3.e-15 :  1.+3.e-15;
 

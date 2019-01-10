@@ -57,7 +57,7 @@ DDSIP_PrintModFileUb (int scen)
 #ifdef DEBUG
             printf ("  LP file %s written.\n",fname);
 #endif
-            fprintf (DDSIP_bb->moreoutfile, "  LP file %s written.\n",fname);
+            fprintf (DDSIP_bb->moreoutfile, "        LP file %s written.\n",fname);
         }
     }
 

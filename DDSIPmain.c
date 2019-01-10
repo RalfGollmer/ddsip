@@ -54,7 +54,7 @@ const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Version
-const char DDSIP_version[] = "2018-11-18 (Github v1.3.1) ";
+const char DDSIP_version[] = "2018-12-09 (Github v1.3.2) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -254,11 +254,12 @@ main (int argc, char * argv[])
             status = 109;
             goto TERMINATE;
         }
-        if (DDSIP_param->outlev > 20)
+        if (DDSIP_param->outlev > 10)
         {
             // Buffer size = 0
-            setbuf (DDSIP_bb->moreoutfile, 0);
             setbuf (stdout, 0);
+            if (DDSIP_param->outlev > 20)
+                setbuf (DDSIP_bb->moreoutfile, 0);
         }
 #ifndef _WIN32
         // Print time to output file
@@ -481,7 +482,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
 
         // Dual method
         if ((DDSIP_param->cb > 0 && (!(DDSIP_bb->noiter % abs(DDSIP_param->cb))) && (abs(DDSIP_param->riskmod) != 4 || DDSIP_bb->noiter)) ||
-            (DDSIP_param->cb < 0 && (((DDSIP_bb->noiter < 3) && abs(DDSIP_param->riskmod) != 4/* && (DDSIP_bb->curnode || DDSIP_param->cbrootitlim)*/) ||
+            (DDSIP_param->cb < 0 && (((DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->cb_depth) && abs(DDSIP_param->riskmod) != 4) ||
                                       (abs(DDSIP_param->riskmod) == 5 && DDSIP_node[DDSIP_bb->curnode]->depth == 8) ||
                                       (DDSIP_bb->noiter > DDSIP_param->cbBreakIters && 
                                         ((!(DDSIP_bb->noiter % abs(DDSIP_param->cb))) ||

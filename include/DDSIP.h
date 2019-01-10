@@ -297,6 +297,8 @@ extern "C" {
         int cb_bestdualListLength;
         // test points on line between inherited multiplier and tmp_bestdual
         int cb_test_line;
+        // use short cb until depth
+        int cb_depth;
     } para_t;
 
     typedef struct
@@ -764,15 +766,16 @@ extern "C" {
     }
 #endif
 
-    int DDSIP_Equal(double a, double b);
+    int DDSIP_Equal(double, double);
+    int DDSIP_MultEqual(double *, double *);
     void DDSIP_qsort_ins_D(const double *, int *, int, int);
     void DDSIP_qsort_ins_A(const double *, int *, int, int);
     int  DDSIP_Error(int);
     int  DDSIP_NoSolution(int);
     int  DDSIP_Infeasible(int);
-    void DDSIP_HandleKillSignal(int );
-    void DDSIP_HandleUserSignal1(int );
-    void DDSIP_HandleUserSignal2(int );
+    void DDSIP_HandleKillSignal(int);
+    void DDSIP_HandleUserSignal1(int);
+    void DDSIP_HandleUserSignal2(int);
     void DDSIP_RegisterSignalHandlers(void);
     double DDSIP_GetCpuTime(void);
     void DDSIP_PrintErrorMsg(int);

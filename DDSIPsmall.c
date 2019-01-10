@@ -326,3 +326,22 @@ DDSIP_Equal(double a, double b)
     sum = fabs(a)+fabs(b);
     return (diff > (DDSIP_param->accuracy * 0.5 * (sum))) ? 0 : 1;
 }
+
+// Accuracy comparison of two multiplier verctors
+int
+DDSIP_MultEqual(double *a, double *b)
+{
+    double diff, sum, tol;
+    int i;
+    tol = 1.e+2 * DDSIP_param->accuracy;
+    for (i = 0; i < DDSIP_bb->dimdual; i++)
+    {
+        diff = fabs(a[i]-b[i]);
+        sum = fabs(a[i])+fabs(b[i]);
+        if ((sum > tol) && diff > (tol * sum))
+        {
+            return 0;
+        }
+    }
+    return 1;
+}

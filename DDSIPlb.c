@@ -895,7 +895,7 @@ DDSIP_Warm (int iscen)
     {
         DDSIP_bb->effort[0]=2;
         // If not in the root node add solution of father
-        if (DDSIP_bb->curnode)
+        if (DDSIP_bb->curnode && DDSIP_node[DDSIP_bb->curnode]->step != dual)
         {
             // Copy solution from father node to the problem (see initialization of subbound and solut)
             sprintf (DDSIP_bb->Names[0],"Father_%d",scen+1);
@@ -3226,8 +3226,8 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     shift_in_cb = (DDSIP_param->hot == 4) ||
                   (DDSIP_param->cbhot == 4) ||
                   (DDSIP_param->cbhot == 3 && !DDSIP_bb->curnode) ||
-                  (DDSIP_param->cbhot == 2 && !DDSIP_bb->curnode && (DDSIP_bb->dualdescitcnt == 1 || DDSIP_bb->dualdescitcnt > 5)) ||
-                  (DDSIP_param->cbhot == 1 && !DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt && DDSIP_bb->dualdescitcnt < 3);
+                  (DDSIP_param->cbhot == 2 && !DDSIP_bb->curnode && (DDSIP_bb->dualdescitcnt <= 1 || DDSIP_bb->dualdescitcnt > 5)) ||
+                  (DDSIP_param->cbhot == 1 && !DDSIP_bb->curnode /*&& DDSIP_bb->dualdescitcnt*/ && DDSIP_bb->dualdescitcnt < 3);
 #endif
 #endif
 

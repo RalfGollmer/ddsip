@@ -1484,7 +1484,7 @@ if(DDSIP_param->outlev)
                                                      DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                     }
                                 }
-                                if (DDSIP_bb->dualObjVal >= DDSIP_node[DDSIP_bb->curnode]->bound)
+                                if (DDSIP_bb->dualObjVal >= inherited_bound)
                                 {
                                     memcpy (DDSIP_bb->local_bestdual, DDSIP_node[DDSIP_bb->curnode]->dual, sizeof (double) * (DDSIP_bb->dimdual));
                                     DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = last_weight;
@@ -1492,7 +1492,9 @@ if(DDSIP_param->outlev)
                                     cnt = 0;
                                 }
                                 else
+                                {
                                     cnt = 1;
+                                }
                             }
                             if (cnt)
                             {

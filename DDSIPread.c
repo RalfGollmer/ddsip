@@ -1186,9 +1186,9 @@ DDSIP_ReadSpec ()
     DDSIP_param->logfreq   = (int) floor (DDSIP_ReadDbl (specfile, "LOGFRE", " LOG FREQUENCY", 1., 1, 0., DDSIP_bigint) + 0.1);
     DDSIP_param->nodelim   = (int) floor (DDSIP_ReadDbl (specfile, "NODELI", " NODE LIMIT", DDSIP_bigint, 1, 0., INT_MAX-1) + 0.1);
     // Accuracy, e.g. for the  comparison of double numbers
-    DDSIP_param->accuracy  = DDSIP_ReadDbl (specfile, "ACCURA", " ACCURACY", 1.0e-12, 0, 1.e-13, 1.);
-    DDSIP_param->brancheps = DDSIP_ReadDbl (specfile, "EPSILO", " EPSILON", 1.e-11, 0, 5.e-12, 1.);
-    DDSIP_param->nulldisp  = DDSIP_ReadDbl (specfile, "NULLDI", " NULL DISPERSION", 1.6e-11, 0, 5.e-12, DDSIP_infty);
+    DDSIP_param->accuracy  = DDSIP_ReadDbl (specfile, "ACCURA", " ACCURACY", 1.0e-14, 0, 1.e-15, 1.);
+    DDSIP_param->brancheps = DDSIP_ReadDbl (specfile, "EPSILO", " EPSILON", 1.e-12, 0, 5.e-15, 1.);
+    DDSIP_param->nulldisp  = DDSIP_ReadDbl (specfile, "NULLDI", " NULL DISPERSION", 1.5e-11, 0, 7.e-13, DDSIP_infty);
     DDSIP_param->absgap    = DDSIP_ReadDbl (specfile, "ABSOLU", " ABSOLUTE GAP", 0., 0, 0., DDSIP_infty);
     DDSIP_param->relgap    = DDSIP_ReadDbl (specfile, "RELATI", " RELATIVE GAP", 1.0e-6, 0, 1.1*DDSIP_param->brancheps, 1.);
     DDSIP_param->expected  = (int) floor (DDSIP_ReadDbl (specfile, "EEVPRO", " EXPECTED VALUE PROBLEM", 0., 1, 0., 1.) + 0.1);
@@ -1248,12 +1248,13 @@ DDSIP_ReadSpec ()
     {
         DDSIP_param->heuristic_vector = (double *) DDSIP_Alloc (sizeof (double), 12, "values(DDSIP_ReadDblVec)");
         DDSIP_param->heuristic_vector[0] = 100;
-        DDSIP_param->heuristic_vector[4] = 11;
+        DDSIP_param->heuristic_vector[1] = 11;
         for (i = 1; i< 4; i++)
         {
-            DDSIP_param->heuristic_vector[i]     = i + 3;
+            DDSIP_param->heuristic_vector[i + 1]     = i + 3;
             DDSIP_param->heuristic_vector[i + 4] = i;
         }
+        DDSIP_param->heuristic_vector[1] = 11;
         for (i = 7; i< 11; i++)
             DDSIP_param->heuristic_vector[i + 1] = i;
         DDSIP_param->heuristic_num = 12;

@@ -1863,6 +1863,7 @@ if (DDSIP_param->outlev > 21)
         DDSIP_bb->feasbound = tmpfeasbound;
         DDSIP_bb->bestrisk = DDSIP_bb->currisk;
         DDSIP_bb->bestexp = DDSIP_bb->curexp;
+        DDSIP_bb->bestdual_max = DDSIP_Dmin(DDSIP_bb->bestdual_max, 0.5*tmpbestvalue + 0.5*DDSIP_bb->bestbound);
 
         // We store all risk measures
         if (DDSIP_param->riskmod)

@@ -247,8 +247,8 @@ DDSIP_InitNewNodes (void)
     // Recall that ub (i+1)-lb(i) > eps and lb(i) <= branchval <= ub(i+1)
     else
     {
-        double minus = branchval - DDSIP_Dmax (DDSIP_param->brancheps, fabs(branchval)*1.1102233e-16);
-        double plus  = branchval + DDSIP_Dmax (DDSIP_param->brancheps, fabs(branchval)*1.1102233e-16);
+        double minus = branchval - DDSIP_Dmax (DDSIP_param->brancheps, fabs(branchval)*1.5e-16);
+        double plus  = branchval + DDSIP_Dmax (DDSIP_param->brancheps, fabs(branchval)*1.5e-16);
         // Case: lb (i) <= branchval-eps < branchval <= ub(i+1)
         // -->   ub (i):=branchval-eps, lb(i+1)=branchval
         if (!(minus < DDSIP_node[DDSIP_bb->nonode]->neolb))

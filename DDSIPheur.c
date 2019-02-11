@@ -36,7 +36,7 @@ static void DDSIP_SmallValue (void);
 static void DDSIP_LargeValue (void);
 static void DDSIP_MinSum (void);
 static void DDSIP_MaxSum (void);
-static int  DDSIP_OneFifth (int, int);
+static int  DDSIP_OneTenth (int, int);
 static int  DDSIP_All (int, int);
 static void DDSIP_BoundConsistent (void);
 
@@ -455,20 +455,20 @@ DDSIP_All (int nrScenarios, int feasCheckOnly)
 }
 
 //==========================================================================
-// OneFifth suggests successively all scenario problem solutions occurring at least scenarios/4 times Heur. 11
+// OneTenth suggests successively all scenario problem solutions occurring at least scenarios/10 times Heur. 11
 int
-DDSIP_OneFifth (int nrScenarios, int feasCheckOnly)
+DDSIP_OneTenth (int nrScenarios, int feasCheckOnly)
 {
     int i, ii, j, status, threshold;
     int cnt;
-    int *unind = (int *) DDSIP_Alloc (sizeof (int), DDSIP_param->scenarios, "unind(OneFifth)");
+    int *unind = (int *) DDSIP_Alloc (sizeof (int), DDSIP_param->scenarios, "unind(OneTenth)");
     sug_t *tmp;
 
-    threshold = DDSIP_Imax (1, DDSIP_param->scenarios/5);
+    threshold = DDSIP_Imax (2, DDSIP_param->scenarios/10);
     j = cnt = 0;
     for (i = DDSIP_param->scenarios-1; i > -1; i--)
     {
-        if (DDSIP_node[DDSIP_bb->curnode]->first_sol[i][DDSIP_bb->firstvar] <= threshold)
+        if (DDSIP_node[DDSIP_bb->curnode]->first_sol[i][DDSIP_bb->firstvar] < threshold)
             continue;
         if (!DDSIP_param->heuristic_auto)
         {
@@ -557,7 +557,7 @@ DDSIP_OneFifth (int nrScenarios, int feasCheckOnly)
             {
                 if (status < 100000)
                 {
-                    fprintf (stderr, "ERROR: Failed to perform UpperBound (OneFifth)\n");
+                    fprintf (stderr, "ERROR: Failed to perform UpperBound (OneTenth)\n");
                     return 1;
                 }
                 else if (DDSIP_param->interrupt_heur > 0)
@@ -679,7 +679,7 @@ DDSIP_Heuristics (int *comb, int nrScenarios, int feasCheckOnly)
         DDSIP_MaxSum ();
         break;
     case 11:			// all scen solutions occurring sufficiently often
-        status = DDSIP_OneFifth (nrScenarios, feasCheckOnly);
+        status = DDSIP_OneTenth (nrScenarios, feasCheckOnly);
         DDSIP_Free ((void **) &(average));
         return status;
     case 12:

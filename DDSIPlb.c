@@ -1802,6 +1802,7 @@ DDSIP_LowerBound (void)
             }
             else  			// Solution exists
             {
+                double bndval = 0.;
                 DDSIP_bb->solstat[scen] = 1;
                 status = CPXgetobjval (DDSIP_env, DDSIP_lp, &objval);
                 if (status)
@@ -1827,8 +1828,43 @@ DDSIP_LowerBound (void)
                 }
                 // Numerical errors?
                 for (j = 0; j < DDSIP_bb->firstvar; j++)
+                {
+                    // outside o bounds?
+                    status = CPXgetlb (DDSIP_env, DDSIP_lp, &bndval, DDSIP_bb->firstindex[j], DDSIP_bb->firstindex[j]);
+                    if (status)
+                    {
+                        fprintf (stderr, "ERROR: Failed to get variable bound\n");
+                        if (DDSIP_param->outlev)
+                            fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get variable bound\n");
+                        goto TERMINATE;
+                    }
+                    if (mipx[DDSIP_bb->firstindex[j]] < bndval)
+                    {
+                        if (DDSIP_param->outlev > 22)
+                            fprintf (DDSIP_bb->moreoutfile, "## First-stage var. %6d:  lb= %.16g > %.16g = mipx\n", DDSIP_bb->firstindex[j], bndval, mipx[DDSIP_bb->firstindex[j]]);
+                        mipx[DDSIP_bb->firstindex[j]] = bndval;
+                    }
+                    else
+                    {
+                        status = CPXgetub (DDSIP_env, DDSIP_lp, &bndval, DDSIP_bb->firstindex[j], DDSIP_bb->firstindex[j]);
+                        if (status)
+                        {
+                            fprintf (stderr, "ERROR: Failed to get variable bound\n");
+                            if (DDSIP_param->outlev)
+                                fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get variable bound\n");
+                            goto TERMINATE;
+                        }
+                        if (mipx[DDSIP_bb->firstindex[j]] > bndval)
+                        {
+                           if (DDSIP_param->outlev > 22)
+                               fprintf (DDSIP_bb->moreoutfile, "## First-stage var. %6d:  ub= %.16g < %.16g = mipx\n", DDSIP_bb->firstindex[j], bndval, mipx[DDSIP_bb->firstindex[j]]);
+                            mipx[DDSIP_bb->firstindex[j]] = bndval;
+                        }
+                    }
+                    // tiny value?
                     if (fabs (mipx[DDSIP_bb->firstindex[j]]) < DDSIP_param->accuracy)
                         mipx[DDSIP_bb->firstindex[j]] = 0.0;
+                }
                 if (relax != 2)
                 {
                     if (mipstatus == CPXMIP_OPTIMAL)
@@ -3792,6 +3828,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 }
                 else			// Solution exists
                 {
+                    double bndval = 0.;
                     DDSIP_bb->solstat[scen] = 1;
                     status = CPXgetobjval (DDSIP_env, DDSIP_lp, &objval);
                     if (status)
@@ -3839,8 +3876,47 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                     }
                     // Numerical errors?
                     for (j = 0; j < DDSIP_bb->firstvar; j++)
+                    {
+                        // outside o bounds?
+                        status = CPXgetlb (DDSIP_env, DDSIP_lp, &bndval, DDSIP_bb->firstindex[j], DDSIP_bb->firstindex[j]);
+                        if (status)
+                        {
+                            fprintf (stderr, "ERROR: Failed to get variable bound\n");
+                            if (DDSIP_param->outlev)
+                                fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get variable bound\n");
+                            goto TERMINATE;
+                        }
+                        if (mipx[DDSIP_bb->firstindex[j]] < bndval)
+                        {
+                            if (DDSIP_param->outlev > 22)
+                                fprintf (DDSIP_bb->moreoutfile, "## First-stage var. %6d:  lb= %.16g > %.16g = mipx\n", DDSIP_bb->firstindex[j], bndval, mipx[DDSIP_bb->firstindex[j]]);
+                            mipx[DDSIP_bb->firstindex[j]] = bndval;
+                        }
+                        else
+                        {
+                            status = CPXgetub (DDSIP_env, DDSIP_lp, &bndval, DDSIP_bb->firstindex[j], DDSIP_bb->firstindex[j]);
+                            if (status)
+                            {
+                                fprintf (stderr, "ERROR: Failed to get variable bound\n");
+                                if (DDSIP_param->outlev)
+                                    fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get variable bound\n");
+                                goto TERMINATE;
+                            }
+                            if (mipx[DDSIP_bb->firstindex[j]] > bndval)
+                            {
+                                if (DDSIP_param->outlev > 22)
+                                    fprintf (DDSIP_bb->moreoutfile, "## First-stage var. %6d:  ub= %.16g < %.16g = mipx\n", DDSIP_bb->firstindex[j], bndval, mipx[DDSIP_bb->firstindex[j]]);
+                                mipx[DDSIP_bb->firstindex[j]] = bndval;
+                            }
+                        }
+                        // tiny value?
                         if (fabs (mipx[DDSIP_bb->firstindex[j]]) < DDSIP_param->accuracy)
+                        {
+                            if (DDSIP_param->outlev > 22 && mipx[DDSIP_bb->firstindex[j]])
+                                fprintf (DDSIP_bb->moreoutfile, "## First-stage var. %6d:  tiny mipx %.16g -> 0.\n", DDSIP_bb->firstindex[j], mipx[DDSIP_bb->firstindex[j]]);
                             mipx[DDSIP_bb->firstindex[j]] = 0.0;
+                        }
+                    }
                     if (relax != 2)
                     {
                         if (mipstatus == CPXMIP_OPTIMAL)

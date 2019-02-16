@@ -231,7 +231,7 @@ DDSIP_ChgProb (int scen, int multipliers)
                 for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
                         j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
                 {
-                    if (fabs (DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]]) > 1e-18)
+                    //if (fabs (DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]]) > 1.e-18)
                     {
 #ifdef DEBUG
                         if (DDSIP_param->outlev > 50)
@@ -286,7 +286,7 @@ DDSIP_ChgProb (int scen, int multipliers)
                         fprintf (DDSIP_bb->moreoutfile, " scen %d: first-stage variable %d nabeg[%d]= %d, nacnt= %d\n", scen+1, i, scen * DDSIP_bb->firstvar + i, DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i], DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]);
                         for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
                                 j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
-                            if (fabs (DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]]) > 1e-18)
+                            //if (fabs (DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]]) > 1.e-18)
                                 fprintf (DDSIP_bb->moreoutfile, " first-stage var: %d, scen: %d, naind[%d]= %d: koeff: %g, dual=%g, cost add: %g\n", i, scen,j, DDSIP_data->naind[j],  DDSIP_data->naval[j], DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]],  DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen]);
                     }
                     fprintf (DDSIP_bb->moreoutfile, "\n");

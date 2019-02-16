@@ -25,6 +25,7 @@
 
 #define SHIFT
 #define CBHOTSTART
+//#define CHECK_BOUNDS
 
 #include <DDSIP.h>
 #include <DDSIPconst.h>
@@ -1802,7 +1803,6 @@ DDSIP_LowerBound (void)
             }
             else  			// Solution exists
             {
-                double bndval = 0.;
                 DDSIP_bb->solstat[scen] = 1;
                 status = CPXgetobjval (DDSIP_env, DDSIP_lp, &objval);
                 if (status)
@@ -1829,41 +1829,38 @@ DDSIP_LowerBound (void)
                 // Numerical errors?
                 for (j = 0; j < DDSIP_bb->firstvar; j++)
                 {
-                    // outside o bounds?
-                    status = CPXgetlb (DDSIP_env, DDSIP_lp, &bndval, DDSIP_bb->firstindex[j], DDSIP_bb->firstindex[j]);
-                    if (status)
+#ifdef CHECK_BOUNDS
+                    // outside of bounds?
+                    // loose - restrict the first-stage variables inside of original bounds (disregarding branching)
+                    if (DDSIP_bb->lborg[j] - mipx[DDSIP_bb->firstindex[j]] > (DDSIP_bb->lborg[j] + 1.) * 5.e-10)
                     {
-                        fprintf (stderr, "ERROR: Failed to get variable bound\n");
-                        if (DDSIP_param->outlev)
-                            fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get variable bound\n");
-                        goto TERMINATE;
-                    }
-                    if (mipx[DDSIP_bb->firstindex[j]] < bndval)
-                    {
-                        if (DDSIP_param->outlev > 22)
-                            fprintf (DDSIP_bb->moreoutfile, "## First-stage var. %6d:  lb= %.16g > %.16g = mipx\n", DDSIP_bb->firstindex[j], bndval, mipx[DDSIP_bb->firstindex[j]]);
-                        mipx[DDSIP_bb->firstindex[j]] = bndval;
+//#ifdef DEBUG
+                        if (DDSIP_param->outlev > 21)
+                            fprintf (DDSIP_bb->moreoutfile, "   ## First-stage var. %6d (%c):  lb= %.16g > %.16g =mipx, diff= %g\n", DDSIP_bb->firstindex[j], DDSIP_bb->firsttype[j], DDSIP_bb->lborg[j], mipx[DDSIP_bb->firstindex[j]], DDSIP_bb->lborg[j] - mipx[DDSIP_bb->firstindex[j]]);
+//#endif
+                        mipx[DDSIP_bb->firstindex[j]] = DDSIP_bb->lborg[j];
                     }
                     else
                     {
-                        status = CPXgetub (DDSIP_env, DDSIP_lp, &bndval, DDSIP_bb->firstindex[j], DDSIP_bb->firstindex[j]);
-                        if (status)
+                        if (mipx[DDSIP_bb->firstindex[j]] - DDSIP_bb->uborg[j] > (DDSIP_bb->uborg[j] + 1.) * 5.e-10)
                         {
-                            fprintf (stderr, "ERROR: Failed to get variable bound\n");
-                            if (DDSIP_param->outlev)
-                                fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get variable bound\n");
-                            goto TERMINATE;
-                        }
-                        if (mipx[DDSIP_bb->firstindex[j]] > bndval)
-                        {
-                           if (DDSIP_param->outlev > 22)
-                               fprintf (DDSIP_bb->moreoutfile, "## First-stage var. %6d:  ub= %.16g < %.16g = mipx\n", DDSIP_bb->firstindex[j], bndval, mipx[DDSIP_bb->firstindex[j]]);
-                            mipx[DDSIP_bb->firstindex[j]] = bndval;
+//#ifdef DEBUG
+                            if (DDSIP_param->outlev > 21)
+                                fprintf (DDSIP_bb->moreoutfile, "   ## First-stage var. %6d (%c):  ub= %.16g < %.16g =mipx, diff= %g\n", DDSIP_bb->firstindex[j], DDSIP_bb->firsttype[j], DDSIP_bb->uborg[j], mipx[DDSIP_bb->firstindex[j]], mipx[DDSIP_bb->firstindex[j]] - DDSIP_bb->uborg[j]);
+//#endif
+                            mipx[DDSIP_bb->firstindex[j]] = DDSIP_bb->uborg[j];
                         }
                     }
+#endif
                     // tiny value?
-                    if (fabs (mipx[DDSIP_bb->firstindex[j]]) < DDSIP_param->accuracy)
+                    if (fabs (mipx[DDSIP_bb->firstindex[j]]) < 1e-18)
+                    {
+//#ifdef DEBUG
+                        if (DDSIP_param->outlev > 21 && mipx[DDSIP_bb->firstindex[j]])
+                            fprintf (DDSIP_bb->moreoutfile, "   ## First-stage var. %6d (%c):  tiny mipx %.6g -> 0.\n", DDSIP_bb->firstindex[j], DDSIP_bb->firsttype[j], mipx[DDSIP_bb->firstindex[j]]);
+//#endif
                         mipx[DDSIP_bb->firstindex[j]] = 0.0;
+                    }
                 }
                 if (relax != 2)
                 {
@@ -2255,7 +2252,7 @@ DDSIP_LowerBound (void)
         wall_secs /= (0.01 + DDSIP_param->scenarios);
 #ifdef DEBUG
         if (DDSIP_param->outlev > 20)
-            fprintf (DDSIP_bb->moreoutfile, "### max time %g, mean %g, max>4*mean: %d ###\n", cpu_secs, wall_secs, cpu_secs > 4.*wall_secs);
+            fprintf (DDSIP_bb->moreoutfile, " ### max time %g, mean %g, max>4*mean: %d ###\n", cpu_secs, wall_secs, cpu_secs > 4.*wall_secs);
 #endif
         if (cpu_secs > 2.*wall_secs)
         {
@@ -2268,7 +2265,7 @@ DDSIP_LowerBound (void)
                      cpu_secs = time_sort_array[wall_hrs];
 #ifdef DEBUG
                      if (DDSIP_param->outlev > 20)
-                         fprintf (DDSIP_bb->moreoutfile, "### shifting scenario %d with time %g to the end of lb_scen_order ###\n", cpu_mins+1, time_sort_array[wall_hrs]);
+                         fprintf (DDSIP_bb->moreoutfile, " ### shifting scenario %d with time %g to the end of lb_scen_order ###\n", cpu_mins+1, time_sort_array[wall_hrs]);
 #endif
                      for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
                      {
@@ -2358,7 +2355,7 @@ DDSIP_LowerBound (void)
             {
 //////////////////////////////////////////////////////////////////
                if (DDSIP_param->outlev > 21)
-                   fprintf (DDSIP_bb->moreoutfile, "########## setting found_optimal_node: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*factor (%20.15g) = %.8g\n",
+                   fprintf (DDSIP_bb->moreoutfile, " ########## setting found_optimal_node: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*factor (%20.15g) = %.8g\n",
                             DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,
                             DDSIP_bb->bestvalue*factor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*factor);
 //////////////////////////////////////////////////////////////////
@@ -2369,7 +2366,7 @@ DDSIP_LowerBound (void)
             else
             {
                if (DDSIP_param->outlev > 21)
-                   fprintf (DDSIP_bb->moreoutfile, "########## else: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*factor (%20.15g) = %.8g\n",
+                   fprintf (DDSIP_bb->moreoutfile, " ########## else: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*factor (%20.15g) = %.8g\n",
                             DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,
                             DDSIP_bb->bestvalue*factor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*factor);
             }
@@ -3440,7 +3437,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                     if (keepSolution)
                     {
                         if (DDSIP_param->outlev > 21)
-                            fprintf (DDSIP_bb->moreoutfile, "## keeping sol. of scen. %d.\n", iscen + 1);
+                            fprintf (DDSIP_bb->moreoutfile, "   ## keeping sol. of scen. %d.\n", iscen + 1);
                         continue;
                     }
                 }
@@ -3828,7 +3825,6 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 }
                 else			// Solution exists
                 {
-                    double bndval = 0.;
                     DDSIP_bb->solstat[scen] = 1;
                     status = CPXgetobjval (DDSIP_env, DDSIP_lp, &objval);
                     if (status)
@@ -3877,43 +3873,36 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                     // Numerical errors?
                     for (j = 0; j < DDSIP_bb->firstvar; j++)
                     {
-                        // outside o bounds?
-                        status = CPXgetlb (DDSIP_env, DDSIP_lp, &bndval, DDSIP_bb->firstindex[j], DDSIP_bb->firstindex[j]);
-                        if (status)
+#ifdef CHECK_BOUNDS
+                        // outside of bounds?
+                        // loose - restrict the first-stage variables inside of original bounds (disregarding branching)
+                        if (DDSIP_bb->lborg[j] - mipx[DDSIP_bb->firstindex[j]] > (DDSIP_bb->lborg[j] + 1.) * 1.e-9)
                         {
-                            fprintf (stderr, "ERROR: Failed to get variable bound\n");
-                            if (DDSIP_param->outlev)
-                                fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get variable bound\n");
-                            goto TERMINATE;
-                        }
-                        if (mipx[DDSIP_bb->firstindex[j]] < bndval)
-                        {
-                            if (DDSIP_param->outlev > 22)
-                                fprintf (DDSIP_bb->moreoutfile, "## First-stage var. %6d:  lb= %.16g > %.16g = mipx\n", DDSIP_bb->firstindex[j], bndval, mipx[DDSIP_bb->firstindex[j]]);
-                            mipx[DDSIP_bb->firstindex[j]] = bndval;
+//#ifdef DEBUG
+                            if (DDSIP_param->outlev > 21)
+                                fprintf (DDSIP_bb->moreoutfile, "   ## First-stage var. %6d (%c):  lb= %.16g > %.16g =mipx, diff= %g\n", DDSIP_bb->firstindex[j], DDSIP_bb->firsttype[j], DDSIP_bb->lborg[j], mipx[DDSIP_bb->firstindex[j]], DDSIP_bb->lborg[j] - mipx[DDSIP_bb->firstindex[j]]);
+//#endif
+                            mipx[DDSIP_bb->firstindex[j]] = DDSIP_bb->lborg[j];
                         }
                         else
                         {
-                            status = CPXgetub (DDSIP_env, DDSIP_lp, &bndval, DDSIP_bb->firstindex[j], DDSIP_bb->firstindex[j]);
-                            if (status)
+                            if (mipx[DDSIP_bb->firstindex[j]] - DDSIP_bb->uborg[j] > (DDSIP_bb->uborg[j] +1.) * 1.e-9)
                             {
-                                fprintf (stderr, "ERROR: Failed to get variable bound\n");
-                                if (DDSIP_param->outlev)
-                                    fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get variable bound\n");
-                                goto TERMINATE;
-                            }
-                            if (mipx[DDSIP_bb->firstindex[j]] > bndval)
-                            {
-                                if (DDSIP_param->outlev > 22)
-                                    fprintf (DDSIP_bb->moreoutfile, "## First-stage var. %6d:  ub= %.16g < %.16g = mipx\n", DDSIP_bb->firstindex[j], bndval, mipx[DDSIP_bb->firstindex[j]]);
-                                mipx[DDSIP_bb->firstindex[j]] = bndval;
+//#ifdef DEBUG
+                                if (DDSIP_param->outlev > 21)
+                                    fprintf (DDSIP_bb->moreoutfile, "   ## First-stage var. %6d (%c):  ub= %.16g < %.16g =mipx, diff= %g\n", DDSIP_bb->firstindex[j], DDSIP_bb->firsttype[j], DDSIP_bb->uborg[j], mipx[DDSIP_bb->firstindex[j]], mipx[DDSIP_bb->firstindex[j]] - DDSIP_bb->uborg[j]);
+//#endif
+                                mipx[DDSIP_bb->firstindex[j]] = DDSIP_bb->uborg[j];
                             }
                         }
-                        // tiny value?
-                        if (fabs (mipx[DDSIP_bb->firstindex[j]]) < DDSIP_param->accuracy)
+#endif
+                        // tiny value, probably zero?
+                        if (fabs (mipx[DDSIP_bb->firstindex[j]]) < 1e-18)
                         {
-                            if (DDSIP_param->outlev > 22 && mipx[DDSIP_bb->firstindex[j]])
-                                fprintf (DDSIP_bb->moreoutfile, "## First-stage var. %6d:  tiny mipx %.16g -> 0.\n", DDSIP_bb->firstindex[j], mipx[DDSIP_bb->firstindex[j]]);
+//#ifdef DEBUG
+                            if (DDSIP_param->outlev > 21 && mipx[DDSIP_bb->firstindex[j]])
+                                fprintf (DDSIP_bb->moreoutfile, "   ## First-stage var. %6d (%c):  tiny mipx %.6g -> 0.\n", DDSIP_bb->firstindex[j], DDSIP_bb->firsttype[j], mipx[DDSIP_bb->firstindex[j]]);
+//#endif
                             mipx[DDSIP_bb->firstindex[j]] = 0.0;
                         }
                     }

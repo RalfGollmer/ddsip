@@ -336,6 +336,27 @@ ONCE_AGAIN:
         fprintf (DDSIP_bb->moreoutfile, "\n");
         printf ("\n");
     }
+//#ifdef DEBUG
+    if (DDSIP_param->outlev > 20)
+    {
+        double h = 0., h1, hmin = DDSIP_infty, hmax = -DDSIP_infty;
+        int nonzeros = 0;
+        for (scen = 0; scen < DDSIP_param->scenarios - 1; scen++)
+            for (i = 0; i < DDSIP_bb->firstvar; i++)
+            {
+                h1 = fabs(subgradient[scen * DDSIP_bb->firstvar + i]);
+                h += h1*h1;
+                if (h1)
+                {
+                    nonzeros++;
+                    hmin = DDSIP_Dmin (hmin, h1);
+                    hmax = DDSIP_Dmax (hmax, h1);
+                }
+            }
+        h = sqrt (h);
+        fprintf (DDSIP_bb->moreoutfile,"   ## 2-norm of subgradient: %.8g,   #nonzeros: %d, min. abs.: %g, max. abs.: %g\n", h, nonzeros, hmin, hmax);
+    }
+//#endif
     *new_subg = 1;
     if (DDSIP_killsignal)
     {
@@ -1315,13 +1336,13 @@ if(DDSIP_param->outlev)
                                 diff = DDSIP_bb->dualObjVal - max_bound;
                                 if (diff > 0.)
                                 {
-                                    fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g    line between    %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                                    fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  + line between    %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                                                  DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
                                                  DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                 }
                                 else
                                 {
-                                    fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g    line between    %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                                    fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  + line between    %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                                                  DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
                                                  DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                 }
@@ -1372,13 +1393,13 @@ if(DDSIP_param->outlev)
                                     diff = DDSIP_bb->dualObjVal - max_bound;
                                     if (diff > 0.)
                                     {
-                                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g    line extrap.    %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  + line extrap.    %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                                                      DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
                                                      DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                     }
                                     else
                                     {
-                                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g    line extrap.    %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  + line extrap.    %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                                                      DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
                                                      DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                     }
@@ -1474,13 +1495,13 @@ if(DDSIP_param->outlev)
                                     diff = DDSIP_bb->dualObjVal - inherited_bound;
                                     if (diff > 0.)
                                     {
-                                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g    line between    %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  - line between    %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                                                      DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
                                                      DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                     }
                                     else
                                     {
-                                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g    line between    %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  - line between    %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                                                      DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
                                                      DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                     }
@@ -1536,13 +1557,13 @@ if(DDSIP_param->outlev)
                                     diff = DDSIP_bb->dualObjVal - inherited_bound;
                                     if (diff > 0.)
                                     {
-                                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g    line extrap.    %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  - line extrap.    %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                                                      DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
                                                      DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                     }
                                     else
                                     {
-                                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g    line extrap.    %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  - line extrap.    %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                                                      DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
                                                      DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                     }

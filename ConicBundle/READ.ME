@@ -1,0 +1,4 @@
+The file memarray.cxx should be copied to the Matrix subdirectory of the ConicBundle installation.
+It initializes allocated memory in order to avoid uninitialized read messages within ConicBundle.
+
+The file bundle.cxx contains an addition to the one in the CBsources subdirectory of ConicBundle: do not allow more than two reevaluations in center, since with DDSIP the subgradients are from the feasible MIP solutions while the objective is from the best bound in the remaining tree. So in case of a positive relgap it might well happen that many reevaluations are triggered by ConicBundle without reaching any progress.

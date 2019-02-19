@@ -259,15 +259,13 @@ long Memarray::get(register long size,char*& addr)
      long roundupsize=index_size(si);
      ep->size=(roundupsize>size)?roundupsize:size; 
      ep->addr=new char[ep->size];
-     // Original-Code:
-     // if (ep->addr==0) ep->size=0; //allocation not successful
-     // for DDSIP:
+     // Original-Code: if (ep->addr==0) ep->size=0; //allocation not successful
      // inserted initialization of allocated memory
-       if (ep->addr==0)
-           ep->size=0; //allocation not successful
-       else
-           memset(ep->addr,'\x00',ep->size);
-     // end of inserted code for DDSIP
+     if (ep->addr==0)
+         ep->size=0; //allocation not successful
+     else
+         memset(ep->addr,'\x00',ep->size);
+     // end inserted code
      ep->index=si;
      in_use+=ep->size;
 #if (CONICBUNDLE_DEBUG>=70)

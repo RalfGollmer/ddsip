@@ -266,7 +266,7 @@ long Memarray::get(register long size,char*& addr)
        if (ep->addr==0)
            ep->size=0; //allocation not successful
        else
-           memset(ep->addr,0,ep->size);
+           memset(ep->addr,'\x00',ep->size);
      // end of inserted code for DDSIP
      ep->index=si;
      in_use+=ep->size;

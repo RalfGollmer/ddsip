@@ -3,15 +3,15 @@
 OSTYPE		:=	$(shell uname -s | tr '[A-Z]' '[a-z]')
 # Adapt the following lines defining the paths to CPLEX and ConicBundle according to your installation
 #CPLEX    = /opt/ibm/ILOG/CPLEX_Studio1263/cplex
-#CPLEX    = /opt/ibm/ILOG/CPLEX_Studio1271/cplex
-CPLEX    = /opt/ibm/ILOG/CPLEX_Studio128/cplex
+CPLEX    = /opt/ibm/ILOG/CPLEX_Studio1271/cplex
 #
 LINUXVAR = x86-64_linux
 CB       = ../ConicBundle
 
 LIBTYPE   = static_pic
 
-PROCESSOR = -mtune=core2 -march=core2 -mmmx -msse -msse2 -msse3 -mssse3 -m64
+#PROCESSOR = -mtune=corei7 -march=corei7 -mmmx -msse -msse2 -msse3 -mssse3 -m64
+PROCESSOR = -mtune=corei7 -march=corei7 -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -m64
 
 # Directories and target
 HOME      = .
@@ -21,25 +21,25 @@ SRCDIR    = $(HOME)
 OBJDIR    = $(SRCDIR)/$(OSTYPE).obj
 # Install here
 BINARY    = $(HOME)
-TARGET    = $(SRCDIR)/DDSIP_12.8.0_debug
-HELP      = $(SRCDIR)/ddsiphelp_12.8.0_debug
+TARGET    = $(SRCDIR)/DDSIP_x64
+HELP      = $(SRCDIR)/ddsiphelp_x64
 
 # Compiler 
 CC = gcc
-# All warnings, debug info, Optimization level 0
-linux.CFLAGS  =  -std=c99 -O0 -g -fno-strict-aliasing -Wall -Wextra -Wformat=2 -Wmissing-prototypes  $(PROCESSOR) -DCONIC_BUNDLE -DDEBUG -DCPLEX_12_8
+# All warnings, Optimizing level 2
+linux.CFLAGS  =  -std=c99 -O2 -fno-strict-aliasing -Wall -Wextra -Wformat=2 -Wmissing-prototypes  $(PROCESSOR) -DCONIC_BUNDLE -DNEOS
 # Header files are here
 CDIRS   = -I./include -I$(CPLEX)/include/ilcplex -I$(CB)/include
 
 # Linker is g++ because of ConicBundle
 LINKER  = g++
-LIBRARIES = -lcplex -lm -ldl
+LIBRARIES = -lcplex -lm
 # Needed for CPLEX library
 linux.LIB = -lpthread
 linux.CBLIB = -L$(CB)/lib -lcb
 
 # Linker flags
-linux.LDFLAGS= $(PROCESSOR) -O0 -g
+linux.LDFLAGS= $(PROCESSOR) -O2
 
 # Linker directories
 LDDIRS = -L./lib 
@@ -61,7 +61,7 @@ $(OBJDIR)/DDSIPmain.o: DDSIPmain.c ./include/DDSIP.h ./include/DDSIPconst.h ./in
 	@if [ ! -d $(OBJDIR) ]; then mkdir $(OBJDIR); fi
 	$(CC) $($(OSTYPE).CFLAGS) $(CDIRS) -c $< -o $@
 
-$(OBJDIR)/%.o: %.c ./include/DDSIP.h ./include/DDSIPconst.h 
+$(OBJDIR)/%.o: %.c ./include/DDSIP.h ./include/DDSIPconst.h
 	@if [ ! -d $(OBJDIR) ]; then mkdir $(OBJDIR); fi
 	$(CC) $($(OSTYPE).CFLAGS) $(CDIRS) -c $< -o $@
 

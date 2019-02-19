@@ -25,6 +25,7 @@
 
 #include <DDSIP.h>
 #include <DDSIPconst.h>
+#include <DDSIPversion.h>
 #include <sys/resource.h>
 
 #define CBFORALL 0
@@ -52,9 +53,6 @@ const int DDSIP_maxrisk = 7;
 const int DDSIP_bigint      = 10000000;	   // Upper bound on integer parameters
 const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
-
-// Version
-const char DDSIP_version[] = "2019-02-10 (Github v1.3.2) ";
 
 // Output directory
 const char DDSIP_outdir[8] = "sipout";
@@ -122,7 +120,7 @@ main (int argc, char * argv[])
     printf ("################################\n##########  ");
     printf ("D D S I P -- Dual Decomposition In Stochastic Integer Programming");
     printf ("  #########\n");
-    printf ("##########  Version: %-57.57s #########\n", DDSIP_version);
+    printf ("#### %s ####\n", DDSIP_version);
     printf ("For copyright, license agreements, help, comments, requests, ... ");
     printf ("see\n\thttp://www.uni-duisburg-essen.de/~hn215go/ddsip.shtml\n");
     printf ("\thttp://www.www.github.com/RalfGollmer/ddsip\n");
@@ -187,7 +185,7 @@ main (int argc, char * argv[])
     i = system (astring);
 #endif
 
-    fprintf (DDSIP_outfile, "\nDDSIP VERSION %s\n", DDSIP_version);
+    fprintf (DDSIP_outfile, "\nDDSIP  %s\n", DDSIP_version);
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
 
     // Open cplex environment

@@ -770,7 +770,7 @@ int i;
         }
         if (((DDSIP_bb->lborg[i] - DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i])/(fabs(DDSIP_bb->lborg[i])+ 1.)) > 1.e-9)
         {
-            // in the root node the lower bound for the additional variable for worst case costs was updated
+            // in the root node the lower bound for the additional variable for worst case costs was updated - emit no warning
             if (DDSIP_bb->curnode || !(i == DDSIP_data->firstvar && (abs(DDSIP_param->riskmod) != 4 || abs(DDSIP_param->riskmod) != 5)))
             {
                 printf ("   low suggestion for variable %d: sug=%16.8g lb=%16.8g, difference=%lg\n",i,

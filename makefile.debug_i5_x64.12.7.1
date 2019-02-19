@@ -2,17 +2,16 @@
 # Set OS type
 OSTYPE		:=	$(shell uname -s | tr '[A-Z]' '[a-z]')
 # Adapt the following lines defining the paths to CPLEX and ConicBundle according to your installation
-# for CPLEX 12.6.3
-#CPLEX    = /opt/ibm/ILOG/CPLEX_Enterprise_Server1263/CPLEX_Studio/cplex
 #CPLEX    = /opt/ibm/ILOG/CPLEX_Studio1263/cplex
 CPLEX    = /opt/ibm/ILOG/CPLEX_Studio1271/cplex
+#
 LINUXVAR = x86-64_linux
 CB       = ../ConicBundle
 
 LIBTYPE   = static_pic
 
-PROCESSOR = -mtune=corei7 -march=corei7 -mmmx -msse -msse2 -msse3 -mssse3 -m64
-#PROCESSOR = -mtune=core-avx-i -march=core-avx-i -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx -m64
+#PROCESSOR = -mtune=corei7 -march=corei7 -mmmx -msse -msse2 -msse3 -mssse3 -m64
+PROCESSOR = -mtune=corei7 -march=corei7 -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -m64
 
 # Directories and target
 HOME      = .
@@ -22,13 +21,13 @@ SRCDIR    = $(HOME)
 OBJDIR    = $(SRCDIR)/$(OSTYPE).obj
 # Install here
 BINARY    = $(HOME)
-TARGET    = $(SRCDIR)/DDSIP_x64_debug
-HELP      = $(SRCDIR)/ddsiphelp_x64_debug
+TARGET    = $(SRCDIR)/DDSIP_12.7.1_debug
+HELP      = $(SRCDIR)/ddsiphelp_12.7.1_debug
 
 # Compiler 
 CC = gcc
 # All warnings, debug info, Optimization level 0
-linux.CFLAGS  =  -std=c99 -O0 -g -fno-strict-aliasing -Wall -Wextra -Wformat=2 -Wmissing-prototypes  $(PROCESSOR) -DCONIC_BUNDLE
+linux.CFLAGS  =  -std=c99 -O0 -g -fno-strict-aliasing -Wall -Wextra -Wformat=2 -Wmissing-prototypes  $(PROCESSOR) -DCONIC_BUNDLE -DDEBUG
 # Header files are here
 CDIRS   = -I./include -I$(CPLEX)/include/ilcplex -I$(CB)/include
 
@@ -56,11 +55,19 @@ OBJSWITHDIR = $(addprefix $(OBJDIR)/,$(OBJECTS))
 
 #Rules
 #Compile
-all: $(TARGET)
+all: VERSION $(TARGET)
 
-$(OBJDIR)/%.o: %.c ./include/DDSIP.h ./include/DDSIPconst.h 
+$(OBJDIR)/DDSIPmain.o: DDSIPmain.c ./include/DDSIP.h ./include/DDSIPconst.h ./include/DDSIPversion.h
 	@if [ ! -d $(OBJDIR) ]; then mkdir $(OBJDIR); fi
 	$(CC) $($(OSTYPE).CFLAGS) $(CDIRS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.c ./include/DDSIP.h ./include/DDSIPconst.h
+	@if [ ! -d $(OBJDIR) ]; then mkdir $(OBJDIR); fi
+	$(CC) $($(OSTYPE).CFLAGS) $(CDIRS) -c $< -o $@
+
+#Version
+VERSION:
+	echo "   char DDSIP_version[] = \"git hash   `git rev-parse HEAD`,   build date `date -I`  \";" > include/DDSIPversion.h 
 
 #Link
 $(TARGET): $(OBJSWITHDIR)

@@ -1180,7 +1180,8 @@ while (tmp1_bestdual)
                         {
                             // cutoff or sufficient increase reached
                             old_obj = obj;
-                            cnt = 0;
+                            if (DDSIP_Dmax (obj, max_bound) >= DDSIP_bb->bestvalue)
+                                cnt = 0;
                             break;
                         }
                         if (obj < max_bound)

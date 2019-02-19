@@ -1831,8 +1831,8 @@ DDSIP_LowerBound (void)
                 {
 #ifdef CHECK_BOUNDS
                     // outside of bounds?
-                    // loose - restrict the first-stage variables inside of original bounds (not regarding tighter bounds due to branching)
-                    if (DDSIP_bb->lborg[j] - mipx[DDSIP_bb->firstindex[j]] > (DDSIP_bb->lborg[j] + 1.) * 1.25e-10)
+                    // loose - restrict the first-stage variables inside of original bounds (disregarding branching)
+                    if (DDSIP_bb->lborg[j] - mipx[DDSIP_bb->firstindex[j]] > (DDSIP_bb->lborg[j] + 1.) * 5.e-10)
                     {
 //#ifdef DEBUG
                         if (DDSIP_param->outlev > 21)
@@ -1842,7 +1842,7 @@ DDSIP_LowerBound (void)
                     }
                     else
                     {
-                        if (mipx[DDSIP_bb->firstindex[j]] - DDSIP_bb->uborg[j] > (DDSIP_bb->uborg[j] + 1.) * 1.25e-10)
+                        if (mipx[DDSIP_bb->firstindex[j]] - DDSIP_bb->uborg[j] > (DDSIP_bb->uborg[j] + 1.) * 5.e-10)
                         {
 //#ifdef DEBUG
                             if (DDSIP_param->outlev > 21)
@@ -3875,8 +3875,8 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                     {
 #ifdef CHECK_BOUNDS
                         // outside of bounds?
-                        // loose - restrict the first-stage variables inside of original bounds (not regarding tighter bounds due to branching)
-                        if (DDSIP_bb->lborg[j] - mipx[DDSIP_bb->firstindex[j]] > (DDSIP_bb->lborg[j] + 1.) * 1.25e-10)
+                        // loose - restrict the first-stage variables inside of original bounds (disregarding branching)
+                        if (DDSIP_bb->lborg[j] - mipx[DDSIP_bb->firstindex[j]] > (DDSIP_bb->lborg[j] + 1.) * 1.e-9)
                         {
 //#ifdef DEBUG
                             if (DDSIP_param->outlev > 21)
@@ -3886,7 +3886,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                         }
                         else
                         {
-                            if (mipx[DDSIP_bb->firstindex[j]] - DDSIP_bb->uborg[j] > (DDSIP_bb->uborg[j] +1.) * 1.25e-10)
+                            if (mipx[DDSIP_bb->firstindex[j]] - DDSIP_bb->uborg[j] > (DDSIP_bb->uborg[j] +1.) * 1.e-9)
                             {
 //#ifdef DEBUG
                                 if (DDSIP_param->outlev > 21)

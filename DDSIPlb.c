@@ -3399,7 +3399,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         }
     }
     // first take care of remains from former calls
-    if (!DDSIP_param->cb_inherit || DDSIP_bb->dualitcnt || DDSIP_param->scalarization)
+    if (!DDSIP_param->cb_inherit || DDSIP_bb->dualitcnt || DDSIP_param->scalarization || DDSIP_bb->skip == 2)
     {
         int keepSolution;
         double lhs;
@@ -4424,6 +4424,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         if (DDSIP_param->outlev)
            fprintf (DDSIP_bb->moreoutfile, "#### Bound reached %20.14g > bestvalue (%20.14g), diff= %g.\n", tmpbestbound, DDSIP_bb->bestvalue, tmpbestbound - DDSIP_bb->bestvalue);
         DDSIP_bb->skip = 2;
+        DDSIP_bb->keepSols = 1;
         goto TERMINATE;
     }
     // Evaluate an upper bound if we found a solution for at least one scenario

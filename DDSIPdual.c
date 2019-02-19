@@ -336,7 +336,7 @@ ONCE_AGAIN:
         fprintf (DDSIP_bb->moreoutfile, "\n");
         printf ("\n");
     }
-//#ifdef DEBUG
+#ifdef DEBUG
     if (DDSIP_param->outlev > 20)
     {
         double h = 0., h1, hmin = DDSIP_infty, hmax = -DDSIP_infty;
@@ -356,7 +356,7 @@ ONCE_AGAIN:
         h = sqrt (h);
         fprintf (DDSIP_bb->moreoutfile,"   ## 2-norm of subgradient: %.8g,   #nonzeros: %d, min. abs.: %g, max. abs.: %g\n", h, nonzeros, hmin, hmax);
     }
-//#endif
+#endif
     *new_subg = 1;
     if (DDSIP_killsignal)
     {

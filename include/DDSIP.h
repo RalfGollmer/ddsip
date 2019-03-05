@@ -299,6 +299,8 @@ extern "C" {
         int cb_test_line;
         // use short cb until depth
         int cb_depth;
+        // min. number of descent iters for depth > 1, <= cb_depth
+        int cb_depth_iters;
     } para_t;
 
     typedef struct

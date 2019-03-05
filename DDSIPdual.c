@@ -1749,7 +1749,7 @@ if(DDSIP_param->outlev)
             current_itlim = DDSIP_param->cbrootitlim;
         else
             current_itlim = (DDSIP_bb->curnode > 2 && DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->cb_depth)?
-                            DDSIP_Imax((DDSIP_param->cbitlim+1)/5, 3):(DDSIP_param->cbitlim+1)/2;
+                            DDSIP_Imax((DDSIP_param->cbitlim+1)/5, DDSIP_param->cb_depth_iters):(DDSIP_param->cbitlim+1)/2;
 //                            DDSIP_Imax((DDSIP_param->cbitlim+1)/4, 5):(DDSIP_param->cbitlim+1)/2;
         while ((!cb_termination_code (p)) && DDSIP_bb->violations && DDSIP_bb->skip != 2
                 && (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time) < DDSIP_param->timelim)

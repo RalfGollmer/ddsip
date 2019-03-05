@@ -665,12 +665,12 @@ int BundleSolver::inner_loop(BundleProblem& prob, int maxsteps)
     Real lin_approx=oldval-newlb-ip(y-newy,new_subg);
 
 //////////////////////////////////////////
-//// added by R. Gollmer in order to avoid too many reevaluations (MIP solutions mostly are not that exact)
-    if (recomp < 3)
-    {
+      // original line: if (lin_approx<-1e-10*(fabs(oldval)+1.))  //minorant cuts above old function value! recompute!
+    if (lin_approx<-1e-6*(fabs(oldval)+1.)){  //minorant cuts above old function value! recompute!
 //////////////////////////////////////////
-      // original line: if (lin_approx<-1e-10*(fabs(oldval)+1.)){  //minorant cuts above old function value! recompute!
-      if (lin_approx<-1e-6*(fabs(oldval)+1.)){  //minorant cuts above old function value! recompute!
+//// added by R. Gollmer in order to avoid too many reevaluations (MIP solutions mostly are not that exact)
+      if (recomp < 3)
+      {
         if (out) {
           (*out)<<"*** WARNING: Bundle::inner_loop(): new subgradient yields greater objective value ="<<oldval-lin_approx<<" in center (oldval="<<oldval<<"), difference "<<-lin_approx<<"\n";
           (*out)<<"***          maybe the old evaluation in the center was not computed to sufficient precision\n";
@@ -699,6 +699,8 @@ int BundleSolver::inner_loop(BundleProblem& prob, int maxsteps)
           if (out) (*out)<<"***          reevaluation in center yields no better value ("<<try_ubval<<")"<<std::endl;
         }
       }
+      else if (out)
+        (*out)<<"*** WARNING: Bundle::inner_loop(): new subgradient yields greater objective value ="<<oldval-lin_approx<<" in center (oldval="<<oldval<<"), difference "<<-lin_approx<<", recomp limit reached\n";
 //////////////////////////////////////////
     }
 //////////////////////////////////////////

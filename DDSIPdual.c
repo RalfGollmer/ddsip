@@ -2264,6 +2264,7 @@ NEXT_TRY:
                         cycleCnt = 0;
                         next_weight = cb_get_last_weight (p);
                         cur_iters = DDSIP_bb->dualitcnt - DDSIP_bb->last_dualitcnt;
+                        cb_get_center (p,DDSIP_node[DDSIP_bb->curnode]->dual);
 ///////////////
                         // if the center point is not local_bestdual (may occur when maxsteps reached) - set center point to local_bestdual
                         if (cur_iters > 3 && DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2] &&

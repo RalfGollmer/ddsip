@@ -670,7 +670,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         {
                             if (mipstatus == CPXMIP_OPTIMAL)
                                 fprintf (DDSIP_bb->moreoutfile,
-                                     "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, opt)",
+                                     "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%     )",
                                      iscen + 1, scen + 1, objval, bobjval, gap);
                             else if (mipstatus == CPXMIP_OPTIMAL_TOL)
                                 fprintf (DDSIP_bb->moreoutfile,
@@ -1716,7 +1716,7 @@ if (DDSIP_param->outlev > 21)
                 DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
                 if (mipstatus == CPXMIP_OPTIMAL)
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, opt)",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%     )",
                          iscen + 1, scen + 1, objval, bobjval, gap);
                 else if (mipstatus == CPXMIP_OPTIMAL_TOL)
                     fprintf (DDSIP_bb->moreoutfile,

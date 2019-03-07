@@ -1958,7 +1958,7 @@ DDSIP_LowerBound (void)
                          "\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d",
                          wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
                 if (nodes_2nd >= 0)
-                    fprintf (DDSIP_bb->moreoutfile, "+%d)", nodes_2nd - nodes_1st); 
+                    fprintf (DDSIP_bb->moreoutfile, " +%d)", nodes_2nd - nodes_1st); 
                 else
                     fprintf (DDSIP_bb->moreoutfile, ")"); 
                 if (DDSIP_param->outlev > 8)
@@ -3150,7 +3150,7 @@ if (DDSIP_param->outlev > 21)
                                                  "\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d",
                                                  wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
                                         if (nodes_2nd >= 0)
-                                            fprintf (DDSIP_bb->moreoutfile, "+%d)", nodes_2nd - nodes_1st); 
+                                            fprintf (DDSIP_bb->moreoutfile, " +%d)", nodes_2nd - nodes_1st); 
                                         else
                                             fprintf (DDSIP_bb->moreoutfile, ")"); 
                                         if (DDSIP_param->outlev>8)
@@ -4055,7 +4055,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                          "\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d",
                          wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
                 if (nodes_2nd >= 0)
-                    fprintf (DDSIP_bb->moreoutfile, "+%d)", nodes_2nd - nodes_1st); 
+                    fprintf (DDSIP_bb->moreoutfile, " +%d)", nodes_2nd - nodes_1st); 
                 else
                     fprintf (DDSIP_bb->moreoutfile, ")"); 
                 if (DDSIP_param->outlev > 8)

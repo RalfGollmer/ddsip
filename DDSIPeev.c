@@ -30,7 +30,7 @@
 int
 DDSIP_ExpValProb (void)
 {
-    int status, j, mipstatus;
+    int status, j, mipstatus, nodes_1st = -1;
     int wall_hrs, wall_mins,cpu_hrs, cpu_mins;
     double objval, bobjval, time_start, time_end, wall_secs, cpu_secs, gap;
 
@@ -140,15 +140,32 @@ DDSIP_ExpValProb (void)
             }
         }
         gap = 100.0*(objval-bobjval)/(fabs(objval)+1e-4);
+        nodes_1st = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
         time_end = DDSIP_GetCpuTime ();
         time_start = time_end-time_start;
         time (&DDSIP_bb->cur_time);
         DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
         DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
-        fprintf (DDSIP_bb->moreoutfile,
-                 "    exp. val. prob: Best=%-18.14g\tBound=%-18.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)",
+        if (mipstatus == 101)
+            fprintf (DDSIP_bb->moreoutfile,
+                 "    exp. val. prob:  Best=%-18.14g\tBound=%-18.14g\t(%9.4g%%, opt)\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d)",
+                 objval, bobjval, gap,
+                 wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
+        else if (mipstatus == 102)
+            fprintf (DDSIP_bb->moreoutfile,
+                 "    exp. val. prob:  Best=%-18.14g\tBound=%-18.14g\t(%9.4g%%, tol)\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d)",
+                 objval, bobjval, gap,
+                 wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
+        else if (mipstatus == 107)
+            fprintf (DDSIP_bb->moreoutfile,
+                 "    exp. val. prob:  Best=%-18.14g\tBound=%-18.14g\t(%9.4g%%, tim)\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d)",
+                 objval, bobjval, gap,
+                 wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
+        else
+            fprintf (DDSIP_bb->moreoutfile,
+                 "    exp. val. prob:  Best=%-18.14g\tBound=%-18.14g\t(%9.4g%%, %3d)\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d)",
                  objval, bobjval, gap, mipstatus,
-                 wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
+                 wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
     }
     // Returns sometimes rubbish, don't know why..
     if (!DDSIP_bb->adv_sol)

@@ -346,6 +346,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     int i, j, k, Bi, Bs, fs, prematureStop = 0;
     int *index;
     int wall_hrs, wall_mins,cpu_hrs, cpu_mins;
+    int nodes_1st, nodes_2nd;
 
     double tmpbestvalue = 0., tmpfeasbound = 0., rest_bound, tmprisk = 0., tmprisk4 = -DDSIP_infty, tmpprob = 0.;
     double security_factor = 1.0-2.e-14, bobjval, objval, time_start, time_end, time_lap, wall_secs, cpu_secs, gap, meanGap;
@@ -512,11 +513,9 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
             fprintf (stderr, "ERROR: Failed to change problem \n");
             goto TERMINATE;
         }
+        nodes_1st = nodes_2nd = -1;
         if (!feasCheckOnly)
         {
-            // Calculate Tx+h
-            //      if (DDSIP_param->outlev)  status = RecFun(param,bb,Tx);
-    
             if (DDSIP_param->cpxubscr)
             {
                 printf ("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n");
@@ -555,6 +554,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                 goto TERMINATE;
             }
             mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
+            nodes_1st = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
             if (!DDSIP_Infeasible (mipstatus))
             {
                 if (CPXgetmiprelgap(DDSIP_env, DDSIP_lp, &mipgap))
@@ -567,10 +567,9 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
 #ifdef DEBUG
                 if (DDSIP_param->cpxubscr ||  DDSIP_param->outlev > 11)
                 {
-                    j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
-                    printf ("      UB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
+                    printf ("      UB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
                     if (DDSIP_param->outlev)
-                        fprintf (DDSIP_bb->moreoutfile,"      UB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_lap-time_start);
+                        fprintf (DDSIP_bb->moreoutfile,"      UB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
                 }
 #endif
                 if (DDSIP_param->watchkappa)
@@ -670,9 +669,13 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         if (DDSIP_param->outlev)
                         {
                             fprintf (DDSIP_bb->moreoutfile,
-                                     "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
+                                     "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, Stat.%3.0d)\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d",
                                      iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
-                                     wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
+                                     wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
+                            if (nodes_2nd >= 0)
+                                fprintf (DDSIP_bb->moreoutfile, "/%4d)\n", nodes_2nd); 
+                            else
+                                fprintf (DDSIP_bb->moreoutfile, ")\n"); 
                             fprintf (DDSIP_bb->moreoutfile,
                                      "Lower bound for suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk +rest_bound);
                         }
@@ -1029,6 +1032,7 @@ if(DDSIP_param->outlev)
 #endif
                         status = CPXmipopt (DDSIP_env, DDSIP_lp);
                         mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
+                        nodes_2nd = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
 #ifdef DEBUG
                         if (DDSIP_param->cpxubscr || DDSIP_param->outlev > 11)
                         {
@@ -1040,11 +1044,10 @@ if(DDSIP_param->outlev)
                             }
                             else
                             {
-                                j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
                                 time_end = DDSIP_GetCpuTime ();
-                                printf ("      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
+                                printf ("      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
                                 if (DDSIP_param->outlev)
-                                    fprintf (DDSIP_bb->moreoutfile,"      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,j,time_end-time_lap);
+                                    fprintf (DDSIP_bb->moreoutfile,"      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
                             }
                         }
 #endif
@@ -1697,9 +1700,13 @@ if (DDSIP_param->outlev > 21)
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                 DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
                 fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, Stat.%3.0d)\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d",
                          iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
-                         wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
+                         wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
+                if (nodes_2nd >= 0)
+                    fprintf (DDSIP_bb->moreoutfile, "/%4d)\n", nodes_2nd); 
+                else
+                    fprintf (DDSIP_bb->moreoutfile, ")\n"); 
                 if (DDSIP_param->outlev>8)
                 {
                     printf ("%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",

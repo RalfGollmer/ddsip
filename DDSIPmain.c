@@ -116,11 +116,9 @@ main (int argc, char * argv[])
     //
 
     // Welcome
-    printf ("########################################################");
-    printf ("################################\n##########  ");
-    printf ("D D S I P -- Dual Decomposition In Stochastic Integer Programming");
-    printf ("  #########\n");
-    printf ("#### %s ####\n", DDSIP_version);
+    printf ("#######################################################################################\n");
+    printf ("#########  D D S I P -- Dual Decomposition In Stochastic Integer Programming  #########\n");
+    printf ("#########  %-66s #########\n", DDSIP_version);
     printf ("For copyright, license agreements, help, comments, requests, ... ");
     printf ("see\n\thttp://www.uni-duisburg-essen.de/~hn215go/ddsip.shtml\n");
     printf ("\thttp://www.www.github.com/RalfGollmer/ddsip\n");

@@ -668,15 +668,15 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         meanGap += DDSIP_data->prob[scen] * gap;
                         if (DDSIP_param->outlev)
                         {
-                            if (mipstatus == 101)
+                            if (mipstatus == CPXMIP_OPTIMAL)
                                 fprintf (DDSIP_bb->moreoutfile,
                                      "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, opt)",
                                      iscen + 1, scen + 1, objval, bobjval, gap);
-                            else if (mipstatus == 102)
+                            else if (mipstatus == CPXMIP_OPTIMAL_TOL)
                                 fprintf (DDSIP_bb->moreoutfile,
                                      "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tol)",
                                      iscen + 1, scen + 1, objval, bobjval, gap);
-                            else if (mipstatus == 107)
+                            else if (mipstatus == CPXMIP_TIME_LIM_FEAS)
                                 fprintf (DDSIP_bb->moreoutfile,
                                      "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tim)",
                                      iscen + 1, scen + 1, objval, bobjval, gap);
@@ -1697,7 +1697,7 @@ if (DDSIP_param->outlev > 21)
             for (j = 0; j < DDSIP_bb->secvar; j++)
                 DDSIP_bb->cur_secstage[scen][j] = mipx[DDSIP_bb->secondindex[j]];
 
-            if ( mipstatus == 101 && bobjval > DDSIP_infty )
+            if ( mipstatus == CPXMIP_OPTIMAL && bobjval > DDSIP_infty )
                 bobjval=objval;
 
             subsol[scen] = objval;
@@ -1714,15 +1714,15 @@ if (DDSIP_param->outlev > 21)
                 time (&DDSIP_bb->cur_time);
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                 DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
-                if (mipstatus == 101)
+                if (mipstatus == CPXMIP_OPTIMAL)
                     fprintf (DDSIP_bb->moreoutfile,
                          "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, opt)",
                          iscen + 1, scen + 1, objval, bobjval, gap);
-                else if (mipstatus == 102)
+                else if (mipstatus == CPXMIP_OPTIMAL_TOL)
                     fprintf (DDSIP_bb->moreoutfile,
                          "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tol)",
                          iscen + 1, scen + 1, objval, bobjval, gap);
-                else if (mipstatus == 107)
+                else if (mipstatus == CPXMIP_TIME_LIM_FEAS)
                     fprintf (DDSIP_bb->moreoutfile,
                          "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tim)",
                          iscen + 1, scen + 1, objval, bobjval, gap);

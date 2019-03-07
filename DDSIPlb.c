@@ -1376,15 +1376,15 @@ DDSIP_LowerBound (void)
                 DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
                 time (&DDSIP_bb->cur_time);
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
-                if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == 101)
+                if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_OPTIMAL)
                     fprintf (DDSIP_bb->moreoutfile,
                          "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, opt)",
                          iscen + 1 ,scen + 1, (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen], (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen], gap);
-                else if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == 102)
+                else if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_OPTIMAL_TOL)
                     fprintf (DDSIP_bb->moreoutfile,
                          "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tol)",
                          iscen + 1 ,scen + 1, (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen], (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen], gap);
-                else if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == 107)
+                else if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_TIME_LIM_FEAS)
                     fprintf (DDSIP_bb->moreoutfile,
                          "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tim)",
                          iscen + 1 ,scen + 1, (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen], (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen], gap);
@@ -1444,7 +1444,7 @@ DDSIP_LowerBound (void)
             }
             //****************************************************************************
             DDSIP_bb->solstat[scen] = 1;
-            if (!((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == 101))
+            if (!((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_OPTIMAL))
                 allopt = 0;
             // Temporary bound is infinity if a scenario problem is infeasible
             if (DDSIP_Equal ((DDSIP_node[DDSIP_bb->curnode]->subbound)[scen], DDSIP_infty))
@@ -1913,7 +1913,7 @@ DDSIP_LowerBound (void)
             }				// end for else
 
             // If all scenario problems were solved to optimality ....
-            if (!(mipstatus == 101))
+            if (!(mipstatus == CPXMIP_OPTIMAL))
             {
                 allopt = 0;
                 // If the tree was exhausted bobjval is huge
@@ -1938,15 +1938,15 @@ DDSIP_LowerBound (void)
                 time (&DDSIP_bb->cur_time);
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                 DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
-                if (mipstatus == 101)
+                if (mipstatus == CPXMIP_OPTIMAL)
                     fprintf (DDSIP_bb->moreoutfile,
                          "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, opt)",
                          iscen + 1, scen + 1, objval, bobjval, gap);
-                else if (mipstatus == 102)
+                else if (mipstatus == CPXMIP_OPTIMAL_TOL)
                     fprintf (DDSIP_bb->moreoutfile,
                          "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tol)",
                          iscen + 1, scen + 1, objval, bobjval, gap);
-                else if (mipstatus == 107)
+                else if (mipstatus == CPXMIP_TIME_LIM_FEAS)
                     fprintf (DDSIP_bb->moreoutfile,
                          "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tim)",
                          iscen + 1, scen + 1, objval, bobjval, gap);
@@ -3112,7 +3112,7 @@ if (DDSIP_param->outlev > 21)
 
                                     (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen] = objval;
                                     // If all scenario problems were solved to optimality ....
-                                    if (!(mipstatus == 101))
+                                    if (!(mipstatus == CPXMIP_OPTIMAL))
                                     {
                                         allopt = 0;
                                         // If the tree was exhausted bobjval is huge
@@ -3130,15 +3130,15 @@ if (DDSIP_param->outlev > 21)
                                         time_start = time_end-time_start;
                                         DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                                         DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
-                                        if (mipstatus == 101)
+                                        if (mipstatus == CPXMIP_OPTIMAL)
                                             fprintf (DDSIP_bb->moreoutfile,
                                                  "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, opt)",
                                                  iscen + 1, scen + 1, objval, bobjval, gap);
-                                        else if (mipstatus == 102)
+                                        else if (mipstatus == CPXMIP_OPTIMAL_TOL)
                                             fprintf (DDSIP_bb->moreoutfile,
                                                  "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tol)",
                                                  iscen + 1, scen + 1, objval, bobjval, gap);
-                                        else if (mipstatus == 107)
+                                        else if (mipstatus == CPXMIP_TIME_LIM_FEAS)
                                             fprintf (DDSIP_bb->moreoutfile,
                                                  "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tim)",
                                                  iscen + 1, scen + 1, objval, bobjval, gap);
@@ -4011,7 +4011,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
 
             (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen] = objval;
             // If all scenario problems were solved to optimality ....
-            if (!(mipstatus == 101))
+            if (!(mipstatus == CPXMIP_OPTIMAL))
             {
                 // If the tree was exhausted bobjval is huge
                 if (fabs (bobjval) > DDSIP_infty)
@@ -4035,15 +4035,15 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 time (&DDSIP_bb->cur_time);
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                 DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
-                if (mipstatus == 101)
+                if (mipstatus == CPXMIP_OPTIMAL)
                     fprintf (DDSIP_bb->moreoutfile,
                          "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, opt)",
                          iscen + 1, scen + 1, objval, bobjval, gap);
-                else if (mipstatus == 102)
+                else if (mipstatus == CPXMIP_OPTIMAL_TOL)
                     fprintf (DDSIP_bb->moreoutfile,
                          "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tol)",
                          iscen + 1, scen + 1, objval, bobjval, gap);
-                else if (mipstatus == 107)
+                else if (mipstatus == CPXMIP_TIME_LIM_FEAS)
                     fprintf (DDSIP_bb->moreoutfile,
                          "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tim)",
                          iscen + 1, scen + 1, objval, bobjval, gap);
@@ -4213,15 +4213,15 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 time_end = DDSIP_GetCpuTime ();
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                 DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
-                if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == 101)
+                if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_OPTIMAL)
                     fprintf (DDSIP_bb->moreoutfile,
                          "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, opt)",
                          iscen + 1 ,scen + 1, (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen], (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen], gap);
-                else if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == 102)
+                else if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_OPTIMAL_TOL)
                     fprintf (DDSIP_bb->moreoutfile,
                          "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tol)",
                          iscen + 1 ,scen + 1, (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen], (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen], gap);
-                else if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == 107)
+                else if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_TIME_LIM_FEAS)
                     fprintf (DDSIP_bb->moreoutfile,
                          "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tim)",
                          iscen + 1 ,scen + 1, (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen], (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen], gap);

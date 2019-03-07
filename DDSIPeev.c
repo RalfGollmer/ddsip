@@ -146,17 +146,17 @@ DDSIP_ExpValProb (void)
         time (&DDSIP_bb->cur_time);
         DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
         DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
-        if (mipstatus == 101)
+        if (mipstatus == CPXMIP_OPTIMAL)
             fprintf (DDSIP_bb->moreoutfile,
                  "    exp. val. prob:  Best=%-18.14g\tBound=%-18.14g\t(%9.4g%%, opt)\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d)",
                  objval, bobjval, gap,
                  wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
-        else if (mipstatus == 102)
+        else if (mipstatus == CPXMIP_OPTIMAL_TOL)
             fprintf (DDSIP_bb->moreoutfile,
                  "    exp. val. prob:  Best=%-18.14g\tBound=%-18.14g\t(%9.4g%%, tol)\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d)",
                  objval, bobjval, gap,
                  wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
-        else if (mipstatus == 107)
+        else if (mipstatus == CPXMIP_TIME_LIM_FEAS)
             fprintf (DDSIP_bb->moreoutfile,
                  "    exp. val. prob:  Best=%-18.14g\tBound=%-18.14g\t(%9.4g%%, tim)\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d)",
                  objval, bobjval, gap,

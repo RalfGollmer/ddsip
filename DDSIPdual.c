@@ -2284,6 +2284,7 @@ NEXT_TRY:
                                 DDSIP_Free ((void **) &(center_point));
                                 return status;
                             }
+                            obj = DDSIP_bb->dualObjVal;
                             cpu_hrs++;
                         }
                         start_weight = next_weight - last_weight;

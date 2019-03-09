@@ -66,7 +66,7 @@ $(OBJDIR)/%.o: %.c ./include/DDSIP.h ./include/DDSIPconst.h
 
 #Version
 VERSION:
-	echo "   char DDSIP_version[] = \"git hash   `git describe --long --dirty --abbrev=10 --tags`,   build `date +"%Y-%m-%d %H:%M"`\";" > include/DDSIPversion.h 
+	echo "   char DDSIP_version[] = \"git hash   `git describe --long --dirty="-mod" --abbrev=10 --tags`,   build `date +"%Y-%m-%d %H:%M"`\";" > include/DDSIPversion.h 
 
 #Link
 $(TARGET): $(OBJSWITHDIR)

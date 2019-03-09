@@ -1378,27 +1378,27 @@ DDSIP_LowerBound (void)
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                 if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_OPTIMAL)
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%     )",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%)     ",
                          iscen + 1 ,scen + 1, (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen], (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen], gap);
                 else if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_OPTIMAL_TOL)
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tol)",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) tol.",
                          iscen + 1 ,scen + 1, (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen], (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen], gap);
                 else if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_TIME_LIM_FEAS)
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tim)",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) TIME",
                          iscen + 1 ,scen + 1, (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen], (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen], gap);
                 else
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, %3.0d)",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) %-4.0d ",
                          iscen + 1 ,scen + 1, (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen], (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen], gap,
                          (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen]);
                 fprintf (DDSIP_bb->moreoutfile,
-                         "\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f  > node %3g",
+                         "\t %3dh %02d:%02.0f / %3dh %02d:%05.2f  > node %3g",
                          wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][DDSIP_bb->firstvar + 2]);
                 if (DDSIP_param->outlev > 8)
                 {
-                    printf ("%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStat.%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f  > node %3g",
+                    printf ("%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%)\tStat.%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f  > node %3g",
                             iscen + 1 ,scen + 1, (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen], (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen],
                             gap, (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen], wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs,
                             (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][DDSIP_bb->firstvar + 2]);
@@ -1420,9 +1420,9 @@ DDSIP_LowerBound (void)
                 if (i_scen < scen)
                 {
                     //first_sol[DDSIP_bb->firstvar]   equals the number of identical first stage scenario solutions
-                    fprintf (DDSIP_bb->moreoutfile," ->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                    fprintf (DDSIP_bb->moreoutfile," \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                     if (DDSIP_param->outlev > 8)
-                        printf (" ->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                        printf (" \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                 }
                 else if (DDSIP_param->outlev >= DDSIP_first_stage_outlev)
                 {
@@ -1697,7 +1697,8 @@ DDSIP_LowerBound (void)
                         }
                         else
                         {
-                            mipstatus = CPXMIP_OPTIMAL_TOL;
+                            if (mipstatus == CPXMIP_TIME_LIM_FEAS)
+                                mipstatus = CPXMIP_OPTIMAL_TOL;
                         }
                         // reset CPLEX parameters to lb
                         status = DDSIP_SetCpxPara (DDSIP_param->cpxnolb, DDSIP_param->cpxlbisdbl, DDSIP_param->cpxlbwhich, DDSIP_param->cpxlbwhat);
@@ -1753,11 +1754,11 @@ DDSIP_LowerBound (void)
                     time (&DDSIP_bb->cur_time);
                     DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                     fprintf (DDSIP_bb->moreoutfile,
-                             "%4d Scenario %4.0d:                          \tinfeasible               \t             \tStat.%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f\n",
+                             "%4d Scenario %4.0d:                          \tinfeasible               \t             \tStat.%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f\n",
                              iscen + 1, scen + 1, mipstatus, wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs);
                     if (DDSIP_param->outlev > 8)
                     {
-                        printf ("%4d Scenario %4.0d:                          \tinfeasible               \t             \tStat.%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f\n",
+                        printf ("%4d Scenario %4.0d:                          \tinfeasible               \t             \tStat.%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f\n",
                                 iscen + 1, scen + 1, mipstatus, wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs);
                         if (DDSIP_param->cpxscr)
                             printf ("\n");
@@ -1784,11 +1785,11 @@ DDSIP_LowerBound (void)
                     time (&DDSIP_bb->cur_time);
                     DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                     fprintf (DDSIP_bb->moreoutfile,
-                             "%4d Scenario %4.0d:                          \tinfeasible               \t             \tStat.%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f\n",
+                             "%4d Scenario %4.0d:                          \tinfeasible               \t             \tStat.%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f\n",
                              iscen + 1, scen + 1, mipstatus, wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs);
                     if (DDSIP_param->outlev>8)
                     {
-                        printf ("%4d Scenario %4.0d:                          \tinfeasible               \t             \tStat.%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f\n",
+                        printf ("%4d Scenario %4.0d:                          \tinfeasible               \t             \tStat.%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f\n",
                                 iscen + 1, scen + 1, mipstatus, wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs);
                         if (DDSIP_param->cpxscr)
                             printf ("\n");
@@ -1940,22 +1941,22 @@ DDSIP_LowerBound (void)
                 DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
                 if (mipstatus == CPXMIP_OPTIMAL)
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%     )",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%)     ",
                          iscen + 1, scen + 1, objval, bobjval, gap);
                 else if (mipstatus == CPXMIP_OPTIMAL_TOL)
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tol)",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) tol.",
                          iscen + 1, scen + 1, objval, bobjval, gap);
                 else if (mipstatus == CPXMIP_TIME_LIM_FEAS)
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tim)",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) TIME",
                          iscen + 1, scen + 1, objval, bobjval, gap);
                 else
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, %3.0d)",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) %-4.0d ",
                          iscen + 1, scen + 1, objval, bobjval, gap, mipstatus);
                 fprintf (DDSIP_bb->moreoutfile,
-                         "\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d",
+                         "\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d",
                          wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
                 if (nodes_2nd >= 0)
                     fprintf (DDSIP_bb->moreoutfile, " +%d)", nodes_2nd - nodes_1st); 
@@ -1965,7 +1966,7 @@ DDSIP_LowerBound (void)
                 {
                     if (DDSIP_param->cpxscr)
                         printf ("\n");
-                    printf ("%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStat.%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)",
+                    printf ("%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%)\tStat.%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2f)",
                             iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
                             wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
                 }
@@ -2022,9 +2023,9 @@ DDSIP_LowerBound (void)
                     (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][DDSIP_bb->firstvar] += 1.0;
                     if (DDSIP_param->outlev)
                     {
-                        fprintf (DDSIP_bb->moreoutfile,"    ->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                        fprintf (DDSIP_bb->moreoutfile,"    \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                         if (DDSIP_param->outlev > 8)
-                            printf ("    ->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                            printf ("    \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                         //fprintf (DDSIP_bb->moreoutfile, "    First-stage solution:   same as in scenario %d (%g identical scen. sols)\n", i_scen + 1, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][DDSIP_bb->firstvar]);
                         if (DDSIP_param->outlev > 5)
                         {
@@ -2990,13 +2991,13 @@ if (DDSIP_param->outlev > 21)
                                             time (&DDSIP_bb->cur_time);
                                             DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                                             fprintf (DDSIP_bb->moreoutfile,
-                                                     "%4d Scenario %4.0d:                          \tinfeasible               \t         \tStat.%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f\n",
+                                                     "%4d Scenario %4.0d:                          \tinfeasible               \t         \tStat.%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f\n",
                                                      scen + 1, scen + 1, mipstatus, wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs);
                                             if (DDSIP_param->outlev>8)
                                             {
                                                 if (DDSIP_param->cpxscr)
                                                     printf ("\n");
-                                                printf ("%4d Scenario %4.0d:                          \tinfeasible               \t         \tStat.%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f\n",
+                                                printf ("%4d Scenario %4.0d:                          \tinfeasible               \t         \tStat.%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f\n",
                                                         scen + 1, scen + 1, mipstatus, wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs);
                                             }
                                         }
@@ -3022,11 +3023,11 @@ if (DDSIP_param->outlev > 21)
                                             time (&DDSIP_bb->cur_time);
                                             DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                                             fprintf (DDSIP_bb->moreoutfile,
-                                                     "%4d Scenario %4.0d:                          \tinfeasible               \t         \tStat.%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f\n",
+                                                     "%4d Scenario %4.0d:                          \tinfeasible               \t         \tStat.%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f\n",
                                                      scen + 1, scen + 1, mipstatus, wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs);
                                             if (DDSIP_param->outlev>8)
                                             {
-                                                printf ("%4d Scenario %4.0d:                          \tinfeasible               \t         \tStat.%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f\n",
+                                                printf ("%4d Scenario %4.0d:                          \tinfeasible               \t         \tStat.%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f\n",
                                                         scen + 1, scen + 1, mipstatus, wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs);
                                                 if (DDSIP_param->cpxscr)
                                                     printf ("\n");
@@ -3132,22 +3133,22 @@ if (DDSIP_param->outlev > 21)
                                         DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
                                         if (mipstatus == CPXMIP_OPTIMAL)
                                             fprintf (DDSIP_bb->moreoutfile,
-                                                 "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%     )",
+                                                 "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%)     ",
                                                  iscen + 1, scen + 1, objval, bobjval, gap);
                                         else if (mipstatus == CPXMIP_OPTIMAL_TOL)
                                             fprintf (DDSIP_bb->moreoutfile,
-                                                 "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tol)",
+                                                 "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) tol.",
                                                  iscen + 1, scen + 1, objval, bobjval, gap);
                                         else if (mipstatus == CPXMIP_TIME_LIM_FEAS)
                                             fprintf (DDSIP_bb->moreoutfile,
-                                                 "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tim)",
+                                                 "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) TIME",
                                                  iscen + 1, scen + 1, objval, bobjval, gap);
                                         else
                                             fprintf (DDSIP_bb->moreoutfile,
-                                                 "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, %3.0d)",
+                                                 "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) %-4.0d ",
                                                  iscen + 1, scen + 1, objval, bobjval, gap, mipstatus);
                                         fprintf (DDSIP_bb->moreoutfile,
-                                                 "\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d",
+                                                 "\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d",
                                                  wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
                                         if (nodes_2nd >= 0)
                                             fprintf (DDSIP_bb->moreoutfile, " +%d)", nodes_2nd - nodes_1st); 
@@ -3157,7 +3158,7 @@ if (DDSIP_param->outlev > 21)
                                         {
                                             if (DDSIP_param->cpxscr)
                                                 printf ("\n");
-                                            printf ("%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStat.%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2f)\n",
+                                            printf ("%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%)\tStat.%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2f)\n",
                                                     iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
                                                     wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
                                         }
@@ -3776,7 +3777,8 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                         }
                         else
                         {
-                            mipstatus = CPXMIP_OPTIMAL_TOL;
+                            if (mipstatus == CPXMIP_TIME_LIM_FEAS)
+                                mipstatus = CPXMIP_OPTIMAL_TOL;
                         }
                         // reset CPLEX parameters to lb
                         status = DDSIP_SetCpxPara (DDSIP_param->cpxnodual, DDSIP_param->cpxdualisdbl, DDSIP_param->cpxdualwhich, DDSIP_param->cpxdualwhat);
@@ -4037,22 +4039,22 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
                 if (mipstatus == CPXMIP_OPTIMAL)
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%     )",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%)     ",
                          iscen + 1, scen + 1, objval, bobjval, gap);
                 else if (mipstatus == CPXMIP_OPTIMAL_TOL)
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tol)",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) tol.",
                          iscen + 1, scen + 1, objval, bobjval, gap);
                 else if (mipstatus == CPXMIP_TIME_LIM_FEAS)
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tim)",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) TIME",
                          iscen + 1, scen + 1, objval, bobjval, gap);
                 else
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, %3.0d)",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) %-4.0d ",
                          iscen + 1, scen + 1, objval, bobjval, gap, mipstatus);
                 fprintf (DDSIP_bb->moreoutfile,
-                         "\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d",
+                         "\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d",
                          wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
                 if (nodes_2nd >= 0)
                     fprintf (DDSIP_bb->moreoutfile, " +%d)", nodes_2nd - nodes_1st); 
@@ -4062,7 +4064,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 {
                     if (DDSIP_param->cpxscr)
                         printf ("\n");
-                    printf ("%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStat:%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs)",
+                    printf ("%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%)\tStat:%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs)",
                             iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
                             wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
                 }
@@ -4127,10 +4129,10 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                     (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][DDSIP_bb->firstvar] += 1.0;
                     if (DDSIP_param->outlev)
                     {
-                        fprintf (DDSIP_bb->moreoutfile,"    ->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                        fprintf (DDSIP_bb->moreoutfile,"    \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                         if (DDSIP_param->outlev > 8)
                         {
-                            printf ("    ->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                            printf ("    \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                         }
                     }
                 }
@@ -4215,27 +4217,27 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
                 if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_OPTIMAL)
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%     )",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%)     ",
                          iscen + 1 ,scen + 1, (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen], (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen], gap);
                 else if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_OPTIMAL_TOL)
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tol)",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) tol.",
                          iscen + 1 ,scen + 1, (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen], (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen], gap);
                 else if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_TIME_LIM_FEAS)
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, tim)",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) TIME",
                          iscen + 1 ,scen + 1, (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen], (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen], gap);
                 else
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%, %3.0d)",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) %-4.0d ",
                          iscen + 1 ,scen + 1, (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen], (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen], gap,
                          (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen]);
                 fprintf (DDSIP_bb->moreoutfile,
-                         "\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f  > node %3g",
+                         "\t %3dh %02d:%02.0f / %3dh %02d:%05.2f  > node %3g",
                          wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][DDSIP_bb->firstvar + 2]);
                 if (DDSIP_param->outlev > 8)
                 {
-                    printf ("%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g\t(%9.4g%%)\tStat.%3.0d\t%3dh %02d:%02.0f cpu %3dh %02d:%05.2f  > from node %3g\n",
+                    printf ("%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%)\tStat.%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f  > from node %3g\n",
                             iscen + 1 ,scen + 1, (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen], (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen],
                             gap, (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen], wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs,
                             (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][DDSIP_bb->firstvar + 2]);
@@ -4251,7 +4253,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 if (i_scen < scen)
                 {
                     //first_sol[DDSIP_bb->firstvar]   equals the number of identical first stage scenario solutions
-                    fprintf (DDSIP_bb->moreoutfile," ->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                    fprintf (DDSIP_bb->moreoutfile," \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                 }
                 else
                     fprintf (DDSIP_bb->moreoutfile,"\n");

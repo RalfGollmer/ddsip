@@ -148,22 +148,22 @@ DDSIP_ExpValProb (void)
         DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
         if (mipstatus == CPXMIP_OPTIMAL)
             fprintf (DDSIP_bb->moreoutfile,
-                 "    exp. val. prob:  Best=%-18.14g\tBound=%-18.14g\t(%9.4g%%     )\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d)",
+                 "    exp. val. prob:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%)     \t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d)",
                  objval, bobjval, gap,
                  wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
         else if (mipstatus == CPXMIP_OPTIMAL_TOL)
             fprintf (DDSIP_bb->moreoutfile,
-                 "    exp. val. prob:  Best=%-18.14g\tBound=%-18.14g\t(%9.4g%%, tol)\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d)",
+                 "    exp. val. prob:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) tol.\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d)",
                  objval, bobjval, gap,
                  wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
         else if (mipstatus == CPXMIP_TIME_LIM_FEAS)
             fprintf (DDSIP_bb->moreoutfile,
-                 "    exp. val. prob:  Best=%-18.14g\tBound=%-18.14g\t(%9.4g%%, tim)\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d)",
+                 "    exp. val. prob:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) TIME\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d)",
                  objval, bobjval, gap,
                  wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
         else
             fprintf (DDSIP_bb->moreoutfile,
-                 "    exp. val. prob:  Best=%-18.14g\tBound=%-18.14g\t(%9.4g%%, %3d)\t %3dh %02d:%02.0f cpu %3dh %02d:%05.2f (%6.2fs nod. %4d)",
+                 "    exp. val. prob:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) %-4d\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d)",
                  objval, bobjval, gap, mipstatus,
                  wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
     }

@@ -864,7 +864,7 @@ DDSIP_DualOpt (void)
             }
             // use the result of set_center as initial dualObjVal
             if(DDSIP_param->outlev > 10)
-                fprintf(DDSIP_bb->moreoutfile," after 1. reinit: dualObjVal = %20.14g, old_obj= %20.14g, incr.= %g\n", DDSIP_bb->dualObjVal, old_obj, DDSIP_bb->dualObjVal-old_obj);
+                fprintf(DDSIP_bb->moreoutfile," after 1. reinit: currentDualObjVal = %20.14g, old_obj= %20.14g, incr.= %g\n", DDSIP_bb->currentDualObjVal, old_obj, DDSIP_bb->dualObjVal-old_obj);
 
             if (DDSIP_param->outlev)
             {
@@ -923,7 +923,7 @@ DDSIP_DualOpt (void)
                 do
                 {
                     rgap = 100.;
-                    obj = DDSIP_bb->dualObjVal;
+                    obj = DDSIP_bb->currentDualObjVal;
                     if (cnt > DDSIP_param->numberReinits)
                         break;
                     if ((obj - old_obj)/(fabs(old_obj) + 2e-15) > 1.e-8)
@@ -939,10 +939,12 @@ DDSIP_DualOpt (void)
                             return 1;
                         }
                         noIncreaseCounter = 0;
+#ifdef DEBUG
+                        if(DDSIP_param->outlev > 20)
+                            fprintf(DDSIP_bb->moreoutfile," ##  reinit model: currentDualObjVal= %20.14g, obj= %20.14g dualObjVal= %20.14g,  old_obj= %20.14g\n", DDSIP_bb->currentDualObjVal, DDSIP_bb->dualObjVal, obj, old_obj);
+#endif
+                        old_obj = DDSIP_bb->currentDualObjVal;
                     }
-                    else
-                        noIncreaseCounter++;
-                    old_obj = obj;
                     if ((status = cb_set_new_center_point (p, DDSIP_bb->local_bestdual)))
                     {
                         fprintf (stderr, "set_new_center_point returned %d\n", status);
@@ -952,9 +954,18 @@ DDSIP_DualOpt (void)
                         DDSIP_Free ((void **) &(center_point));
                         return status;
                     }
+                    obj = DDSIP_bb->currentDualObjVal;
+                    if (obj < old_obj + 1.e-14)
+                    {
+                        noIncreaseCounter++;
+#ifdef DEBUG
+                        if(DDSIP_param->outlev > 20)
+                            fprintf(DDSIP_bb->moreoutfile," ##                currentDualObjVal= %20.14g, obj= %20.14g  <=  %20.14g=old_obj -> noIncreaseCounter= %d\n", DDSIP_bb->currentDualObjVal, obj, old_obj, noIncreaseCounter);
+#endif
+                    }
                     cnt++;
                     if(DDSIP_param->outlev > 10)
-                        fprintf(DDSIP_bb->moreoutfile," after %d. reinit: dualObjVal = %20.14g, old_obj= %20.14g, incr.= %g\n", cnt, DDSIP_bb->dualObjVal, old_obj, DDSIP_bb->dualObjVal-old_obj);
+                        fprintf(DDSIP_bb->moreoutfile," after %d. reinit: currentDualObjVal = %20.14g, obj = %20.14g, old_obj= %20.14g, incr.= %g,  noIncreaseCounter= %d\n", cnt, DDSIP_bb->currentDualObjVal, obj, old_obj, DDSIP_bb->currentDualObjVal-old_obj, noIncreaseCounter);
                     if (DDSIP_param->outlev)
                     {
                         DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
@@ -1000,9 +1011,13 @@ DDSIP_DualOpt (void)
                             }
                         }
                     }
-                    if (DDSIP_bb->dualObjVal > old_obj)
+                    if (DDSIP_bb->currentDualObjVal > old_obj)
                     {
-                        old_obj = obj;
+#ifdef DEBUG
+                        if(DDSIP_param->outlev > 10)
+                            fprintf(DDSIP_bb->moreoutfile," ##  update old_obj: currentDualObjVal= %20.14g, dualObjVal= %20.14g, old_obj= %20.14g\n", DDSIP_bb->currentDualObjVal, DDSIP_bb->dualObjVal, old_obj);
+#endif
+                        old_obj = DDSIP_bb->currentDualObjVal;
                         obj = DDSIP_bb->dualObjVal;
                     }
                     DDSIP_bb->cutAdded = 0;

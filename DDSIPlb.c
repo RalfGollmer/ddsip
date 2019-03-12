@@ -1420,9 +1420,9 @@ DDSIP_LowerBound (void)
                 if (i_scen < scen)
                 {
                     //first_sol[DDSIP_bb->firstvar]   equals the number of identical first stage scenario solutions
-                    fprintf (DDSIP_bb->moreoutfile," \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                    fprintf (DDSIP_bb->moreoutfile,"    \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                     if (DDSIP_param->outlev > 8)
-                        printf (" \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                        printf ("    \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                 }
                 else if (DDSIP_param->outlev >= DDSIP_first_stage_outlev)
                 {
@@ -1697,7 +1697,7 @@ DDSIP_LowerBound (void)
                         }
                         else
                         {
-                            if (mipstatus == CPXMIP_TIME_LIM_FEAS)
+                            if (mipstatus == CPXMIP_TIME_LIM_FEAS || mipstatus == CPXMIP_NODE_LIM_FEAS)
                                 mipstatus = CPXMIP_OPTIMAL_TOL;
                         }
                         // reset CPLEX parameters to lb
@@ -3468,7 +3468,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     // first take care of remains from former calls
     if (!DDSIP_param->cb_inherit || DDSIP_bb->dualitcnt || DDSIP_param->scalarization || DDSIP_bb->skip == 2)
     {
-        int keepSolution;
+        int keepSolution, solKept = 0;
         double lhs;
         cutpool_t *currentCut;
         for (iscen = 0; iscen < DDSIP_param->scenarios; iscen++)
@@ -3503,8 +3503,14 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                     }
                     if (keepSolution)
                     {
-                        if (DDSIP_param->outlev > 21)
-                            fprintf (DDSIP_bb->moreoutfile, "   ## keeping sol. of scen. %d.\n", iscen + 1);
+                        if (DDSIP_param->outlev > 20)
+                        {
+                            if (solKept)
+                                fprintf (DDSIP_bb->moreoutfile, ", %d", iscen + 1);
+                            else
+                                fprintf (DDSIP_bb->moreoutfile, "   ## keeping sol. of scen. %d", iscen + 1);
+                        }
+                        solKept++;
                         continue;
                     }
                 }
@@ -3520,6 +3526,8 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 DDSIP_Free ((void **) &(((DDSIP_node[DDSIP_bb->curnode])->first_sol)[iscen]));
             }
         }
+        if (solKept && DDSIP_param->outlev > 20)
+            fprintf (DDSIP_bb->moreoutfile, ".\n");
     }
     // This node has been solved (as soon as we enter the loop below)
     DDSIP_node[DDSIP_bb->curnode]->solved = 1;
@@ -3777,7 +3785,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                         }
                         else
                         {
-                            if (mipstatus == CPXMIP_TIME_LIM_FEAS)
+                            if (mipstatus == CPXMIP_TIME_LIM_FEAS || mipstatus == CPXMIP_NODE_LIM_FEAS)
                                 mipstatus = CPXMIP_OPTIMAL_TOL;
                         }
                         // reset CPLEX parameters to lb
@@ -4253,7 +4261,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 if (i_scen < scen)
                 {
                     //first_sol[DDSIP_bb->firstvar]   equals the number of identical first stage scenario solutions
-                    fprintf (DDSIP_bb->moreoutfile," \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                    fprintf (DDSIP_bb->moreoutfile,"    \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                 }
                 else
                     fprintf (DDSIP_bb->moreoutfile,"\n");

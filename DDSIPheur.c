@@ -500,7 +500,12 @@ DDSIP_OneTenth (int nrScenarios, int feasCheckOnly)
         return 1;
     }
     else if (DDSIP_param->outlev)
-            fprintf(DDSIP_bb->moreoutfile, " %d candidates.\n", cnt);
+    {
+            fprintf(DDSIP_bb->moreoutfile, " %d candidates:  ", cnt);
+            for (i = cnt-1; i >= 0; i--)
+               fprintf(DDSIP_bb->moreoutfile, " %d", unind[i] + 1);
+            fprintf(DDSIP_bb->moreoutfile, "\n");
+    }
 
     for (i = cnt-1; i >= 0; i--)
     {
@@ -509,7 +514,7 @@ DDSIP_OneTenth (int nrScenarios, int feasCheckOnly)
             DDSIP_Free ((void **) &(unind));
             return 1;
         }
-        if (DDSIP_node[DDSIP_bb->curnode]->first_sol[unind[i]][DDSIP_bb->firstvar] > threshold)
+        //if (DDSIP_node[DDSIP_bb->curnode]->first_sol[unind[i]][DDSIP_bb->firstvar] >= threshold)
         {
             tmp = DDSIP_bb->sug[DDSIP_param->nodelim + 2];
             if (!tmp)

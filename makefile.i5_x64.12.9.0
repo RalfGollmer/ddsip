@@ -2,8 +2,6 @@
 # Set OS type
 OSTYPE		:=	$(shell uname -s | tr '[A-Z]' '[a-z]')
 # Adapt the following lines defining the paths to CPLEX and ConicBundle according to your installation
-#CPLEX    = /opt/ibm/ILOG/CPLEX_Studio1263/cplex
-#CPLEX    = /opt/ibm/ILOG/CPLEX_Studio1271/cplex
 CPLEX    = /opt/ibm/ILOG/CPLEX_Studio129/cplex
 #
 LINUXVAR = x86-64_linux

@@ -1930,7 +1930,7 @@ DDSIP_LowerBound (void)
             if (DDSIP_param->hot == 4)
             {
                 // prepare for shifting difficult scenarios to the end such that they can make use of more mipstarts
-                time_sort_array[iscen] = time_start;
+                time_sort_array[iscen] = time_start + 1e3*gap;
             }
 #endif
             time (&DDSIP_bb->cur_time);
@@ -2299,7 +2299,7 @@ DDSIP_LowerBound (void)
         if (DDSIP_param->outlev > 20)
             fprintf (DDSIP_bb->moreoutfile, " ### max time %g, mean %g, max>4*mean: %d ###\n", cpu_secs, wall_secs, cpu_secs > 4.*wall_secs);
 #endif
-        if (cpu_secs > 2.*wall_secs)
+        if (cpu_secs > 4.*wall_secs)
         {
             cpu_hrs = 0;
             for (wall_hrs = 0; wall_hrs < DDSIP_param->scenarios-cpu_hrs; wall_hrs++)
@@ -4034,14 +4034,14 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             meanGap += DDSIP_data->prob[scen] * gap;
             time_end = DDSIP_GetCpuTime ();
             time_start = time_end-time_start;
+            time (&DDSIP_bb->cur_time);
 #ifdef SHIFT
             if (shift_in_cb)
             {
                 // prepare for shifting difficult scenarios to the end such that they can make use of more mipstarts
-                time_sort_array[scen] = difftime (DDSIP_bb->cur_time, startTime) + 0.01*time_start + 500.*gap;
+                time_sort_array[scen] = difftime (DDSIP_bb->cur_time, startTime) + 0.1*time_start + 5.e3*gap;
             }
 #endif
-            time (&DDSIP_bb->cur_time);
             // Debugging information
             if (DDSIP_param->outlev)
             {

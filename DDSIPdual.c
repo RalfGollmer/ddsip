@@ -195,9 +195,9 @@ DDSIP_DualUpdate (void *function_key, double *dual, double relprec,
     // update node->dual
     memcpy (DDSIP_node[DDSIP_bb->curnode]->dual, dual, sizeof (double) * DDSIP_bb->dimdual);
 
-    if (DDSIP_param->outlev > 50)
+    if (DDSIP_param->outlev > 25)
     {
-        fprintf (DDSIP_bb->moreoutfile, "\nCurrent lambda for node %d: (%p)\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->dual);
+        fprintf (DDSIP_bb->moreoutfile, "\nDualUpdate: Current lambda for node %d: (%p)\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->dual);
         for (i = 0; i < DDSIP_bb->dimdual; i++)
         {
             fprintf (DDSIP_bb->moreoutfile, " %14.8g,", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
@@ -376,16 +376,19 @@ DDSIP_DualOpt (void)
 {
     cb_problemp p;
     int cb_status, status, i_scen, j, cnt, noIncreaseCounter = 0, comb = 3, init_iters = 1;
-    double *minfirst = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar,
-                       "minfirst(DualOpt)");
-    double *maxfirst = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar,
-                       "maxfirst(DualOpt)");
-    double *center_point = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual,
-                           "center_point(DualOpt)");
+    double *minfirst;
+    double *maxfirst;
+    double *center_point;
     double obj, old_obj, start_weight, diff;
     int    wall_hrs, wall_mins, cpu_hrs, cpu_mins, limits_reset, cur_iters, repeated_increase = 2, weight_decreases = 0, many_iters = 0, cycleCnt  = 0;
     double wall_secs, cpu_secs, inherited_bound, rgap;
     double old_cpxrelgap = 1.e-16, old_cpxtimelim = 1000000., old_cpxrelgap2 = 1.e-16, old_cpxtimelim2 = 1000000., last_weight, next_weight, reduction_factor = 0.50;
+    minfirst = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar,
+               "minfirst(DualOpt)");
+    maxfirst = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar,
+               "maxfirst(DualOpt)");
+    center_point = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual,
+                           "center_point(DualOpt)");
 
     DDSIP_bb->DDSIP_step = dual;
     DDSIP_bb->last_dualitcnt = 0;
@@ -840,18 +843,19 @@ DDSIP_DualOpt (void)
         }
         if (DDSIP_bb->cutAdded)
         {
-            if ((obj - old_obj)/(fabs(old_obj) + 1e-16) > 1.e-8)
+            // reinit model
+            if (cb_reinit_function_model(p, (void *) DDSIP_DualUpdate))
             {
-                // reinit model
-                if (cb_reinit_function_model(p, (void *) DDSIP_DualUpdate))
-                {
-                    fprintf (stderr, "ERROR: reinit_function_model failed\n");
-                    cb_destruct_problem (&p);
-                    DDSIP_Free ((void **) &(minfirst));
-                    DDSIP_Free ((void **) &(maxfirst));
-                    DDSIP_Free ((void **) &(center_point));
-                    return 1;
-                }
+                fprintf (stderr, "ERROR: reinit_function_model failed\n");
+                cb_destruct_problem (&p);
+                DDSIP_Free ((void **) &(minfirst));
+                DDSIP_Free ((void **) &(maxfirst));
+                DDSIP_Free ((void **) &(center_point));
+                return 1;
+            }
+            else if (DDSIP_param->outlev > 20)
+            {
+                fprintf (DDSIP_bb->moreoutfile, "######### cb_reinit_function_model successful #########\n");
             }
             if ((status = cb_set_new_center_point (p, DDSIP_bb->local_bestdual)))
             {
@@ -922,29 +926,37 @@ DDSIP_DualOpt (void)
                 cnt = 1;
                 do
                 {
+                    // reinit model
+                    if (cb_reinit_function_model(p, (void *) DDSIP_DualUpdate))
+                    {
+                        fprintf (stderr, "ERROR: reinit_function_model failed\n");
+                        cb_destruct_problem (&p);
+                        DDSIP_Free ((void **) &(minfirst));
+                        DDSIP_Free ((void **) &(maxfirst));
+                        DDSIP_Free ((void **) &(center_point));
+                        return 1;
+                    }
+                    else if (DDSIP_param->outlev > 20)
+                    {
+                        fprintf (DDSIP_bb->moreoutfile, "######### cb_reinit_function_model successful #########\n");
+                    }
                     rgap = 100.;
                     obj = DDSIP_bb->currentDualObjVal;
                     if (cnt > DDSIP_param->numberReinits)
                         break;
                     if ((obj - old_obj)/(fabs(old_obj) + 2e-15) > 1.e-8)
                     {
-                        // reinit model
-                        if (cb_reinit_function_model(p, (void *) DDSIP_DualUpdate))
-                        {
-                            fprintf (stderr, "ERROR: reinit_function_model failed\n");
-                            cb_destruct_problem (&p);
-                            DDSIP_Free ((void **) &(minfirst));
-                            DDSIP_Free ((void **) &(maxfirst));
-                            DDSIP_Free ((void **) &(center_point));
-                            return 1;
-                        }
                         noIncreaseCounter = 0;
+                    }
+                    else if (obj < old_obj + 1.e-14)
+                    {
+                        noIncreaseCounter++;
 #ifdef DEBUG
                         if(DDSIP_param->outlev > 20)
-                            fprintf(DDSIP_bb->moreoutfile," ##  reinit model: currentDualObjVal= %20.14g, obj= %20.14g dualObjVal= %20.14g,  old_obj= %20.14g\n", DDSIP_bb->currentDualObjVal, DDSIP_bb->dualObjVal, obj, old_obj);
+                            fprintf(DDSIP_bb->moreoutfile," ##                currentDualObjVal= %20.14g, obj= %20.14g  <=  %20.14g=old_obj -> noIncreaseCounter= %d\n", DDSIP_bb->currentDualObjVal, obj, old_obj, noIncreaseCounter);
 #endif
-                        old_obj = DDSIP_bb->currentDualObjVal;
                     }
+                    old_obj = obj;
                     if ((status = cb_set_new_center_point (p, DDSIP_bb->local_bestdual)))
                     {
                         fprintf (stderr, "set_new_center_point returned %d\n", status);
@@ -953,15 +965,6 @@ DDSIP_DualOpt (void)
                         DDSIP_Free ((void **) &(maxfirst));
                         DDSIP_Free ((void **) &(center_point));
                         return status;
-                    }
-                    obj = DDSIP_bb->currentDualObjVal;
-                    if (obj < old_obj + 1.e-14)
-                    {
-                        noIncreaseCounter++;
-#ifdef DEBUG
-                        if(DDSIP_param->outlev > 20)
-                            fprintf(DDSIP_bb->moreoutfile," ##                currentDualObjVal= %20.14g, obj= %20.14g  <=  %20.14g=old_obj -> noIncreaseCounter= %d\n", DDSIP_bb->currentDualObjVal, obj, old_obj, noIncreaseCounter);
-#endif
                     }
                     cnt++;
                     if(DDSIP_param->outlev > 10)
@@ -1023,11 +1026,8 @@ DDSIP_DualOpt (void)
                     DDSIP_bb->cutAdded = 0;
                     if (!DDSIP_killsignal)
                     {
-//                        wall_hrs = DDSIP_param->heuristic;
-//                        DDSIP_param->heuristic = 12;
                         DDSIP_EvaluateScenarioSolutions (&comb);
                         DDSIP_bb->keepSols = 1;
-//                        DDSIP_param->heuristic = wall_hrs;
                     }
                     else
                         break;
@@ -2764,13 +2764,13 @@ while (tmp1_bestdual)
 //######################
             }
         }
-//#ifdef DEBUG
+#ifdef DEBUG
         else
         {
             if (DDSIP_param->outlev > 20)
                 fprintf (DDSIP_bb->moreoutfile, " ##  mult. of node %2d  bound %16.12g, bestdual_max %16.12g not added to bestdual list after desc.it. %d\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestdual_max, DDSIP_bb->dualdescitcnt);
         }
-//#endif
+#endif
 //######################
         if (DDSIP_param->outlev)
         {

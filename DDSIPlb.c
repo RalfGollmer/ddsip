@@ -1371,10 +1371,10 @@ DDSIP_LowerBound (void)
             gap = 100.0*((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen]-(DDSIP_node[DDSIP_bb->curnode]->subbound)[scen])/
                          (fabs((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen])+1e-4);
             meanGap += DDSIP_data->prob[scen] * gap;
+            time (&DDSIP_bb->cur_time);
             if (DDSIP_param->outlev)
             {
                 DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
-                time (&DDSIP_bb->cur_time);
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                 if ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_OPTIMAL)
                     fprintf (DDSIP_bb->moreoutfile,
@@ -1745,13 +1745,13 @@ DDSIP_LowerBound (void)
                 goto TERMINATE;
             }
 
+            time (&DDSIP_bb->cur_time);
             // Infeasible, unbounded ... ?
             if (mipstatus==CPXMIP_TIME_LIM_INFEAS)
             {
                 if (DDSIP_param->outlev)
                 {
                     DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
-                    time (&DDSIP_bb->cur_time);
                     DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                     fprintf (DDSIP_bb->moreoutfile,
                              "%4d Scenario %4.0d:                          \tinfeasible               \t             \tStat.%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f\n",
@@ -1782,7 +1782,6 @@ DDSIP_LowerBound (void)
                 if (DDSIP_param->outlev)
                 {
                     DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
-                    time (&DDSIP_bb->cur_time);
                     DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                     fprintf (DDSIP_bb->moreoutfile,
                              "%4d Scenario %4.0d:                          \tinfeasible               \t             \tStat.%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f\n",
@@ -1934,9 +1933,9 @@ DDSIP_LowerBound (void)
                 time_sort_array[iscen] = time_start;
             }
 #endif
+            time (&DDSIP_bb->cur_time);
             if (DDSIP_param->outlev)
             {
-                time (&DDSIP_bb->cur_time);
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                 DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
                 if (mipstatus == CPXMIP_OPTIMAL)
@@ -2982,13 +2981,13 @@ if (DDSIP_param->outlev > 21)
                                     }
 
                                     mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
+                                    time (&DDSIP_bb->cur_time);
                                     // Infeasible, unbounded ... ?
                                     if (mipstatus==CPXMIP_TIME_LIM_INFEAS)
                                     {
                                         if (DDSIP_param->outlev)
                                         {
                                             DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
-                                            time (&DDSIP_bb->cur_time);
                                             DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                                             fprintf (DDSIP_bb->moreoutfile,
                                                      "%4d Scenario %4.0d:                          \tinfeasible               \t         \tStat.%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f\n",
@@ -3020,7 +3019,6 @@ if (DDSIP_param->outlev > 21)
                                         if (DDSIP_param->outlev)
                                         {
                                             DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
-                                            time (&DDSIP_bb->cur_time);
                                             DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                                             fprintf (DDSIP_bb->moreoutfile,
                                                      "%4d Scenario %4.0d:                          \tinfeasible               \t         \tStat.%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f\n",
@@ -3123,10 +3121,10 @@ if (DDSIP_param->outlev > 21)
                                     (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] = mipstatus;
                                     gap = 100.0*(objval-bobjval)/(fabs(objval)+1e-4);
                                     meanGap += DDSIP_data->prob[scen] * gap;
+                                    time (&DDSIP_bb->cur_time);
                                     // Debugging information
                                     if (DDSIP_param->outlev)
                                     {
-                                        time (&DDSIP_bb->cur_time);
                                         time_end = DDSIP_GetCpuTime ();
                                         time_start = time_end-time_start;
                                         DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
@@ -3322,6 +3320,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     int shift_in_cb = 0;
 #ifdef CBHOTSTART 
 #ifdef SHIFT
+    time_t   startTime;
     double * time_sort_array = NULL;
     shift_in_cb = (DDSIP_param->hot == 4) ||
                   (DDSIP_param->cbhot == 4) ||
@@ -3548,6 +3547,9 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             DDSIP_bb->skip = 2;
             goto TERMINATE;
         }
+#ifdef SHIFT
+        time (&startTime);
+#endif
         nodes_1st = nodes_2nd = -1;
         if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen] == NULL)
         {
@@ -4036,13 +4038,13 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             if (shift_in_cb)
             {
                 // prepare for shifting difficult scenarios to the end such that they can make use of more mipstarts
-                time_sort_array[scen] = time_start + 500.*gap;
+                time_sort_array[scen] = difftime (DDSIP_bb->cur_time, startTime) + 0.01*time_start + 500.*gap;
             }
 #endif
+            time (&DDSIP_bb->cur_time);
             // Debugging information
             if (DDSIP_param->outlev)
             {
-                time (&DDSIP_bb->cur_time);
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                 DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
                 if (mipstatus == CPXMIP_OPTIMAL)
@@ -4216,10 +4218,10 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             gap = 100.0*((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen]-(DDSIP_node[DDSIP_bb->curnode]->subbound)[scen])/
                          (fabs((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen])+1e-4);
             meanGap += DDSIP_data->prob[scen] * gap;
+            time (&DDSIP_bb->cur_time);
             // Debugging information
             if (DDSIP_param->outlev)
             {
-                time (&DDSIP_bb->cur_time);
                 time_end = DDSIP_GetCpuTime ();
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                 DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);

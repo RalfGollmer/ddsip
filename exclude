@@ -1,10 +1,8 @@
 DDSIP_x64*
-DDSIP_126_x64*
-DDSIP_126_x64_debug
-ddsiphelp_x64
-ddsiphelp_x64_debug
+DDSIP_12*
+DDSIP_*_debug
+ddsiphelp_*
 linux.obj
-sunos.obj
 linux.debug.obj/*
 .git
 .gitignore

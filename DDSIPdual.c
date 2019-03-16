@@ -382,7 +382,8 @@ DDSIP_DualOpt (void)
     double obj, old_obj, start_weight, diff;
     int    wall_hrs, wall_mins, cpu_hrs, cpu_mins, limits_reset, cur_iters, repeated_increase = 2, weight_decreases = 0, many_iters = 0, cycleCnt  = 0;
     double wall_secs, cpu_secs, inherited_bound, rgap;
-    double old_cpxrelgap = 1.e-16, old_cpxtimelim = 1000000., old_cpxrelgap2 = 1.e-16, old_cpxtimelim2 = 1000000., last_weight, next_weight, reduction_factor = 0.50;
+    double old_cpxrelgap = 1.e-16, old_cpxtimelim = 1000000., old_cpxrelgap2 = 1.e-16, old_cpxtimelim2 = 1000000., last_weight, next_weight;
+    double reduction_factor = 0.50;
     minfirst = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar,
                "minfirst(DualOpt)");
     maxfirst = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar,
@@ -1197,6 +1198,8 @@ while (tmp1_bestdual)
                             old_obj = obj;
                             if (DDSIP_Dmax (obj, max_bound) >= DDSIP_bb->bestvalue)
                                 cnt = 0;
+                            else
+                                cnt = 1;
                             break;
                         }
                         if (obj < max_bound)

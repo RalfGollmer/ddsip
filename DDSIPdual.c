@@ -1196,7 +1196,7 @@ while (tmp1_bestdual)
                         {
                             // cutoff or sufficient increase reached
                             old_obj = obj;
-                            if (DDSIP_Dmax (obj, max_bound) >= DDSIP_bb->bestvalue)
+                            if (DDSIP_Dmax (obj, max_bound) >= DDSIP_bb->bestvalue - (fabs(DDSIP_bb->bestvalue) * 0.9 * DDSIP_param->relgap))
                                 cnt = 0;
                             else
                                 cnt = 1;

@@ -606,7 +606,7 @@ nearest integer.\medskip\\
 8&Solution with worst objective value\medskip\\
 9&Solution with minimal sum of first-stage variables\medskip\\
 10&Solution with maximal sum of first-stage variables\medskip\\
-11&Try solutions of those scenarios which occur more than scenarios/5 times\medskip\\
+11&Try solutions of those scenarios which occur more than max(scenarios/10,2) times\medskip\\
 12&Try solutions of all scenarios\medskip\\
 13&Apply heuristic 4 and 5 alternating\medskip\\
 14&Apply heuristic 3 and 5 alternating\medskip\\
@@ -711,6 +711,8 @@ CBSTEP&Int&0..&12&Maximal number of iterations within one descent step.\medskip\
 CBTOTI&Int&0..&5000&Iteration limit: total iterations, i.e. descent and null steps.\medskip\\
 CBCONT &Int&1..&6&Used when CBFREQ$<$0: number of nodes with invocation of \texttt{ConicBundle} in every node after CBBREAK.\medskip\\
 CBBREA &Int&1..&24&Used when CBFREQ$<$0: invocation of \texttt{ConicBundle} in nodes 1..CBBREAK only for nodes, which inherited more than half of the scenario solutions.\medskip\\
+CBDEPT &Int&1..&1&Invoke ConicBundle for all nodes until specified depth.\medskip\\
+CBITLI &Int&1..&1&Iteration limit for nodes with\\&&&& $1<depth\le CBDEPTH$.\medskip\\
 CBPREC&Dbl&0..&1e-14&Precision of bundle method.\medskip\\
 CBPRIN&Int&0..&0&\texttt{ConicBundle} output level.\medskip\\
 NONANT&Int&1..3&& The identity of the first-stage vectors is represented

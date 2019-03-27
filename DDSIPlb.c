@@ -729,7 +729,7 @@ DDSIP_Warm (int iscen)
                || (DDSIP_node[DDSIP_bb->curnode]->step == dual &&
                    (DDSIP_param->cbhot > 2  || 
                     (DDSIP_param->cbhot == 2 && !DDSIP_bb->curnode) ||
-                    (DDSIP_param->cbhot == 1 && !DDSIP_bb->curnode /*&& DDSIP_bb->dualdescitcnt*/ && DDSIP_bb->dualdescitcnt < 3))
+                    (DDSIP_param->cbhot == 1 && !DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt < 3))
                   )
 #endif
             )
@@ -806,6 +806,7 @@ DDSIP_Warm (int iscen)
         // Add solutions of previous scenarios (the directly preceding scenario's are in m1 etc.)
         if (iscen > 1)
         {
+//            for (kf=0; kf<iscen - 2; kf++)
             for (kf=iscen - 2; kf>-1; kf--)
             {
                 if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[DDSIP_bb->lb_scen_order[kf]])
@@ -1213,9 +1214,6 @@ DDSIP_LowerBound (void)
     double sumprob, maxdispersion, rest_bound, factor, nfactor;
     char **colname;
     char *colstore;
-#ifdef SHIFT
-    double * time_sort_array = NULL;
-#endif
 
     DDSIP_bb->skip = 0;
     DDSIP_bb->LBIters++;
@@ -1329,13 +1327,6 @@ DDSIP_LowerBound (void)
     }
     else
         rest_bound = -DDSIP_param->scenarios*DDSIP_infty;
-#ifdef SHIFT
-    if (DDSIP_param->hot == 4)
-    {
-        // prepare for shifting difficult scenarios to the end such that they can make use of more mipstarts
-        time_sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "time_sort_array(LowerBound)");
-    }
-#endif
     // LowerBound problem for each scenario
     //****************************************************************************
     meanGap = 0.;
@@ -1930,7 +1921,7 @@ DDSIP_LowerBound (void)
             if (DDSIP_param->hot == 4)
             {
                 // prepare for shifting difficult scenarios to the end such that they can make use of more mipstarts
-                time_sort_array[iscen] = time_start + 1e3*gap;
+                DDSIP_bb->aggregate_time[iscen] = time_start + 1e3*gap;
             }
 #endif
             time (&DDSIP_bb->cur_time);
@@ -2287,12 +2278,12 @@ DDSIP_LowerBound (void)
     if (DDSIP_param->hot == 4)
     {
         // shifting difficult scenarios to the end such that they can make use of more mipstarts
-        wall_secs = cpu_secs = time_sort_array[0];
+        wall_secs = cpu_secs = DDSIP_bb->aggregate_time[0];
         for (wall_hrs = 1; wall_hrs < DDSIP_param->scenarios; wall_hrs++)
         {
-            wall_secs += time_sort_array[wall_hrs];
+            wall_secs += DDSIP_bb->aggregate_time[wall_hrs];
             if (wall_hrs < DDSIP_param->scenarios - 2)
-                cpu_secs = DDSIP_Dmax (cpu_secs, time_sort_array[wall_hrs]);
+                cpu_secs = DDSIP_Dmax (cpu_secs, DDSIP_bb->aggregate_time[wall_hrs]);
         }
         wall_secs /= (0.01 + DDSIP_param->scenarios);
 #ifdef DEBUG
@@ -2304,21 +2295,21 @@ DDSIP_LowerBound (void)
             cpu_hrs = 0;
             for (wall_hrs = 0; wall_hrs < DDSIP_param->scenarios-cpu_hrs; wall_hrs++)
             {
-                if (time_sort_array[wall_hrs] > 4.*wall_secs)
+                if (DDSIP_bb->aggregate_time[wall_hrs] > 4.*wall_secs)
                 {
                      cpu_mins = DDSIP_bb->lb_scen_order[wall_hrs];
-                     cpu_secs = time_sort_array[wall_hrs];
+                     cpu_secs = DDSIP_bb->aggregate_time[wall_hrs];
 #ifdef DEBUG
                      if (DDSIP_param->outlev > 20)
-                         fprintf (DDSIP_bb->moreoutfile, " ### shifting scenario %d with time %g to the end of lb_scen_order ###\n", cpu_mins+1, time_sort_array[wall_hrs]);
+                         fprintf (DDSIP_bb->moreoutfile, " ### shifting scenario %d with time %g to the end of lb_scen_order ###\n", cpu_mins+1, DDSIP_bb->aggregate_time[wall_hrs]);
 #endif
                      for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
                      {
                          DDSIP_bb->lb_scen_order[wall_mins-1] = DDSIP_bb->lb_scen_order[wall_mins];
-                         time_sort_array[wall_mins-1] = time_sort_array[wall_mins];
+                         DDSIP_bb->aggregate_time[wall_mins-1] = DDSIP_bb->aggregate_time[wall_mins];
                      }
                      DDSIP_bb->lb_scen_order[DDSIP_param->scenarios-1] = cpu_mins; 
-                     time_sort_array[DDSIP_param->scenarios-1] = cpu_secs; 
+                     DDSIP_bb->aggregate_time[DDSIP_param->scenarios-1] = cpu_secs; 
                      cpu_hrs++;
                      wall_hrs--;
                 }
@@ -2886,7 +2877,6 @@ if (DDSIP_param->outlev > 21)
                                                         }
                                                         else
                                                         {
-                                                            j = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
                                                             time_end = DDSIP_GetCpuTime ();
                                                             printf ("      LB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
                                                             if (DDSIP_param->outlev)
@@ -3273,12 +3263,6 @@ TERMINATE:
     DDSIP_Free ((void **) &(minfirst));
     DDSIP_Free ((void **) &(maxfirst));
     DDSIP_Free ((void **) &(type));
-#ifdef SHIFT
-    if (DDSIP_param->hot == 4)
-    {
-        DDSIP_Free ((void **) &(time_sort_array));
-    }
-#endif
     return status;
 } // DDSIP_LowerBound
 
@@ -3322,13 +3306,18 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
 #ifdef CBHOTSTART 
 #ifdef SHIFT
     time_t   startTime;
-    double * time_sort_array = NULL;
     shift_in_cb = (DDSIP_param->hot == 4) ||
                   (DDSIP_param->cbhot == 4) ||
                   (DDSIP_param->cbhot == 3 && !DDSIP_bb->curnode) ||
                   (DDSIP_param->cbhot == 2 && !DDSIP_bb->curnode && (DDSIP_bb->dualdescitcnt <= 1 || DDSIP_bb->dualdescitcnt > 5)) ||
-                  (DDSIP_param->cbhot == 1 && !DDSIP_bb->curnode /*&& DDSIP_bb->dualdescitcnt*/ && DDSIP_bb->dualdescitcnt < 3);
+                  (DDSIP_param->cbhot <= 1 && !DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt < 3);
 #endif
+#endif
+#ifdef SHIFT
+    if (!(DDSIP_bb->dualitcnt))
+    {
+        memset (DDSIP_bb->aggregate_time, '\0', sizeof (double) * (DDSIP_param->scenarios));
+    }
 #endif
 
     DDSIP_bb->DDSIP_step = dual;
@@ -3364,13 +3353,6 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             fprintf (DDSIP_bb->moreoutfile, "Solving (dual opt. function eval) in node %d, desc. it. %d (limit: %d), tot. it. %3d (curr. desc.:%2d) weight = %g :\n", DDSIP_bb->curnode, DDSIP_bb->dualdescitcnt,DDSIP_param->cbrootitlim,DDSIP_bb->dualitcnt+1, DDSIP_bb->dualitcnt - DDSIP_bb->last_dualitcnt + 1, cb_get_last_weight(DDSIP_bb->dualProblem));
         }
     }
-#ifdef SHIFT
-    if (shift_in_cb)
-    {
-        // prepare for shifting difficult scenarios to the end such that they can make use of more mipstarts
-        time_sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "time_sort_array(LowerBound)");
-    }
-#endif
     // Initialization of indices, minfirst, and maxfirst
     for (j = 0; j < DDSIP_bb->firstvar + DDSIP_bb->secvar; j++)
         indices[j] = j;
@@ -4040,7 +4022,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             if (shift_in_cb)
             {
                 // prepare for shifting difficult scenarios to the end such that they can make use of more mipstarts
-                time_sort_array[scen] = difftime (DDSIP_bb->cur_time, startTime) + 0.1*time_start + 5.e3*gap;
+                DDSIP_bb->aggregate_time[scen] += difftime (DDSIP_bb->cur_time, startTime) + 0.1*time_start + 1.e3*gap;
             }
 #endif
             // Debugging information
@@ -4282,7 +4264,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
 #ifdef SHIFT
     if (shift_in_cb)
     {
-        DDSIP_qsort_ins_A (time_sort_array, DDSIP_bb->lb_scen_order, 0, DDSIP_param->scenarios-1);
+        DDSIP_qsort_ins_A (DDSIP_bb->aggregate_time, DDSIP_bb->lb_scen_order, 0, DDSIP_param->scenarios-1);
         DDSIP_bb->lb_sorted = 0;
         if (DDSIP_param->outlev > 21)
         {
@@ -4291,7 +4273,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             for (iscen = 0; iscen < DDSIP_param->scenarios; iscen++)
             {
                 fprintf(DDSIP_bb->moreoutfile," %3d: Scen %3d  %20.14g\n",
-                        iscen+1, DDSIP_bb->lb_scen_order[iscen]+1, time_sort_array[DDSIP_bb->lb_scen_order[iscen]]);
+                        iscen+1, DDSIP_bb->lb_scen_order[iscen]+1, DDSIP_bb->aggregate_time[DDSIP_bb->lb_scen_order[iscen]]);
             }
         }
     }
@@ -4847,12 +4829,6 @@ TERMINATE:
     DDSIP_Free ((void **) &(minfirst));
     DDSIP_Free ((void **) &(maxfirst));
     DDSIP_Free ((void **) &(type));
-#ifdef SHIFT
-    if (shift_in_cb)
-    {
-        DDSIP_Free ((void **) &(time_sort_array));
-    }
-#endif
     if (DDSIP_param->outlev > 11)
     {
         if (status)

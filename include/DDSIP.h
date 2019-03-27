@@ -624,6 +624,8 @@ extern "C" {
         double* local_bestdual;
         // multipliers from start info
         double* startinfo_multipliers;
+        // array to collect aggregated time info
+        double* aggregate_time;
         //  number of scenarios shifted to begin of the sorted list due to ub infeasibility
         int shifts;
         // an initial multiplier given?

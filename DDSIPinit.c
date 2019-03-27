@@ -499,6 +499,10 @@ DDSIP_BbTypeInit (void)
     }
 #endif
 
+    if (DDSIP_param->cb || DDSIP_param->hot == 4)
+    {
+        DDSIP_bb->aggregate_time = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "ref_scenobj(BbTypeInit)");
+    }
     DDSIP_node[0]->father = -1;
     DDSIP_node[0]->depth  = 0;
     DDSIP_node[0]->neoind = 0;

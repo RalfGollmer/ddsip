@@ -3306,11 +3306,11 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
 #ifdef CBHOTSTART 
 #ifdef SHIFT
     time_t   startTime;
-    shift_in_cb = (DDSIP_param->hot == 4) ||
-                  (DDSIP_param->cbhot == 4) ||
-                  (DDSIP_param->cbhot == 3 && !DDSIP_bb->curnode) ||
-                  (DDSIP_param->cbhot == 2 && !DDSIP_bb->curnode && (DDSIP_bb->dualdescitcnt <= 1 || DDSIP_bb->dualdescitcnt > 5)) ||
-                  (DDSIP_param->cbhot <= 1 && !DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt < 3);
+    shift_in_cb = (DDSIP_param->hot == 4 && DDSIP_bb->dualdescitcnt) ||
+                  (DDSIP_param->cbhot == 4 && DDSIP_bb->dualdescitcnt) ||
+                  (DDSIP_param->cbhot == 3 && !DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt) ||
+                  (DDSIP_param->cbhot == 2 && !DDSIP_bb->curnode && (DDSIP_bb->dualdescitcnt == 1 || DDSIP_bb->dualdescitcnt > 5)) ||
+                  (DDSIP_param->cbhot <= 1 && !DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt <= 3 && DDSIP_bb->dualdescitcnt >= 1);
 #endif
 #endif
 #ifdef SHIFT

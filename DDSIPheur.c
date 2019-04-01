@@ -592,8 +592,8 @@ DDSIP_Heuristics (int *comb, int nrScenarios, int feasCheckOnly)
     int i, j, status = 0;
     sug_t *tmp;
 
-    double *average = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar,
-                      "average(Heuristic)");
+    double *average = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar, "average(Heuristic)");
+    double *average_eq = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar, "average_eq(Heuristic)");
     tmp = DDSIP_bb->sug[DDSIP_param->nodelim + 2];
     if (!tmp)
     {
@@ -622,13 +622,19 @@ DDSIP_Heuristics (int *comb, int nrScenarios, int feasCheckOnly)
     for (j = 0; j < DDSIP_bb->firstvar; j++)
     {
         average[j] = DDSIP_data->prob[0] * (DDSIP_node[DDSIP_bb->curnode]->first_sol)[0][j];
+        average_eq[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[0][j];
     }
     for (i = 1; i < DDSIP_param->scenarios; i++)
     {
         for (j = 0; j < DDSIP_bb->firstvar; j++)
         {
             average[j] += DDSIP_data->prob[i] * (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][j];
+            average_eq[j] += (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][j];
         }
+    }
+    for (j = 0; j < DDSIP_bb->firstvar; j++)
+    {
+        average_eq[j] /= DDSIP_param->scenarios;
     }
 
     switch (DDSIP_param->heuristic)
@@ -719,6 +725,21 @@ DDSIP_Heuristics (int *comb, int nrScenarios, int feasCheckOnly)
             DDSIP_CloseToAverage (average);
             *comb = 3;
         }
+        break;
+    case 21:
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "round down          ");
+        DDSIP_RoundDown (average_eq);
+        break;
+    case 22:
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "round up            ");
+        DDSIP_RoundUp (average_eq);
+        break;
+    case 23:
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "round nearest       ");
+        DDSIP_RoundNear (average_eq);
         break;
     default:
         DDSIP_Frequent ();

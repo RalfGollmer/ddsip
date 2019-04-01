@@ -1174,7 +1174,7 @@ DDSIP_ReadSpec ()
 #ifdef NEOS
     DDSIP_param->outlev    = (int) floor (DDSIP_ReadDbl (specfile, "OUTLEV", " OUTPUT LEVEL", 0., 1, 0.,3.) + 0.1);
     DDSIP_param->files     = (int) floor (DDSIP_ReadDbl (specfile, "OUTFIL", " OUTPUT FILES LEVEL", 1., 1, 0., 1.) + 0.1);
-    DDSIP_param->timelim   = DDSIP_ReadDbl (specfile, "TIMELI", " TIME LIMIT", 7000., 0, 0., DDSIP_infty);
+    DDSIP_param->timelim   = DDSIP_ReadDbl (specfile, "TIMELI", " TIME LIMIT", 7000., 0, 0., 7190);
 #else
     DDSIP_param->outlev    = (int) floor (DDSIP_ReadDbl (specfile, "OUTLEV", " OUTPUT LEVEL", 1., 1, 0.,100.) + 0.1);
     DDSIP_param->files     = (int) floor (DDSIP_ReadDbl (specfile, "OUTFIL", " OUTPUT FILES LEVEL", 1., 1, 0., 6.) + 0.1);
@@ -1246,18 +1246,18 @@ DDSIP_ReadSpec ()
     }
     else if (DDSIP_param->heuristic == 100)
     {
-        DDSIP_param->heuristic_vector = (double *) DDSIP_Alloc (sizeof (double), 12, "values(DDSIP_ReadDblVec)");
+        DDSIP_param->heuristic_vector = (double *) DDSIP_Alloc (sizeof (double), 15, "values(DDSIP_ReadDblVec)");
         DDSIP_param->heuristic_vector[0] = 100;
         DDSIP_param->heuristic_vector[1] = 11;
         for (i = 1; i< 4; i++)
         {
             DDSIP_param->heuristic_vector[i + 1]     = i + 3;
             DDSIP_param->heuristic_vector[i + 4] = i;
+            DDSIP_param->heuristic_vector[i + 11] = i + 20;
         }
-        DDSIP_param->heuristic_vector[1] = 11;
         for (i = 7; i< 11; i++)
             DDSIP_param->heuristic_vector[i + 1] = i;
-        DDSIP_param->heuristic_num = 12;
+        DDSIP_param->heuristic_num = 15;
         DDSIP_param->heuristic_auto = 1;
         DDSIP_param->interrupt_heur = (int) floor (DDSIP_ReadDbl (specfile, "INTHEU", " INTERRUPT HEURISTIC LOOP", -1., 1, -1., 1.) + 0.1);
     }
@@ -1671,7 +1671,7 @@ DDSIP_ReadData ()
 {
     int i, j, k, status = 0, maxVarNameLength;
 
-    double probsum;
+    double probsum, h;
 
     char fname[DDSIP_ln_fname];
     char identifier[DDSIP_max_str_ln];
@@ -1810,6 +1810,15 @@ DDSIP_ReadData ()
 
     }
     fprintf (DDSIP_outfile, "\nSTOCHASTIC RHS DATA READ FROM `%s'.\n", fname);
+    h = DDSIP_data->prob[0];
+    for (i = 1; i < DDSIP_param->scenarios; i++)
+    {
+        if (!DDSIP_Equal (h, DDSIP_data->prob[i]))
+        {
+            DDSIP_param->heuristic_num = 12;
+            break;
+        }
+    }
 
     if (fabs (1. - probsum) > DDSIP_param->accuracy)
     {

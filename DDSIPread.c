@@ -1257,7 +1257,7 @@ DDSIP_ReadSpec ()
         }
         for (i = 7; i< 11; i++)
             DDSIP_param->heuristic_vector[i + 1] = i;
-        DDSIP_param->heuristic_num = 15;
+        DDSIP_param->heuristic_num = 12;
         DDSIP_param->heuristic_auto = 1;
         DDSIP_param->interrupt_heur = (int) floor (DDSIP_ReadDbl (specfile, "INTHEU", " INTERRUPT HEURISTIC LOOP", -1., 1, -1., 1.) + 0.1);
     }
@@ -1815,7 +1815,7 @@ DDSIP_ReadData ()
     {
         if (!DDSIP_Equal (h, DDSIP_data->prob[i]))
         {
-            DDSIP_param->heuristic_num = 12;
+            DDSIP_param->heuristic_num = 15;
             break;
         }
     }

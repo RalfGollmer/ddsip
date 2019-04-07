@@ -476,9 +476,12 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
 ////////////////////////////////////////////
 #endif
 
+        if (DDSIP_param->outlev > 20 && DDSIP_bb->curnode && DDSIP_node[DDSIP_node[DDSIP_bb->curnode]->father]->cbReturn32)
+            fprintf (DDSIP_bb->moreoutfile, "########## DDSIP_node[%d >father]->cbReturn32 = 1\n", DDSIP_bb->curnode);
         // Dual method
-        if ((DDSIP_param->cb > 0 && (!(DDSIP_bb->noiter % abs(DDSIP_param->cb))) && (abs(DDSIP_param->riskmod) != 4 || DDSIP_bb->noiter)) ||
-            (DDSIP_param->cb < 0 && (((DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->cb_depth) && abs(DDSIP_param->riskmod) != 4) ||
+        if ((!DDSIP_bb->curnode || !DDSIP_node[DDSIP_node[DDSIP_bb->curnode]->father]->cbReturn32) &&
+            ((DDSIP_param->cb > 0 && (!(DDSIP_bb->noiter % abs(DDSIP_param->cb))) && (abs(DDSIP_param->riskmod) != 4 || DDSIP_bb->noiter)) ||
+             (DDSIP_param->cb < 0 && (((DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->cb_depth) && abs(DDSIP_param->riskmod) != 4) ||
                                       (abs(DDSIP_param->riskmod) == 5 && DDSIP_node[DDSIP_bb->curnode]->depth == 8) ||
                                       (DDSIP_bb->noiter > DDSIP_param->cbBreakIters && 
                                         ((!(DDSIP_bb->noiter % abs(DDSIP_param->cb))) ||
@@ -497,6 +500,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
                                           (CBFORALL || (DDSIP_node[DDSIP_bb->curnode]->numInheritedSols > (DDSIP_Imin(DDSIP_param->scenarios/20,2)+(DDSIP_param->scenarios+1)/2))))
                                    )
                 )
+            )
            )
         {
             DDSIP_bb->DDSIP_step = DDSIP_node[DDSIP_bb->curnode]->step = dual;

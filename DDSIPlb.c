@@ -3285,7 +3285,8 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     int cnt, iscen, i_scen, j, k, k1, status = 0, optstatus, mipstatus, scen, relax = 0, increase = 9;
     int wall_hrs, wall_mins,cpu_hrs, cpu_mins;
     int nodes_1st, nodes_2nd;
-    static double original_weight;
+    static int nearly_constant = 0, totally_constant = 0;
+    static double original_weight, old_value = -1.e30;
     double weight_reset_factor = 1.8;
     static int use_LB_params = 0;
 
@@ -3310,7 +3311,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                   (DDSIP_param->cbhot == 4 && DDSIP_bb->dualdescitcnt) ||
                   (DDSIP_param->cbhot == 3 && !DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt) ||
                   (DDSIP_param->cbhot == 2 && !DDSIP_bb->curnode && (DDSIP_bb->dualdescitcnt == 1 || DDSIP_bb->dualdescitcnt > 5)) ||
-                  (DDSIP_param->cbhot <= 1 && !DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt <= 3 && DDSIP_bb->dualdescitcnt >= 1);
+                  (DDSIP_param->cbhot == 1 && !DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt <= 3 && DDSIP_bb->dualdescitcnt >= 1);
 #endif
 #endif
 #ifdef SHIFT
@@ -4349,6 +4350,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             // for the case of no bound increase, when the initial evaluation (with weight -1) was best, make the weight 0.1
             if (DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] < 0.)
               DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = 0.1;
+            nearly_constant = totally_constant = 0;
             if (DDSIP_param->outlev > 10)
               fprintf (DDSIP_bb->moreoutfile," +++-> bestdual for node updated in desc. it. %d, tot. it. %g  (weight %g)\n", DDSIP_bb->dualdescitcnt, DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2],  DDSIP_bb->local_bestdual[DDSIP_bb->dimdual]);
         }
@@ -4716,7 +4718,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             }
         }
     }
-    // Count again the number of differences within first stage solution in current node
+    // Count again the number of differences within first stage solution in current node for the bestbound solution
     // DDSIP_bb->violations=k means differences in k components
     if (DDSIP_param->outlev > 34)
     {
@@ -4738,13 +4740,27 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     maxdispersion = 0.;
     for (j = 0; j < DDSIP_bb->firstvar; j++)
     {
+        minfirst[j] = DDSIP_infty;
+        maxfirst[j] = -DDSIP_infty;
+    }
+    for (scen = 0; scen < DDSIP_param->scenarios; scen++)
+    {
+        for (j = 0; j < DDSIP_bb->firstvar; j++)
+        {
+            // Calculate minimum and maximum of each component
+            minfirst[j] = DDSIP_Dmin ((DDSIP_bb->bestfirst[scen].first_sol)[j], minfirst[j]);
+            maxfirst[j] = DDSIP_Dmax ((DDSIP_bb->bestfirst[scen].first_sol)[j], maxfirst[j]);
+        }
+    }
+    for (j = 0; j < DDSIP_bb->firstvar; j++)
+    {
         if (!DDSIP_Equal (maxfirst[j], minfirst[j]))
         {
             DDSIP_bb->violations++;
             maxdispersion = DDSIP_Dmax (maxdispersion, maxfirst[j]-minfirst[j]);
             // More Output
             if (DDSIP_param->outlev > 34)
-                fprintf (DDSIP_bb->moreoutfile, "Deviation of variable %d: min=%16.14g\t max=%16.14g\t diff=%16.14g  \t%s\n", j, minfirst[j], maxfirst[j], maxfirst[j] - minfirst[j], colname[DDSIP_bb->firstindex[j]]);
+                fprintf (DDSIP_bb->moreoutfile, "Deviation of variable %5d: min=%16.14g\t max=%16.14g\t diff=%16.14g  \t%10.10s\tmaxdisp: %g\n", DDSIP_bb->firstindex[j], minfirst[j], maxfirst[j], maxfirst[j] - minfirst[j], colname[DDSIP_bb->firstindex[j]], maxdispersion);
         }
     }
     if (DDSIP_param->outlev > 34)
@@ -4811,7 +4827,35 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         fprintf (DDSIP_bb->moreoutfile, "\tCurrent dual objective value             = \t%-18.16g          \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
         fprintf (DDSIP_bb->moreoutfile, "\tBest dual objective value in descent step= \t%-18.16g\n", DDSIP_bb->dualObjVal);
     }
-
+    if (DDSIP_bb->dualdescitcnt && fabs (-(*objective_val) - old_value)/(fabs (old_value) + 1.e-16) < 1.e-17)
+    {
+        totally_constant++;
+        if (DDSIP_param->outlev > 20)
+            fprintf (DDSIP_bb->moreoutfile, "\tobj change: %g, totally_constant: %d\n", fabs (-(*objective_val) - old_value)/(fabs (old_value) + 1.e-16), totally_constant);
+    }
+    if (DDSIP_bb->dualdescitcnt && (fabs (-(*objective_val) - old_value)/(fabs(old_value) + 1.e-16) < 1.e-14 || fabs (-(*objective_val) - old_value) < 1.e-15))
+    {
+        nearly_constant++;
+        if (DDSIP_param->outlev > 20)
+            fprintf (DDSIP_bb->moreoutfile, "\tobj change: %g, nearly_constant: %d\n", fabs (-(*objective_val) - old_value)/(fabs(old_value) + 1.e-16), nearly_constant);
+    }
+    old_value = -(*objective_val);
+    if (totally_constant > 2)
+    {
+        wr =  DDSIP_Dmax (1.0e4, 10.*cb_get_last_weight(DDSIP_bb->dualProblem));
+        if (DDSIP_param->outlev > 20)
+            fprintf (DDSIP_bb->moreoutfile, "####\tset new weight to %g, totally_constant:%d (nearly_constant: %d)\n", wr, totally_constant, nearly_constant);
+        cb_set_next_weight (DDSIP_bb->dualProblem, wr);
+        nearly_constant = totally_constant = 0;
+    }
+    else if (nearly_constant > 4)
+    {
+        wr =  0.4*cb_get_last_weight(DDSIP_bb->dualProblem);
+        if (DDSIP_param->outlev > 20)
+            fprintf (DDSIP_bb->moreoutfile, "####\tset new weight to %g, nearly_constant: %d (totally_constant:%d)\n", wr, nearly_constant, totally_constant);
+        cb_set_next_weight (DDSIP_bb->dualProblem, wr);
+        nearly_constant = totally_constant = 0;
+    }
 TERMINATE:
 
     // Only if no errors, yet.

@@ -511,6 +511,7 @@ DDSIP_BbTypeInit (void)
     DDSIP_node[0]->bound = -DDSIP_infty;
     DDSIP_node[0]->dispnorm = DDSIP_infty;
     DDSIP_node[0]->leaf = 0;
+    DDSIP_node[0]->cbReturn32 = 0;
 
     if (DDSIP_param->riskmod == 3)
         DDSIP_node[0]->target = -DDSIP_infty;

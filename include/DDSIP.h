@@ -638,6 +638,8 @@ extern "C" {
         int Dive;
         // could we keep solutions (for reinits)?
         int keepSols;
+        // are we recomputing with zero multipliers??
+        int zeroMult;
 
     } bb_t;
 
@@ -714,6 +716,9 @@ extern "C" {
 
         //was there a cut added in the meantime?
         int cutAdded;
+
+        //return code of CB 32?
+        int cbReturn32;
 
     } node_t;
 

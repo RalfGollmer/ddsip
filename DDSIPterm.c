@@ -255,6 +255,7 @@ DDSIP_Continue (int *noiter, int *boundstat)
                     DDSIP_Free ((void **) &(colname));
                     DDSIP_Free ((void **) &(index));
                     fclose (outputfile);
+#ifndef NEOS
 #ifndef _WIN32
                     {
                         char command[256];
@@ -268,6 +269,7 @@ DDSIP_Continue (int *noiter, int *boundstat)
                             i = system (command);
                         }
                     }
+#endif
 #endif
                 }
             }

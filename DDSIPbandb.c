@@ -128,6 +128,8 @@ DDSIP_InitNewNodes (void)
 
     DDSIP_node[DDSIP_bb->nonode]->cutAdded = 0;
     DDSIP_node[DDSIP_bb->nonode + 1]->cutAdded = 0;
+    DDSIP_node[DDSIP_bb->nonode]->cbReturn32 = DDSIP_node[DDSIP_bb->curnode]->cbReturn32;
+    DDSIP_node[DDSIP_bb->nonode + 1]->cbReturn32 = DDSIP_node[DDSIP_bb->curnode]->cbReturn32;
 
     if (DDSIP_param->hot)
     {
@@ -1107,7 +1109,7 @@ DDSIP_Bound (void)
         {
             fprintf (DDSIP_bb->moreoutfile,
                      "No of front nodes: %d (including %d leaves)     found_optimal_node: %d, bestbound: %18.12g\n", DDSIP_bb->nofront, DDSIP_bb->nofront - DDSIP_bb->no_reduced_front, DDSIP_bb->found_optimal_node, DDSIP_bb->bestbound);
-            fprintf (DDSIP_bb->moreoutfile, "     No.   bound             violations dispnorm  branchvar lower bound  upper        range         depth isleaf solved cutAdded\n");
+            fprintf (DDSIP_bb->moreoutfile, "     No.   bound             violations dispnorm  branchvar  lower bound   upper        range       depth isleaf solved cutAdded\n");
             j = (DDSIP_param->outlev > 21 || !(DDSIP_bb->curnode % 200)) ? DDSIP_bb->nofront : DDSIP_Imin(DDSIP_bb->nofront,25);
             for (i = 0; i < j; i++)
             {

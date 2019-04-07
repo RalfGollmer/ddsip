@@ -393,6 +393,7 @@ DDSIP_DualOpt (void)
 
     DDSIP_bb->DDSIP_step = dual;
     DDSIP_bb->last_dualitcnt = 0;
+    DDSIP_bb->zeroMult = 0;
     diff = -1.;
     inherited_bound = DDSIP_node[DDSIP_bb->curnode]->bound;
     if (DDSIP_param->outlev)
@@ -2780,6 +2781,12 @@ while (tmp1_bestdual)
             printf ("   --------- ");
             fprintf (DDSIP_outfile, "   --------- ");
             i_scen=cb_termination_code (p);
+            if (i_scen == 32)
+            {
+                 DDSIP_node[DDSIP_bb->curnode]->cbReturn32 = 1;
+                 if (DDSIP_param->outlev > 20)
+                    fprintf (DDSIP_bb->moreoutfile, "########## DDSIP_node[%d]->cbReturn32 = 1\n", DDSIP_bb->curnode);
+            }
             //if (obj > DDSIP_bb->bestvalue)
             if ((obj - DDSIP_bb->bestvalue) > DDSIP_param->accuracy*(fabs(DDSIP_bb->bestvalue)+1.e-10))
             {
@@ -2867,6 +2874,7 @@ while (tmp1_bestdual)
 ////////////////////////////////////////////////////////////////////////////// computation of bounds for premature stop only when cutoff not yet decided
         if (DDSIP_param->prematureStop && (DDSIP_bb->curnode || DDSIP_bb->initial_multiplier) && !DDSIP_node[DDSIP_bb->curnode]->leaf)
         {
+            DDSIP_bb->zeroMult = 1;
             // Initialize multipliers with zero
             memset (DDSIP_bb->startinfo_multipliers, '\0', sizeof (double) * (DDSIP_bb->dimdual));
             if ((status = cb_set_new_center_point (p, DDSIP_bb->startinfo_multipliers)))

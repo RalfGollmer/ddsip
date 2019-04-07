@@ -4718,7 +4718,8 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             }
         }
     }
-    // Count again the number of differences within first stage solution in current node for the bestbound solution
+    // Count again the number of differences within first stage solution in current node
+    // do this for the bestbound solution in case it was a step with zero multipliers
     // DDSIP_bb->violations=k means differences in k components
     if (DDSIP_param->outlev > 34)
     {
@@ -4738,19 +4739,22 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     }
     DDSIP_bb->violations = 0;
     maxdispersion = 0.;
-    for (j = 0; j < DDSIP_bb->firstvar; j++)
+    if (DDSIP_bb->zeroMult)
     {
-        minfirst[j] = DDSIP_infty;
-        maxfirst[j] = -DDSIP_infty;
-    }
-    for (scen = 0; scen < DDSIP_param->scenarios; scen++)
-    {
-        for (j = 0; j < DDSIP_bb->firstvar; j++)
-        {
-            // Calculate minimum and maximum of each component
-            minfirst[j] = DDSIP_Dmin ((DDSIP_bb->bestfirst[scen].first_sol)[j], minfirst[j]);
-            maxfirst[j] = DDSIP_Dmax ((DDSIP_bb->bestfirst[scen].first_sol)[j], maxfirst[j]);
-        }
+         for (j = 0; j < DDSIP_bb->firstvar; j++)
+         {
+             minfirst[j] = DDSIP_infty;
+             maxfirst[j] = -DDSIP_infty;
+         }
+         for (scen = 0; scen < DDSIP_param->scenarios; scen++)
+         {
+             for (j = 0; j < DDSIP_bb->firstvar; j++)
+             {
+                 // Calculate minimum and maximum of each component
+                 minfirst[j] = DDSIP_Dmin ((DDSIP_bb->bestfirst[scen].first_sol)[j], minfirst[j]);
+                 maxfirst[j] = DDSIP_Dmax ((DDSIP_bb->bestfirst[scen].first_sol)[j], maxfirst[j]);
+             }
+         }
     }
     for (j = 0; j < DDSIP_bb->firstvar; j++)
     {

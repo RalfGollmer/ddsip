@@ -825,7 +825,7 @@ DDSIP_Bound (void)
                     DDSIP_qsort_ins_D (front_node_bound, DDSIP_bb->front_nodes_sorted, 0, DDSIP_bb->nofront-1);
                     if (DDSIP_param->boundstrat < 6 || DDSIP_param->boundstrat == 10)
                     {
-                        double threshold;
+                        double threshold = -1e6;
                         DDSIP_bb->Dive = 0;
                         bestAmongTheLast = DDSIP_infty;
                         // branch the one with best bound among the last generated nodes
@@ -848,7 +848,7 @@ DDSIP_Bound (void)
                             bestAmongTheLast = DDSIP_Dmin(front_node_bound[DDSIP_bb->front_nodes_sorted[i]], bestAmongTheLast);
                         }
                         DDSIP_qsort_ins_A (front_node_bound, DDSIP_bb->front_nodes_sorted, 0, depth_first_nodes-1);
-                        threshold = DDSIP_bb->Dive ? (bestAmongTheLast > 0.15*DDSIP_bb->bestbound + 0.85*worstBound):(1. - DDSIP_param->btTolerance)*DDSIP_bb->bestbound + DDSIP_param->btTolerance*worstBound;
+                        threshold = DDSIP_bb->Dive ? 0.15*DDSIP_bb->bestbound + 0.85*worstBound:(1. - DDSIP_param->btTolerance)*DDSIP_bb->bestbound + DDSIP_param->btTolerance*worstBound;
                         for (i = depth_first_nodes; i < DDSIP_bb->nofront; i++)
                         {
                             front_node_bound[DDSIP_bb->front_nodes_sorted[i]] =  (DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->leaf) ? DDSIP_infty : DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound;
@@ -866,7 +866,7 @@ DDSIP_Bound (void)
                             if ((!DDSIP_bb->Dive &&
                                  (bestAmongTheLast > threshold || DDSIP_bb->bestBound ||
                                  ((fabs (DDSIP_bb->bestvalue) < DDSIP_infty) && !(DDSIP_bb->noiter % 50)))) ||
-                                (DDSIP_bb->Dive && bestAmongTheLast > 0.15*DDSIP_bb->bestbound + 0.85*worstBound)
+                                (DDSIP_bb->Dive && bestAmongTheLast > threshold)
                                )
                             {
                                 for  (i = 0; i < DDSIP_bb->nofront; i++)
@@ -909,7 +909,7 @@ DDSIP_Bound (void)
                             {
                                 for (i = 0; i < depth_first_nodes; i++)
                                 {
-                                    front_node_bound[DDSIP_bb->front_nodes_sorted[i]] =  (DDSIP_node[DDSIP_bb->front[i]]->leaf) ? DDSIP_infty : 10.*DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->dispnorm + DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->violations;
+                                    front_node_bound[DDSIP_bb->front_nodes_sorted[i]] =  (DDSIP_node[DDSIP_bb->front[i]]->leaf) ? DDSIP_infty : DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound + 10.*DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->dispnorm + DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->violations;
                                 }
                             }
                             DDSIP_qsort_ins_A (front_node_bound, DDSIP_bb->front_nodes_sorted, 0, i-1);

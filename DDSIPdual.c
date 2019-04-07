@@ -393,7 +393,6 @@ DDSIP_DualOpt (void)
 
     DDSIP_bb->DDSIP_step = dual;
     DDSIP_bb->last_dualitcnt = 0;
-    DDSIP_bb->zeroMult = 0;
     diff = -1.;
     inherited_bound = DDSIP_node[DDSIP_bb->curnode]->bound;
     if (DDSIP_param->outlev)
@@ -2286,7 +2285,7 @@ NEXT_TRY:
                         cb_get_center (p,center_point);
 ///////////////
                         // if the center point is not local_bestdual (may occur when maxsteps reached) - set center point to local_bestdual
-                        if (cur_iters > 3 && DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2] &&
+                        if (cur_iters > 2 && DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2] &&
                             memcmp(DDSIP_bb->local_bestdual, center_point, sizeof (double) * (DDSIP_bb->dimdual)) &&
                             (int) DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2] != DDSIP_bb->dualitcnt &&
                             (obj - old_obj)/(fabs(old_obj) + 1.e-10) > 1.e-8 &&
@@ -2874,7 +2873,6 @@ while (tmp1_bestdual)
 ////////////////////////////////////////////////////////////////////////////// computation of bounds for premature stop only when cutoff not yet decided
         if (DDSIP_param->prematureStop && (DDSIP_bb->curnode || DDSIP_bb->initial_multiplier) && !DDSIP_node[DDSIP_bb->curnode]->leaf)
         {
-            DDSIP_bb->zeroMult = 1;
             // Initialize multipliers with zero
             memset (DDSIP_bb->startinfo_multipliers, '\0', sizeof (double) * (DDSIP_bb->dimdual));
             if ((status = cb_set_new_center_point (p, DDSIP_bb->startinfo_multipliers)))
@@ -3090,17 +3088,20 @@ while (tmp1_bestdual)
         }
     }
     //determine variable to branch on
+    diff = -1.;
     if (!DDSIP_node[DDSIP_bb->curnode]->leaf && !DDSIP_killsignal)
     {
         for (j = 0; j < DDSIP_bb->firstvar; j++)
         {
             maxfirst[j] -= minfirst[j];
+            diff = DDSIP_Dmax (diff, maxfirst[j]);
             if (fabs(maxfirst[j])>DDSIP_param->nulldisp)
             {
                 if (DDSIP_param->outlev>40)
                     fprintf (DDSIP_bb->moreoutfile," ---- Deviation of variable %d : %g\n",j,maxfirst[j]);
             }
         }
+        DDSIP_node[DDSIP_bb->curnode]->dispnorm = diff;
         status = DDSIP_GetBranchIndex (maxfirst);
     }
     DDSIP_Free ((void **) &(minfirst));

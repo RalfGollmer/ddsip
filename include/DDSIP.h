@@ -638,8 +638,6 @@ extern "C" {
         int Dive;
         // could we keep solutions (for reinits)?
         int keepSols;
-        // are we recomputing with zero multipliers??
-        int zeroMult;
 
     } bb_t;
 

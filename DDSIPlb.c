@@ -4739,23 +4739,6 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     }
     DDSIP_bb->violations = 0;
     maxdispersion = 0.;
-    if (DDSIP_bb->zeroMult)
-    {
-         for (j = 0; j < DDSIP_bb->firstvar; j++)
-         {
-             minfirst[j] = DDSIP_infty;
-             maxfirst[j] = -DDSIP_infty;
-         }
-         for (scen = 0; scen < DDSIP_param->scenarios; scen++)
-         {
-             for (j = 0; j < DDSIP_bb->firstvar; j++)
-             {
-                 // Calculate minimum and maximum of each component
-                 minfirst[j] = DDSIP_Dmin ((DDSIP_bb->bestfirst[scen].first_sol)[j], minfirst[j]);
-                 maxfirst[j] = DDSIP_Dmax ((DDSIP_bb->bestfirst[scen].first_sol)[j], maxfirst[j]);
-             }
-         }
-    }
     for (j = 0; j < DDSIP_bb->firstvar; j++)
     {
         if (!DDSIP_Equal (maxfirst[j], minfirst[j]))

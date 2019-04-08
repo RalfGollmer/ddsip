@@ -909,7 +909,10 @@ DDSIP_Bound (void)
                             {
                                 for (i = 0; i < depth_first_nodes; i++)
                                 {
-                                    front_node_bound[DDSIP_bb->front_nodes_sorted[i]] =  (DDSIP_node[DDSIP_bb->front[i]]->leaf) ? DDSIP_infty : DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound + 10.*DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->dispnorm + DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->violations;
+                                    if (DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound > threshold)
+                                        front_node_bound[DDSIP_bb->front_nodes_sorted[i]] =  DDSIP_infty;
+                                    else
+                                        front_node_bound[DDSIP_bb->front_nodes_sorted[i]] =  (DDSIP_node[DDSIP_bb->front[i]]->leaf) ? DDSIP_infty : DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound + 10.*DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->dispnorm + DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->violations;
                                 }
                             }
                             DDSIP_qsort_ins_A (front_node_bound, DDSIP_bb->front_nodes_sorted, 0, i-1);

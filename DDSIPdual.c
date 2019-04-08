@@ -1042,7 +1042,6 @@ DDSIP_DualOpt (void)
                 }
                 old_obj = obj = DDSIP_bb->dualObjVal;
             }
-            DDSIP_bb->last_dualitcnt = DDSIP_bb->dualitcnt;
             last_weight = next_weight;
         }
         init_iters = DDSIP_bb->dualitcnt;
@@ -1053,11 +1052,11 @@ DDSIP_DualOpt (void)
         diff = obj - inherited_bound;
         if (obj > inherited_bound)
         {
-           inherited_bound = obj;
-        }
-        if (DDSIP_param->outlev > 20)
-        {
-           fprintf (DDSIP_bb->moreoutfile, " ######## inherited_bound (=%.14g) - obj (=%.14g) = %g #########################\n", inherited_bound, obj, inherited_bound - obj);
+            if (DDSIP_param->outlev > 20)
+            {
+               fprintf (DDSIP_bb->moreoutfile, " ######## update inherited_bound (=%.14g) to obj (=%.14g) #########################\n", inherited_bound, obj);
+            }
+            inherited_bound = obj;
         }
         DDSIP_bb->keepSols = 0;
         if (DDSIP_param->cb_checkBestdual && DDSIP_bb->bestdual_cnt &&
@@ -1067,6 +1066,7 @@ DDSIP_DualOpt (void)
             bbest_t * tmp_bestdual, * tmp_previous, * tmp_maxbound = NULL, * tmp_minbound = NULL, * tmp_minprevious = NULL;
             double max_weight, max_bound, min_bound;
             tmp_bestdual = tmp_previous = DDSIP_bb->bestdual;
+            tmp_maxbound = tmp_bestdual;
             max_bound = -DDSIP_infty;
             min_bound =  DDSIP_infty;
             max_weight = start_weight;
@@ -1675,7 +1675,7 @@ if(DDSIP_param->outlev > 20)
             }
         }
     }
-
+    DDSIP_bb->last_dualitcnt = DDSIP_bb->dualitcnt;
 
     if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 0.5*(fabs(DDSIP_bb->bestvalue) + 1e-10)*DDSIP_param->relgap)
     {
@@ -1751,11 +1751,6 @@ if(DDSIP_param->outlev > 20)
     else
     {
         int current_itlim = 1;
-        if (DDSIP_param->outlev && DDSIP_bb->cutAdded)
-        {
-            printf ("  | %16d  %86d cuts\n", DDSIP_bb->dualdescitcnt, DDSIP_bb->cutAdded);
-            fprintf (DDSIP_outfile, "  | %16d  %86d cuts\n", DDSIP_bb->dualdescitcnt, DDSIP_bb->cutAdded);
-        }
         if (!(DDSIP_bb->curnode) && DDSIP_param->deleteRedundantCuts)
             DDSIP_CheckRedundancy(1);
         noIncreaseCounter = 0;

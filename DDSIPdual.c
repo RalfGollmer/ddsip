@@ -1069,11 +1069,11 @@ DDSIP_DualOpt (void)
         {
             bbest_t * tmp_bestdual, * tmp_previous, * tmp_maxbound = NULL, * tmp_minbound = NULL, * tmp_minprevious = NULL;
             double max_weight, max_bound, min_bound;
-            tmp_bestdual = tmp_previous = DDSIP_bb->bestdual;
-            tmp_maxbound = tmp_bestdual;
+            tmp_maxbound = tmp_bestdual = tmp_previous = DDSIP_bb->bestdual;
             max_bound = -DDSIP_infty;
             min_bound =  DDSIP_infty;
             max_weight = start_weight;
+            cnt = 0;
             if (DDSIP_param->outlev)
             {
                 DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
@@ -1102,7 +1102,6 @@ DDSIP_DualOpt (void)
             }
             old_obj = obj = DDSIP_bb->dualObjVal;
             // test Lagrange multipliers from DDSIP_bb->bestdual
-            cnt = 0;
             while (tmp_bestdual && obj < DDSIP_bb->bestvalue - 0.5*DDSIP_param->relgap*(fabs(DDSIP_bb->bestvalue)+1.e-10))
             {
                 if (tmp_bestdual->node_nr != (int) DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual + 1]
@@ -1146,6 +1145,7 @@ DDSIP_DualOpt (void)
                         DDSIP_Free ((void **) &(center_point));
                         return status;
                     }
+                    cnt = 1;
                     obj = DDSIP_bb->dualObjVal;
                     diff = obj - inherited_bound;
                     if (obj < min_bound)
@@ -1206,8 +1206,6 @@ while (tmp1_bestdual)
                                 cnt = 1;
                             break;
                         }
-                        if (obj < max_bound)
-                            cnt = -1;
                     }
                     else
                     {

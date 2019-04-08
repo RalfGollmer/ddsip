@@ -1040,6 +1040,10 @@ DDSIP_DualOpt (void)
                     next_weight *= 5.0;
                     cb_set_next_weight (p, next_weight);
                 }
+                if (DDSIP_bb->currentDualObjVal > DDSIP_bb->dualObjVal)
+                {
+                    DDSIP_bb->dualObjVal = DDSIP_bb->currentDualObjVal;
+                }
                 old_obj = obj = DDSIP_bb->dualObjVal;
             }
             last_weight = next_weight;

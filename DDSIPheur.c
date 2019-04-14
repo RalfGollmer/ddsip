@@ -692,6 +692,7 @@ DDSIP_Heuristics (int *comb, int nrScenarios, int feasCheckOnly)
     case 11:			// all scen solutions occurring sufficiently often
         status = DDSIP_OneTenth (nrScenarios, feasCheckOnly);
         DDSIP_Free ((void **) &(average));
+        DDSIP_Free ((void **) &(average_eq));
         return status;
     case 12:
         if (DDSIP_param->outlev)
@@ -747,6 +748,7 @@ DDSIP_Heuristics (int *comb, int nrScenarios, int feasCheckOnly)
     }
 
     DDSIP_Free ((void **) &(average));
+    DDSIP_Free ((void **) &(average_eq));
 
     if (!status && DDSIP_bb->sug[DDSIP_param->nodelim + 2])
     {

@@ -470,15 +470,18 @@ DDSIP_DualOpt (void)
     if (DDSIP_bb->curnode)
     {
         start_weight = DDSIP_param->cbfactor*DDSIP_param->cbweight + (1. - DDSIP_param->cbfactor)*DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual];
-        // idea: limit too big start weights - speed up or slow down?
-        //       cpu_secs is used for the limit
-        cpu_secs = 2e-2 * fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 10.;
-        if (start_weight > cpu_secs && (!DDSIP_param->riskmod ||start_weight > DDSIP_param->riskweight))
-            start_weight = DDSIP_Dmin((start_weight-cpu_secs)*0.5  + cpu_secs, fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 1.);
-        if (DDSIP_param->riskmod == 4)
+        if (DDSIP_param->cb_increaseWeight || DDSIP_param->cb_reduceWeight)
         {
-            if (start_weight < DDSIP_param->riskweight*0.2)
-                start_weight = DDSIP_param->riskweight*0.2;
+            // idea: limit too big start weights - speed up or slow down?
+            //       cpu_secs is used for the limit
+            cpu_secs = 2e-2 * fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 10.;
+            if (start_weight > cpu_secs && (!DDSIP_param->riskmod ||start_weight > DDSIP_param->riskweight))
+                start_weight = DDSIP_Dmin((start_weight-cpu_secs)*0.5  + cpu_secs, fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 1.);
+            if (DDSIP_param->riskmod == 4)
+            {
+                if (start_weight < DDSIP_param->riskweight*0.2)
+                    start_weight = DDSIP_param->riskweight*0.2;
+            }
         }
     }
     else
@@ -1109,18 +1112,24 @@ DDSIP_DualOpt (void)
                     && (!DDSIP_MultEqual (DDSIP_bb->startinfo_multipliers, tmp_bestdual->dual))
                    )
                 {
-                  memcpy (DDSIP_node[DDSIP_bb->curnode]->dual, tmp_bestdual->dual, sizeof (double) * DDSIP_bb->dimdual);
-                  DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual+1] = tmp_bestdual->node_nr;
-                    next_weight = last_weight = DDSIP_Dmin(
-                                                    0.1*(fabs(DDSIP_bb->bestbound) + 1.),
-                                                    DDSIP_param->cbfactor*DDSIP_param->cbweight + (1. - DDSIP_param->cbfactor)*
-                                                    last_weight > tmp_bestdual->weight?
-                                                    (0.7*last_weight + 0.3*tmp_bestdual->weight):
-                                                    (0.3*last_weight + 0.7*tmp_bestdual->weight)
-                                                );
-                    max_weight = DDSIP_Dmax (max_weight, next_weight);
-                    cb_set_next_weight (p, next_weight);
-
+                    memcpy (DDSIP_node[DDSIP_bb->curnode]->dual, tmp_bestdual->dual, sizeof (double) * DDSIP_bb->dimdual);
+                    DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual+1] = tmp_bestdual->node_nr;
+                    if (DDSIP_param->cb_increaseWeight || DDSIP_param->cb_reduceWeight)
+                    {
+                        next_weight = last_weight = DDSIP_Dmin(
+                            0.1*(fabs(DDSIP_bb->bestbound) + 1.),
+                            DDSIP_param->cbfactor*DDSIP_param->cbweight + (1. - DDSIP_param->cbfactor)*
+                            last_weight > tmp_bestdual->weight?
+                            (0.7*last_weight + 0.3*tmp_bestdual->weight):
+                            (0.3*last_weight + 0.7*tmp_bestdual->weight));
+                        max_weight = DDSIP_Dmax (max_weight, next_weight);
+                        cb_set_next_weight (p, next_weight);
+                    }
+                    else
+                    {
+                        max_weight = next_weight = last_weight = start_weight;
+                        cb_set_next_weight (p, next_weight);
+                    }
 #ifdef DEBUG
                     if (DDSIP_param->outlev > 21 && DDSIP_param->outlev < DDSIP_current_lambda_outlev)
                     {
@@ -1249,6 +1258,35 @@ while (tmp1_bestdual)
                         }
                     }
                 }
+                else if (tmp_bestdual != DDSIP_bb->bestdual && DDSIP_MultEqual (DDSIP_bb->startinfo_multipliers, tmp_bestdual->dual) && tmp_minbound)
+                {
+                    if (tmp_bestdual->bound > tmp_minbound->bound)
+                    {
+                        // put this one at the top of the list
+                        if (tmp_bestdual != DDSIP_bb->bestdual)
+                        {
+                            tmp_previous->next = tmp_bestdual->next;
+                            tmp_bestdual->next = DDSIP_bb->bestdual;
+                            DDSIP_bb->bestdual = tmp_bestdual;
+//######################
+//#ifdef DEBUG
+if (DDSIP_param->outlev > 10)
+{
+int jj = 1;
+bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
+fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d\n", tmp1_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
+while (tmp1_bestdual)
+{
+   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
+   tmp1_bestdual = tmp1_bestdual->next;
+}
+}
+//#endif
+//######################
+                            tmp_bestdual =  tmp_previous;
+                        }
+                    }
+                }
                 tmp_previous = tmp_bestdual;
                 tmp_bestdual = tmp_bestdual->next;
 #ifdef DEBUG
@@ -1307,8 +1345,11 @@ while (tmp1_bestdual)
             if (cnt && DDSIP_bb->skip != 2)
             {
                 // go back to the multipliers which gave the best bound - either from bestdual or the inherited one
-                last_weight = next_weight = 0.3*DDSIP_Dmin(max_weight, 5e+2) + 0.7*start_weight;
-                cb_set_next_weight (p, next_weight);
+                if (DDSIP_param->cb_increaseWeight || DDSIP_param->cb_reduceWeight)
+                {
+                    last_weight = next_weight = 0.3*DDSIP_Dmin(max_weight, 5e+2) + 0.7*start_weight;
+                    cb_set_next_weight (p, next_weight);
+                }
                 if (max_bound > inherited_bound)
                 {
 //////////////////////////
@@ -2314,6 +2355,8 @@ NEXT_TRY:
                         if (DDSIP_param->outlev > 10)
                             fprintf(DDSIP_bb->moreoutfile,"############### iters in descent step: %d, up to now: repeated increase= %d, many_iters= %d, weight change by CB: %g ##################\n", cur_iters, repeated_increase, many_iters,  start_weight);
 /////////
+                        if (start_weight > 0.)
+                            reduction_factor = DDSIP_Dmax (0.7, reduction_factor);
                         if (DDSIP_param->cb_reduceWeight && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight && start_weight == 0. &&
                                 (cur_iters < 4 || (DDSIP_bb->dualdescitcnt == 1 && cur_iters < 10)))
                         {
@@ -2424,6 +2467,8 @@ NEXT_TRY:
                                             if (cur_iters > 9)
                                             {
                                                 many_iters++;
+                                                if (repeated_increase > 0 || cur_iters > 11)
+                                                    repeated_increase--;
                                             }
                                         }
                                         else if(many_iters && last_weight >= next_weight)

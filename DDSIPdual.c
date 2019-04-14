@@ -1209,7 +1209,7 @@ while (tmp1_bestdual)
                         {
                             // cutoff or sufficient increase reached
                             old_obj = obj;
-                            if (DDSIP_Dmax (obj, max_bound) >= DDSIP_bb->bestvalue - (fabs(DDSIP_bb->bestvalue) * 1e-2 * DDSIP_param->relgap) + 1e-16)
+                            if (DDSIP_Dmax (obj, max_bound) >=  DDSIP_bb->bestvalue - 0.5*(fabs(DDSIP_bb->bestvalue) + 1e-10)*DDSIP_param->relgap)
                                 cnt = 0;
                             else
                                 cnt = 1;
@@ -2355,8 +2355,11 @@ NEXT_TRY:
                         if (DDSIP_param->outlev > 10)
                             fprintf(DDSIP_bb->moreoutfile,"############### iters in descent step: %d, up to now: repeated increase= %d, many_iters= %d, weight change by CB: %g ##################\n", cur_iters, repeated_increase, many_iters,  start_weight);
 /////////
-                        if (start_weight > 0.)
-                            reduction_factor = DDSIP_Dmax (0.7, reduction_factor);
+                        if (start_weight > 0. && DDSIP_bb->dualdescitcnt > 1)
+                        {
+                        
+                                reduction_factor = 0.55;
+                        }
                         if (DDSIP_param->cb_reduceWeight && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight && start_weight == 0. &&
                                 (cur_iters < 4 || (DDSIP_bb->dualdescitcnt == 1 && cur_iters < 10)))
                         {

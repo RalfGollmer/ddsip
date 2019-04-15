@@ -29,13 +29,13 @@
 static void DDSIP_RoundDown (double *);
 static void DDSIP_RoundUp (double *);
 static void DDSIP_RoundNear (double *);
-static void DDSIP_Frequent (void);
-static void DDSIP_Probable (void);
-static void DDSIP_CloseToAverage (double *);
-static void DDSIP_SmallValue (void);
-static void DDSIP_LargeValue (void);
-static void DDSIP_MinSum (void);
-static void DDSIP_MaxSum (void);
+static int  DDSIP_Frequent (void);
+static int  DDSIP_Probable (void);
+static int  DDSIP_CloseToAverage (double *);
+static int  DDSIP_SmallValue (void);
+static int  DDSIP_LargeValue (void);
+static int  DDSIP_MinSum (void);
+static int  DDSIP_MaxSum (void);
 static int  DDSIP_OneTenth (int, int);
 static int  DDSIP_All (int, int);
 static void DDSIP_BoundConsistent (void);
@@ -97,10 +97,10 @@ DDSIP_RoundNear (double *average)
 
 //==========================================================================
 // Most frequent scenario solution  Heur. 4
-void
+int
 DDSIP_Frequent (void)
 {
-    int i, j, k;
+    int i, k;
     k = 0;
     for (i = 1; i < DDSIP_param->scenarios; i++)
         if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][DDSIP_bb->firstvar] > (DDSIP_node[DDSIP_bb->curnode]->first_sol)[k][DDSIP_bb->firstvar])
@@ -108,15 +108,21 @@ DDSIP_Frequent (void)
 
     if(DDSIP_param->outlev)
         fprintf (DDSIP_bb->moreoutfile, "(scen %3d)", k+1);
-    for (j = 0; j < DDSIP_bb->firstvar; j++)
-        (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[k][j];
+    if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[k][DDSIP_bb->firstvar + 2] < DDSIP_bb->curnode)
+    {
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (node %.0f).\n", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[k][DDSIP_bb->firstvar + 2]);
+        return 1;
+    }
+    memcpy (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[k], sizeof (double) * DDSIP_bb->firstvar);
     DDSIP_bb->from_scenario = k;
+    return 0;
 }
 
 
 //==========================================================================
 // Most probable scenario solution  Heur. 6
-void
+int
 DDSIP_Probable (void)
 {
     int i, j, k;
@@ -151,16 +157,22 @@ DDSIP_Probable (void)
 
     if(DDSIP_param->outlev)
         fprintf (DDSIP_bb->moreoutfile, "(scen %3d)", k+1);
-    for (j = 0; j < DDSIP_bb->firstvar; j++)
-        (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[k][j];
+    if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[k][DDSIP_bb->firstvar + 2] < DDSIP_bb->curnode)
+    {
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (node %.0f).\n", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[k][DDSIP_bb->firstvar + 2]);
+        return 1;
+    }
+    memcpy (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[k], sizeof (double) * DDSIP_bb->firstvar);
     DDSIP_Free((void **) &prob);
     DDSIP_bb->from_scenario = k;
+    return 0;
 }
 
 
 //==========================================================================
 // Scenario solution closest to average  Heur. 5
-void
+int
 DDSIP_CloseToAverage (double *average)
 {
     int i, j, minind = 0;
@@ -181,14 +193,20 @@ DDSIP_CloseToAverage (double *average)
     }
     if(DDSIP_param->outlev)
         fprintf (DDSIP_bb->moreoutfile, "(scen %3d)", minind+1);
-    for (j = 0; j < DDSIP_bb->firstvar; j++)
-        (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[minind][j];
+    if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[minind][DDSIP_bb->firstvar + 2] < DDSIP_bb->curnode)
+    {
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (node %.0f).\n", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[minind][DDSIP_bb->firstvar + 2]);
+        return 1;
+    }
+    memcpy (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[minind], sizeof (double) * DDSIP_bb->firstvar);
     DDSIP_bb->from_scenario = minind;
+    return 0;
 }
 
 //==========================================================================
 // Scenario solution with smallest objective value Heur. 7
-void
+int
 DDSIP_SmallValue (void)
 {
     int j, i = 0;
@@ -202,14 +220,20 @@ DDSIP_SmallValue (void)
         }
     if(DDSIP_param->outlev)
         fprintf (DDSIP_bb->moreoutfile, "(scen %3d)", i+1);
-    for (j = 0; j < DDSIP_bb->firstvar; j++)
-        (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][j];
+    if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][DDSIP_bb->firstvar + 2] < DDSIP_bb->curnode)
+    {
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (node %.0f).\n", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][DDSIP_bb->firstvar + 2]);
+        return 1;
+    }
+    memcpy (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i], sizeof (double) * DDSIP_bb->firstvar);
     DDSIP_bb->from_scenario = i;
+    return 0;
 }
 
 //==========================================================================
 // Scenario solution with largest objective value Heur. 8
-void
+int
 DDSIP_LargeValue (void)
 {
     int j, i = 0;
@@ -223,14 +247,20 @@ DDSIP_LargeValue (void)
         }
     if(DDSIP_param->outlev)
         fprintf (DDSIP_bb->moreoutfile, "(scen %3d)", i+1);
-    for (j = 0; j < DDSIP_bb->firstvar; j++)
-        (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][j];
+    if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][DDSIP_bb->firstvar + 2] < DDSIP_bb->curnode)
+    {
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (node %.0f).\n", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][DDSIP_bb->firstvar + 2]);
+        return 1;
+    }
+    memcpy (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i], sizeof (double) * DDSIP_bb->firstvar);
     DDSIP_bb->from_scenario = i;
+    return 0;
 }
 
 //==========================================================================
 // Senario solution with minimal sum of first-stage variables  Heur. 9
-void
+int
 DDSIP_MinSum (void)
 {
     int i, j, minind = 0;
@@ -260,14 +290,20 @@ DDSIP_MinSum (void)
     }
     if(DDSIP_param->outlev)
         fprintf (DDSIP_bb->moreoutfile, "(scen %3d)", minind+1);
-    for (i = 0; i < DDSIP_bb->firstvar; i++)
-        (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[minind][i];
+    if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[minind][DDSIP_bb->firstvar + 2] < DDSIP_bb->curnode)
+    {
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (node %.0f).\n", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[minind][DDSIP_bb->firstvar + 2]);
+        return 1;
+    }
+    memcpy (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[minind], sizeof (double) * DDSIP_bb->firstvar);
     DDSIP_bb->from_scenario = minind;
+    return 0;
 }
 
 //==========================================================================
 // Senario solution with maximal sum of first-stage variables  Heur. 10
-void
+int
 DDSIP_MaxSum (void)
 {
     int i, j, maxind = 0;
@@ -297,9 +333,15 @@ DDSIP_MaxSum (void)
     }
     if(DDSIP_param->outlev)
         fprintf (DDSIP_bb->moreoutfile, "(scen %3d)", maxind+1);
-    for (i = 0; i < DDSIP_bb->firstvar; i++)
-        (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[maxind][i];
+    if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[maxind][DDSIP_bb->firstvar + 2] < DDSIP_bb->curnode)
+    {
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (node %.0f).\n", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[maxind][DDSIP_bb->firstvar + 2]);
+        return 1;
+    }
+    memcpy (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[maxind], sizeof (double) * DDSIP_bb->firstvar);
     DDSIP_bb->from_scenario = maxind;
+    return 0;
 }
 
 //==========================================================================
@@ -368,8 +410,7 @@ DDSIP_All (int nrScenarios, int feasCheckOnly)
                 printf("\n\n FEHLER: !!!!!!!!!!!!!!!!!!!!! DDSIP_bb->sug[DDSIP_param->nodelim + 2]->next = %p\n\n",DDSIP_bb->sug[DDSIP_param->nodelim + 2]->next);
         }
 
-        for (j = 0; j < DDSIP_bb->firstvar; j++)
-            (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[unind[i]][j];
+        memcpy (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[unind[i]], sizeof (double) * DDSIP_bb->firstvar);
 
         if (DDSIP_param->cpxubscr||DDSIP_param->outlev > 7)
             printf ("Heuristic 12: suggested first stage solution of scen. %3d\n", unind[i]+1);
@@ -434,8 +475,7 @@ DDSIP_All (int nrScenarios, int feasCheckOnly)
             if (tmp->next != NULL)
                 printf("\n\n FEHLER: !!!!!!!!!!!!!!!!!!!!! DDSIP_bb->sug[DDSIP_param->nodelim + 2]->next = %p\n\n",DDSIP_bb->sug[DDSIP_param->nodelim + 2]->next);
         }
-        for (j = 0; j < DDSIP_bb->firstvar; j++)
-            (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[unind[0]][j];
+        memcpy (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[unind[0]], sizeof (double) * DDSIP_bb->firstvar);
 
         if(DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "\nHeuristic 12: suggested first stage solution of scen. %3d", unind[0]+1);
@@ -533,10 +573,7 @@ DDSIP_OneTenth (int nrScenarios, int feasCheckOnly)
 
             if(DDSIP_param->outlev)
                 fprintf (DDSIP_bb->moreoutfile, "\nHeuristic 11: suggested first stage solution of scen. %3d  (%g identical scen. sols) ", unind[i]+1, DDSIP_node[DDSIP_bb->curnode]->first_sol[unind[i]][DDSIP_bb->firstvar]);
-            for (j = 0; j < DDSIP_bb->firstvar; j++)
-            {
-                (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[unind[i]][j];
-            }
+            memcpy (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[unind[i]], sizeof (double) * DDSIP_bb->firstvar);
 
             if (DDSIP_param->relax)
                 for (ii = 0; ii < DDSIP_bb->firstvar; ii++)
@@ -657,43 +694,41 @@ DDSIP_Heuristics (int *comb, int nrScenarios, int feasCheckOnly)
     case 4:
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "most frequent       ");
-        DDSIP_Frequent ();
+        status = DDSIP_Frequent ();
         break;
     case 5:
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "closest to average  ");
-        DDSIP_CloseToAverage (average);
+        status = DDSIP_CloseToAverage (average);
         break;
     case 6:
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "highest probability ");
-        DDSIP_Probable();
+        status = DDSIP_Probable();
         break;
     case 7:
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "smallest obj        ");
-        DDSIP_SmallValue ();
+        status = DDSIP_SmallValue ();
         break;
     case 8:
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "greatest obj        ");
-        DDSIP_LargeValue ();
+        status = DDSIP_LargeValue ();
         break;
     case 9:
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "minimal sum         ");
-        DDSIP_MinSum ();
+        status = DDSIP_MinSum ();
         break;
     case 10:
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "maximal sum         ");
-        DDSIP_MaxSum ();
+        status = DDSIP_MaxSum ();
         break;
     case 11:			// all scen solutions occurring sufficiently often
         status = DDSIP_OneTenth (nrScenarios, feasCheckOnly);
-        DDSIP_Free ((void **) &(average));
-        DDSIP_Free ((void **) &(average_eq));
-        return status;
+        break;
     case 12:
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "all scen. sols ");
@@ -750,7 +785,9 @@ DDSIP_Heuristics (int *comb, int nrScenarios, int feasCheckOnly)
     DDSIP_Free ((void **) &(average));
     DDSIP_Free ((void **) &(average_eq));
 
-    if (!status && DDSIP_bb->sug[DDSIP_param->nodelim + 2])
+    if (status)
+        return status;
+    if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
     {
         // round resulting values for integer first stage vars
         if (DDSIP_param->relax)

@@ -1211,8 +1211,11 @@ while (tmp1_bestdual)
                             old_obj = obj;
                             if (DDSIP_Dmax (obj, max_bound) >=  DDSIP_bb->bestvalue - 0.5*(fabs(DDSIP_bb->bestvalue) + 1e-10)*DDSIP_param->relgap)
                                 cnt = 0;
-                            else if (DDSIP_Dmax (obj, max_bound) >=  DDSIP_bb->bestvalue - 5.*(fabs(DDSIP_bb->bestvalue) + 1e-10)*DDSIP_param->relgap)
+                            else if (DDSIP_Dmax (obj, max_bound) >=  DDSIP_bb->bestvalue - 10.*(fabs(DDSIP_bb->bestvalue) + 1e-10)*DDSIP_param->relgap)
+                            {
                                 cnt = 2;
+                                cb_set_next_weight (p, DDSIP_Dmax (5.*next_weight, 10.));
+                            }
                             else
                                 cnt = 1;
                             break;
@@ -2375,10 +2378,12 @@ NEXT_TRY:
                         if (DDSIP_param->outlev > 10)
                             fprintf(DDSIP_bb->moreoutfile,"############### iters in descent step: %d, up to now: repeated increase= %d, many_iters= %d, weight change by CB: %g ##################\n", cur_iters, repeated_increase, many_iters,  start_weight);
 /////////
-                        if (start_weight > 0. && DDSIP_bb->dualdescitcnt > 1)
+                        if (start_weight > 0.)
                         {
-                        
+                            if (DDSIP_bb->dualdescitcnt == 1)
                                 reduction_factor = 0.55;
+                            else
+                                reduction_factor = 0.65;
                         }
                         if (DDSIP_param->cb_reduceWeight && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight && start_weight == 0. &&
                                 (cur_iters < 4 || (DDSIP_bb->dualdescitcnt == 1 && cur_iters < 10)))

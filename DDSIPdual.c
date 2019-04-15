@@ -1209,7 +1209,7 @@ while (tmp1_bestdual)
                         {
                             // cutoff or sufficient increase reached
                             old_obj = obj;
-                            if (DDSIP_Dmax (obj, max_bound) >=  DDSIP_bb->bestvalue - 0.5*(fabs(DDSIP_bb->bestvalue) + 1e-10)*DDSIP_param->relgap)
+                            if (DDSIP_Dmax (obj, max_bound) >=  DDSIP_bb->bestvalue - 0.5*(fabs(DDSIP_bb->bestvalue) + 1e-10)*DDSIP_param->relgap + 1e-9)
                                 cnt = 0;
                             else if (DDSIP_Dmax (obj, max_bound) >=  DDSIP_bb->bestvalue - 10.*(fabs(DDSIP_bb->bestvalue) + 1e-10)*DDSIP_param->relgap)
                             {
@@ -1370,8 +1370,8 @@ if(DDSIP_param->outlev > 20)
                             if (cnt == 2)
                             {
                                 for (status=0; status < DDSIP_bb->dimdual; status++)
-                                    DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.001 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                + 0.999 * tmp_maxbound->dual[status];
+                                    DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.00002 * DDSIP_bb->startinfo_multipliers[status]
+                                                                                + 0.99998 * tmp_maxbound->dual[status];
                             }
                             else
                             {
@@ -2383,7 +2383,7 @@ NEXT_TRY:
                             if (DDSIP_bb->dualdescitcnt == 1)
                                 reduction_factor = 0.55;
                             else
-                                reduction_factor = 0.65;
+                                reduction_factor = DDSIP_Dmax (0.65, reduction_factor);
                         }
                         if (DDSIP_param->cb_reduceWeight && last_weight >= DDSIP_Dmin(0.5,reduction_factor)*next_weight && start_weight == 0. &&
                                 (cur_iters < 4 || (DDSIP_bb->dualdescitcnt == 1 && cur_iters < 10)))
@@ -2589,6 +2589,13 @@ NEXT_TRY:
                             fprintf(DDSIP_bb->moreoutfile,"############### weight_reset 2\n");
                         start_weight = 0.;
                         next_weight = last_weight;
+                    }
+                    if (start_weight > 0.)
+                    {
+                        if (DDSIP_bb->dualdescitcnt == 1)
+                            reduction_factor = 0.55;
+                        else
+                            reduction_factor = DDSIP_Dmax (0.65, reduction_factor);
                     }
 ///////////////
                     if (DDSIP_param->outlev > 10)

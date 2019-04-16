@@ -1436,8 +1436,8 @@ if(DDSIP_param->outlev > 20)
                                 if (cnt == 2)
                                 {
                                     for (status=0; status < DDSIP_bb->dimdual; status++)
-                                        DDSIP_node[DDSIP_bb->curnode]->dual[status] = -0.001 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                     + 1.001 * tmp_maxbound->dual[status];
+                                        DDSIP_node[DDSIP_bb->curnode]->dual[status] = -0.0001 * DDSIP_bb->startinfo_multipliers[status]
+                                                                                     + 1.0001 * tmp_maxbound->dual[status];
                                 }
                                 else
                                 {

@@ -944,23 +944,6 @@ DDSIP_DualOpt (void)
                     {
                         fprintf (DDSIP_bb->moreoutfile, "######### cb_reinit_function_model successful #########\n");
                     }
-                    rgap = 100.;
-                    obj = DDSIP_bb->currentDualObjVal;
-                    if (cnt > DDSIP_param->numberReinits)
-                        break;
-                    if ((obj - old_obj)/(fabs(old_obj) + 2e-15) > 1.e-8)
-                    {
-                        noIncreaseCounter = 0;
-                    }
-                    else if (obj < old_obj + 1.e-14)
-                    {
-                        noIncreaseCounter++;
-#ifdef DEBUG
-                        if(DDSIP_param->outlev > 20)
-                            fprintf(DDSIP_bb->moreoutfile," ##                currentDualObjVal= %20.14g, obj= %20.14g  <=  %20.14g=old_obj -> noIncreaseCounter= %d\n", DDSIP_bb->currentDualObjVal, obj, old_obj, noIncreaseCounter);
-#endif
-                    }
-                    old_obj = obj;
                     if ((status = cb_set_new_center_point (p, DDSIP_bb->local_bestdual)))
                     {
                         fprintf (stderr, "set_new_center_point returned %d\n", status);
@@ -970,9 +953,38 @@ DDSIP_DualOpt (void)
                         DDSIP_Free ((void **) &(center_point));
                         return status;
                     }
+                    obj = DDSIP_bb->currentDualObjVal;
+                    rgap = (obj - old_obj)/(fabs(old_obj) + 2e-15);
+                    if (rgap > 1.e-9)
+                    {
+                        noIncreaseCounter = 0;
+#ifdef DEBUG
+                        if(DDSIP_param->outlev > 20)
+                            fprintf(DDSIP_bb->moreoutfile," ## BETTER BOUND   currentDualObjVal= %20.14g, %20.14g=old_obj, rel. change: %g -> noIncreaseCounter= %d\n", DDSIP_bb->currentDualObjVal, old_obj, rgap, noIncreaseCounter);
+#endif
+                    }
+                    else if (rgap < -1.e-14)
+                    {
+                        noIncreaseCounter++;
+#ifdef DEBUG
+                        if(DDSIP_param->outlev > 20)
+                            fprintf(DDSIP_bb->moreoutfile," ## WORSE BOUND    currentDualObjVal= %20.14g, %20.14g=old_obj, rel. change: %g -> noIncreaseCounter= %d\n", DDSIP_bb->currentDualObjVal, old_obj, rgap, noIncreaseCounter);
+#endif
+                    }
+#ifdef DEBUG
+                    else
+                    {
+                        if(DDSIP_param->outlev > 20)
+                            fprintf(DDSIP_bb->moreoutfile," ## ELSE           currentDualObjVal= %20.14g, %20.14g=old_obj, rel. change: %g    noIncreaseCounter= %d\n", DDSIP_bb->currentDualObjVal, old_obj, rgap, noIncreaseCounter);
+                    }
+//#endif
                     cnt++;
                     if(DDSIP_param->outlev > 10)
-                        fprintf(DDSIP_bb->moreoutfile," after %d. reinit: currentDualObjVal = %20.14g, obj = %20.14g, old_obj= %20.14g, incr.= %g,  noIncreaseCounter= %d\n", cnt, DDSIP_bb->currentDualObjVal, obj, old_obj, DDSIP_bb->currentDualObjVal-old_obj, noIncreaseCounter);
+                        fprintf(DDSIP_bb->moreoutfile," after %d. reinit: currentDualObjVal = %20.14g, old_obj= %20.14g, incr.= %g,  noIncreaseCounter= %d\n", cnt, DDSIP_bb->currentDualObjVal, old_obj, DDSIP_bb->currentDualObjVal-old_obj, noIncreaseCounter);
+                    if (cnt > DDSIP_param->numberReinits)
+                        break;
+                    old_obj = obj;
+                    rgap = 100.;
                     if (DDSIP_param->outlev)
                     {
                         DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);

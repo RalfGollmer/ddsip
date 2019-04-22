@@ -977,7 +977,7 @@ DDSIP_DualOpt (void)
                         if(DDSIP_param->outlev > 20)
                             fprintf(DDSIP_bb->moreoutfile," ## ELSE           currentDualObjVal= %20.14g, %20.14g=old_obj, rel. change: %g    noIncreaseCounter= %d\n", DDSIP_bb->currentDualObjVal, old_obj, rgap, noIncreaseCounter);
                     }
-//#endif
+#endif
                     cnt++;
                     if(DDSIP_param->outlev > 10)
                         fprintf(DDSIP_bb->moreoutfile," after %d. reinit: currentDualObjVal = %20.14g, old_obj= %20.14g, incr.= %g,  noIncreaseCounter= %d\n", cnt, DDSIP_bb->currentDualObjVal, old_obj, DDSIP_bb->currentDualObjVal-old_obj, noIncreaseCounter);

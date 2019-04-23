@@ -983,7 +983,6 @@ DDSIP_DualOpt (void)
                         fprintf(DDSIP_bb->moreoutfile," after %d. reinit: currentDualObjVal = %20.14g, old_obj= %20.14g, incr.= %g,  noIncreaseCounter= %d\n", cnt, DDSIP_bb->currentDualObjVal, old_obj, DDSIP_bb->currentDualObjVal-old_obj, noIncreaseCounter);
                     if (cnt > DDSIP_param->numberReinits)
                         break;
-                    old_obj = obj;
                     rgap = 100.;
                     if (DDSIP_param->outlev)
                     {
@@ -1047,7 +1046,7 @@ DDSIP_DualOpt (void)
                     }
                     else
                         break;
-                } while (DDSIP_bb->cutAdded && (((obj - old_obj)/(fabs(obj)+1e-16) > 4.e-12) || (noIncreaseCounter < 3))
+                } while (DDSIP_bb->cutAdded && (((obj - old_obj)/(fabs(obj)+1e-16) > 4.e-12) || (noIncreaseCounter < 5))
                          && cnt < DDSIP_param->numberReinits && rgap > 99.*DDSIP_param->relgap);
                 if (DDSIP_param->cb_increaseWeight && DDSIP_bb->cutCntr > 1 &&
                     !DDSIP_bb->curnode && obj > inherited_bound + 1.e-3 && DDSIP_param->cbrootitlim > 5)
@@ -1065,6 +1064,7 @@ DDSIP_DualOpt (void)
         }
         init_iters = DDSIP_bb->dualitcnt;
     }
+    noIncreaseCounter = 0;
     DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2] = 0;
     if (DDSIP_bb->curnode)
     {

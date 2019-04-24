@@ -712,10 +712,10 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                 viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
                             else
                                 viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
-//#ifdef DEBUG
+#ifdef DEBUG
                             if (DDSIP_param->outlev > 20)
                                 fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1.);
-//#endif
+#endif
                             viol = viol*wall_secs + 1.;
                             if (cpu_secs > viol)
                             {
@@ -892,12 +892,10 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                         if (!DDSIP_Equal (rmatval[k], newCut->matval[k]))
                                                         {
 #ifdef DEBUG
-////////////////////
-if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
+if (DDSIP_param->outlev)
 {
   fprintf(DDSIP_bb->moreoutfile, "### 1 ### check for identical cut: Cut no. %d is different, index %d: %22.16g - %22.16g = %g \n", newCut->number, k, rmatval[k], newCut->matval[k],rmatval[k] - newCut->matval[k]);
 }
-////////////////////
 #endif
                                                             break;
                                                         }
@@ -953,17 +951,13 @@ if (DDSIP_param->outlev > 21)
                                                     //shift this infeasible scenario to first place, such that next time it is checked first
                                                     if (Bi)
                                                     {
-/////////////////////
-if(DDSIP_param->outlev)
-  fprintf(DDSIP_bb->moreoutfile," ######## shift infeasible scen to top, Bi= %d, shifts= %d\n", Bi, DDSIP_bb->shifts);
-/////////////////////
+#ifdef DEBUG
+                                                        if(DDSIP_param->outlev > 20)
+                                                            fprintf(DDSIP_bb->moreoutfile," ######## shift infeasible scen %d to top, (index, shifts: %d, %d)\n", DDSIP_bb->ub_scen_order[Bi]+1, Bi, DDSIP_bb->shifts);
+#endif
                                                         if (Bi >= DDSIP_bb->shifts)
                                                         {
                                                             DDSIP_bb->shifts++;
-/////////////////////
-if(DDSIP_param->outlev)
-  fprintf(DDSIP_bb->moreoutfile," ##### increased shifts= %d\n", DDSIP_bb->shifts);
-/////////////////////
                                                         }
                                                         k = DDSIP_bb->ub_scen_order[Bi];
                                                         for(j = Bi; j>0; j--)
@@ -981,12 +975,12 @@ if(DDSIP_param->outlev)
                                                     }
                                                 }
                                             }
-/////////////////////////////////
+#ifdef DEBUG
                                             else if (DDSIP_param->outlev > 20)
                                             {
                                                 fprintf (DDSIP_bb->moreoutfile," ####----------ray doesn't contain a coefficient for a second-stage constraint\n");
                                             }
-/////////////////////////////////
+#endif
 
                                             DDSIP_Free ((void *) &rmatind);
                                             DDSIP_Free ((void *) &rmatval);
@@ -1316,12 +1310,10 @@ if(DDSIP_param->outlev)
                                             if (!DDSIP_Equal (rmatval[k], newCut->matval[k]))
                                             {
 #ifdef DEBUG
-////////////////////
-if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
-{
-  fprintf(DDSIP_bb->moreoutfile, "### 2 ### check for identical cut: Cut no. %d is different, index %d: %22.16g - %22.16g = %g \n", newCut->number, k, rmatval[k], newCut->matval[k],rmatval[k] - newCut->matval[k]);
-}
-////////////////////
+                                                if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
+                                                {
+                                                  fprintf(DDSIP_bb->moreoutfile, "### 2 ### check for identical cut: Cut no. %d is different, index %d: %22.16g - %22.16g = %g \n", newCut->number, k, rmatval[k], newCut->matval[k],rmatval[k] - newCut->matval[k]);
+                                                }
 #endif
                                                 break;
                                             }
@@ -1330,12 +1322,12 @@ if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
                                             newCut = newCut->prev;
                                         else
                                         {
-////////////////////
-if (DDSIP_param->outlev > 21)
-{
-  fprintf(DDSIP_bb->moreoutfile, "### 2 ### check for identical cut: Cut no. %d is identical, rhs was: %g, now: %g ###\n", newCut->number, newCut->rhs, rhs);
-}
-////////////////////
+//////////////////// DEBUG output
+                                            if (DDSIP_param->outlev > 20)
+                                            {
+                                              fprintf(DDSIP_bb->moreoutfile, "### 2 ### check for identical cut: Cut no. %d is identical, rhs was: %g, now: %g ###\n", newCut->number, newCut->rhs, rhs);
+                                            }
+//////////////////// DEBUG output
                                             if (rhs > newCut->rhs)
                                                 newCut->rhs = rhs;
                                             i = 0;
@@ -1378,6 +1370,10 @@ if (DDSIP_param->outlev > 21)
                                     //shift this infeasible scenario to first place, such that next time it is checked first
                                     if (Bi != iscen)
                                     {
+#ifdef DEBUG
+                                        if(DDSIP_param->outlev > 20)
+                                            fprintf(DDSIP_bb->moreoutfile," ######## shift infeasible scen %d to top, (index, shifts: %d, %d)\n", DDSIP_bb->ub_scen_order[Bi]+1, Bi, DDSIP_bb->shifts);
+#endif
                                         if (Bi >= DDSIP_bb->shifts)
                                         {
                                             DDSIP_bb->shifts++;
@@ -1390,12 +1386,12 @@ if (DDSIP_param->outlev > 21)
                                         scen = k;
                                     }
                                 }
-/////////////////////////////////
+#ifdef DEBUG
                                 else if (DDSIP_param->outlev > 20)
                                 {
                                     fprintf (DDSIP_bb->moreoutfile," ####----------ray doesn't contain a coefficient for a second-stage constraint\n");
                                 }
-/////////////////////////////////
+#endif
 
                                 DDSIP_Free ((void *) &rmatind);
                                 DDSIP_Free ((void *) &rmatval);
@@ -1515,11 +1511,9 @@ if (DDSIP_param->outlev > 21)
                         return status;
                     }
 #ifdef DEBUG
-/////////////////////////////////
                     fprintf (stderr," return value of dualopt: %d\n", status);
                     if (DDSIP_param->outlev)
                         fprintf (DDSIP_bb->moreoutfile," return value of dualopt: %d\n", status);
-/////////////////////////////////
 #endif
                     status = CPXgetstat (DDSIP_env, DDSIP_dual_lp);
                     if (!status)
@@ -1529,11 +1523,9 @@ if (DDSIP_param->outlev > 21)
                         return status;
                     }
 #ifdef DEBUG
-/////////////////////////////////
                     fprintf (stderr," getstat for dualopt: %d\n", status);
                     if (DDSIP_param->outlev)
                         fprintf (DDSIP_bb->moreoutfile," getstat for dualopt: %d\n", status);
-/////////////////////////////////
 #endif
                     status = CPXgetobjval (DDSIP_env, DDSIP_dual_lp, &objv);
                     if (status)
@@ -1543,11 +1535,9 @@ if (DDSIP_param->outlev > 21)
                         return status;
                     }
 #ifdef DEBUG
-/////////////////////////////////
                     fprintf (stderr," return value of getobjval: %d, value=%g\n", status, objv);
                     if (DDSIP_param->outlev)
                         fprintf (DDSIP_bb->moreoutfile," return value of getobjval: %d, value=%g\n", status, objv);
-/////////////////////////////////
 #endif
                 }
                 else
@@ -1626,6 +1616,10 @@ if (DDSIP_param->outlev > 21)
             //shift this infeasible scenario to first place, such that next time it is checked first
             if (iscen || !DDSIP_bb->shifts)
             {
+#ifdef DEBUG
+                if(DDSIP_param->outlev > 20)
+                    fprintf(DDSIP_bb->moreoutfile," ######## shift infeasible scen %d to top, (index, shifts: %d, %d)\n", DDSIP_bb->ub_scen_order[iscen]+1, iscen, DDSIP_bb->shifts);
+#endif
                 if (iscen >= DDSIP_bb->shifts)
                     DDSIP_bb->shifts++;
                 k = DDSIP_bb->ub_scen_order[iscen];
@@ -1655,10 +1649,10 @@ if (DDSIP_param->outlev > 21)
                     viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
                 else
                     viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
-//#ifdef DEBUG
+#ifdef DEBUG
                 if (DDSIP_param->outlev > 20)
                     fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1.);
-//#endif
+#endif
                 viol = viol*wall_secs + 1.;
                 if (cpu_secs > viol)
                 {
@@ -1788,10 +1782,10 @@ if (DDSIP_param->outlev > 21)
                         viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
                     else
                         viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
-//#ifdef DEBUG
+#ifdef DEBUG
                     if (DDSIP_param->outlev > 20)
                         fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > 5.2*wall_secs + 1.);
-//#endif
+#endif
                     viol = viol*wall_secs + 1.;
                     if (cpu_secs > viol)
                     {
@@ -1982,10 +1976,10 @@ if (DDSIP_param->outlev > 21)
             viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
         else
             viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
-//#ifdef DEBUG
+#ifdef DEBUG
         if (DDSIP_param->outlev > 20)
             fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1.: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1.);
-//#endif
+#endif
         viol = viol*wall_secs + 1.;
         if (cpu_secs > viol)
         {

@@ -696,7 +696,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         }
                         prematureStop = 1;
                         // in the first nodes check all the remaining scenarios whether they give rise to cut
-                        if (DDSIP_param->alwaysBendersCuts && (DDSIP_param->testOtherScens || DDSIP_bb->curnode < 3) && DDSIP_param->heuristic > 3 )
+                        if (DDSIP_param->alwaysBendersCuts && (DDSIP_param->testOtherScens || DDSIP_bb->curnode < 3) && DDSIP_param->heuristic > 3 && DDSIP_param->heuristic < 21)
                         {
                             time_start = time_lap = DDSIP_GetCpuTime ();
                             CPXLPptr     DDSIP_dual_lp  = NULL;

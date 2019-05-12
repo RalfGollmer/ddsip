@@ -1222,6 +1222,7 @@ DDSIP_LowerBound (void)
     {
         fprintf (DDSIP_bb->moreoutfile, "\n----------------------\n");
         fprintf (DDSIP_bb->moreoutfile, "Solving scenario problems (Lower bounds) in node %d:\n", DDSIP_bb->curnode);
+        printf ("Solving scenario problems (Lower bounds) in node %d:\n", DDSIP_bb->curnode);
     }
     // Initialization of indices, minfirst, and maxfirst
     for (j = 0; j < DDSIP_bb->firstvar + DDSIP_bb->secvar; j++)
@@ -4337,7 +4338,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             fprintf (DDSIP_bb->moreoutfile,
                      " +++++ dual step     increasing  bound for node %3d, new val: %-18.16g, old value: %-18.16g  incr.  %g, rel %g%%,  weight = %g +++++\n",
                      DDSIP_bb->curnode, tmpbestbound,  DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestbound - DDSIP_node[DDSIP_bb->curnode]->bound,
-                     1.e2*(tmpbestbound - DDSIP_node[DDSIP_bb->curnode]->bound)/(fabs(DDSIP_node[DDSIP_bb->curnode]->bound)+1e-6), cb_get_last_weight(DDSIP_bb->dualProblem));
+                     1.e2*(tmpbestbound - DDSIP_node[DDSIP_bb->curnode]->bound)/(fabs(DDSIP_node[DDSIP_bb->curnode]->bound)+1e-16), cb_get_last_weight(DDSIP_bb->dualProblem));
         DDSIP_node[DDSIP_bb->curnode]->violations = DDSIP_bb->violations;
         if (DDSIP_bb->dualdescitcnt)
         {
@@ -4427,8 +4428,8 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         increase = 0;
         if (DDSIP_param->outlev > 6)
             fprintf (DDSIP_bb->moreoutfile,
-                 " -**** dual step not increasing  bound for node %3d, new val: %-18.16g, old bound: %-18.16g (diff: %.6g, ub: %.13g) weight = %g ****-\n",
-                 DDSIP_bb->curnode, tmpbestbound, DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestbound -  DDSIP_node[DDSIP_bb->curnode]->bound, tmpupper, cb_get_last_weight(DDSIP_bb->dualProblem));
+                 " -**** dual step not increasing  bound for node %3d, new val: %-18.16g, old bound: %-18.16g (diff: %.6g, rel %g%%) weight = %g ****-\n",
+                 DDSIP_bb->curnode, tmpbestbound, DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestbound -  DDSIP_node[DDSIP_bb->curnode]->bound, 1e2*(tmpbestbound -  DDSIP_node[DDSIP_bb->curnode]->bound)/(fabs(DDSIP_node[DDSIP_bb->curnode]->bound)+1e-16), cb_get_last_weight(DDSIP_bb->dualProblem));
         // even when bound was not increased, store the first-stage solution in initial evaluation
         if (cb_get_last_weight(DDSIP_bb->dualProblem) < 0.)
         {

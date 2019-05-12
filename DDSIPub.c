@@ -973,25 +973,21 @@ if (DDSIP_param->outlev > 21)
                         }
                         if (iscen > DDSIP_bb->shifts + 3)
                         {
-                            cpu_secs = sort_array[DDSIP_bb->shifts];
+                            wall_secs = cpu_secs = sort_array[DDSIP_bb->shifts];
                             for (wall_hrs = DDSIP_bb->shifts+1; wall_hrs <= iscen; wall_hrs++)
                             {
                                 cpu_secs = DDSIP_Dmax (cpu_secs, sort_array[wall_hrs]);
-                            }
-                            wall_secs = sort_array[0];
-                            for (wall_hrs = 1; wall_hrs <= iscen; wall_hrs++)
-                            {
                                 wall_secs += sort_array[wall_hrs];
                             }
-                            wall_secs /= (0.01 + iscen - DDSIP_bb->shifts);
+                            wall_secs /= (1.01 + iscen - DDSIP_bb->shifts);
                             if (timeLimit)
                                 viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
                             else
                                 viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
-#ifdef DEBUG
+//#ifdef DEBUG
                             if (DDSIP_param->outlev > 20)
                                 fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1.);
-#endif
+//#endif
                             viol = viol*wall_secs + 1.;
                             if (cpu_secs > viol)
                             {
@@ -1002,10 +998,10 @@ if (DDSIP_param->outlev > 21)
                                     {
                                          cpu_mins = DDSIP_bb->ub_scen_order[wall_hrs];
                                          cpu_secs = sort_array[wall_hrs];
-#ifdef DEBUG
+//#ifdef DEBUG
                                          if (DDSIP_param->outlev)
                                              fprintf (DDSIP_bb->moreoutfile, "### shifting scenario %d with time %g to the end of ub_scen_order ###\n", cpu_mins+1, sort_array[wall_hrs]);
-#endif
+//#endif
                                          for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
                                          {
                                              DDSIP_bb->ub_scen_order[wall_mins-1] = DDSIP_bb->ub_scen_order[wall_mins];
@@ -1634,14 +1630,10 @@ if (DDSIP_param->outlev > 21)
             }
             if (iscen > DDSIP_bb->shifts)
             {
-                cpu_secs = sort_array[DDSIP_bb->shifts];
+                wall_secs = cpu_secs = sort_array[DDSIP_bb->shifts];
                 for (wall_hrs = DDSIP_bb->shifts+1; wall_hrs < iscen; wall_hrs++)
                 {
                     cpu_secs = DDSIP_Dmax (cpu_secs, sort_array[wall_hrs]);
-                }
-                wall_secs = sort_array[0];
-                for (wall_hrs = 1; wall_hrs < iscen; wall_hrs++)
-                {
                     wall_secs += sort_array[wall_hrs];
                 }
                 wall_secs /= (0.01 + iscen - DDSIP_bb->shifts);
@@ -1649,10 +1641,10 @@ if (DDSIP_param->outlev > 21)
                     viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
                 else
                     viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
-#ifdef DEBUG
+//#ifdef DEBUG
                 if (DDSIP_param->outlev > 20)
                     fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1.);
-#endif
+//#endif
                 viol = viol*wall_secs + 1.;
                 if (cpu_secs > viol)
                 {
@@ -1663,10 +1655,10 @@ if (DDSIP_param->outlev > 21)
                         {
                              cpu_mins = DDSIP_bb->ub_scen_order[wall_hrs];
                              cpu_secs = sort_array[wall_hrs];
-#ifdef DEBUG
+//#ifdef DEBUG
                              if (DDSIP_param->outlev)
                                  fprintf (DDSIP_bb->moreoutfile, "### shifting scenario %d with time %g to the end of ub_scen_order ###\n", cpu_mins+1, sort_array[wall_hrs]);
-#endif
+//#endif
                              for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
                              {
                                  DDSIP_bb->ub_scen_order[wall_mins-1] = DDSIP_bb->ub_scen_order[wall_mins];
@@ -1774,18 +1766,18 @@ if (DDSIP_param->outlev > 21)
                     wall_secs = cpu_secs = sort_array[0];
                     for (wall_hrs = 1; wall_hrs <= iscen; wall_hrs++)
                     {
-                        wall_secs += sort_array[wall_hrs];
                         cpu_secs = DDSIP_Dmax (cpu_secs, sort_array[wall_hrs]);
+                        wall_secs += sort_array[wall_hrs];
                     }
                     wall_secs /= (0.01 + iscen - DDSIP_bb->shifts);
                     if (timeLimit)
                         viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
                     else
                         viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
-#ifdef DEBUG
+//#ifdef DEBUG
                     if (DDSIP_param->outlev > 20)
                         fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > 5.2*wall_secs + 1.);
-#endif
+//#endif
                     viol = viol*wall_secs + 1.;
                     if (cpu_secs > viol)
                     {
@@ -1796,10 +1788,10 @@ if (DDSIP_param->outlev > 21)
                             {
                                  cpu_mins = DDSIP_bb->ub_scen_order[wall_hrs];
                                  cpu_secs = sort_array[wall_hrs];
-#ifdef DEBUG
+//#ifdef DEBUG
                                  if (DDSIP_param->outlev)
                                      fprintf (DDSIP_bb->moreoutfile, "### shifting scenario %d with time %g to the end of ub_scen_order ###\n", cpu_mins+1, sort_array[wall_hrs]);
-#endif
+//#endif
                                  for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
                                  {
                                      DDSIP_bb->ub_scen_order[wall_mins-1] = DDSIP_bb->ub_scen_order[wall_mins];
@@ -1966,9 +1958,6 @@ if (DDSIP_param->outlev > 21)
         for (wall_hrs = DDSIP_bb->shifts; wall_hrs < DDSIP_param->scenarios - 1; wall_hrs++)
         {
             cpu_secs = DDSIP_Dmax (cpu_secs, sort_array[wall_hrs]);
-        }
-        for (wall_hrs = DDSIP_bb->shifts; wall_hrs < DDSIP_param->scenarios; wall_hrs++)
-        {
             wall_secs += sort_array[wall_hrs];
         }
         wall_secs /= (0.01 + DDSIP_param->scenarios - DDSIP_bb->shifts);
@@ -1976,10 +1965,10 @@ if (DDSIP_param->outlev > 21)
             viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
         else
             viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
-#ifdef DEBUG
+//#ifdef DEBUG
         if (DDSIP_param->outlev > 20)
             fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1.: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1.);
-#endif
+//#endif
         viol = viol*wall_secs + 1.;
         if (cpu_secs > viol)
         {
@@ -1990,10 +1979,10 @@ if (DDSIP_param->outlev > 21)
                 {
                      cpu_mins = DDSIP_bb->ub_scen_order[wall_hrs];
                      cpu_secs = sort_array[wall_hrs];
-#ifdef DEBUG
+//#ifdef DEBUG
                      if (DDSIP_param->outlev)
                          fprintf (DDSIP_bb->moreoutfile, "### shifting scenario %d with time %g to the end of ub_scen_order ###\n", cpu_mins+1, sort_array[wall_hrs]);
-#endif
+//#endif
                      for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
                      {
                          DDSIP_bb->ub_scen_order[wall_mins-1] = DDSIP_bb->ub_scen_order[wall_mins];

@@ -2960,7 +2960,7 @@ while (tmp1_bestdual)
             }
         }
 ////////////////////////////////////////////////////////////////////////////// computation of bounds for premature stop only when cutoff not yet decided
-        if (DDSIP_param->prematureStop && (DDSIP_bb->curnode || DDSIP_bb->initial_multiplier) && !DDSIP_node[DDSIP_bb->curnode]->leaf)
+        if (DDSIP_param->prematureStop && !DDSIP_killsignal && (DDSIP_bb->curnode || DDSIP_bb->initial_multiplier) && !DDSIP_node[DDSIP_bb->curnode]->leaf)
         {
             // Initialize multipliers with zero
             memset (DDSIP_bb->startinfo_multipliers, '\0', sizeof (double) * (DDSIP_bb->dimdual));

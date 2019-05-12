@@ -664,21 +664,19 @@ int BundleSolver::inner_loop(BundleProblem& prob, int maxsteps)
       
     Real lin_approx=oldval-newlb-ip(y-newy,new_subg);
 
-//////////////////////////////////////////
-      // original line: if (lin_approx<-1e-10*(fabs(oldval)+1.))  //minorant cuts above old function value! recompute!
-    if (lin_approx<-1e-6*(fabs(oldval)+1.)){  //minorant cuts above old function value! recompute!
+    if (lin_approx<-1e-10*(fabs(oldval)+1.)){  //minorant cuts above old function value! recompute!
 //////////////////////////////////////////
 //// added by R. Gollmer in order to avoid too many reevaluations (MIP solutions mostly are not that exact)
-      if (recomp < 3)
+      recomp++;
+      sumrecomp++;
+      if (recomp < 4)
       {
         if (out) {
-          (*out)<<"*** WARNING: Bundle::inner_loop(): new subgradient yields greater objective value ="<<oldval-lin_approx<<" in center (oldval="<<oldval<<"), difference "<<-lin_approx<<"\n";
+          (*out)<<"*** WARNING: Bundle::inner_loop(): new subgradient yields greater objective value ="<<oldval-lin_approx<<" in center (oldval="<<oldval<<"), difference "<<-lin_approx<<" (rel: "<<-lin_approx/(fabs(oldval)+1.e-16)<<")\n";
           (*out)<<"***          maybe the old evaluation in the center was not computed to sufficient precision\n";
           (*out)<<"***          or the sugbradient information provided by the last oracle call was wrong.\n";
           (*out)<<"***          Trying a function reevaluation in the center with higher precision..."<<std::endl;
         }
-        recomp++;
-        sumrecomp++;
         
         status1=problem->eval_function(y,CB_plus_infinity,.001*relprec);
         cntobjeval++;
@@ -700,7 +698,7 @@ int BundleSolver::inner_loop(BundleProblem& prob, int maxsteps)
         }
       }
       else if (out)
-        (*out)<<"*** WARNING: Bundle::inner_loop(): new subgradient yields greater objective value ="<<oldval-lin_approx<<" in center (oldval="<<oldval<<"), difference "<<-lin_approx<<", recomp limit reached\n";
+        (*out)<<"*** WARNING: Bundle::inner_loop(): new subgradient yields greater objective value ="<<oldval-lin_approx<<" in center (oldval="<<oldval<<"), difference "<<-lin_approx<<", recomp "<<recomp<<", limit reached\n";
 //////////////////////////////////////////
     }
 //////////////////////////////////////////

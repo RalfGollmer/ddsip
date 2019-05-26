@@ -3287,7 +3287,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     int wall_hrs, wall_mins,cpu_hrs, cpu_mins;
     int nodes_1st, nodes_2nd;
     static int nearly_constant = 0, totally_constant = 0;
-    static double original_weight, old_value = -1.e30;
+    static double original_weight = 1., old_value = -1.e30;
     double weight_reset_factor = 1.8;
     static int use_LB_params = 0;
 

@@ -1052,11 +1052,21 @@ DDSIP_DualOpt (void)
                 {
                    fprintf (DDSIP_bb->moreoutfile, " ########  total number of cuts added: %3d  #########################\n", DDSIP_bb->cutCntr);
                 }
+                if (!DDSIP_bb->curnode && DDSIP_bb->cutCntr > 1)
+                    fprintf (DDSIP_outfile, "  | %16d  --- %82d cuts total ---\n", 0, DDSIP_bb->cutCntr);
                 if (DDSIP_param->cb_increaseWeight && DDSIP_bb->cutCntr > 1 &&
-                    !DDSIP_bb->curnode && obj > inherited_bound + 1.e-3 && DDSIP_param->cbrootitlim > 5)
+                    !DDSIP_bb->curnode && obj > inherited_bound + 1.e-3)
                 {
-                    next_weight *= 5.0;
-                    cb_set_next_weight (p, next_weight);
+                    if (DDSIP_param->cbrootitlim > 5)
+                    {
+                        last_weight = next_weight *= 5.0;
+                        cb_set_next_weight (p, next_weight);
+                    }
+                    else if (DDSIP_param->cbrootitlim > 3)
+                    {
+                        last_weight = next_weight *= 3.0;
+                        cb_set_next_weight (p, next_weight);
+                    }
                 }
                 if (DDSIP_bb->currentDualObjVal > DDSIP_bb->dualObjVal)
                 {

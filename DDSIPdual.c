@@ -1053,7 +1053,7 @@ DDSIP_DualOpt (void)
                    fprintf (DDSIP_bb->moreoutfile, " ########  total number of cuts added: %3d  #########################\n", DDSIP_bb->cutCntr);
                 }
                 if (!DDSIP_bb->curnode && DDSIP_bb->cutCntr > 1)
-                    fprintf (DDSIP_outfile, "  | %16d  --- %82d cuts total ---\n", 0, DDSIP_bb->cutCntr);
+                    fprintf (DDSIP_outfile, "  | %16d       -- %78d cuts total -----\n", 0, DDSIP_bb->cutCntr);
                 if (DDSIP_param->cb_increaseWeight && DDSIP_bb->cutCntr > 1 &&
                     !DDSIP_bb->curnode && obj > inherited_bound + 1.e-3)
                 {
@@ -2885,9 +2885,9 @@ while (tmp1_bestdual)
             i_scen=cb_termination_code (p);
             if (i_scen == 32)
             {
-                 DDSIP_node[DDSIP_bb->curnode]->cbReturn32 = 1;
+                 DDSIP_node[DDSIP_bb->curnode]->cbReturn32 = DDSIP_node[DDSIP_bb->curnode]->depth;
                  if (DDSIP_param->outlev > 20)
-                    fprintf (DDSIP_bb->moreoutfile, "########## DDSIP_node[%d]->cbReturn32 = 1\n", DDSIP_bb->curnode);
+                    fprintf (DDSIP_bb->moreoutfile, "########## DDSIP_node[%d]->cbReturn32 = %d\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->cbReturn32);
             }
             //if (obj > DDSIP_bb->bestvalue)
             if ((obj - DDSIP_bb->bestvalue) > DDSIP_param->accuracy*(fabs(DDSIP_bb->bestvalue)+1.e-10))

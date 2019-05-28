@@ -128,12 +128,12 @@ DDSIP_InitNewNodes (void)
 
     DDSIP_node[DDSIP_bb->nonode]->cutAdded = 0;
     DDSIP_node[DDSIP_bb->nonode + 1]->cutAdded = 0;
-    if (DDSIP_node[DDSIP_bb->curnode]->cbReturn32 && DDSIP_node[DDSIP_bb->curnode]->depth < DDSIP_node[DDSIP_bb->curnode]->cbReturn32 + 1)
+    if (DDSIP_node[DDSIP_bb->curnode]->cbReturn32 && DDSIP_node[DDSIP_bb->curnode]->depth < DDSIP_node[DDSIP_bb->curnode]->cbReturn32 + 3)
     {
         DDSIP_node[DDSIP_bb->nonode]->cbReturn32 = DDSIP_node[DDSIP_bb->curnode]->cbReturn32;
         DDSIP_node[DDSIP_bb->nonode + 1]->cbReturn32 = DDSIP_node[DDSIP_bb->curnode]->cbReturn32;
         if (DDSIP_param->outlev > 20)
-           fprintf (DDSIP_bb->moreoutfile, "##########  DDSIP_node[%d]->depth= %d < ->cbReturn32 = %d + 1 -> nodes %d and %d inherit cbReturn\n",
+           fprintf (DDSIP_bb->moreoutfile, "##########  DDSIP_node[%d]->depth= %d < ->cbReturn32 = %d + 3 -> nodes %d and %d inherit cbReturn\n",
                     DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->depth, DDSIP_node[DDSIP_bb->curnode]->cbReturn32, DDSIP_bb->nonode, DDSIP_bb->nonode+1);
     }
     else

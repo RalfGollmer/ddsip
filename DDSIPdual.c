@@ -2043,7 +2043,7 @@ NEXT_TRY:
                             fprintf (DDSIP_bb->moreoutfile,"§§§§§§§§§§§§§§§ dualdescitcnt = %d,iters in descent step: %d, noIncreaseCounter= %d, last_weight= %g, current weight= %g, dualitcnt= %d, cb_do_maxsteps returned %d §§§§§§§§§§§§§§§\n",DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt - DDSIP_bb->last_dualitcnt, noIncreaseCounter, last_weight, next_weight, DDSIP_bb->dualitcnt, cb_status);
                         }
 /////////
-                        if (DDSIP_param->cb_increaseWeight)
+                        if (DDSIP_param->cb_increaseWeight && DDSIP_bb->dualitcnt - DDSIP_bb->last_dualitcnt >= DDSIP_param->cb_maxsteps)
                         {
                             if (noIncreaseCounter == 1)
                             {

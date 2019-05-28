@@ -1412,7 +1412,7 @@ DDSIP_LowerBound (void)
                 if (i_scen < scen)
                 {
                     //first_sol[DDSIP_bb->firstvar]   equals the number of identical first stage scenario solutions
-                    fprintf (DDSIP_bb->moreoutfile,"    \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                    fprintf (DDSIP_bb->moreoutfile,"    \t\t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                     if (DDSIP_param->outlev > 8)
                         printf ("    \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                 }
@@ -4248,7 +4248,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 if (i_scen < scen)
                 {
                     //first_sol[DDSIP_bb->firstvar]   equals the number of identical first stage scenario solutions
-                    fprintf (DDSIP_bb->moreoutfile,"    \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                    fprintf (DDSIP_bb->moreoutfile,"    \t\t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                 }
                 else
                     fprintf (DDSIP_bb->moreoutfile,"\n");

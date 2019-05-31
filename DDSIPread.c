@@ -1246,17 +1246,47 @@ DDSIP_ReadSpec ()
     }
     else if (DDSIP_param->heuristic == 100)
     {
+        DDSIP_param->heuristic_order = (int) floor (DDSIP_ReadDbl (specfile, "HEUROR", " HEURISTIC ORDER", 2., 1, 0., 3.) + 0.1);
         DDSIP_param->heuristic_vector = (double *) DDSIP_Alloc (sizeof (double), 15, "values(DDSIP_ReadDblVec)");
         DDSIP_param->heuristic_vector[0] = 100;
         DDSIP_param->heuristic_vector[1] = 11;
-        for (i = 1; i< 4; i++)
+        switch (DDSIP_param->heuristic_order)
         {
-            DDSIP_param->heuristic_vector[i + 1]     = i + 3;
-            DDSIP_param->heuristic_vector[i + 4] = i;
-            DDSIP_param->heuristic_vector[i + 11] = i + 20;
+            case 1:
+                // rounded means at the end
+                for (i = 2; i< 9; i++)
+                {
+                    DDSIP_param->heuristic_vector[i]     = i + 2;
+                }
+                for (i = 1; i< 4; i++)
+                {
+                    DDSIP_param->heuristic_vector[i + 8] = i;
+                    DDSIP_param->heuristic_vector[i + 11] = i + 20;
+                }
+                break;
+            case 2:
+                // rounded means in the middle
+                for (i = 1; i< 4; i++)
+                {
+                    DDSIP_param->heuristic_vector[i + 1]     = i + 3;
+                    DDSIP_param->heuristic_vector[i + 4] = i;
+                    DDSIP_param->heuristic_vector[i + 11] = i + 20;
+                }
+                for (i = 7; i< 11; i++)
+                    DDSIP_param->heuristic_vector[i + 1] = i;
+                break;
+            default:
+                // rounded means at the beginning
+                for (i = 1; i< 4; i++)
+                {
+                    DDSIP_param->heuristic_vector[i + 1]  = i;
+                    DDSIP_param->heuristic_vector[i + 11] = i + 20;
+                }
+                for (i = 4; i< 11; i++)
+                {
+                    DDSIP_param->heuristic_vector[i + 1]  = i;
+                }
         }
-        for (i = 7; i< 11; i++)
-            DDSIP_param->heuristic_vector[i + 1] = i;
         DDSIP_param->heuristic_num = 12;
         DDSIP_param->heuristic_auto = 1;
         DDSIP_param->interrupt_heur = (int) floor (DDSIP_ReadDbl (specfile, "INTHEU", " INTERRUPT HEURISTIC LOOP", -1., 1, -1., 1.) + 0.1);
@@ -1493,7 +1523,7 @@ DDSIP_ReadSpec ()
             DDSIP_param->cbrootitlim = 0;
         }
         else
-            DDSIP_param->cbrootitlim = (int) floor (DDSIP_ReadDbl (specfile, "CBRITL", " CB DESCENT ITERATIONS IN ROOT", DDSIP_Imax (DDSIP_param->cbitlim-8, 9), 1, 0., DDSIP_bigint) + 0.1);
+            DDSIP_param->cbrootitlim = (int) floor (DDSIP_ReadDbl (specfile, "CBRITL", " CB DESCENT ITERATIONS IN ROOT", 9, 1, 0., DDSIP_bigint) + 0.1);
 
         DDSIP_param->cb_maxsteps  = (int) floor (DDSIP_ReadDbl (specfile, "CBSTEP", " CB MAXSTEPS", 12., 1, 1., 10000.) + 0.1);
         DDSIP_param->cbtotalitlim = (int) floor (DDSIP_ReadDbl (specfile, "CBTOTI", " CB ITERATION LIMIT",5000., 1, 0., DDSIP_bigint) + 0.1);
@@ -1529,7 +1559,7 @@ DDSIP_ReadSpec ()
         DDSIP_param->cb_test_line = (int) floor (DDSIP_ReadDbl (specfile, "CBLINE", " CB TEST LINE", 1., 1, 0., 1.) + 0.1);
         DDSIP_param->cb_cutnodes = (int) floor (DDSIP_ReadDbl (specfile, "CBCUTN", " CB CUTS UP TO NODE", 3., 1, 0., 100.) + 0.1);
         DDSIP_param->cb_depth = (int) floor (DDSIP_ReadDbl (specfile, "CBDEPT", " CB UNTIL DEPTH", 1., 1, 0., 1000.) + 0.1);
-        DDSIP_param->cb_depth_iters = (int) floor (DDSIP_ReadDbl (specfile, "CBDITL", " CB DEPTH ITERS", 3., 1, 2., 10.) + 0.1);
+        DDSIP_param->cb_depth_iters = (int) floor (DDSIP_ReadDbl (specfile, "CBDITL", " CB DEPTH ITERS", 10., 1, 2., 10.) + 0.1);
     }
 #else
     DDSIP_param->cb = 0;

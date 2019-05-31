@@ -202,6 +202,7 @@ extern "C" {
         int   heuristic;
         int   heuristic_num;
         int   heuristic_auto;
+        int   heuristic_order;
         double* heuristic_vector;
         // Branching direction
         int   branchdir;
@@ -638,6 +639,8 @@ extern "C" {
         int Dive;
         // could we keep solutions (for reinits)?
         int keepSols;
+        // iteration limit for CB
+        int current_itlim;
 
     } bb_t;
 

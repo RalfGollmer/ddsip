@@ -3342,18 +3342,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     // Output
     if (DDSIP_param->outlev)
     {
-        fprintf (DDSIP_bb->moreoutfile, "\n----------------------\n");
-        if (DDSIP_bb->curnode)
-        {
-            if (DDSIP_bb->curnode < DDSIP_param->cbBreakIters)
-                fprintf (DDSIP_bb->moreoutfile, "Solving (dual opt. function eval) in node %d, desc. it. %d (limit: %d), tot. it. %3d (curr. desc.:%2d) weight = %g :\n", DDSIP_bb->curnode, DDSIP_bb->dualdescitcnt,(DDSIP_param->cbitlim+1)/2,DDSIP_bb->dualitcnt+1, DDSIP_bb->dualitcnt - DDSIP_bb->last_dualitcnt + 1, cb_get_last_weight(DDSIP_bb->dualProblem));
-            else
-                fprintf (DDSIP_bb->moreoutfile, "Solving (dual opt. function eval) in node %d, desc. it. %d (limit: %d), tot. it. %3d (curr. desc.:%2d) weight = %g :\n", DDSIP_bb->curnode, DDSIP_bb->dualdescitcnt,DDSIP_param->cbitlim,DDSIP_bb->dualitcnt+1, DDSIP_bb->dualitcnt - DDSIP_bb->last_dualitcnt + 1, cb_get_last_weight(DDSIP_bb->dualProblem));
-        }
-        else
-        {
-            fprintf (DDSIP_bb->moreoutfile, "Solving (dual opt. function eval) in node %d, desc. it. %d (limit: %d), tot. it. %3d (curr. desc.:%2d) weight = %g :\n", DDSIP_bb->curnode, DDSIP_bb->dualdescitcnt,DDSIP_param->cbrootitlim,DDSIP_bb->dualitcnt+1, DDSIP_bb->dualitcnt - DDSIP_bb->last_dualitcnt + 1, cb_get_last_weight(DDSIP_bb->dualProblem));
-        }
+        fprintf (DDSIP_bb->moreoutfile, "\n----------------------\nSolving (dual opt. function eval) in node %d, desc. it. %d (limit: %d), tot. it. %3d (curr. desc.:%2d) weight = %g :\n", DDSIP_bb->curnode, DDSIP_bb->dualdescitcnt,DDSIP_bb->current_itlim,DDSIP_bb->dualitcnt+1, DDSIP_bb->dualitcnt - DDSIP_bb->last_dualitcnt + 1, cb_get_last_weight(DDSIP_bb->dualProblem));
     }
     // Initialization of indices, minfirst, and maxfirst
     for (j = 0; j < DDSIP_bb->firstvar + DDSIP_bb->secvar; j++)

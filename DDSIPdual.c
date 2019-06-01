@@ -1877,7 +1877,7 @@ if(DDSIP_param->outlev > 20)
     //////////////////////////////////////////////////////////////////
         }
     }
-    else if ((DDSIP_bb->nofront == 1) && (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap))
+    else if ((DDSIP_bb->no_reduced_front == 1) && (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap))
     {
         if (DDSIP_param->outlev)
         {
@@ -1906,8 +1906,8 @@ if(DDSIP_param->outlev > 20)
                 && (DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue) * DDSIP_Dmax (DDSIP_Dmin (0.5*DDSIP_param->relgap, 1.e-9), 2.e-12))
                 && cycleCnt < 2)
         {
-            if ((DDSIP_bb->nofront == 1) &&
-                    (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue) * DDSIP_param->relgap))
+            if ((DDSIP_bb->no_reduced_front == 1) &&
+                    (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 2.e-1*fabs(DDSIP_bb->bestvalue) * DDSIP_param->relgap))
             {
                 break;
             }
@@ -2976,20 +2976,17 @@ while (tmp1_bestdual)
                         fprintf (DDSIP_bb->moreoutfile, "########## skip=+2 for DDSIP_bb->bestsol_in_curnode=%d, DDSIP_node[%d]->bound (%20.15g) - bestvalue = %.8g\n", DDSIP_bb->bestsol_in_curnode, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue);
                 }
                 else if (DDSIP_bb->found_optimal_node && /* !DDSIP_bb->bestsol_in_curnode && */
-                     DDSIP_node[DDSIP_bb->curnode]->violations > 0.4*DDSIP_param->scenarios && (DDSIP_bb->nofront > 1))
+                     DDSIP_node[DDSIP_bb->curnode]->violations > 0.4*DDSIP_param->scenarios && (DDSIP_bb->no_reduced_front > 1))
                 {
                      DDSIP_bb->skip = -2;
                      if (DDSIP_param->outlev > 20)
                          fprintf (DDSIP_bb->moreoutfile, "########## skip=-2 for DDSIP_bb->bestsol_in_curnode=%d, DDSIP_node[%d]->bound (%20.15g) - bestvalue = %.8g\n", DDSIP_bb->bestsol_in_curnode, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue);
                 }
-                if (DDSIP_param->outlev)
+                if (DDSIP_bb->no_reduced_front == 1)
+                    DDSIP_Print2 ("termination status: gap reached. --------------------------------------------------------------", "\n", 0, 0);
+                else
                 {
-                    if (DDSIP_bb->nofront == 1)
-                        DDSIP_Print2 ("termination status: gap reached. --------------------------------------------------------------", "\n", 0, 0);
-                    else
-                    {
-                        DDSIP_Print2 ("termination status: within relative gap. Number of violations of nonanticipativity: ", " ------------------------------------------\n", 1.*DDSIP_node[DDSIP_bb->curnode]->violations, 1);
-                    }
+                    DDSIP_Print2 ("termination status: within relative gap. Number of violations of nonanticipativity: ", " ------------------------------------------\n", 1.*DDSIP_node[DDSIP_bb->curnode]->violations, 1);
                 }
                 DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
             }

@@ -457,6 +457,8 @@ main (int argc, char * argv[])
     // comb tells in case of a combined heuristic, which one to apply (3 = RoundNear)
     comb = 3;
 
+    if (!DDSIP_param->nodelim)
+        return 0;
     if (DDSIP_param->outlev)
         printf ("Starting branch-and-bound algorithm.\n");
     fprintf (DDSIP_outfile, "----------------------------------------------------------------------------------------\n");

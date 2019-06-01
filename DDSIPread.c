@@ -119,7 +119,8 @@ DDSIP_ReadDbl (FILE * specfile, const char *pattern, const char *text, double de
             }
             else
             {
-                DDSIP_SkipToEOL (specfile);
+                if (c != '\n')
+                    DDSIP_SkipToEOL (specfile);
                 i = 0;
             }
         }

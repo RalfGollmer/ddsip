@@ -1748,6 +1748,14 @@ if(DDSIP_param->outlev > 20)
                             return status;
                         }
                     }
+                    // increase weight
+                    if (last_weight < 1.e3)
+                    {
+                        last_weight = next_weight = 1.2 * next_weight;
+                        cb_set_next_weight (p, next_weight);
+                        if (DDSIP_param->outlev)
+                            fprintf (DDSIP_bb->moreoutfile,"########### increased next weight to %g\n", next_weight);
+                    }
                     old_obj = obj = DDSIP_bb->dualObjVal;
                     if (obj > inhMult_bound)
                     {
@@ -1907,7 +1915,7 @@ if(DDSIP_param->outlev > 20)
                 && cycleCnt < 2)
         {
             if ((DDSIP_bb->no_reduced_front == 1) &&
-                    (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 2.e-1*fabs(DDSIP_bb->bestvalue) * DDSIP_param->relgap))
+                    (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 4.e-1*fabs(DDSIP_bb->bestvalue) * DDSIP_param->relgap))
             {
                 break;
             }
@@ -2023,7 +2031,7 @@ NEXT_TRY:
                         if (DDSIP_param->outlev)
                             fprintf (DDSIP_bb->moreoutfile, "set_new_center_point to bestdual, reevaluate with increased weight\n");
                         // increase weight
-                        if (last_weight < 1.e60)
+                        if (last_weight < 1.e20)
                         {
                             last_weight = next_weight = DDSIP_Dmax(5e-2 * fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 100., 5e+3 * cb_get_last_weight (p));
                             cb_set_next_weight (p, next_weight);
@@ -2493,7 +2501,7 @@ NEXT_TRY:
                             {
                                 if (repeated_increase > 2 + (next_weight < 0.05?1:0))
                                 {
-                                    if (weight_decreases > 1 && (next_weight > 9.e-3 || reduction_factor > 0.6))
+                                    if (weight_decreases > 1 && (next_weight > 0.049 || reduction_factor > 0.6))
                                     {
                                         reduction_factor = 0.75*reduction_factor + 0.025;
                                         weight_decreases = 1;

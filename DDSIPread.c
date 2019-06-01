@@ -54,7 +54,7 @@ DDSIP_SkipToEOL (FILE * specfile)
 int
 DDSIP_Find (FILE * specfile, const char *pattern)
 {
-    int find = 0, i = 0;
+    int find = 0, i = 0, in_string = 0;
 
     int c;
     char str[DDSIP_max_str_ln];
@@ -63,9 +63,9 @@ DDSIP_Find (FILE * specfile, const char *pattern)
     rewind (specfile);
     // Read as long as str doesn't match pattern.
     // Only the first occurence of the pattern is relevant.
-    while (!find && (c = fgetc (specfile)) != EOF)
+    while (!find && i < DDSIP_max_str_ln && (c = fgetc (specfile)) != EOF)
     {
-        if (isspace(c)||c=='*')
+        if (in_string && (isspace(c)||c=='*'))
         {
             str[i] = '\0';
             if (!strncmp (str, pattern, DDSIP_Imin (DDSIP_unique, (int) strlen (pattern))))
@@ -75,7 +75,10 @@ DDSIP_Find (FILE * specfile, const char *pattern)
             i = 0;
         }
         else
+        {
+            in_string = 1;
             str[i++] = (char) c;
+        }
     }
 
     return find;
@@ -88,14 +91,12 @@ DDSIP_Find (FILE * specfile, const char *pattern)
 double
 DDSIP_ReadDbl (FILE * specfile, const char *pattern, const char *text, double defval, int isint, double lb, double ub)
 {
-    int find, i;
+    int find = 0, i = 0, in_string = 0;
 
     double val;
 
     int c;
     char str[DDSIP_max_str_ln];
-    find = 0;
-    i = 0;
     // Rewind file
     rewind (specfile);
     // Read as long as str doesn't match pattern.
@@ -103,9 +104,9 @@ DDSIP_ReadDbl (FILE * specfile, const char *pattern, const char *text, double de
 
     // Default ?
     val = defval;
-    while (!find && (c = fgetc (specfile)) != EOF)
+    while (!find && i < DDSIP_max_str_ln && (c = fgetc (specfile)) != EOF)
     {
-        if (isspace (c))
+        if (in_string && isspace (c))
         {
             str[i] = '\0';
             if (!strncmp (str, pattern, DDSIP_Imin (DDSIP_unique, (int) strlen (pattern))))
@@ -116,7 +117,11 @@ DDSIP_ReadDbl (FILE * specfile, const char *pattern, const char *text, double de
                     fprintf (stderr, "*ERROR: could not read value for %s\n", pattern);
                 }
             }
-            i = 0;
+            else
+            {
+                DDSIP_SkipToEOL (specfile);
+                i = 0;
+            }
         }
         else
         {
@@ -126,7 +131,10 @@ DDSIP_ReadDbl (FILE * specfile, const char *pattern, const char *text, double de
                 i = 0;
             }
             else
+            {
                 str[i++] = (char) c;
+                in_string = 1;
+            }
         }
     }
 
@@ -213,14 +221,13 @@ DDSIP_ReadDbl (FILE * specfile, const char *pattern, const char *text, double de
 double *
 DDSIP_ReadDblVec (FILE * specfile, const char *pattern, const char *text, double defval, int isint, double lb, double ub, int maxvals, int *number)
 {
-    int find, i, ih;
+    int find = 0, i = 0, in_string = 0, ih;
 
     double *val;
 
     int c;
     char str[DDSIP_max_str_ln];
-    find = 0;
-    *number = i = 0;
+    *number = 0;
     // Rewind file
     rewind (specfile);
     // Read as long as str doesn't match pattern.
@@ -229,9 +236,9 @@ DDSIP_ReadDblVec (FILE * specfile, const char *pattern, const char *text, double
     // Default ?
     val = NULL;
     *number = 0;
-    while (!find && (c = fgetc (specfile)) != EOF)
+    while (!find && i < DDSIP_max_str_ln && (c = fgetc (specfile)) != EOF)
     {
-        if (isspace (c))
+        if (in_string && isspace (c))
         {
             str[i] = '\0';
             if (!strncmp (str, pattern, DDSIP_Imin (DDSIP_unique, (int) strlen (pattern))))
@@ -301,7 +308,10 @@ DDSIP_ReadDblVec (FILE * specfile, const char *pattern, const char *text, double
                 i = 0;
             }
             else
+            {
                 str[i++] = (char) c;
+                in_string = 1;
+            }
         }
     }
 
@@ -343,7 +353,7 @@ DDSIP_ReadDblVec (FILE * specfile, const char *pattern, const char *text, double
 char *
 DDSIP_ReadString (FILE * specfile, const char *pattern, const char *text)
 {
-    int find, i;
+    int find = 0, i = 0, in_string = 0;
 
     int c;
     char str[DDSIP_max_str_ln];
@@ -357,9 +367,9 @@ DDSIP_ReadString (FILE * specfile, const char *pattern, const char *text)
 
     // Default ?
     string = NULL;
-    while (!find && (c = fgetc (specfile)) != EOF)
+    while (!find && i < DDSIP_max_str_ln && (c = fgetc (specfile)) != EOF)
     {
-        if (isspace (c))
+        if (in_string && isspace (c))
         {
             str[i] = '\0';
             if (!strncmp (str, pattern, DDSIP_Imin (DDSIP_unique, (int) strlen (pattern))))
@@ -376,7 +386,10 @@ DDSIP_ReadString (FILE * specfile, const char *pattern, const char *text)
                 i = 0;
             }
             else
+            {
                 str[i++] = (char) c;
+                in_string = 1;
+            }
         }
     }
     if (find)
@@ -482,7 +495,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
     sprintf (pattern, "CPLEXBEGIN");
     // Search for 'CPLEXBEGIN' from beginning of specfile
     rewind (specfile);
-    while (!find && (c = fgetc (specfile)) != EOF)
+    while (!find && i < DDSIP_max_str_ln && (c = fgetc (specfile)) != EOF)
         if (c == '\n' || c == ' ' || c == '*' )
         {
             str[i] = '\0';
@@ -1559,7 +1572,7 @@ DDSIP_ReadSpec ()
         DDSIP_param->cb_test_line = (int) floor (DDSIP_ReadDbl (specfile, "CBLINE", " CB TEST LINE", 1., 1, 0., 1.) + 0.1);
         DDSIP_param->cb_cutnodes = (int) floor (DDSIP_ReadDbl (specfile, "CBCUTN", " CB CUTS UP TO NODE", 3., 1, 0., 100.) + 0.1);
         DDSIP_param->cb_depth = (int) floor (DDSIP_ReadDbl (specfile, "CBDEPT", " CB UNTIL DEPTH", 1., 1, 0., 1000.) + 0.1);
-        DDSIP_param->cb_depth_iters = (int) floor (DDSIP_ReadDbl (specfile, "CBDITL", " CB DEPTH ITERS", 10., 1, 2., 10.) + 0.1);
+        DDSIP_param->cb_depth_iters = (int) floor (DDSIP_ReadDbl (specfile, "CBDITL", " CB DEPTH ITERS", 10., 1, 2., DDSIP_bigint) + 0.1);
     }
 #else
     DDSIP_param->cb = 0;

@@ -1211,7 +1211,7 @@ DDSIP_LowerBound (void)
     char *type = (char *) DDSIP_Alloc (sizeof (char), DDSIP_bb->firstvar, "type(LowerBound)");
     int    *ordind  = NULL;
     double *scensol = NULL;
-    double sumprob, maxdispersion, rest_bound, factor, nfactor;
+    double sumprob, maxdispersion, rest_bound, factor;
     char **colname;
     char *colstore;
 
@@ -2151,13 +2151,11 @@ DDSIP_LowerBound (void)
 
     if (DDSIP_bb->bestvalue < 0.)
     {
-        factor  = 1.-2.e-11;
-        nfactor = 1.+DDSIP_Dmin(0.9*DDSIP_param->relgap, 1.e-8);
+        factor  = 1.+DDSIP_Dmax(0.5*DDSIP_param->relgap, 2.e-10);
     }
     else
     {
-        factor  = 1.+2.e-11;
-        nfactor = 1.-DDSIP_Dmin(0.9*DDSIP_param->relgap, 1.e-8);
+        factor  = 1.-DDSIP_Dmax(0.5*DDSIP_param->relgap, 2.e-10);
     }
 
     if (!(DDSIP_bb->lb_sorted))
@@ -2387,27 +2385,6 @@ DDSIP_LowerBound (void)
             {
                 DDSIP_bb->skip = -1;
             }
-            if ((!(DDSIP_bb->found_optimal_node) && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue*factor) ||
-                ( (DDSIP_bb->found_optimal_node) && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node*nfactor && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue*factor))
-            {
-//////////////////////////////////////////////////////////////////
-               if (DDSIP_param->outlev > 21)
-                   fprintf (DDSIP_bb->moreoutfile, " ########## setting found_optimal_node: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*factor (%20.15g) = %.8g\n",
-                            DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,
-                            DDSIP_bb->bestvalue*factor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*factor);
-//////////////////////////////////////////////////////////////////
-                DDSIP_bb->found_optimal_node = DDSIP_bb->curnode;
-                DDSIP_bb->bound_optimal_node = DDSIP_node[DDSIP_bb->curnode]->bound;
-            }
-//////////////////////////////////////////////////////////////////
-            else
-            {
-               if (DDSIP_param->outlev > 21)
-                   fprintf (DDSIP_bb->moreoutfile, " ########## else: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*factor (%20.15g) = %.8g\n",
-                            DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,
-                            DDSIP_bb->bestvalue*factor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*factor);
-            }
-//////////////////////////////////////////////////////////////////
         }
         else
         {
@@ -2417,6 +2394,27 @@ DDSIP_LowerBound (void)
                 minfirst[j] = -DDSIP_infty;
             }
         }
+        if ((!(DDSIP_bb->found_optimal_node) && DDSIP_node[DDSIP_bb->curnode]->bound <= DDSIP_bb->bestvalue && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*DDSIP_Dmin(0.9*DDSIP_param->relgap, 1.e-8)) ||
+            ( (DDSIP_bb->found_optimal_node) && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node))
+        {
+//////////////////////////////////////////////////////////////
+           if (DDSIP_param->outlev > 20)
+               fprintf (DDSIP_bb->moreoutfile, " ########## setting found_optimal_node: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*factor (%20.15g) = %.8g\n",
+                        DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,
+                        DDSIP_bb->bestvalue*factor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*factor);
+//////////////////////////////////////////////////////////////
+            DDSIP_bb->found_optimal_node = DDSIP_bb->curnode;
+            DDSIP_bb->bound_optimal_node = DDSIP_node[DDSIP_bb->curnode]->bound;
+        }
+//////////////////////////////////////////////////////////////
+        else
+        {
+           if (DDSIP_param->outlev > 20)
+               fprintf (DDSIP_bb->moreoutfile, " ########## else: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*factor (%20.15g) = %.8g\n",
+                        DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,
+                        DDSIP_bb->bestvalue*factor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*factor);
+        }
+//////////////////////////////////////////////////////////////
     }
     else
     {
@@ -2481,12 +2479,18 @@ DDSIP_LowerBound (void)
                 DDSIP_bb->heurval = tmpbestvalue;
                 DDSIP_bb->skip = -1;
             }
-            if ((!(DDSIP_bb->found_optimal_node) && (DDSIP_node[DDSIP_bb->curnode]->bound >= DDSIP_bb->bestvalue*factor)) ||
-                ( (DDSIP_bb->found_optimal_node) && (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node*nfactor)))
-            {
-                DDSIP_bb->found_optimal_node = DDSIP_bb->curnode;
-                DDSIP_bb->bound_optimal_node = DDSIP_node[DDSIP_bb->curnode]->bound;
-            }
+        }
+        if ((!(DDSIP_bb->found_optimal_node) && DDSIP_node[DDSIP_bb->curnode]->bound <= DDSIP_bb->bestvalue && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*DDSIP_Dmin(0.9*DDSIP_param->relgap, 1.e-8)) ||
+            ( (DDSIP_bb->found_optimal_node) && (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node)))
+        {
+//////////////////////////////////////////////////////////////
+           if (DDSIP_param->outlev > 20)
+               fprintf (DDSIP_bb->moreoutfile, " ########## setting found_optimal_node: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*factor (%20.15g) = %.8g\n",
+                        DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,
+                        DDSIP_bb->bestvalue*factor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*factor);
+//////////////////////////////////////////////////////////////
+            DDSIP_bb->found_optimal_node = DDSIP_bb->curnode;
+            DDSIP_bb->bound_optimal_node = DDSIP_node[DDSIP_bb->curnode]->bound;
         }
 
         // More debugging information

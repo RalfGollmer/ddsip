@@ -714,7 +714,7 @@ DDSIP_Bound (void)
             DDSIP_node[DDSIP_bb->front[i]]->cutAdded = 1;
         if ((!(DDSIP_bb->found_optimal_node) && (DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bestvalue*factor + DDSIP_bb->correct_bounding)
             ) ||
-            ( (DDSIP_bb->found_optimal_node) && (DDSIP_bb->found_optimal_node != DDSIP_bb->front[i]) &&
+            ( (DDSIP_bb->found_optimal_node) && (DDSIP_bb->found_optimal_node != DDSIP_bb->front[i] || DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bestvalue + 2.*DDSIP_bb->correct_bounding) &&
              ((DDSIP_node[DDSIP_bb->front[i]]->violations && (DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bound_optimal_node + DDSIP_bb->correct_bounding)) ||
               (!(DDSIP_node[DDSIP_bb->front[i]]->violations) && (DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bestvalue))
              )
@@ -740,6 +740,9 @@ DDSIP_Bound (void)
             }
             // mark ist as a leaf
             DDSIP_node[DDSIP_bb->front[i]]->leaf = 1;
+            // if a node previously seeming to be kept is now deleted, remove found_optimal_node info
+            if (DDSIP_bb->found_optimal_node == DDSIP_bb->front[i])
+                DDSIP_bb->found_optimal_node = 0;
             // Free the node's allocated arrays
             for (scen = 0; scen < DDSIP_param->scenarios; scen++)
             {

@@ -385,6 +385,7 @@ DDSIP_DualOpt (void)
     double wall_secs, cpu_secs, inherited_bound, inhMult_bound = -1e+20, rgap;
     double old_cpxrelgap = 1.e-16, old_cpxtimelim = 1000000., old_cpxrelgap2 = 1.e-16, old_cpxtimelim2 = 1000000., last_weight, next_weight;
     double reduction_factor = 0.50;
+    double nfactor;
     minfirst = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar,
                "minfirst(DualOpt)");
     maxfirst = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar,
@@ -849,6 +850,14 @@ DDSIP_DualOpt (void)
             DDSIP_EvaluateScenarioSolutions (&comb);
             DDSIP_bb->keepSols = 1;
         }
+        if (DDSIP_bb->bestvalue < 0.)
+        {
+            nfactor = 1.+DDSIP_Dmin(0.9*DDSIP_param->relgap, 1.e-8);
+        }
+        else
+        {
+            nfactor = 1.-DDSIP_Dmin(0.9*DDSIP_param->relgap, 1.e-8);
+        }
         if (DDSIP_bb->cutAdded)
         {
             // reinit model
@@ -1090,6 +1099,14 @@ DDSIP_DualOpt (void)
             last_weight = next_weight;
         }
         init_iters = DDSIP_bb->dualitcnt;
+    }
+    if (DDSIP_bb->bestvalue < 0.)
+    {
+        nfactor = 1.+DDSIP_Dmin(0.9*DDSIP_param->relgap, 1.e-8);
+    }
+    else
+    {
+        nfactor = 1.-DDSIP_Dmin(0.9*DDSIP_param->relgap, 1.e-8);
     }
     noIncreaseCounter = 0;
     DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2] = 0;
@@ -1735,9 +1752,9 @@ if(DDSIP_param->outlev > 20)
                 if (cnt)
                 {
                     // increase weight
-                    if (last_weight < 1.e3)
+                    if (DDSIP_param->cb_increaseWeight && last_weight < 1.e3)
                     {
-                        last_weight = next_weight = 1.2 * next_weight;
+                        last_weight = next_weight *= 1.2;
                         cb_set_next_weight (p, next_weight);
                         if (DDSIP_param->outlev)
                             fprintf (DDSIP_bb->moreoutfile,"########### points on line worse -> increased next weight to %g\n", next_weight);
@@ -1782,9 +1799,9 @@ if(DDSIP_param->outlev > 20)
         old_obj = obj = DDSIP_bb->dualObjVal;
         DDSIP_bb->last_dualitcnt = DDSIP_bb->dualitcnt;
         if (DDSIP_param->cb_increaseWeight &&
-            (DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->cb_depth ||
-            ((DDSIP_bb->bestvalue - obj) < DDSIP_Dmin (1.e4*DDSIP_param->relgap, 1.e-5)*(fabs(DDSIP_bb->bestvalue)+1.e-10) && next_weight < 20.)
-           ))
+            ((DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->cb_depth ||
+             ((DDSIP_bb->bestvalue - obj) < DDSIP_Dmin (1.e4*DDSIP_param->relgap, 1.e-5)*(fabs(DDSIP_bb->bestvalue)+1.e-10))) &&
+              next_weight < 10.))
         {
             last_weight = next_weight *= 2.5;
             cb_set_next_weight (p, next_weight);
@@ -1848,15 +1865,6 @@ if(DDSIP_param->outlev > 20)
         }
         else
         {
-            double nfactor;
-            if (DDSIP_bb->bestvalue < 0.)
-            {
-                nfactor = 1.+DDSIP_Dmin(0.5*DDSIP_param->relgap, 1.e-8);
-            }
-            else
-            {
-                nfactor = 1.-DDSIP_Dmin(0.5*DDSIP_param->relgap, 1.e-8);
-            }
             if (DDSIP_param->outlev)
                 DDSIP_Print2 ("   --------- termination status: within relative gap. Number of violations of nonanticipativity: ", " ------------------------------------------\n", 1.*DDSIP_node[DDSIP_bb->curnode]->violations, 1);
             DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
@@ -3014,6 +3022,29 @@ while (tmp1_bestdual)
                 else
                 {
                     DDSIP_Print2 ("termination status: within relative gap. Number of violations of nonanticipativity: ", " ------------------------------------------\n", 1.*DDSIP_node[DDSIP_bb->curnode]->violations, 1);
+                    if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 1.e-11*fabs(DDSIP_bb->bestvalue))
+                        DDSIP_bb->skip = -2;
+                    if ((DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue*nfactor) &&
+                        (!(DDSIP_bb->found_optimal_node) || (DDSIP_bb->found_optimal_node && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node)))
+                    {
+    //////////////////////////////////////////////////////////////////
+                           if (DDSIP_param->outlev > 20)
+                               fprintf (DDSIP_bb->moreoutfile, "########## setting found_optimal_node: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*nfactor (%20.15g) = %.8g\n",
+                                        DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,
+                                        DDSIP_bb->bestvalue*nfactor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*nfactor);
+    //////////////////////////////////////////////////////////////////
+                        DDSIP_bb->found_optimal_node = DDSIP_bb->curnode;
+                        DDSIP_bb->bound_optimal_node = DDSIP_node[DDSIP_bb->curnode]->bound;
+                    }
+    //////////////////////////////////////////////////////////////////
+                    else
+                    {
+                       if (DDSIP_param->outlev > 20)
+                           fprintf (DDSIP_bb->moreoutfile, "########## else: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bound_optimal_node (%20.15g) = %.8g, - bestvalue*nfactor (%20.15g) = %.8g\n",
+                                    DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bound_optimal_node, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bound_optimal_node,
+                                    DDSIP_bb->bestvalue*nfactor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*nfactor);
+                    }
+    //////////////////////////////////////////////////////////////////
                 }
                 DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
             }

@@ -291,6 +291,7 @@ extern "C" {
         int numberReinits;
         int redundancyCheck;
         int deleteRedundantCuts;
+        double cut_security_tol;
 #endif
         // annotation file name if Benders decomposition within CPLEX should be used
         char *annotationFile;

@@ -349,7 +349,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     int nodes_1st, nodes_2nd, timeLimit = 0;
 
     double tmpbestvalue = 0., tmpfeasbound = 0., rest_bound, tmprisk = 0., tmprisk4 = -DDSIP_infty, tmpprob = 0.;
-    double security_factor = 1.0-2.e-12, bobjval, objval, time_start, time_end, time_lap, wall_secs, cpu_secs, gap, meanGap;
+    double security_factor, bobjval, objval, time_start, time_end, time_lap, wall_secs, cpu_secs, gap, meanGap;
 
     double *mipx, *values;
     double *subsol;
@@ -359,7 +359,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     //  double         *Tx;
 
     double * sort_array;
-
+    security_factor = 1.0 - DDSIP_param->cut_security_tol;
 
     // if the user has supplied a start point, there is no useful information for additional variables
     if (DDSIP_bb->DDSIP_step == adv || DDSIP_bb->DDSIP_step == eev)

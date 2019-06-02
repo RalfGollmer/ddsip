@@ -1097,7 +1097,7 @@ DDSIP_DualOpt (void)
     {
         if (DDSIP_param->outlev > 20)
         {
-           fprintf (DDSIP_bb->moreoutfile, " ######## update inhMult_bound (=%.14g) to obj (=%.14g) #########################\n", inhMult_bound, obj);
+           fprintf (DDSIP_bb->moreoutfile, " ######## update inhMult_bound  (=%.14g) to obj (=%.14g) #########################\n", inhMult_bound, obj);
         }
         inhMult_bound = obj;
     }
@@ -1155,7 +1155,7 @@ DDSIP_DualOpt (void)
             {
                 if (DDSIP_param->outlev > 20)
                 {
-                   fprintf (DDSIP_bb->moreoutfile, " ######## update inhMult_bound (=%.14g) to obj (=%.14g) #########################\n", inhMult_bound, obj);
+                   fprintf (DDSIP_bb->moreoutfile, " ######## update inhMult_bound  (=%.14g) to obj (=%.14g) #########################\n", inhMult_bound, obj);
                 }
                 inhMult_bound = obj;
             }
@@ -1215,7 +1215,7 @@ DDSIP_DualOpt (void)
                     {
                         if (DDSIP_param->outlev > 20)
                         {
-                           fprintf (DDSIP_bb->moreoutfile, " ######## update inhMult_bound (=%.14g) to obj (=%.14g) #########################\n", inhMult_bound, obj);
+                           fprintf (DDSIP_bb->moreoutfile, " ######## update inhMult_bound  (=%.14g) to obj (=%.14g) #########################\n", inhMult_bound, obj);
                         }
                         inhMult_bound = obj;
                     }
@@ -1761,7 +1761,7 @@ if(DDSIP_param->outlev > 20)
                     {
                         if (DDSIP_param->outlev > 20)
                         {
-                           fprintf (DDSIP_bb->moreoutfile, " ######## update inhMult_bound (=%.14g) to obj (=%.14g) #########################\n", inhMult_bound, obj);
+                           fprintf (DDSIP_bb->moreoutfile, " ######## update inhMult_bound  (=%.14g) to obj (=%.14g) #########################\n", inhMult_bound, obj);
                         }
                         inhMult_bound = obj;
                     }
@@ -1899,6 +1899,25 @@ if(DDSIP_param->outlev > 20)
             DDSIP_CheckRedundancy(1);
         noIncreaseCounter = 0;
         many_iters = 0;
+////////////////////////////////////////////////////////////////////////////////////
+////////// check the cuts - only for that reason the same center is used
+//        {
+//            int outfiles;
+//            outfiles = DDSIP_param->files;
+//            DDSIP_bb->keepSols = 0;
+//            DDSIP_param->files = 4;
+//            if ((status = cb_set_new_center_point (p, DDSIP_bb->local_bestdual)))
+//            {
+//                fprintf (stderr, "set_new_center_point returned %d\n", status);
+//                cb_destruct_problem (&p);
+//                DDSIP_Free ((void **) &(minfirst));
+//                DDSIP_Free ((void **) &(maxfirst));
+//                DDSIP_Free ((void **) &(center_point));
+//                return status;
+//            }
+//            DDSIP_param->files = outfiles;
+//        }
+////////////////////////////////////////////////////////////////////////////////////
         DDSIP_bb->last_dualitcnt = DDSIP_bb->dualitcnt;
         if (DDSIP_bb->curnode >= DDSIP_param->cbBreakIters)
             DDSIP_bb->current_itlim = DDSIP_param->cbitlim;

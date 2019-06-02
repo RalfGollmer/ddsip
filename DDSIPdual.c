@@ -1228,15 +1228,13 @@ DDSIP_DualOpt (void)
                     }
                     cnt = 1;
                     obj = DDSIP_bb->currentDualObjVal;
-                    if (obj > inhMult_bound)
+                    if (obj > inhMult_bound && obj > max_bound)
                     {
-                        if (DDSIP_param->outlev > 20)
-                        {
-                           fprintf (DDSIP_bb->moreoutfile, " ######## update inhMult_bound  (=%.14g) to obj (=%.14g) #########################\n", inhMult_bound, obj);
-                        }
-                        inhMult_bound = obj;
+                        memcpy (DDSIP_bb->local_bestdual, tmp_bestdual->dual, sizeof (double) * (DDSIP_bb->dimdual));
+                        DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = last_weight;
+                        DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 1] = tmp_maxbound->node_nr;
                     }
-                    diff = obj - inherited_bound;
+                    diff = obj - inhMult_bound;
                     if (obj < min_bound)
                     {
                         min_bound = obj;
@@ -1435,11 +1433,11 @@ while (tmp1_bestdual)
                     last_weight = next_weight = 0.3*DDSIP_Dmin(max_weight, 5e+2) + 0.7*start_weight;
                     cb_set_next_weight (p, next_weight);
                 }
-                if (max_bound > inhMult_bound)
+                if (max_bound >= inhMult_bound)
                 {
 //////////////////////////
 if(DDSIP_param->outlev > 20)
-    fprintf(DDSIP_bb->moreoutfile, "### max_bound (%g) > inhMult_bound (%g), tmp_maxbound= %p\n", max_bound, inhMult_bound, tmp_maxbound);
+    fprintf(DDSIP_bb->moreoutfile, "### max_bound (%g) >= inhMult_bound (%g), tmp_maxbound= %p\n", max_bound, inhMult_bound, tmp_maxbound);
 //////////////////////////
                     if (tmp_maxbound)
                     {
@@ -1615,7 +1613,7 @@ if(DDSIP_param->outlev > 20)
                     cnt = 1;
 //////////////////////////
 if(DDSIP_param->outlev > 20)
-    fprintf(DDSIP_bb->moreoutfile, "### max_bound (%g) <= inherited_bound (%g), tmp_maxbound= %p\n", max_bound, inherited_bound, tmp_maxbound);
+    fprintf(DDSIP_bb->moreoutfile, "### max_bound (%g) < inherited_bound (%g), tmp_maxbound= %p\n", max_bound, inherited_bound, tmp_maxbound);
 //////////////////////////
 #ifdef LINEFORNEG
                     if (DDSIP_param->cb_test_line)

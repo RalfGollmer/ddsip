@@ -1734,6 +1734,14 @@ if(DDSIP_param->outlev > 20)
                 }
                 if (cnt)
                 {
+                    // increase weight
+                    if (last_weight < 1.e3)
+                    {
+                        last_weight = next_weight = 1.2 * next_weight;
+                        cb_set_next_weight (p, next_weight);
+                        if (DDSIP_param->outlev)
+                            fprintf (DDSIP_bb->moreoutfile,"########### points on line worse -> increased next weight to %g\n", next_weight);
+                    }
                     if (memcmp (DDSIP_bb->local_bestdual, DDSIP_node[DDSIP_bb->curnode]->dual, sizeof (double) * (DDSIP_bb->dimdual)))
                     {
                         if ((status = cb_set_new_center_point (p, DDSIP_bb->local_bestdual)))
@@ -1747,14 +1755,6 @@ if(DDSIP_param->outlev > 20)
                             DDSIP_Free ((void **) &(center_point));
                             return status;
                         }
-                    }
-                    // increase weight
-                    if (last_weight < 1.e3)
-                    {
-                        last_weight = next_weight = 1.2 * next_weight;
-                        cb_set_next_weight (p, next_weight);
-                        if (DDSIP_param->outlev)
-                            fprintf (DDSIP_bb->moreoutfile,"########### increased next weight to %g\n", next_weight);
                     }
                     old_obj = obj = DDSIP_bb->dualObjVal;
                     if (obj > inhMult_bound)

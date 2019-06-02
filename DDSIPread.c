@@ -187,18 +187,14 @@ DDSIP_ReadDbl (FILE * specfile, const char *pattern, const char *text, double de
     // Write info to output file
     if (!find)
     {
-        // Two-stage parameters can be read from the time file, too. Some parameters are hidden.
-        if (DDSIP_param->outlev)
+        fprintf (DDSIP_outfile, " %-8s  %-31s(default) ", pattern, text);
+        if (isint)
         {
-            fprintf (DDSIP_outfile, " %-8s  %-31s(default) ", pattern, text);
-            if (isint)
-            {
-                val = (int) floor (val + 0.1);
-                fprintf (DDSIP_outfile, "    %12.0f\n", val);
-            }
-            else
-                fprintf (DDSIP_outfile, "    %12.3e\n", val);
+            val = (int) floor (val + 0.1);
+            fprintf (DDSIP_outfile, "    %12.0f\n", val);
         }
+        else
+            fprintf (DDSIP_outfile, "    %12.3e\n", val);
     }
     else
     {
@@ -1174,6 +1170,11 @@ DDSIP_ReadSpec ()
     DDSIP_param->stoccost = (int) floor (DDSIP_ReadDbl (specfile, "STOCCO", " STOCHASTIC COST COEFFICIENTS", 0., 1, 0., DDSIP_bigint) + 0.1);
     DDSIP_param->stocmat = (int) floor (DDSIP_ReadDbl (specfile, "STOCMA", " STOCHASTIC MATRIX ENTRIES", 0., 1, 0., DDSIP_bigint) + 0.1);
 
+    if (!DDSIP_param->stocrhs && !DDSIP_param->stoccost && !DDSIP_param->stocmat)
+    {
+        fprintf (DDSIP_outfile, " XXX ERROR: no stochastic entries (neither in rhs, cost, nor matrix) specified - exit. XXX\n");
+        exit (1);
+    }
 
     // Cplex parameters, output somewhere else
     DDSIP_ReadCpxPara (specfile);

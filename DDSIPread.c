@@ -1319,7 +1319,7 @@ DDSIP_ReadSpec ()
         DDSIP_param->alwaysBendersCuts = 1;
         tmp = DDSIP_param->stocmat ? 1. : 0.;
         DDSIP_param->testOtherScens = (int) floor (DDSIP_ReadDbl (specfile, "TESTBE", " TEST FOR FURTHER BENDERS CUTS", tmp, 1, 0., 1.) + 0.1);
-        DDSIP_param->cut_security_tol = DDSIP_ReadDbl (specfile, "CUTSEC", " BENDERS SECURITY TOLERANCE", 1.e-14, 0, 0., 1.0e-6);
+        DDSIP_param->cut_security_tol = DDSIP_ReadDbl (specfile, "CUTSEC", " BENDERS SECURITY TOLERANCE", 2.e-14, 0, 0., 1.0e-6);
     }
     else
     {

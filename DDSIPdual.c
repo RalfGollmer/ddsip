@@ -1418,11 +1418,11 @@ while (tmp1_bestdual)
                     last_weight = next_weight = 0.3*DDSIP_Dmin(max_weight, 5e+2) + 0.7*start_weight;
                     cb_set_next_weight (p, next_weight);
                 }
-                if (max_bound > inherited_bound)
+                if (max_bound > inhMult_bound)
                 {
 //////////////////////////
 if(DDSIP_param->outlev > 20)
-    fprintf(DDSIP_bb->moreoutfile, "### max_bound (%g) > inherited_bound (%g), tmp_maxbound= %p\n", max_bound, inherited_bound, tmp_maxbound);
+    fprintf(DDSIP_bb->moreoutfile, "### max_bound (%g) > inhMult_bound (%g), tmp_maxbound= %p\n", max_bound, inhMult_bound, tmp_maxbound);
 //////////////////////////
                     if (tmp_maxbound)
                     {
@@ -1716,7 +1716,7 @@ if(DDSIP_param->outlev > 20)
                                                      DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                     }
                                 }
-                                if (DDSIP_bb->currentDualObjVal >= inherited_bound)
+                                if (DDSIP_bb->currentDualObjVal >= inhMult_bound)
                                 {
                                     memcpy (DDSIP_bb->local_bestdual, DDSIP_node[DDSIP_bb->curnode]->dual, sizeof (double) * (DDSIP_bb->dimdual));
                                     DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = last_weight;

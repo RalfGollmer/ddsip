@@ -271,25 +271,28 @@ DDSIP_FreeBb ()
         }
         if (DDSIP_param->cb)
         {
-            for (i = 0; i < DDSIP_param->scenarios; i++)
+            if (DDSIP_bb->bestfirst)
             {
-                if (DDSIP_bb->bestfirst[i].first_sol)
+                for (i = 0; i < DDSIP_param->scenarios; i++)
                 {
-                    if ((cnt = (int) (DDSIP_bb->bestfirst[i].first_sol[DDSIP_bb->firstvar] - 0.9)))
+                    if ( DDSIP_bb->bestfirst[i].first_sol)
                     {
-                        for (k1 = i + 1; cnt && k1 < DDSIP_param->scenarios; k1++)
+                        if ((cnt = (int) (DDSIP_bb->bestfirst[i].first_sol[DDSIP_bb->firstvar] - 0.9)))
                         {
-                            if (DDSIP_bb->bestfirst[i].first_sol == DDSIP_bb->bestfirst[k1].first_sol)
+                            for (k1 = i + 1; cnt && k1 < DDSIP_param->scenarios; k1++)
                             {
-                                DDSIP_bb->bestfirst[k1].first_sol = NULL;
-                                cnt--;
+                                if (DDSIP_bb->bestfirst[i].first_sol == DDSIP_bb->bestfirst[k1].first_sol)
+                                {
+                                    DDSIP_bb->bestfirst[k1].first_sol = NULL;
+                                    cnt--;
+                                }
                             }
                         }
+                        DDSIP_Free ((void **) &(DDSIP_bb->bestfirst[i].first_sol));
                     }
-                    DDSIP_Free ((void **) &(DDSIP_bb->bestfirst[i].first_sol));
                 }
+                DDSIP_Free ((void **) &(DDSIP_bb->bestfirst));
             }
-            DDSIP_Free ((void **) &(DDSIP_bb->bestfirst));
             DDSIP_Free ((void **) &(DDSIP_bb->startinfo_multipliers));
             DDSIP_Free ((void **) &(DDSIP_bb->aggregate_time));
         }

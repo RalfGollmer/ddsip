@@ -726,6 +726,11 @@ DDSIP_InitStages (void)
     {
         printf ("XXX ERROR: no first-stage variables found. Wrong post- or prefix given? Problem cannot be handled by DDSIP.\n    Exiting.\n");
         fprintf (DDSIP_outfile, "XXX ERROR: no first-stage variables found. Wrong post- or prefix given? Problem cannot be handled by DDSIP.\n    Exiting.\n");
+        DDSIP_Free ((void **) &(secondindex));
+        DDSIP_Free ((void **) &(firindex));
+        DDSIP_Free ((void **) &(ctype));
+        DDSIP_Free ((void **) &(colname));
+        DDSIP_Free ((void **) &(colstore));
         return -1;
     }
     if (abs(DDSIP_param->riskmod) == 4)

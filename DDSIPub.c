@@ -877,7 +877,7 @@ if (DDSIP_param->outlev > 21)
                                                     sprintf (rowstore, "DDSIPBendersCut%.04d",DDSIP_bb->cutNumber);
                                                     if (DDSIP_param->outlev)
                                                     {
-                                                        fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %g, rhs= %.15g + %.15g = %.15g ############\n", rowstore, Bs+1, viol, lhs, viol*security_factor, rhs);
+                                                        fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %.15g, rhs= %.15g + %.15g = %.15g ############\n", rowstore, Bs+1, viol, lhs, viol*security_factor, rhs);
                                                         //fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %g ############\n", rowstore, Bs+1, viol);
                                                         if (DDSIP_param->outlev > 8)
                                                            printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
@@ -1340,7 +1340,7 @@ if (DDSIP_param->outlev > 21)
                                         sprintf (rowstore, "DDSIPBendersCut%.04d",DDSIP_bb->cutNumber);
                                         if (DDSIP_param->outlev)
                                         {
-                                            fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %g, rhs= %.15g + %.15g = %.15g ############\n", rowstore, Bs+1, viol, lhs, viol*security_factor, rhs);
+                                            fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %.15g, rhs= %.15g + %.15g = %.15g ############\n", rowstore, Bs+1, viol, lhs, viol*security_factor, rhs);
                                             //fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %g ############\n", rowstore, Bs+1, viol);
                                             if (DDSIP_param->outlev > 8)
                                                 printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);

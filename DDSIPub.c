@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 #include <DDSIPconst.h>
 
 #define CHECKINTEGERCUT
+#define DEACTIVATECUTS
 //#define CHECKIDENTICAL
 //#define DEBUG
 
@@ -356,6 +357,10 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
 
     double we, wr, d, mipgap, oldviol = DDSIP_infty, viol;
     double rhs;
+#ifdef DEACTIVATECUTS
+    double *cutrhs, *deactivatedrhs;
+    int    *cutindex, numCuts = 0;
+#endif
     //  double         *Tx;
 
     double * sort_array;
@@ -485,6 +490,56 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
         fprintf (stderr, "ERROR: Failed to change bounds \n");
         goto TERMINATE;
     }
+#ifdef DEACTIVATECUTS
+    if (DDSIP_param->deactivate_cuts)
+    {
+        // deactivate cuts already present by changing their rhs
+        if (DDSIP_bb->cutCntr)
+        {
+            numCuts = DDSIP_bb->cutCntr;
+            cutrhs   = (double *) DDSIP_Alloc (sizeof (double), numCuts, "cutrhs (UpperBound)");
+            deactivatedrhs   = (double *) DDSIP_Alloc (sizeof (double), numCuts, "cutrhs (UpperBound)");
+            cutindex = (int *)    DDSIP_Alloc (sizeof (int), numCuts, "cutindex (UpperBound)");
+            j = CPXgetnumrows (DDSIP_env, DDSIP_lp);
+            if (j < DDSIP_bb->nocon + DDSIP_bb->cutCntr)
+            {
+                if (DDSIP_param->outlev)
+                    fprintf (DDSIP_bb->moreoutfile, "### ERROR: nocon= %d + cutCntr= %d > %d (getnumrows)\n", DDSIP_bb->nocon, DDSIP_bb->cutCntr, j);
+            }
+            status = CPXgetrhs (DDSIP_env, DDSIP_lp, cutrhs, DDSIP_bb->nocon, DDSIP_bb->nocon + numCuts - 1);
+            if (status)
+            {
+                fprintf (stderr, "ERROR: Failed to get cut rhs, return code: %d\n", status);
+                if (DDSIP_param->outlev)
+                    fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get cut rhs, return code: %d\n", status);
+                numCuts = 0;
+            }
+            else
+            {
+                for (j = 0; j < DDSIP_bb->cutCntr; j++)
+                {
+                    cutindex[j] = DDSIP_bb->nocon + j;
+                    deactivatedrhs[j] = -fabs(cutrhs[j]) -10.0;
+                }
+                status = CPXchgrhs (DDSIP_env, DDSIP_lp, numCuts, cutindex, deactivatedrhs);
+                if (status)
+                {
+                    fprintf (stderr, "ERROR: Failed to change cut rhs \n");
+                    if (DDSIP_param->outlev)
+                        fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to change cut rhs, return code: %d\n", status);
+                    numCuts = 0;
+                }
+            }
+            DDSIP_Free ((void*) &deactivatedrhs);
+#ifdef DEBUG
+            if (DDSIP_param->outlev > 20)
+            {
+                fprintf (DDSIP_bb->moreoutfile," ############ deactivated %d cuts by changing their rhs\n", numCuts);
+            }
+#endif
+        }
+    }
+#endif
 
     // prepare for decision about stopping: rest_bound is the expectation of all the lower bounds in this node
     if (DDSIP_bb->DDSIP_step == adv || DDSIP_bb->DDSIP_step == eev || feasCheckOnly)
@@ -775,7 +830,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                             char *rowstore = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_varname, "colstore(UpperBound)");
                                             int *cmatbeg = (int *) DDSIP_Alloc (sizeof (int*), 1, "cmatbeg(UpperBound)");
                                             int *cmatind = (int *) DDSIP_Alloc (sizeof (int), numRows, "cmatind(UpperBound)");
-                                            double lhs;
+                                            double lhs, min_entry = 1.e+20, max_entry = 0.;
                                             double *cmatval = (double *) DDSIP_Alloc (sizeof (double), numRows, "cmatval (UpperBound)");
                                             int col_nonzeros, surplus, ii;
 
@@ -825,6 +880,8 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                     {
                                                         lhs += rmatval[k]*values[k];
                                                         i++;
+                                                        max_entry = DDSIP_Dmax (max_entry, fabs(rmatval[k]));
+                                                        min_entry = DDSIP_Dmin (min_entry, fabs(rmatval[k]));
                                                     }
                                                 }
                                                 if (i > 1)
@@ -877,7 +934,7 @@ if (DDSIP_param->outlev > 21)
                                                     sprintf (rowstore, "DDSIPBendersCut%.04d",DDSIP_bb->cutNumber);
                                                     if (DDSIP_param->outlev)
                                                     {
-                                                        fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %.15g, rhs= %.15g + %.15g = %.15g ############\n", rowstore, Bs+1, viol, lhs, viol*security_factor, rhs);
+                                                        fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %.14g, lhs= %.14g, min/max coeff %.6g/%.6g rhs= %.14g ############\n", rowstore, Bs+1, viol, lhs, min_entry, max_entry, rhs);
                                                         //fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %g ############\n", rowstore, Bs+1, viol);
                                                         if (DDSIP_param->outlev > 8)
                                                            printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
@@ -1238,7 +1295,7 @@ if (DDSIP_param->outlev > 21)
                                 char *rowstore = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_varname, "colstore(UpperBound)");
                                 int *cmatbeg = (int *) DDSIP_Alloc (sizeof (int*), 1, "cmatbeg(UpperBound)");
                                 int *cmatind = (int *) DDSIP_Alloc (sizeof (int), numRows, "cmatind(UpperBound)");
-                                double lhs;
+                                double lhs, min_entry = 1.e+20, max_entry = 0.;
                                 double *cmatval = (double *) DDSIP_Alloc (sizeof (double), numRows, "cmatval (UpperBound)");
                                 int col_nonzeros, surplus, ii;
 
@@ -1288,6 +1345,8 @@ if (DDSIP_param->outlev > 21)
                                         {
                                             lhs += rmatval[k]*values[k];
                                             i++;
+                                            max_entry = DDSIP_Dmax (max_entry, fabs(rmatval[k]));
+                                            min_entry = DDSIP_Dmin (min_entry, fabs(rmatval[k]));
                                         }
                                     }
                                     if (i > 1)
@@ -1340,7 +1399,7 @@ if (DDSIP_param->outlev > 21)
                                         sprintf (rowstore, "DDSIPBendersCut%.04d",DDSIP_bb->cutNumber);
                                         if (DDSIP_param->outlev)
                                         {
-                                            fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %.15g, rhs= %.15g + %.15g = %.15g ############\n", rowstore, Bs+1, viol, lhs, viol*security_factor, rhs);
+                                            fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %.14g, lhs= %.14g, min/max coeff %.6g/%.6g rhs= %.14g ############\n", rowstore, Bs+1, viol, lhs, min_entry, max_entry, rhs);
                                             //fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %g ############\n", rowstore, Bs+1, viol);
                                             if (DDSIP_param->outlev > 8)
                                                 printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
@@ -2001,6 +2060,27 @@ if (DDSIP_param->outlev > 21)
 
 TERMINATE:
 
+#ifdef DEACTIVATECUTS
+    if (numCuts)
+    {
+        status = CPXchgrhs (DDSIP_env, DDSIP_lp, numCuts, cutindex, cutrhs);
+        if (status)
+        {
+            if (DDSIP_param->outlev)
+                fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to change cut rhs, return code: %d\n", status);
+            fprintf (stderr, "ERROR: Failed to change cut rhs, return code %d\n", status);
+            exit (123);
+        }
+        DDSIP_Free ((void*) &cutrhs);
+        DDSIP_Free ((void*) &cutindex);
+#ifdef DEBUG
+        if (DDSIP_param->outlev > 20)
+        {
+            fprintf (DDSIP_bb->moreoutfile," ############ activated %d cuts again by changing their rhs\n", numCuts);
+        }
+#endif
+    }
+#endif
     DDSIP_Free ((void **) &(sort_array));
     // if not only feasibility was tested, add the suggested first-stage to the list of suggested solutions
     if (!feasCheckOnly)

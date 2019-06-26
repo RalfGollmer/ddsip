@@ -1334,6 +1334,12 @@ DDSIP_ReadSpec ()
     if (DDSIP_param->addBendersCuts || DDSIP_param->addIntegerCuts)
     {
         DDSIP_param->numberReinits  = (int) floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 25., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->deactivate_cuts= (int) floor (DDSIP_ReadDbl (specfile, "DEACTI", " DEACTIVATE CUTS IN UB", 0., 1, 0., 1) + 0.1);
+    }
+    else
+    {
+        DDSIP_param->numberReinits  = 0;
+        DDSIP_param->deactivate_cuts= 0;
     }
     
     DDSIP_param->redundancyCheck = (int) floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", 0., 1, 0., 1.) + 0.1);
@@ -1495,7 +1501,7 @@ DDSIP_ReadSpec ()
     DDSIP_param->cb = 0;
 #ifdef CONIC_BUNDLE
     //conic bundle part
-    tmp = (DDSIP_param->riskalg == 1 || DDSIP_param->scalarization) ? 0 : -16;
+    tmp = (DDSIP_param->riskalg == 1 || DDSIP_param->scalarization) ? 0 : -18;
     DDSIP_param->cb = (int) floor (DDSIP_ReadDbl (specfile, "CBFREQ", " CB METHOD IN EVERY ITH NODE", tmp, 1, -DDSIP_bigint, DDSIP_bigint) + 0.1);
     if (DDSIP_param->scalarization && DDSIP_param->cb)
     {
@@ -1531,7 +1537,7 @@ DDSIP_ReadSpec ()
     {
         //DDSIP_param->prematureStop = 0; // would be safer, but after current changes the lower bound used for premature stoppng is chosen with more caution (should work in many cases)
         DDSIP_param->prematureStop = 1;
-        DDSIP_param->cbitlim = (int) floor (DDSIP_ReadDbl (specfile, "CBITLI", " CB DESCENT ITERATIONS", 16., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->cbitlim = (int) floor (DDSIP_ReadDbl (specfile, "CBITLI", " CB DESCENT ITERATIONS", 20., 1, 0., DDSIP_bigint) + 0.1);
         if (abs(DDSIP_param->riskmod) == 4 || abs(DDSIP_param->riskmod) == 5)
         {
             printf ("     setting CBRITLIM to 0 due risk model.\n");
@@ -1541,6 +1547,8 @@ DDSIP_ReadSpec ()
         else
             DDSIP_param->cbrootitlim = (int) floor (DDSIP_ReadDbl (specfile, "CBRITL", " CB DESCENT ITERATIONS IN ROOT", 9, 1, 0., DDSIP_bigint) + 0.1);
 
+        DDSIP_param->cb_depth = (int) floor (DDSIP_ReadDbl (specfile, "CBDEPT", " CB UNTIL DEPTH", 1., 1, 0., 1000.) + 0.1);
+        DDSIP_param->cb_depth_iters = (int) floor (DDSIP_ReadDbl (specfile, "CBDITL", " CB DEPTH ITERS", 10., 1, 2., DDSIP_bigint) + 0.1);
         DDSIP_param->cb_maxsteps  = (int) floor (DDSIP_ReadDbl (specfile, "CBSTEP", " CB MAXSTEPS", 12., 1, 1., 10000.) + 0.1);
         DDSIP_param->cbtotalitlim = (int) floor (DDSIP_ReadDbl (specfile, "CBTOTI", " CB ITERATION LIMIT",5000., 1, 0., DDSIP_bigint) + 0.1);
         DDSIP_param->cbContinuous = (int) floor (DDSIP_ReadDbl (specfile, "CBCONT", " CONTINUOUS CB CALLS", 6., 1, 0., DDSIP_bigint) + 0.1);
@@ -1574,8 +1582,6 @@ DDSIP_ReadSpec ()
         DDSIP_param->cb_bestdualListLength= (int) floor (DDSIP_ReadDbl (specfile, "CBLIST", " CB BESTDUAL LIST LENGTH", 5., 1, 1., 50.) + 0.1);
         DDSIP_param->cb_test_line = (int) floor (DDSIP_ReadDbl (specfile, "CBLINE", " CB TEST LINE", 1., 1, 0., 1.) + 0.1);
         DDSIP_param->cb_cutnodes = (int) floor (DDSIP_ReadDbl (specfile, "CBCUTN", " CB CUTS UP TO NODE", 3., 1, 0., 100.) + 0.1);
-        DDSIP_param->cb_depth = (int) floor (DDSIP_ReadDbl (specfile, "CBDEPT", " CB UNTIL DEPTH", 1., 1, 0., 1000.) + 0.1);
-        DDSIP_param->cb_depth_iters = (int) floor (DDSIP_ReadDbl (specfile, "CBDITL", " CB DEPTH ITERS", 10., 1, 2., DDSIP_bigint) + 0.1);
     }
 #else
     DDSIP_param->cb = 0;

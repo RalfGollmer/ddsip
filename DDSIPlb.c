@@ -389,14 +389,14 @@ DDSIP_GetBranchIndex (double *dispnorm)
                 if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][index[j]] <= hbranch)
                 {
                     below++;
-                    hlb =  hbranch - (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][index[j]];
-                    dist_below += hlb*hlb;
+                    h =  hbranch - (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][index[j]];
+                    dist_below += DDSIP_data->prob[i] * h*h;
                 }
                 else if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][index[j]] > hbranch)
                 {
                     above++;
-                    hlb = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][index[j]] - hbranch;
-                    dist_above += hlb*hlb;
+                    h = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][index[j]] - hbranch;
+                    dist_above += DDSIP_data->prob[i] * h*h;
                 }
             }
             diff = abs (below-above);
@@ -426,7 +426,7 @@ DDSIP_GetBranchIndex (double *dispnorm)
                 }
                 //
                 if (DDSIP_param->outlev > 21)
-                    fprintf (DDSIP_bb->moreoutfile,"\tGetBranchIndex: index  %5d disp. %15.12g  below %3d above %3d diff %3d  mindiff %3d dist %12.7g branchindex %d\n",DDSIP_bb->firstindex[index[j]],dispnorm[index[j]],below,above,diff,mindiff,dist,DDSIP_bb->firstindex[DDSIP_node[DDSIP_bb->curnode]->branchind]);
+                    fprintf (DDSIP_bb->moreoutfile,"\tGetBranchIndex: index  %5d disp. %15.12g,  below: %3d above: %3d diff %3d  mindiff %3d dist %12.7g branchindex %d\n",DDSIP_bb->firstindex[index[j]],dispnorm[index[j]],below,above,diff,mindiff,dist,DDSIP_bb->firstindex[DDSIP_node[DDSIP_bb->curnode]->branchind]);
                 //
             }
             else
@@ -1832,10 +1832,7 @@ DDSIP_LowerBound (void)
                     goto TERMINATE;
                 }
 
-                if (relax == 2)
-                    status = CPXgetx (DDSIP_env, DDSIP_lp, mipx, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
-                else
-                    status = CPXgetx (DDSIP_env, DDSIP_lp, mipx, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
+                status = CPXgetx (DDSIP_env, DDSIP_lp, mipx, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
                 if (status)
                 {
                     fprintf (stderr, "ERROR: Failed to get solution \n");
@@ -3065,10 +3062,7 @@ if (DDSIP_param->outlev > 21)
                                             goto TERMINATE;
                                         }
 
-                                        if (relax == 2)
-                                            status = CPXgetx (DDSIP_env, DDSIP_lp, mipx, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
-                                        else
-                                            status = CPXgetx (DDSIP_env, DDSIP_lp, mipx, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
+                                        status = CPXgetx (DDSIP_env, DDSIP_lp, mipx, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
                                         if (status)
                                         {
                                             fprintf (stderr, "ERROR: Failed to get solution \n");
@@ -3919,10 +3913,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                         goto TERMINATE;
                     }
 
-                    if (relax == 2)
-                        status = CPXgetx (DDSIP_env, DDSIP_lp, mipx, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
-                    else
-                        status = CPXgetx (DDSIP_env, DDSIP_lp, mipx, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
+                    status = CPXgetx (DDSIP_env, DDSIP_lp, mipx, 0, DDSIP_bb->firstvar + DDSIP_bb->secvar - 1);
                     if (status)
                     {
                         fprintf (stderr, "ERROR: Failed to get solution \n");

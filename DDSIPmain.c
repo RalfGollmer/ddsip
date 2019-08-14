@@ -165,7 +165,9 @@ main (int argc, char * argv[])
 
     setbuf (DDSIP_outfile, 0);
     fprintf (DDSIP_outfile, "%s\n", argv[0]);
+    fprintf (DDSIP_outfile, "DDSIP  %s\n", DDSIP_version);
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
+
     fprintf (DDSIP_outfile, "current system time: ");
     fflush (DDSIP_outfile);
 #ifndef _WIN32
@@ -182,8 +184,6 @@ main (int argc, char * argv[])
     sprintf (astring, "date /T >> %s & time /T >> %s\n", DDSIP_outfname,DDSIP_outfname);
     i = system (astring);
 #endif
-
-    fprintf (DDSIP_outfile, "\nDDSIP  %s\n", DDSIP_version);
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
 
     // Open cplex environment
@@ -196,7 +196,7 @@ main (int argc, char * argv[])
     }
     sprintf (astring, "%s", CPXversion (DDSIP_env));
     printf ("CPLEX version is %s\n", astring);
-    fprintf (DDSIP_outfile, "CPLEX version is %s\n\n", astring);
+    fprintf (DDSIP_outfile, "CPLEX version is %s\n", astring);
 
     // Allocate the structures to hold the information on the problem
     DDSIP_param = (para_t *) DDSIP_Alloc (sizeof (para_t), 1, "param(Main)");
@@ -531,7 +531,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
             goto TERMINATE;
 #endif
 
-        if (!DDSIP_bb->skip || DDSIP_bb->skip == -1)
+        if (!DDSIP_bb->skip || DDSIP_bb->skip == -1 || DDSIP_bb->skip == -11)
         {
             double old_bound;
             int cntr, maxCntr;

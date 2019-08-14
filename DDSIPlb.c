@@ -4493,12 +4493,22 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 cb_set_next_weight (DDSIP_bb->dualProblem, weight_reset_factor*original_weight);
                 if (DDSIP_param->outlev > 20)
                     fprintf (DDSIP_bb->moreoutfile, " ### increased weight to %g\n", weight_reset_factor*original_weight);
+                if ((DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) > (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 1.))
+                {
+                    DDSIP_bb->weight_reset = 2;
+                    cb_set_next_weight (DDSIP_bb->dualProblem, 2.*weight_reset_factor*original_weight);
+                    if (DDSIP_param->outlev > 20)
+                        fprintf (DDSIP_bb->moreoutfile, " ### increased weight to %g\n", 2.*weight_reset_factor*original_weight);
+                }
             }
         }
     }
-    if ((DDSIP_bb->dualdescitcnt == 1) && (DDSIP_bb->weight_reset == 1) && ((DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) < 1.e-8 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 100.)))
+    if ((DDSIP_bb->dualdescitcnt == 1) && (DDSIP_bb->weight_reset) && ((DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) < 1.e-8 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 100.)))
     {
-        if (fabs (weight_reset_factor*original_weight - cb_get_last_weight(DDSIP_bb->dualProblem)) < DDSIP_param->accuracy)
+        if (((DDSIP_bb->weight_reset == 1) &&
+                  (fabs(   weight_reset_factor*original_weight - cb_get_last_weight(DDSIP_bb->dualProblem)) < DDSIP_param->accuracy)) ||
+            ((DDSIP_bb->weight_reset == 2) &&
+                  (fabs(2.*weight_reset_factor*original_weight - cb_get_last_weight(DDSIP_bb->dualProblem)) < DDSIP_param->accuracy)))
         {
            DDSIP_bb->weight_reset = -1;
            cb_set_next_weight (DDSIP_bb->dualProblem, original_weight);

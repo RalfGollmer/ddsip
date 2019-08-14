@@ -196,7 +196,7 @@ DDSIP_ChgProb (int scen, int multipliers)
                     fprintf (DDSIP_bb->moreoutfile, "DDSIP_ChgProb: Current lambda for node %d:\n", DDSIP_bb->curnode);
                     for (i = 0; i < DDSIP_bb->dimdual; i++)
                     {
-                        fprintf (DDSIP_bb->moreoutfile, " %15.8g", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
+                        fprintf (DDSIP_bb->moreoutfile, " %14.8g", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
                         if (!((i+1)%10))
                             fprintf (DDSIP_bb->moreoutfile, "\n");
                     }
@@ -271,7 +271,7 @@ DDSIP_ChgProb (int scen, int multipliers)
                     fprintf (DDSIP_bb->moreoutfile, "DDSIP_ChgProb: Current lambda for node %d:\n", DDSIP_bb->curnode);
                     for (i = 0; i < DDSIP_bb->dimdual; i++)
                     {
-                        fprintf (DDSIP_bb->moreoutfile, " %15.8g", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
+                        fprintf (DDSIP_bb->moreoutfile, " %14.8g", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
                         if (!((i+1)%10))
                             fprintf (DDSIP_bb->moreoutfile, "\n");
                     }

@@ -2141,10 +2141,14 @@ TERMINATE:
 
 void DDSIP_EvaluateScenarioSolutions (int* comb)
 {
-    int i, i_scen, status = 0;
+    int i, i_scen, status = 0, use_heur12 = 0;
     double tmpbestheur = DDSIP_infty;
     enum DDSIP_step_t currentStep;
-
+    if (DDSIP_bb->keepSols == -11)
+    {
+        use_heur12 = 1;
+        DDSIP_bb->keepSols = 0;
+    }
     if ((DDSIP_bb->skip == 3) && (DDSIP_node[DDSIP_bb->curnode]->bound >= DDSIP_bb->bestvalue))
         return;
     currentStep = DDSIP_bb->DDSIP_step;
@@ -2219,7 +2223,7 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
 		    }
 	    }
 	    // use (expensive) heuristic 12 using all single-scenario solutions as suggestions
-	    if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || DDSIP_bb->curnode < 13 || DDSIP_bb->noiter%250 > 247))
+	    if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || DDSIP_bb->curnode < 13 || use_heur12 || DDSIP_bb->noiter%250 > 247))
 	    {
 		    DDSIP_param->heuristic = 12;
 		    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))

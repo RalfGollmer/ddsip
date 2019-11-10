@@ -888,11 +888,11 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                     rhs = lhs + viol*security_factor;
                                                 else
                                                     rhs = lhs + viol;
+                                                i = 1;
 #ifdef CHECKIDENTICAL
                                                 // Check whether cut with identical matval was already added.
                                                 // current one may be dominated!
                                                 // This is possible with continued check of the same solution for other scens
-                                                i = 1;
                                                 newCut = DDSIP_bb->cutpool;
                                                 while (newCut)
                                                 {
@@ -1353,11 +1353,11 @@ if (DDSIP_param->outlev > 21)
                                         rhs = lhs + viol*security_factor;
                                     else
                                         rhs = lhs + viol;
+                                    i = 1;
 #ifdef CHECKIDENTICAL
                                     // Check whether cut with identical matval was already added.
                                     // current one may be dominated!
                                     // This is possible with continued check of the same solution for other scens
-                                    i = 1;
                                     newCut = DDSIP_bb->cutpool;
                                     while (newCut)
                                     {
@@ -1443,12 +1443,12 @@ if (DDSIP_param->outlev > 21)
                                         scen = k;
                                     }
                                 }
-#ifdef DEBUG
+//#ifdef DEBUG
                                 else if (DDSIP_param->outlev > 20)
                                 {
                                     fprintf (DDSIP_bb->moreoutfile," ####----------ray doesn't contain a coefficient for a second-stage constraint\n");
                                 }
-#endif
+//#endif
 
                                 DDSIP_Free ((void *) &rmatind);
                                 DDSIP_Free ((void *) &rmatval);

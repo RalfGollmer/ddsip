@@ -1130,7 +1130,7 @@ DDSIP_DualOpt (void)
                 }
                 if (DDSIP_bb->currentDualObjVal > DDSIP_bb->dualObjVal)
                 {
-                    DDSIP_bb->dualObjVal = DDSIP_bb->currentDualObjVal;
+                    DDSIP_bb->dualObjVal = DDSIP_Dmax (old_obj, DDSIP_bb->currentDualObjVal);
                 }
                 old_obj = obj = DDSIP_bb->dualObjVal;
             }

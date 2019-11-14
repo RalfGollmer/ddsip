@@ -432,7 +432,13 @@ DDSIP_DualOpt (void)
                            "center_point(DualOpt)");
 
     DDSIP_bb->DDSIP_step = dual;
-    DDSIP_bb->current_itlim = DDSIP_param->cbrootitlim;
+    if (DDSIP_bb->curnode >= DDSIP_param->cbBreakIters)
+        DDSIP_bb->current_itlim = DDSIP_param->cbitlim;
+    else if (!DDSIP_bb->curnode)
+        DDSIP_bb->current_itlim = DDSIP_param->cbrootitlim;
+    else
+        DDSIP_bb->current_itlim = (DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->cb_depth)?
+                                   DDSIP_param->cb_depth_iters:(DDSIP_param->cbitlim+1)/2;
     DDSIP_bb->last_dualitcnt = 0;
     diff = -1.;
     inherited_bound = DDSIP_node[DDSIP_bb->curnode]->bound;
@@ -2039,13 +2045,6 @@ if(DDSIP_param->outlev > 20)
 //        }
 ////////////////////////////////////////////////////////////////////////////////////
         DDSIP_bb->last_dualitcnt = DDSIP_bb->dualitcnt;
-        if (DDSIP_bb->curnode >= DDSIP_param->cbBreakIters)
-            DDSIP_bb->current_itlim = DDSIP_param->cbitlim;
-        else if (!DDSIP_bb->curnode)
-            DDSIP_bb->current_itlim = DDSIP_param->cbrootitlim;
-        else
-            DDSIP_bb->current_itlim = (DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->cb_depth)?
-                                       DDSIP_param->cb_depth_iters:(DDSIP_param->cbitlim+1)/2;
         while ((!cb_termination_code (p)) && DDSIP_bb->violations && DDSIP_bb->skip != 2
                 && (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time) < DDSIP_param->timelim)
                 && DDSIP_bb->dualdescitcnt < DDSIP_bb->current_itlim

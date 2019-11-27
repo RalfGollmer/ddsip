@@ -742,10 +742,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                             fprintf (DDSIP_bb->moreoutfile,
                                      "\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d",
                                      wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
-                            if (nodes_2nd >= 0)
-                                fprintf (DDSIP_bb->moreoutfile, " +%d)\n", nodes_2nd - nodes_1st); 
-                            else
-                                fprintf (DDSIP_bb->moreoutfile, ")\n"); 
+                            fprintf (DDSIP_bb->moreoutfile, ")\n"); 
                             fprintf (DDSIP_bb->moreoutfile,
                                      "After %d scenarios lower bound for suggested solution yields expected value already greater than the best known\n (reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk +rest_bound);
                         }

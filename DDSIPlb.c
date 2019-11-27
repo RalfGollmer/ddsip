@@ -3275,7 +3275,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
 {
 #ifdef CONIC_BUNDLE
     double objval, bobjval, tmpbestbound = 0.0, tmpupper = 0.0, maxdispersion = 0.;
-    double wr, mipgap, time_start, time_end, wall_secs, cpu_secs, gap, meanGap;
+    double wr, mipgap, time_start, time_end, wall_secs, cpu_secs, gap, meanGap, maxGap;
 #ifdef DEBUG
     double we, time_lap;
 #endif
@@ -3436,6 +3436,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             return status;
         }
     }
+NEXT_TRY:
     // first take care of remains from former calls
     if (!DDSIP_param->cb_inherit || DDSIP_bb->dualitcnt || DDSIP_param->scalarization || DDSIP_bb->skip == 2)
     {
@@ -3505,7 +3506,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     DDSIP_bb->violations = DDSIP_bb->firstvar;
     tmpbestbound = 0.0;
     tmpupper     = 0.0;
-    meanGap = 0.0;
+    maxGap = meanGap = 0.0;
 
     // LowerBound problem for each scenario
     //****************************************************************************
@@ -4001,6 +4002,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] = mipstatus;
             gap = 100.0*(objval-bobjval)/(fabs(objval)+1e-4);
             meanGap += DDSIP_data->prob[scen] * gap;
+            maxGap   = DDSIP_Dmax (maxGap, gap);
             time_end = DDSIP_GetCpuTime ();
             time_start = time_end-time_start;
             time (&DDSIP_bb->cur_time);
@@ -4187,6 +4189,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             gap = 100.0*((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen]-(DDSIP_node[DDSIP_bb->curnode]->subbound)[scen])/
                          (fabs((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen])+1e-4);
             meanGap += DDSIP_data->prob[scen] * gap;
+            maxGap   = DDSIP_Dmax (maxGap, gap);
             time (&DDSIP_bb->cur_time);
             // Debugging information
             if (DDSIP_param->outlev)
@@ -4277,9 +4280,10 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         }
     DDSIP_node[DDSIP_bb->curnode]->violations = DDSIP_bb->violations;
     DDSIP_node[DDSIP_bb->curnode]->dispnorm = maxdispersion;
+    *objective_val = -tmpbestbound;
+    DDSIP_bb->currentDualObjVal = tmpbestbound;
 
-#ifdef TEST_NO_VIOL_IN_CB
-    if (!DDSIP_bb->violations)
+    if ((DDSIP_bb->currentDualObjVal < DDSIP_bb->bestvalue) && !DDSIP_bb->violations)
     {
         int comb = 22;
         if (DDSIP_param->outlev)
@@ -4287,15 +4291,29 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
             printf ("\nUpper bounds for solution with no violations\n");
             fprintf (DDSIP_bb->moreoutfile, "\nUpper bounds for solution with no violations\n");
         }
-        DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
         j = DDSIP_param->heuristic;
         DDSIP_param->heuristic = 100;
         if (!DDSIP_Heuristics (&comb, DDSIP_param->scenarios, 0))
             // Evaluate the proposed first-stage solution
             DDSIP_UpperBound (DDSIP_param->scenarios, 0);
         DDSIP_param->heuristic = j;
+        // in case the cplex parameters for cb produce too big gaps, try again with LB parameters
+        if (!use_LB_params && maxGap > 0.5*DDSIP_param->relgap)
+        {
+            if (DDSIP_param->outlev)
+            {
+                printf ("\nNo violations, but max MIP gap too big - try again with CPLEX parameters for LB\n");
+                fprintf (DDSIP_bb->moreoutfile, "\n### No violations, but max MIP gap too big - try again with CPLEX parameters for LB\n");
+            }
+            use_LB_params = 1;
+            DDSIP_bb->violations = 999;
+            goto NEXT_TRY;
+        }
+        else
+        {
+            DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
+        }
     }
-#endif
 
     DDSIP_bb->ref_max = -1;
     if (DDSIP_param->riskalg || DDSIP_param->scalarization)
@@ -4310,8 +4328,6 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 fprintf (DDSIP_bb->moreoutfile, " cb:  new tmpbestbound = %g\n", tmpbestbound);
         }
     }
-    *objective_val = -tmpbestbound;
-    DDSIP_bb->currentDualObjVal = tmpbestbound;
     DDSIP_bb->CBIters++;
     if (tmpbestbound > DDSIP_node[DDSIP_bb->curnode]->bound /*- fabs(DDSIP_node[DDSIP_bb->curnode]->bound)*2.e-15*/)
     {
@@ -4787,7 +4803,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
                 printf ("\tNumber of violations of nonanticipativity of first-stage variables:  %d, max: %g\n", DDSIP_bb->violations, maxdispersion);
                 printf ("\tDual bound of node  %-10d           = \t%-18.16g\n",
                                         DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound);
-                printf ("\tCurrent dual objective value             = \t%-18.16g          \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
+                printf ("\tCurrent dual objective value             = \t%-18.16g          \t(mean MIP gap: %g%%, max MIP gap: %g%%)\n", -(*objective_val), meanGap, maxGap);
             }
         }
         else
@@ -4806,7 +4822,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
         }
         fprintf (DDSIP_bb->moreoutfile, "\tDual bound of node %-10d            = \t%-18.16g\n",
                                         DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound);
-        fprintf (DDSIP_bb->moreoutfile, "\tCurrent dual objective value             = \t%-18.16g          \t(mean MIP gap: %g%%)\n", -(*objective_val), meanGap);
+        fprintf (DDSIP_bb->moreoutfile, "\tCurrent dual objective value             = \t%-18.16g          \t(mean MIP gap: %g%%, max gap: %g%%)\n", -(*objective_val), meanGap, maxGap);
         fprintf (DDSIP_bb->moreoutfile, "\tBest dual objective value in descent step= \t%-18.16g\n", DDSIP_bb->dualObjVal);
     }
     if (DDSIP_param->cb_increaseWeight)

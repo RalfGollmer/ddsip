@@ -403,7 +403,7 @@ ONCE_AGAIN:
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "\nTermination signal received.\n");
         DDSIP_bb->dualObjVal = -DDSIP_infty;
-        DDSIP_bb->skip = 2;
+        DDSIP_bb->skip = 1;
     }
     return 0;
 }
@@ -3109,7 +3109,7 @@ while (tmp1_bestdual)
             }
             else if (!DDSIP_bb->violations)
             {
-                DDSIP_Print2 ("termination status: optimal. --------------------------------------------------------------", "\n", 0, 0);
+                DDSIP_Print2 ("termination status: no violation of nonanticipativity. ------------------------------------", "\n", 0, 0);
                 DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
             }
             else if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - (fabs(DDSIP_bb->bestvalue) + 1e-10) * 0.5*DDSIP_param->relgap)

@@ -1543,20 +1543,20 @@ if(DDSIP_param->outlev > 20)
                                 {
 #if MIX == 1
                                     double h1, h2;
-#ifdef DEBUG
+//#ifdef DEBUG
 if (DDSIP_param->outlev)
     fprintf(DDSIP_bb->moreoutfile, "# MIX 1, factor %g\n", MIXFACTOR);
-#endif
+//#endif
                                     h2 = MIXFACTOR*(b_b2 - inhMult_bound)/(b_b1 + b_b2 - 2.*inhMult_bound);
                                     h1 = 1. - h2;
                                     for (status=0; status < DDSIP_bb->dimdual; status++)
-                                        DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.016 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                    + 0.984 * (h1*tmp_b1[status]+h2*tmp_b2[status]);
+                                        DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.005 * DDSIP_bb->startinfo_multipliers[status]
+                                                                                    + 0.995 * (h1*tmp_b1[status]+h2*tmp_b2[status]);
 #elif MIX == 2
-#ifdef DEBUG
+//#ifdef DEBUG
 if (DDSIP_param->outlev)
     fprintf(DDSIP_bb->moreoutfile, "# MIX 2\n");
-#endif
+//#endif
                                     for (status=0; status < DDSIP_bb->dimdual; status++)
                                         DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.005 * DDSIP_bb->startinfo_multipliers[status] +
                                                                                       0.995 * (0.008 * tmp_b2[status]
@@ -1645,13 +1645,13 @@ if (DDSIP_param->outlev)
                                         h2 = MIXFACTOR*(b_b2 - inhMult_bound)/(b_b1 + b_b2 - 2.*inhMult_bound);
                                         h1 = 1. - h2;
                                         for (status=0; status < DDSIP_bb->dimdual; status++)
-                                            DDSIP_node[DDSIP_bb->curnode]->dual[status] = -0.01 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                         + 1.01 * (h1*tmp_b1[status]+h2*tmp_b2[status]);
+                                            DDSIP_node[DDSIP_bb->curnode]->dual[status] = -0.005 * DDSIP_bb->startinfo_multipliers[status]
+                                                                                         + 1.005 * (h1*tmp_b1[status]+h2*tmp_b2[status]);
 #elif MIX == 2
                                         for (status=0; status < DDSIP_bb->dimdual; status++)
-                                           DDSIP_node[DDSIP_bb->curnode]->dual[status] = -0.005 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                        + 1.005 * (-0.008 * tmp_b2[status]
-                                                                                                  + 1.008 * tmp_b1[status]);
+                                            DDSIP_node[DDSIP_bb->curnode]->dual[status] = -0.005 * DDSIP_bb->startinfo_multipliers[status]
+                                                                                         + 1.005 * (-0.008 * tmp_b2[status]
+                                                                                                   + 1.008 * tmp_b1[status]);
 #endif
                                     }
 #endif

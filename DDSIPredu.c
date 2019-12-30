@@ -479,6 +479,7 @@ DDSIP_CheckRedundancy (int automatic)
                 }
                 else
                 {
+                    DDSIP_bb->cutpool = currentCut->prev;
                     DDSIP_Free ((void *) &(currentCut->matval));
                     DDSIP_Free ((void *) &(currentCut));
                     currentCut = DDSIP_bb->cutpool;

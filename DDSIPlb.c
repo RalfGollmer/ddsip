@@ -4351,7 +4351,8 @@ NEXT_TRY:
             // for the case of no bound increase, when the initial evaluation (with weight -1) was best, make the weight 0.1
             if (DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] < 0.)
               DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = 0.1;
-            nearly_constant = totally_constant = 0;
+            if ((tmpbestbound - DDSIP_node[DDSIP_bb->curnode]->bound)/(fabs(DDSIP_node[DDSIP_bb->curnode]->bound)+1e-16) > 1.e-9)
+                nearly_constant = totally_constant = 0;
             if (DDSIP_param->outlev > 10)
               fprintf (DDSIP_bb->moreoutfile," +++-> bestdual for node updated in desc. it. %d, tot. it. %g  (weight %g)\n", DDSIP_bb->dualdescitcnt, DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2],  DDSIP_bb->local_bestdual[DDSIP_bb->dimdual]);
         }
@@ -4430,6 +4431,8 @@ NEXT_TRY:
             fprintf (DDSIP_bb->moreoutfile,
                  " -**** dual step not increasing  bound for node %3d, new val: %-18.16g, old bound: %-18.16g (diff: %.6g, rel %g%%) weight = %g ****-\n",
                  DDSIP_bb->curnode, tmpbestbound, DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestbound -  DDSIP_node[DDSIP_bb->curnode]->bound, 1e2*(tmpbestbound -  DDSIP_node[DDSIP_bb->curnode]->bound)/(fabs(DDSIP_node[DDSIP_bb->curnode]->bound)+1e-16), cb_get_last_weight(DDSIP_bb->dualProblem));
+        if ((DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound)/(fabs(DDSIP_node[DDSIP_bb->curnode]->bound)+1e-16) > 1.e-9)
+            nearly_constant = totally_constant = 0;
         // even when bound was not increased, store the first-stage solution in initial evaluation
         if (cb_get_last_weight(DDSIP_bb->dualProblem) < 0.)
         {
@@ -4833,11 +4836,12 @@ NEXT_TRY:
             if (DDSIP_param->outlev > 20)
                 fprintf (DDSIP_bb->moreoutfile, "\tobj change: %g, totally_constant: %d\n", fabs (-(*objective_val) - old_value)/(fabs (old_value) + 1.e-16), totally_constant);
         }
-        if (DDSIP_bb->dualdescitcnt && (fabs (-(*objective_val) - old_value)/(fabs(old_value) + 1.e-16) < 1.e-14 || fabs (-(*objective_val) - old_value) < 1.e-15))
+        //if (DDSIP_bb->dualdescitcnt && (fabs (-(*objective_val) - old_value)/(fabs(old_value) + 1.e-16) < 1.e-14 || fabs (-(*objective_val) - old_value) < 1.e-15))
+        if (DDSIP_bb->dualdescitcnt && (fabs (-(*objective_val) - old_value)/(fabs(old_value) + 1.e-16) < 1.e-09))
         {
             nearly_constant++;
             if (DDSIP_param->outlev > 20)
-                fprintf (DDSIP_bb->moreoutfile, "\tobj change: %g, nearly_constant: %d\n", fabs (-(*objective_val) - old_value)/(fabs(old_value) + 1.e-16), nearly_constant);
+                fprintf (DDSIP_bb->moreoutfile, "##\tobj change: %g, nearly_constant: %d\n", fabs (-(*objective_val) - old_value)/(fabs(old_value) + 1.e-16), nearly_constant);
         }
         if (totally_constant > 2)
         {
@@ -4847,9 +4851,14 @@ NEXT_TRY:
             cb_set_next_weight (DDSIP_bb->dualProblem, wr);
             nearly_constant = totally_constant = 0;
         }
-        else if (nearly_constant > 4)
+        else if (nearly_constant > 3)
         {
-            wr =  0.4*cb_get_last_weight(DDSIP_bb->dualProblem);
+            if (cb_get_last_weight(DDSIP_bb->dualProblem) < 1e-3)
+                wr =  10.*cb_get_last_weight(DDSIP_bb->dualProblem);
+            else if (cb_get_last_weight(DDSIP_bb->dualProblem) < 1e-2)
+                wr =  5.*cb_get_last_weight(DDSIP_bb->dualProblem);
+            else
+                wr =  0.4*cb_get_last_weight(DDSIP_bb->dualProblem);
             if (DDSIP_param->outlev > 20)
                 fprintf (DDSIP_bb->moreoutfile, "####\tset new weight to %g, nearly_constant: %d (totally_constant:%d)\n", wr, nearly_constant, totally_constant);
             cb_set_next_weight (DDSIP_bb->dualProblem, wr);

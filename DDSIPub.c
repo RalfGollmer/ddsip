@@ -304,7 +304,7 @@ DDSIP_SolChk (double* cutViolation)
     }
 
     // if cuts have been inserted test for violation
-    if (DDSIP_bb->cutpool)
+    if (DDSIP_bb->cutpool && !DDSIP_param->deactivate_cuts)
     {
         currentCut = DDSIP_bb->cutpool;
         while (currentCut)
@@ -519,7 +519,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                 for (j = 0; j < DDSIP_bb->cutCntr; j++)
                 {
                     cutindex[j] = DDSIP_bb->nocon + j;
-                    deactivatedrhs[j] = -fabs(cutrhs[j]) -10.0;
+                    deactivatedrhs[j] = -fabs(cutrhs[j]) - 1.0e2;
                 }
                 status = CPXchgrhs (DDSIP_env, DDSIP_lp, numCuts, cutindex, deactivatedrhs);
                 if (status)

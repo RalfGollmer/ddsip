@@ -121,7 +121,7 @@ main (int argc, char * argv[])
     printf ("#########  %-66s #########\n", DDSIP_version);
     printf ("For copyright, license agreements, help, comments, requests, ... ");
     printf ("see\n\thttp://www.uni-duisburg-essen.de/~hn215go/ddsip.shtml\n");
-    printf ("\thttp://www.www.github.com/RalfGollmer/ddsip\n");
+    printf ("\thttp://www.github.com/RalfGollmer/ddsip\n");
     /*    printf ("  Copyright (C) to University of Duisburg-Essen \n\n"); */
     /*    printf("  This program is free software; you can redistribute it and/or\n"); */
     /*    printf ("  modify it under the terms of the GNU General Public License\n"); */

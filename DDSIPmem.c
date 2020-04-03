@@ -117,8 +117,24 @@ DDSIP_Alloc (int elsize, int nelem, const char *name)
 void
 DDSIP_FreeNode (int nono)
 {
+    int scen, j, cnt;
     if (DDSIP_param->hot)
         DDSIP_Free ((void **) &(DDSIP_node[nono]->solut));
+    for (scen = 0; scen < DDSIP_param->scenarios; scen++)
+    {
+        if (((DDSIP_node[nono])->first_sol)[scen]
+                && (cnt = (int) ((((DDSIP_node[nono])->first_sol)[scen])[DDSIP_data->firstvar] - 0.9)))
+            for (j = scen + 1; cnt && j < DDSIP_param->scenarios; j++)
+            {
+                if (((DDSIP_node[nono])->first_sol)[j]
+                        && (((DDSIP_node[nono])->first_sol)[scen] == ((DDSIP_node[nono])->first_sol)[j]))
+                {
+                    ((DDSIP_node[nono])->first_sol)[j] = NULL;
+                    cnt--;
+                }
+            }
+        DDSIP_Free ((void **) &((DDSIP_node[nono]->first_sol)[scen]));
+    }
     DDSIP_Free ((void **) &(DDSIP_node[nono]->first_sol));
     DDSIP_Free ((void **) &(DDSIP_node[nono]->cursubsol));
     DDSIP_Free ((void **) &(DDSIP_node[nono]->subbound));

@@ -1312,42 +1312,6 @@ DDSIP_ReadSpec ()
     }
     //DDSIP_param->prepro = (int) floor (DDSIP_ReadDbl (specfile, "PREPRO", " PREPROCESSING", 0., 1, 0., 3.) + 0.1);
     DDSIP_param->prepro = 0;
-#ifdef ADDBENDERSCUTS
-    DDSIP_param->addBendersCuts = (int) floor (DDSIP_ReadDbl (specfile, "ADDBEN", " ADD BENDERS CUTS", 1., 1, 0., 2.) + 0.1);
-    if (DDSIP_param->addBendersCuts)
-    {
-        DDSIP_param->alwaysBendersCuts = 1;
-        tmp = DDSIP_param->stocmat ? 1. : 0.;
-        DDSIP_param->testOtherScens = (int) floor (DDSIP_ReadDbl (specfile, "TESTBE", " TEST FOR FURTHER BENDERS CUTS", tmp, 1, 0., 1.) + 0.1);
-        DDSIP_param->cut_security_tol = DDSIP_ReadDbl (specfile, "CUTSEC", " BENDERS SECURITY TOLERANCE", 2.e-14, 0, 0., 1.0e-6);
-    }
-    else
-    {
-        DDSIP_param->alwaysBendersCuts = 0;
-        DDSIP_param->testOtherScens = 0;
-        DDSIP_param->numberReinits  = 0;
-    }
-#endif
-#ifdef ADDINTEGERCUTS
-    DDSIP_param->addIntegerCuts = (int) floor (DDSIP_ReadDbl (specfile, "ADDINT", " ADD INTEGER CUTS", 1., 1, 0., 1.) + 0.1);
-#endif
-    if (DDSIP_param->addBendersCuts || DDSIP_param->addIntegerCuts)
-    {
-        DDSIP_param->numberReinits  = (int) floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 25., 1, 0., DDSIP_bigint) + 0.1);
-        DDSIP_param->deactivate_cuts= (int) floor (DDSIP_ReadDbl (specfile, "DEACTI", " DEACTIVATE CUTS IN UB", 0., 1, 0., 1) + 0.1);
-    }
-    else
-    {
-        DDSIP_param->numberReinits  = 0;
-        DDSIP_param->deactivate_cuts= 0;
-    }
-    
-    DDSIP_param->redundancyCheck = (int) floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", 0., 1, 0., 1.) + 0.1);
-    if (DDSIP_param->redundancyCheck)
-        DDSIP_param->deleteRedundantCuts = (int) floor (DDSIP_ReadDbl (specfile, "DELRED", " DELETE REDUNDANT CUTS", 1., 1, 0., 1.) + 0.1);
-    else
-        DDSIP_param->deleteRedundantCuts = 0;
-
     DDSIP_param->annotationFile = DDSIP_ReadString (specfile, "ANNOTA", " ANNOTATION FILE FOR CPLEX BENDERS");
     fprintf (DDSIP_outfile, "\n");
 
@@ -1495,7 +1459,10 @@ DDSIP_ReadSpec ()
         }
     }
     else
+    {
         DDSIP_param->riskvar = 0;
+        DDSIP_param->riskweight = 1.e+6;
+    }
 
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
     DDSIP_param->cb = 0;
@@ -1547,7 +1514,7 @@ DDSIP_ReadSpec ()
         else
             DDSIP_param->cbrootitlim = (int) floor (DDSIP_ReadDbl (specfile, "CBRITL", " CB DESCENT ITERATIONS IN ROOT", 9, 1, 0., DDSIP_bigint) + 0.1);
 
-        DDSIP_param->cb_depth = (int) floor (DDSIP_ReadDbl (specfile, "CBDEPT", " CB UNTIL DEPTH", 1., 1, 0., 1000.) + 0.1);
+        DDSIP_param->cb_depth = (int) floor (DDSIP_ReadDbl (specfile, "CBDEPT", " CB UNTIL DEPTH", 1., 1, -DDSIP_bigint, DDSIP_bigint) + 0.1);
         DDSIP_param->cb_depth_iters = (int) floor (DDSIP_ReadDbl (specfile, "CBDITL", " CB DEPTH ITERS", 10., 1, 2., DDSIP_bigint) + 0.1);
         DDSIP_param->cb_maxsteps  = (int) floor (DDSIP_ReadDbl (specfile, "CBSTEP", " CB MAXSTEPS", 12., 1, 1., 10000.) + 0.1);
         DDSIP_param->cbtotalitlim = (int) floor (DDSIP_ReadDbl (specfile, "CBTOTI", " CB ITERATION LIMIT",5000., 1, 0., DDSIP_bigint) + 0.1);
@@ -1581,12 +1548,49 @@ DDSIP_ReadSpec ()
         DDSIP_param->cb_checkBestdual = (int) floor (DDSIP_ReadDbl (specfile, "CBCHEC", " CB CHECK BESTDUAL", 1., 1, 0., 1.) + 0.1);
         DDSIP_param->cb_bestdualListLength= (int) floor (DDSIP_ReadDbl (specfile, "CBLIST", " CB BESTDUAL LIST LENGTH", 5., 1, 1., 50.) + 0.1);
         DDSIP_param->cb_test_line = (int) floor (DDSIP_ReadDbl (specfile, "CBLINE", " CB TEST LINE", 1., 1, 0., 1.) + 0.1);
-        DDSIP_param->cb_cutnodes = (int) floor (DDSIP_ReadDbl (specfile, "CBCUTN", " CB CUTS UP TO NODE", 3., 1, 0., 100.) + 0.1);
+        DDSIP_param->cb_cutnodes = (int) floor (DDSIP_ReadDbl (specfile, "CBCUTN", " CB CUTS UP TO NODE", 4., 1, 0., 100.) + 0.1);
     }
 #else
     DDSIP_param->cb = 0;
     DDSIP_param->prematureStop = 1;
 #endif
+#ifdef ADDBENDERSCUTS
+    DDSIP_param->addBendersCuts = (int) floor (DDSIP_ReadDbl (specfile, "ADDBEN", " ADD BENDERS CUTS", 1., 1, 0., 2.) + 0.1);
+    if (DDSIP_param->addBendersCuts)
+    {
+        DDSIP_param->alwaysBendersCuts = 1;
+        tmp = DDSIP_param->stocmat ? 1. : 0.;
+        DDSIP_param->testOtherScens = (int) floor (DDSIP_ReadDbl (specfile, "TESTBE", " TEST FOR FURTHER BENDERS CUTS", tmp, 1, 0., 1.) + 0.1);
+        DDSIP_param->cut_security_tol = DDSIP_ReadDbl (specfile, "CUTSEC", " BENDERS SECURITY TOLERANCE", 2.e-10, 0, 0., 1.e-4);
+    }
+    else
+    {
+        DDSIP_param->alwaysBendersCuts = 0;
+        DDSIP_param->testOtherScens = 0;
+        DDSIP_param->numberReinits  = 0;
+    }
+#endif
+#ifdef ADDINTEGERCUTS
+    DDSIP_param->addIntegerCuts = (int) floor (DDSIP_ReadDbl (specfile, "ADDINT", " ADD INTEGER CUTS", 1., 1, 0., 1.) + 0.1);
+#endif
+    if (DDSIP_param->addBendersCuts || DDSIP_param->addIntegerCuts)
+    {
+        DDSIP_param->numberReinits  = (int) floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 25., 1, 0., DDSIP_bigint) + 0.1);
+        DDSIP_param->numberScenReeval  = (int) floor (DDSIP_ReadDbl (specfile, "SCENRE", " NR OF SCENARIO REEVALUATIONS", (DDSIP_param->addBendersCuts?((DDSIP_param->cb && DDSIP_param->cb_depth > -1)?7:4):-1), 1, -DDSIP_bigint, (DDSIP_param->addBendersCuts?DDSIP_bigint:-1)) + 0.1);
+        DDSIP_param->deactivate_cuts= (int) floor (DDSIP_ReadDbl (specfile, "DEACTI", " DEACTIVATE CUTS IN UB", 0., 1, 0., 1) + 0.1);
+    }
+    else
+    {
+        DDSIP_param->numberReinits  = 0;
+        DDSIP_param->deactivate_cuts= 0;
+    }
+    
+    DDSIP_param->redundancyCheck = (int) floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", DDSIP_param->deactivate_cuts, 1, 0., 1.) + 0.1);
+    if (DDSIP_param->redundancyCheck)
+        DDSIP_param->deleteRedundantCuts = (int) floor (DDSIP_ReadDbl (specfile, "DELRED", " DELETE REDUNDANT CUTS", 1., 1, 0., 1.) + 0.1);
+    else
+        DDSIP_param->deleteRedundantCuts = 0;
+
 
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
     if (DDSIP_param->riskmod < 0)
@@ -1863,12 +1867,15 @@ DDSIP_ReadData ()
     }
     fprintf (DDSIP_outfile, "\nSTOCHASTIC RHS DATA READ FROM `%s'.\n", fname);
     h = DDSIP_data->prob[0];
-    for (i = 1; i < DDSIP_param->scenarios; i++)
+    if (DDSIP_param->heuristic == 100)
     {
-        if (!DDSIP_Equal (h, DDSIP_data->prob[i]))
+        for (i = 1; i < DDSIP_param->scenarios; i++)
         {
-            DDSIP_param->heuristic_num = 15;
-            break;
+            if (!DDSIP_Equal (h, DDSIP_data->prob[i]))
+            {
+                DDSIP_param->heuristic_num = 15;
+                break;
+            }
         }
     }
 

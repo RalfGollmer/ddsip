@@ -594,10 +594,14 @@ DDSIP_SetBounds (void)
     // Initialize
     i = DDSIP_node[DDSIP_bb->curnode]->father;
     DDSIP_bb->curbdcnt = 1;
+    if (DDSIP_param->outlev)
+        fprintf (DDSIP_bb->moreoutfile, "depth %2d:  %d", DDSIP_node[DDSIP_bb->curnode]->depth, DDSIP_bb->curnode);
 
     // While the father of the current node is greater than the root
     while (i > 0)
     {
+        if (DDSIP_param->outlev)
+            fprintf (DDSIP_bb->moreoutfile, " -> %d", i);
         k = 0;
         change = 0;
 
@@ -615,7 +619,7 @@ DDSIP_SetBounds (void)
             k++;
         }
 
-        // If the index did not occur, yet, a new one is introduced
+        // If the index did not occur yet, a new one is introduced
         if (!(change) && DDSIP_bb->curbdcnt < DDSIP_bb->firstvar)
         {
             DDSIP_bb->curind[DDSIP_bb->curbdcnt] = DDSIP_node[i]->neoind;
@@ -788,12 +792,19 @@ DDSIP_Bound (void)
         for  (i = 0; i < DDSIP_bb->nofront; i++)
         {
             DDSIP_bb->front_nodes_sorted[i] = DDSIP_bb->front[i];
-            front_node_bound[DDSIP_bb->front_nodes_sorted[i]] =  (DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->leaf) ? DDSIP_infty : DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound;
+            front_node_bound[DDSIP_bb->front_nodes_sorted[i]] =  DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound;
         }
         DDSIP_qsort_ins_A (front_node_bound, DDSIP_bb->front_nodes_sorted, 0, DDSIP_bb->nofront-1);
         // Update bestbound = lowest bound within front nodes
         DDSIP_bb->bestbound = DDSIP_node[DDSIP_bb->front_nodes_sorted[0]]->bound;
         worstBound = DDSIP_node[DDSIP_bb->front_nodes_sorted[DDSIP_bb->nofront-1]]->bound;
+        // Now sort leaf nodes to the end
+        for  (i = 0; i < DDSIP_bb->nofront; i++)
+        {
+            DDSIP_bb->front_nodes_sorted[i] = DDSIP_bb->front[i];
+            front_node_bound[DDSIP_bb->front_nodes_sorted[i]] =  (DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->leaf) ? DDSIP_infty : DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound;
+        }
+        DDSIP_qsort_ins_A (front_node_bound, DDSIP_bb->front_nodes_sorted, 0, DDSIP_bb->nofront-1);
         cnt = 1;
 
         // sort the least bound nodes according to the violations and depth

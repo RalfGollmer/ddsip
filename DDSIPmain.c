@@ -481,24 +481,24 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
         if (DDSIP_param->outlev > 20 && DDSIP_node[DDSIP_bb->curnode]->cbReturn32)
             fprintf (DDSIP_bb->moreoutfile, "########## DDSIP_node[%d]->cbReturn32 = %d -> no ConicBundle\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->cbReturn32);
         // Dual method
-        if ((!DDSIP_bb->curnode || !DDSIP_node[DDSIP_bb->curnode]->cbReturn32) &&
-            ((DDSIP_param->cb > 0 && (!(DDSIP_bb->noiter % abs(DDSIP_param->cb))) && (abs(DDSIP_param->riskmod) != 4 || DDSIP_bb->noiter)) ||
+        if ((/*!DDSIP_bb->curnode || */!DDSIP_node[DDSIP_bb->curnode]->cbReturn32) &&
+            ((DDSIP_param->cb > 0 && (!(DDSIP_bb->curnode % abs(DDSIP_param->cb))) && (abs(DDSIP_param->riskmod) != 4 || DDSIP_bb->curnode)) ||
              (DDSIP_param->cb < 0 && (((DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->cb_depth) && abs(DDSIP_param->riskmod) != 4) ||
                                       (abs(DDSIP_param->riskmod) == 5 && DDSIP_node[DDSIP_bb->curnode]->depth == 8) ||
-                                      (DDSIP_bb->noiter > DDSIP_param->cbBreakIters && 
-                                        ((!(DDSIP_bb->noiter % abs(DDSIP_param->cb))) ||
-                                         (!((DDSIP_bb->noiter+1) % -DDSIP_param->cb)) ||
-                                         (DDSIP_bb->noiter%200 > 199 - DDSIP_param->cbContinuous) ||
-                                         (DDSIP_bb->noiter < DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters) ||
-                                         ((DDSIP_bb->noiter  >= 2*DDSIP_param->cbBreakIters) && (DDSIP_bb->noiter < DDSIP_param->cbContinuous + 2*DDSIP_param->cbBreakIters)) ||
+                                      (DDSIP_bb->curnode > DDSIP_param->cbBreakIters && 
+                                        ((!(DDSIP_bb->curnode % abs(DDSIP_param->cb))) ||
+                                         (!((DDSIP_bb->curnode+1) % -DDSIP_param->cb)) ||
+                                         (DDSIP_bb->curnode%200 > 199 - DDSIP_param->cbContinuous) ||
+                                         (DDSIP_bb->curnode < DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters) ||
+                                         ((DDSIP_bb->curnode  >= 2*DDSIP_param->cbBreakIters) && (DDSIP_bb->curnode < DDSIP_param->cbContinuous + 2*DDSIP_param->cbBreakIters)) ||
                                          ((DDSIP_bb->cutoff > 6) &&
-                                             (((DDSIP_bb->no_reduced_front < 51) && (DDSIP_bb->noiter % -DDSIP_param->cb) < DDSIP_param->cbContinuous)
+                                             (((DDSIP_bb->no_reduced_front < 51) && (DDSIP_bb->curnode % -DDSIP_param->cb) < DDSIP_param->cbContinuous)
                                              || (((DDSIP_node[DDSIP_bb->curnode-1])->step == dual) && (DDSIP_node[DDSIP_bb->curnode-1])->leaf /*&& (DDSIP_bb->dualdescitcnt < 11)*/)
                                              )
                                          )
                                        )
                                      ) ||
-                                     (abs(DDSIP_param->riskmod) != 5 && DDSIP_bb->noiter <= DDSIP_param->cbBreakIters && DDSIP_bb->noiter > DDSIP_param->cbBreakIters*.5 &&
+                                     (abs(DDSIP_param->riskmod) != 5 && DDSIP_bb->curnode <= DDSIP_param->cbBreakIters && DDSIP_bb->curnode > DDSIP_param->cbBreakIters*.5 &&
                                           (CBFORALL || (DDSIP_node[DDSIP_bb->curnode]->numInheritedSols > (DDSIP_Imin(DDSIP_param->scenarios/20,2)+(DDSIP_param->scenarios+1)/2))))
                                    )
                 )
@@ -770,7 +770,7 @@ TERMINATE:
         DDSIP_Free ((void **) &(DDSIP_param));
     }
 
-    fprintf (DDSIP_outfile, "Current system time: ");
+    fprintf (DDSIP_outfile, "current system time: ");
 #ifndef _WIN32
     i = system ("date");
     // Print time to output file

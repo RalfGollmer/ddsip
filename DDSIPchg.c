@@ -41,14 +41,14 @@ DDSIP_ChgBounds (int print)
     if (print && DDSIP_param->outlev > 3)
     {
         if (DDSIP_bb->curbdcnt)
-            fprintf (DDSIP_bb->moreoutfile, "New bounds\n nr  variable_nr      .    lb                ub   variable_name\n");
+            fprintf (DDSIP_bb->moreoutfile, "New bounds\n nr   fs-var  variable_index  .    lb                ub   variable_name\n");
         for (i = 0; i < DDSIP_bb->curbdcnt; i++)
         {
             j = index[i];
             status = CPXgetcolname (DDSIP_env, DDSIP_lp, DDSIP_bb->name_buffer, DDSIP_bb->n_buffer, DDSIP_bb->n_buffer_len, &j, j, j);
             if (status)
                 fprintf (stderr," Error when querying name of variable %d: %d\n",j,status);
-            fprintf (DDSIP_bb->moreoutfile, "%3d  %6d  %16.14g  %16.14g   %s\n", i, index[i], DDSIP_bb->curlb[i], DDSIP_bb->curub[i], DDSIP_bb->n_buffer);
+            fprintf (DDSIP_bb->moreoutfile, "%3d  %6d  %6d  %16.14g  %16.14g   %s\n", i+1, DDSIP_bb->curind[i]+1, index[i], DDSIP_bb->curlb[i], DDSIP_bb->curub[i], DDSIP_bb->n_buffer);
         }
     }
 

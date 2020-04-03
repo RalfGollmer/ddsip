@@ -159,6 +159,7 @@ DDSIP_Probable (void)
         fprintf (DDSIP_bb->moreoutfile, "(scen %3d)", k+1);
     if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[k][DDSIP_bb->firstvar + 2] < DDSIP_bb->curnode)
     {
+        DDSIP_Free((void **) &prob);
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (node %.0f).\n", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[k][DDSIP_bb->firstvar + 2]);
         return 1;

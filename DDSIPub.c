@@ -214,7 +214,7 @@ DDSIP_GetCpxSolution (int mipstatus, double *objval, double *bobjval, double *mi
 //==========================================================================
 // We check if the suggested solution has already occured (return 1)
 int
-DDSIP_SolChk (double* cutViolation)
+DDSIP_SolChk (double* cutViolation, int test_equality)
 {
     int i, cnt = 0;
     double lhs;
@@ -226,17 +226,17 @@ DDSIP_SolChk (double* cutViolation)
         // Print output for debugging purposes even for multiple suggestions
     {
         int ih;
-        fprintf (DDSIP_bb->moreoutfile, "\nSuggested first stage solution:\n");
+        fprintf (DDSIP_bb->moreoutfile, "\n## Suggested first stage solution:\n");
 
         for (i = 0; i < DDSIP_bb->firstvar; i++)
         {
             if (DDSIP_bb->firsttype[i] == 'B' || DDSIP_bb->firsttype[i] == 'I' || DDSIP_bb->firsttype[i] == 'N')
             {
                 ih = (int) floor ((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] + 0.5);
-                fprintf (DDSIP_bb->moreoutfile, " %20d,", ih);
+                fprintf (DDSIP_bb->moreoutfile, " %21d,", ih);
             }
             else
-                fprintf (DDSIP_bb->moreoutfile, " %20.15g,", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]);
+                fprintf (DDSIP_bb->moreoutfile, " %21.15g,", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]);
 
             if (!((i + 1) % 5))
                 fprintf (DDSIP_bb->moreoutfile, "\n");
@@ -247,26 +247,57 @@ DDSIP_SolChk (double* cutViolation)
     if (DDSIP_bb->sug[DDSIP_bb->curnode])
     {
         tmp = (DDSIP_bb->sug[DDSIP_bb->curnode]);
-        do
+        if (test_equality)
         {
-            cnt = 0;
-            while (cnt < DDSIP_bb->firstvar && DDSIP_Equal ((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[cnt], tmp->firstval[cnt]))
+            do
             {
-                cnt++;
+                cnt = 0;
+                while (cnt < DDSIP_bb->firstvar && (DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[cnt] == tmp->firstval[cnt])
+                {
+                    cnt++;
+                }
+                // solution occurred previously ?
+                if (cnt == DDSIP_bb->firstvar)
+                {
+		    if (test_equality < 2)
+                    {
+                        if (DDSIP_param->outlev)
+                            fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (same node).\n");
+                        if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
+                            printf ("... multiple suggestion (same node).\n");
+			if (test_equality != 2)
+                            DDSIP_bb->skip = 4;
+                        return 0;
+                    }
+                }
+                tmp = tmp->next;
             }
-            // solution occurred previously ?
-            if (cnt == DDSIP_bb->firstvar)
-            {
-                if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (same node).\n");
-                if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
-                    printf ("... multiple suggestion (same node).\n");
-                DDSIP_bb->skip = 4;
-                return 0;
-            }
-            tmp = tmp->next;
+            while (tmp);
         }
-        while (tmp);
+        else
+        {
+            do
+            {
+                cnt = 0;
+                while (cnt < DDSIP_bb->firstvar && DDSIP_Equal ((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[cnt], tmp->firstval[cnt]))
+                {
+                    cnt++;
+                }
+                // solution occurred previously ?
+                if (cnt == DDSIP_bb->firstvar)
+                {
+                    if (DDSIP_param->outlev)
+                        fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (same node).\n");
+                    if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
+                        printf ("... multiple suggestion (same node).\n");
+                    if (test_equality != 2)
+                        DDSIP_bb->skip = 4;
+                    return 0;
+                }
+                tmp = tmp->next;
+            }
+            while (tmp);
+        }
     }
     // in case of asd the target (expected value) most probably has changed from the former nodes. An identical proposal has to be checked, too
     if (DDSIP_param->riskmod != 3)
@@ -278,33 +309,61 @@ DDSIP_SolChk (double* cutViolation)
                 if (DDSIP_bb->sug[i])
                 {
                     tmp = DDSIP_bb->sug[i];
-                    do
+                    if (test_equality)
                     {
-                        cnt = 0;
-                        while (cnt < DDSIP_bb->firstvar && DDSIP_Equal ((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[cnt], tmp->firstval[cnt]))
+                        do
                         {
-                            cnt++;
+                            cnt = 0;
+                            while (cnt < DDSIP_bb->firstvar && ((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[cnt] == tmp->firstval[cnt]))
+                            {
+                                cnt++;
+                            }
+                            // solution occurred previously ?
+                            if (cnt == DDSIP_bb->firstvar)
+                            {
+                                if (DDSIP_param->outlev)
+                                    fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (node %d).\n", i);
+                                if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
+                                    printf ("... multiple suggestion (node %d).\n", i);
+                                if (test_equality != 2)
+                                    DDSIP_bb->skip = 4;
+                                return 0;
+                            }
+                            tmp = tmp->next;
                         }
-                        // solution occurred previously ?
-                        if (cnt == DDSIP_bb->firstvar)
-                        {
-                            if (DDSIP_param->outlev)
-                                fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (node %d).\n", i);
-                            if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
-                                printf ("... multiple suggestion (node %d).\n", i);
-                            DDSIP_bb->skip = 4;
-                            return 0;
-                        }
-                        tmp = tmp->next;
+                        while (tmp);
                     }
-                    while (tmp);
+                    else
+                    {
+                        do
+                        {
+                            cnt = 0;
+                            while (cnt < DDSIP_bb->firstvar && DDSIP_Equal ((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval[cnt], tmp->firstval[cnt]))
+                            {
+                                cnt++;
+                            }
+                            // solution occurred previously ?
+                            if (cnt == DDSIP_bb->firstvar)
+                            {
+                                if (DDSIP_param->outlev)
+                                    fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (node %d).\n", i);
+                                if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
+                                    printf ("... multiple suggestion (node %d).\n", i);
+                                if (test_equality != 2)
+                                    DDSIP_bb->skip = 4;
+                                return 0;
+                            }
+                            tmp = tmp->next;
+                        }
+                        while (tmp);
+                    }
                 }
             }
         }
     }
 
     // if cuts have been inserted test for violation
-    if (DDSIP_bb->cutpool && !DDSIP_param->deactivate_cuts)
+    if (DDSIP_bb->cutpool)
     {
         currentCut = DDSIP_bb->cutpool;
         while (currentCut)
@@ -323,11 +382,19 @@ DDSIP_SolChk (double* cutViolation)
                     printf ("... violates cut %d.\n", currentCut->number);
                 if (!(DDSIP_param->testOtherScens) || DDSIP_bb->curnode > 6 /* || DDSIP_param->heuristic < 3 */)
                 {
-                    DDSIP_bb->skip = 4;
+                    if (test_equality != 2)
+                        DDSIP_bb->skip = 4;
                     return 0;
                 }
                 break;
             }
+//            else
+//            {
+//                if (DDSIP_param->outlev > 21)
+//                {
+//                    fprintf (DDSIP_bb->moreoutfile, " ...doesn't violate cut %d.\n", currentCut->number);
+//                }
+//            }
             currentCut = currentCut->prev;
         }
     }
@@ -378,8 +445,23 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
 
     // Solution occured before ?
     if (DDSIP_bb->skip != -1)
-        if (!DDSIP_SolChk (&oldviol))
-            return 0;
+    {
+        if (feasCheckOnly == 2)
+        {
+            if (!DDSIP_SolChk (&oldviol, 2))
+                return 0;
+        }
+	else if (feasCheckOnly > -1)
+        {
+            if (!DDSIP_SolChk (&oldviol, 0))
+                return 0;
+        }
+        else
+        {
+            if (!DDSIP_SolChk (&oldviol, 1))
+                return 0;
+        }
+    }
 
     DDSIP_bb->skip = 0;
 
@@ -395,10 +477,10 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
             if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
             {
                 ih = (int) floor ((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] + 0.5);
-                fprintf (DDSIP_bb->moreoutfile, " %20d", ih);
+                fprintf (DDSIP_bb->moreoutfile, " %21d", ih);
             }
             else
-                fprintf (DDSIP_bb->moreoutfile, " %20.15g", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j]);
+                fprintf (DDSIP_bb->moreoutfile, " %21.15g", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j]);
 
             if (!((j + 1) % 5))
                 fprintf (DDSIP_bb->moreoutfile, "\n");
@@ -410,13 +492,13 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     subsol = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "subsol(UpperBound)");
     //Tx = (double *) DDSIP_Alloc(sizeof(double), DDSIP_bb->firstcon + DDSIP_bb->seccon,"(UpperBound)");
 
-    if (!feasCheckOnly)
+    if (feasCheckOnly < 1)
         DDSIP_bb->UBIters++;
 
     if (DDSIP_param->outlev)
     {
-        fprintf (DDSIP_bb->moreoutfile, "\n----------------------\n");
-        if (feasCheckOnly)
+        fprintf (DDSIP_bb->moreoutfile, "----------------------\n");
+        if (feasCheckOnly > 0)
             fprintf (DDSIP_bb->moreoutfile, "Checking first-stage solution for possible cuts:\n");
         else
             fprintf (DDSIP_bb->moreoutfile, "Evaluating first-stage solution (Upper bounds):\n");
@@ -491,7 +573,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
         goto TERMINATE;
     }
 #ifdef DEACTIVATECUTS
-    if (DDSIP_param->deactivate_cuts)
+    if (DDSIP_param->deactivate_cuts && feasCheckOnly < 2)
     {
         // deactivate cuts already present by changing their rhs
         if (DDSIP_bb->cutCntr)
@@ -552,10 +634,16 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     {
         rest_bound = DDSIP_node[DDSIP_bb->curnode]->bound;
     }
+//#ifdef DEBUG
+            if (DDSIP_param->outlev > 20)
+            {
+                fprintf (DDSIP_bb->moreoutfile," ------------ feasCheckOnly= %d, rest_bound= %18.12g\n", feasCheckOnly, rest_bound);
+            }
+//#endif
 
     // UpperBound single-scenario problems
     meanGap = tmpprob = tmpbestvalue = 0.;
-    nr = feasCheckOnly ? 1 : DDSIP_param->scenarios;
+    nr = (feasCheckOnly > 0) ? 1 : DDSIP_param->scenarios;
     for (iscen = 0; iscen < nr; iscen++)
     {
         scen = DDSIP_bb->ub_scen_order[iscen];
@@ -569,11 +657,12 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
             goto TERMINATE;
         }
         nodes_1st = nodes_2nd = -1;
-        if (!feasCheckOnly)
+        if (feasCheckOnly < 1)
         {
-            if (DDSIP_param->cpxubscr)
+            if (DDSIP_param-> outlev || DDSIP_param->cpxubscr)
             {
-                printf ("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n");
+                if (DDSIP_param->cpxubscr)
+                    printf ("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n");
                 printf ("Calculating objective value for scenario problem %d in node %d (heuristic %d).....\n", scen + 1,DDSIP_bb->curnode,DDSIP_param->heuristic);
             }
             // Debugging information
@@ -725,22 +814,26 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         {
                             if (mipstatus == CPXMIP_OPTIMAL)
                                 fprintf (DDSIP_bb->moreoutfile,
-                                     "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%)     ",
+                                     "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%10.4g%%)     ",
                                      iscen + 1, scen + 1, objval, bobjval, gap);
                             else if (mipstatus == CPXMIP_OPTIMAL_TOL)
                                 fprintf (DDSIP_bb->moreoutfile,
-                                     "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) tol.",
+                                     "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%10.4g%%) tol.",
+                                     iscen + 1, scen + 1, objval, bobjval, gap);
+                            else if (mipstatus == CPXMIP_NODE_LIM_FEAS)
+                                fprintf (DDSIP_bb->moreoutfile,
+                                     "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%10.4g%%) NODE",
                                      iscen + 1, scen + 1, objval, bobjval, gap);
                             else if (mipstatus == CPXMIP_TIME_LIM_FEAS)
                                 fprintf (DDSIP_bb->moreoutfile,
-                                     "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) TIME",
+                                     "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%10.4g%%) TIME",
                                      iscen + 1, scen + 1, objval, bobjval, gap);
                             else
                                 fprintf (DDSIP_bb->moreoutfile,
-                                     "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) %-4.0d ",
+                                     "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%10.4g%%) %-4.0d ",
                                      iscen + 1, scen + 1, objval, bobjval, gap, mipstatus);
                             fprintf (DDSIP_bb->moreoutfile,
-                                     "\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d",
+                                     "\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%7.2fs n:%5d",
                                      wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
                             fprintf (DDSIP_bb->moreoutfile, ")\n"); 
                             fprintf (DDSIP_bb->moreoutfile,
@@ -838,7 +931,26 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                 if (fabs (ray[DDSIP_bb->secondrowind[k]]) > 1.e-16)
                                                     break;
                                             }
-                                            if (k < DDSIP_bb->seccon)
+                                            if (k >= DDSIP_bb->seccon)
+                                            {
+					        i = 0;
+                                                for (k = 0; k < DDSIP_bb->firstcon; k++)
+                                                {
+                                                    if (fabs (ray[DDSIP_bb->firstrowind[k]]) > 1.e-16)
+                                                        i++;
+                                                }
+//#ifdef DEBUG
+                                                if (DDSIP_param->outlev > 20)
+                                                {
+                                                    fprintf (DDSIP_bb->moreoutfile," ####----------ray doesn't contain a coefficient for a second-stage constraint, %d nonzeros for first-stage ones\n", i);
+                                                }
+//#endif
+                                            }
+                                            else
+                                            {
+                                                i = 99;
+                                            }
+                                            if (i > 1)
                                             {
                                                 rhs = 1.;
                                                 sense = 'G';
@@ -982,12 +1094,6 @@ if (DDSIP_param->outlev > 21)
                                                     }
                                                 }
                                             }
-#ifdef DEBUG
-                                            else if (DDSIP_param->outlev > 20)
-                                            {
-                                                fprintf (DDSIP_bb->moreoutfile," ####----------ray doesn't contain a coefficient for a second-stage constraint\n");
-                                            }
-#endif
 
                                             DDSIP_Free ((void *) &rmatind);
                                             DDSIP_Free ((void *) &rmatval);
@@ -1073,7 +1179,7 @@ if (DDSIP_param->outlev > 21)
                         goto TERMINATE;
                     }
                 }
-                if (DDSIP_param->cpxnoub2 && status != CPXMIP_OPTIMAL && !feasCheckOnly)
+                if (DDSIP_param->cpxnoub2 && status != CPXMIP_OPTIMAL && feasCheckOnly < 1)
                 {
                     // more iterations with different settings
                     status = DDSIP_SetCpxPara (DDSIP_param->cpxnoub2, DDSIP_param->cpxubisdbl2, DDSIP_param->cpxubwhich2, DDSIP_param->cpxubwhat2);
@@ -1186,7 +1292,7 @@ if (DDSIP_param->outlev > 21)
         if (DDSIP_NoSolution (mipstatus))
         {
             time_start = DDSIP_GetCpuTime ();
-            if (!feasCheckOnly)
+            if (feasCheckOnly < 1)
             {
                 if (DDSIP_param->outlev)
                 {
@@ -1208,8 +1314,11 @@ if (DDSIP_param->outlev > 21)
                 if (feasCheckOnly)
                 {
                     beg = 0;
-                    //end = (DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 7 && DDSIP_param->testOtherScens) || !nrScenarios) ? DDSIP_param->scenarios : nrScenarios;
                     end = (DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 11 && DDSIP_param->testOtherScens) || !nrScenarios) ? DDSIP_param->scenarios : nrScenarios;
+		    if (feasCheckOnly == 2 && (DDSIP_bb->dualitcnt > 1 || DDSIP_bb->curnode))
+                    {
+                        end = DDSIP_bb->shifts;
+                    }
                 }
                 else
                 {
@@ -1303,7 +1412,26 @@ if (DDSIP_param->outlev > 21)
                                     if (fabs (ray[DDSIP_bb->secondrowind[k]]) > 1.e-16)
                                         break;
                                 }
-                                if (k < DDSIP_bb->seccon)
+                                if (k >= DDSIP_bb->seccon)
+                                {
+                                    i = 0;
+                                    for (k = 0; k < DDSIP_bb->firstcon; k++)
+                                    {
+                                        if (fabs (ray[DDSIP_bb->firstrowind[k]]) > 1.e-16)
+                                            i++;
+                                    }
+//#ifdef DEBUG
+                                    if (DDSIP_param->outlev > 20)
+                                    {
+                                        fprintf (DDSIP_bb->moreoutfile," ####----------ray doesn't contain a coefficient for a second-stage constraint, %d nonzeros for first-stage ones\n", i);
+                                    }
+//#endif
+                                }
+                                else
+                                {
+                                    i = 99;
+                                }
+                                if (i > 1)
                                 {
                                     rhs = 1.;
                                     sense = 'G';
@@ -1420,6 +1548,10 @@ if (DDSIP_param->outlev > 21)
                                         newCut->Benders = 1;
                                         DDSIP_bb->cutpool = newCut;
                                         rmatval = NULL;
+		                        if (feasCheckOnly == 2 && DDSIP_bb->dualitcnt > 1)
+                                        {
+                                            end = DDSIP_param->scenarios;
+                                        }
                                     }
                                     //shift this infeasible scenario to first place, such that next time it is checked first
                                     if (Bi != iscen)
@@ -1440,12 +1572,6 @@ if (DDSIP_param->outlev > 21)
                                         scen = k;
                                     }
                                 }
-//#ifdef DEBUG
-                                else if (DDSIP_param->outlev > 20)
-                                {
-                                    fprintf (DDSIP_bb->moreoutfile," ####----------ray doesn't contain a coefficient for a second-stage constraint\n");
-                                }
-//#endif
 
                                 DDSIP_Free ((void *) &rmatind);
                                 DDSIP_Free ((void *) &rmatval);
@@ -1486,7 +1612,7 @@ if (DDSIP_param->outlev > 21)
 #ifdef ADDINTEGERCUTS
             //if all first-stage variables are binary ones, we can add an inequality, cutting off this point
             if (DDSIP_bb->DDSIP_step != adv && DDSIP_bb->DDSIP_step != eev &&
-                (DDSIP_param->addIntegerCuts && DDSIP_param->heuristic > 3 /* && !feasCheckOnly */))
+                (DDSIP_param->addIntegerCuts && DDSIP_param->heuristic > 3 && (feasCheckOnly < 2)))
             {
                 int rmatbeg;
                 int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_bb->novar), "rmatind(UpperBound)");
@@ -1667,65 +1793,68 @@ if (DDSIP_param->outlev > 21)
                 DDSIP_Free ((void *) &rowstore);
             }
 #endif
-            //shift this infeasible scenario to first place, such that next time it is checked first
-            if (iscen || !DDSIP_bb->shifts)
+            if (feasCheckOnly < 1)
             {
+	        //shift this infeasible scenario to first place, such that next time it is checked first
+                if (feasCheckOnly < 1 && (iscen || !DDSIP_bb->shifts))
+                {
 #ifdef DEBUG
-                if(DDSIP_param->outlev > 20)
-                    fprintf(DDSIP_bb->moreoutfile," ######## shift infeasible scen %d to top, (index, shifts: %d, %d)\n", DDSIP_bb->ub_scen_order[iscen]+1, iscen, DDSIP_bb->shifts);
+                    if(DDSIP_param->outlev > 20)
+                        fprintf(DDSIP_bb->moreoutfile," ######## shift infeasible scen %d to top, (index, shifts: %d, %d)\n", DDSIP_bb->ub_scen_order[iscen]+1, iscen, DDSIP_bb->shifts);
 #endif
-                if (iscen >= DDSIP_bb->shifts)
-                    DDSIP_bb->shifts++;
-                k = DDSIP_bb->ub_scen_order[iscen];
-                cpu_secs = sort_array[iscen];
-                for(j = iscen; j>0; j--)
-                {
-                    DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
-                    sort_array[j] = sort_array[j-1];
-                }
-                DDSIP_bb->ub_scen_order[0] = k;
-                sort_array[0] = cpu_secs;
-            }
-            if (iscen > DDSIP_bb->shifts)
-            {
-                wall_secs = cpu_secs = sort_array[DDSIP_bb->shifts];
-                for (wall_hrs = DDSIP_bb->shifts+1; wall_hrs < iscen; wall_hrs++)
-                {
-                    cpu_secs = DDSIP_Dmax (cpu_secs, sort_array[wall_hrs]);
-                    wall_secs += sort_array[wall_hrs];
-                }
-                wall_secs /= (0.01 + iscen - DDSIP_bb->shifts);
-                if (timeLimit)
-                    viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
-                else
-                    viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
-//#ifdef DEBUG
-                if (DDSIP_param->outlev > 20)
-                    fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1.);
-//#endif
-                viol = viol*wall_secs + 1.;
-                if (cpu_secs > viol)
-                {
-                    cpu_hrs = 0;
-                    for (wall_hrs = DDSIP_bb->shifts; wall_hrs < iscen-cpu_hrs; wall_hrs++)
+                    if (iscen >= DDSIP_bb->shifts)
+                        DDSIP_bb->shifts++;
+                    k = DDSIP_bb->ub_scen_order[iscen];
+                    cpu_secs = sort_array[iscen];
+                    for(j = iscen; j>0; j--)
                     {
-                        if (sort_array[wall_hrs] > viol)
-                        {
-                             cpu_mins = DDSIP_bb->ub_scen_order[wall_hrs];
-                             cpu_secs = sort_array[wall_hrs];
+                        DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
+                        sort_array[j] = sort_array[j-1];
+                    }
+                    DDSIP_bb->ub_scen_order[0] = k;
+                    sort_array[0] = cpu_secs;
+                }
+                if (iscen > DDSIP_bb->shifts)
+                {
+                    wall_secs = cpu_secs = sort_array[DDSIP_bb->shifts];
+                    for (wall_hrs = DDSIP_bb->shifts+1; wall_hrs < iscen; wall_hrs++)
+                    {
+                        cpu_secs = DDSIP_Dmax (cpu_secs, sort_array[wall_hrs]);
+                        wall_secs += sort_array[wall_hrs];
+                    }
+                    wall_secs /= (0.01 + iscen - DDSIP_bb->shifts);
+                    if (timeLimit)
+                        viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                    else
+                        viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
 //#ifdef DEBUG
-                             if (DDSIP_param->outlev)
-                                 fprintf (DDSIP_bb->moreoutfile, "### shifting scenario %d with time %g to the end of ub_scen_order ###\n", cpu_mins+1, sort_array[wall_hrs]);
+                    if (DDSIP_param->outlev > 20)
+                        fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1.);
 //#endif
-                             for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
-                             {
-                                 DDSIP_bb->ub_scen_order[wall_mins-1] = DDSIP_bb->ub_scen_order[wall_mins];
-                                 sort_array[wall_mins-1] = sort_array[wall_mins];
-                             }
-                             DDSIP_bb->ub_scen_order[DDSIP_param->scenarios-1] = cpu_mins; 
-                             sort_array[DDSIP_param->scenarios-1] = cpu_secs; 
-                             cpu_hrs++;
-                             wall_hrs--;
+                    viol = viol*wall_secs + 1.;
+                    if (cpu_secs > viol)
+                    {
+                        cpu_hrs = 0;
+                        for (wall_hrs = DDSIP_bb->shifts; wall_hrs < iscen-cpu_hrs; wall_hrs++)
+                        {
+                            if (sort_array[wall_hrs] > viol)
+                            {
+                                 cpu_mins = DDSIP_bb->ub_scen_order[wall_hrs];
+                                 cpu_secs = sort_array[wall_hrs];
+//#ifdef DEBUG
+                                 if (DDSIP_param->outlev)
+                                     fprintf (DDSIP_bb->moreoutfile, "### shifting scenario %d with time %g to the end of ub_scen_order ###\n", cpu_mins+1, sort_array[wall_hrs]);
+//#endif
+                                 for (wall_mins = wall_hrs+1; wall_mins < DDSIP_param->scenarios; wall_mins++)
+                                 {
+                                     DDSIP_bb->ub_scen_order[wall_mins-1] = DDSIP_bb->ub_scen_order[wall_mins];
+                                     sort_array[wall_mins-1] = sort_array[wall_mins];
+                                 }
+                                 DDSIP_bb->ub_scen_order[DDSIP_param->scenarios-1] = cpu_mins; 
+                                 sort_array[DDSIP_param->scenarios-1] = cpu_secs; 
+                                 cpu_hrs++;
+                                 wall_hrs--;
+                            }
                         }
                     }
                 }
@@ -1734,7 +1863,7 @@ if (DDSIP_param->outlev > 21)
                 continue;
             goto TERMINATE;
         }
-        if (!feasCheckOnly)
+        if (feasCheckOnly < 1)
         {
             // Get solution
             status = DDSIP_GetCpxSolution (mipstatus, &objval, &bobjval, mipx);
@@ -1770,35 +1899,31 @@ if (DDSIP_param->outlev > 21)
                 DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
                 if (mipstatus == CPXMIP_OPTIMAL)
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%)     ",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%10.4g%%)     ",
                          iscen + 1, scen + 1, objval, bobjval, gap);
                 else if (mipstatus == CPXMIP_OPTIMAL_TOL)
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) tol.",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%10.4g%%) tol.",
+                         iscen + 1, scen + 1, objval, bobjval, gap);
+                else if (mipstatus == CPXMIP_NODE_LIM_FEAS)
+                    fprintf (DDSIP_bb->moreoutfile,
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%10.4g%%) NODE",
                          iscen + 1, scen + 1, objval, bobjval, gap);
                 else if (mipstatus == CPXMIP_TIME_LIM_FEAS)
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) TIME",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%10.4g%%) TIME",
                          iscen + 1, scen + 1, objval, bobjval, gap);
                 else
                     fprintf (DDSIP_bb->moreoutfile,
-                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) %-4.0d ",
+                         "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%10.4g%%) %-4.0d ",
                          iscen + 1, scen + 1, objval, bobjval, gap, mipstatus);
                 fprintf (DDSIP_bb->moreoutfile,
-                         "\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d",
+                         "\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%7.2fs n:%5d",
                          wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
                 if (nodes_2nd >= 0)
-                    fprintf (DDSIP_bb->moreoutfile, " +%d)\n", nodes_2nd - nodes_1st); 
+                    fprintf (DDSIP_bb->moreoutfile, " +%4d)\n", nodes_2nd - nodes_1st); 
                 else
                     fprintf (DDSIP_bb->moreoutfile, ")\n"); 
-                if (DDSIP_param->outlev>8)
-                {
-                    printf ("%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%)\tStatus=%3.0d\t%3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2f)\n",
-                            iscen + 1, scen + 1, objval, bobjval, gap, mipstatus,
-                            wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start);
-                    if (DDSIP_param->cpxscr)
-                        printf ("\n");
-                }
             }
 
             tmpfeasbound += DDSIP_Dmin (objval, bobjval) * DDSIP_data->prob[scen];
@@ -1882,7 +2007,7 @@ if (DDSIP_param->outlev > 21)
             }
         }
     }				// end for iscen=..
-    if (feasCheckOnly)
+    if (feasCheckOnly > 0)
         goto TERMINATE;
 
     if (DDSIP_param->riskmod)
@@ -2058,7 +2183,7 @@ if (DDSIP_param->outlev > 21)
 TERMINATE:
 
 #ifdef DEACTIVATECUTS
-    if (numCuts)
+    if (numCuts && DDSIP_param->deactivate_cuts && feasCheckOnly < 2)
     {
         status = CPXchgrhs (DDSIP_env, DDSIP_lp, numCuts, cutindex, cutrhs);
         if (status)
@@ -2080,7 +2205,7 @@ TERMINATE:
 #endif
     DDSIP_Free ((void **) &(sort_array));
     // if not only feasibility was tested, add the suggested first-stage to the list of suggested solutions
-    if (!feasCheckOnly)
+    if (feasCheckOnly < 1)
     {
         DDSIP_bb->sug[DDSIP_param->nodelim + 2]->next = DDSIP_bb->sug[DDSIP_bb->curnode];
         DDSIP_bb->sug[DDSIP_bb->curnode] = DDSIP_bb->sug[DDSIP_param->nodelim + 2];
@@ -2164,14 +2289,14 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
             bound_sort_array[DDSIP_bb->ub_scen_order[i_scen]] = DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]] * (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]];
         }
         DDSIP_qsort_ins_D (bound_sort_array, DDSIP_bb->ub_scen_order, DDSIP_bb->shifts, DDSIP_param->scenarios-1);
-        // insert the least-cost scenario after the first bb->shifts scenarios - to be sure to check that for feasibility, too
-        if (DDSIP_bb->shifts < DDSIP_param->scenarios - 2)
+        // insert the least-cost scenario after the first bb->shifts+1 scenarios - to be sure to check that for feasibility, too
+        if (DDSIP_bb->shifts < DDSIP_param->scenarios - 3)
         {
             int j;
             i_scen = DDSIP_bb->ub_scen_order[DDSIP_param->scenarios - 1];
-            for (j = DDSIP_param->scenarios - 1; j>DDSIP_bb->shifts; j--)
+            for (j = DDSIP_param->scenarios - 1; j>DDSIP_bb->shifts + 1; j--)
                 DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
-            DDSIP_bb->ub_scen_order[DDSIP_bb->shifts] = i_scen;
+            DDSIP_bb->ub_scen_order[DDSIP_bb->shifts + 1] = i_scen;
         }
         DDSIP_bb->ub_sorted = 1;
 
@@ -2190,92 +2315,114 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
         }
         DDSIP_Free ((void**) &bound_sort_array);
     }
-    if (DDSIP_param->heuristic == 100)  	// use subsequently different heuristics in the same node
+    if (*comb == -1)
     {
-	    for (i = 1; i < DDSIP_param->heuristic_num; i++)
-	    {
-		    DDSIP_param->heuristic = (int) floor (DDSIP_param->heuristic_vector[i] + 0.1);
-		    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
-		    {
-			    // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-			    if (DDSIP_bb->skip != -4 && DDSIP_bb->sug[DDSIP_param->nodelim + 2])
-			    {
-				    if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
-				    {
-					    if (DDSIP_bb->heurval < tmpbestheur)
-						    tmpbestheur = DDSIP_bb->heurval;
-				    }
-				    if (status == 100000)
-				    {
-					    DDSIP_bb->skip = -5;
-					    if (DDSIP_param->interrupt_heur > 0)
-						    break;
-				    }
-			    }
-		    }
-		    if (DDSIP_killsignal)
-		    {
-			    DDSIP_bb->skip = -5;
-			    break;
-		    }
-	    }
-	    // use (expensive) heuristic 12 using all single-scenario solutions as suggestions
-	    if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || DDSIP_bb->curnode < 13 || use_heur12 || DDSIP_bb->noiter%250 > 247))
-	    {
-		    DDSIP_param->heuristic = 12;
-		    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
-		    {
-			    // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
-			    if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
-			    {
-				    if (!DDSIP_UpperBound (DDSIP_param->scenarios, 0))
-				    {
-					    if (DDSIP_bb->heurval < tmpbestheur)
-						    tmpbestheur = DDSIP_bb->heurval;
-				    }
-			    }
-		    }
-		    DDSIP_bb->heurval = tmpbestheur;
-	    }
-	    DDSIP_param->heuristic = 100;
-    }
-    else if (DDSIP_param->heuristic == 99)  	// use subsequently different heuristics in the same node
-    {
-	    for (i = 1; i < DDSIP_param->heuristic_num; i++)
-	    {
-		    DDSIP_param->heuristic = (int) floor (DDSIP_param->heuristic_vector[i] + 0.1);
-		    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
-		    {
-			    // Evaluate the proposed first-stage solution
-			    if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
-			    {
-				    if (DDSIP_bb->heurval < tmpbestheur)
-					    tmpbestheur = DDSIP_bb->heurval;
-			    }
-			    if (status == 100000 || DDSIP_killsignal)
-			    {
-				    DDSIP_bb->skip = -5;
-				    if (DDSIP_param->interrupt_heur > 0)
-					    break;
-			    }
-		    }
-	    }
-	    DDSIP_param->heuristic = 99;
-	    DDSIP_bb->heurval = tmpbestheur;
+        int heur;
+        heur = DDSIP_param->heuristic;
+        DDSIP_param->heuristic = 4;
+        if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
+        {
+                // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
+                if (DDSIP_bb->skip != -4 && DDSIP_bb->sug[DDSIP_param->nodelim + 2])
+                {
+            	    if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, -1)))
+            	    {
+            		    if (DDSIP_bb->heurval < tmpbestheur)
+            			    tmpbestheur = DDSIP_bb->heurval;
+            	    }
+                }
+        }
+        DDSIP_param->heuristic = heur;
     }
     else
     {
-	    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
-		    // Evaluate the proposed first-stage solution
-		    if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
-		    {
-			    if (DDSIP_bb->heurval < tmpbestheur)
-				    tmpbestheur = DDSIP_bb->heurval;
-		    }
-	    if (status == 100000 || DDSIP_killsignal)
-	    {
-		    DDSIP_bb->skip = -5;
-	    }
+        if (DDSIP_param->heuristic == 100)  	// use subsequently different heuristics in the same node
+        {
+                for (i = 1; i < DDSIP_param->heuristic_num; i++)
+                {
+            	    DDSIP_param->heuristic = (int) floor (DDSIP_param->heuristic_vector[i] + 0.1);
+            	    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
+            	    {
+            		    // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
+            		    if (DDSIP_bb->skip != -4 && DDSIP_bb->sug[DDSIP_param->nodelim + 2])
+            		    {
+            			    if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
+            			    {
+            				    if (DDSIP_bb->heurval < tmpbestheur)
+            					    tmpbestheur = DDSIP_bb->heurval;
+            			    }
+            			    if (status == 100000)
+            			    {
+            				    DDSIP_bb->skip = -5;
+            				    if (DDSIP_param->interrupt_heur > 0)
+            					    break;
+            			    }
+            		    }
+            	    }
+            	    if (DDSIP_killsignal)
+            	    {
+            		    DDSIP_bb->skip = -5;
+            		    break;
+            	    }
+                }
+                // use (expensive) heuristic 12 using all single-scenario solutions as suggestions
+                if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || DDSIP_bb->curnode < 13 || use_heur12 || DDSIP_bb->noiter%250 > 247))
+                {
+            	    DDSIP_param->heuristic = 12;
+            	    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
+            	    {
+            		    // Evaluate the proposed first-stage solution (if DDSIP_bb->skip was not set)
+            		    if (DDSIP_bb->sug[DDSIP_param->nodelim + 2])
+            		    {
+            			    if (!DDSIP_UpperBound (DDSIP_param->scenarios, 0))
+            			    {
+            				    if (DDSIP_bb->heurval < tmpbestheur)
+            					    tmpbestheur = DDSIP_bb->heurval;
+            			    }
+            		    }
+            	    }
+            	    DDSIP_bb->heurval = tmpbestheur;
+                }
+                DDSIP_param->heuristic = 100;
+        }
+        else if (DDSIP_param->heuristic == 99)  	// use subsequently different heuristics in the same node
+        {
+                for (i = 1; i < DDSIP_param->heuristic_num; i++)
+                {
+            	    DDSIP_param->heuristic = (int) floor (DDSIP_param->heuristic_vector[i] + 0.1);
+            	    if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
+            	    {
+            		    // Evaluate the proposed first-stage solution
+            		    if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
+            		    {
+            			    if (DDSIP_bb->heurval < tmpbestheur)
+            				    tmpbestheur = DDSIP_bb->heurval;
+            		    }
+            		    if (status == 100000 || DDSIP_killsignal)
+            		    {
+            			    DDSIP_bb->skip = -5;
+            			    if (DDSIP_param->interrupt_heur > 0)
+            				    break;
+            		    }
+            	    }
+                }
+                DDSIP_param->heuristic = 99;
+                DDSIP_bb->heurval = tmpbestheur;
+        }
+        else
+        {
+                if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
+            	    // Evaluate the proposed first-stage solution
+            	    if (!(status = DDSIP_UpperBound (DDSIP_param->scenarios, 0)) || status == 100000)
+            	    {
+            		    if (DDSIP_bb->heurval < tmpbestheur)
+            			    tmpbestheur = DDSIP_bb->heurval;
+            	    }
+                if (status == 100000 || DDSIP_killsignal)
+                {
+            	    DDSIP_bb->skip = -5;
+                }
+        }
     }
     DDSIP_bb->DDSIP_step = currentStep;
     DDSIP_bb->heurSuccess = -1;

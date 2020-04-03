@@ -290,6 +290,7 @@ extern "C" {
         int alwaysBendersCuts;
         int testOtherScens;
         int numberReinits;
+        int numberScenReeval;
         int redundancyCheck;
         int deleteRedundantCuts;
         double cut_security_tol;
@@ -612,6 +613,8 @@ extern "C" {
         int cutAdded;
         // store cuts of the UB steps for testing proposals
         cutpool_t* cutpool;
+        // last_weight in CB iter 1 - an eventually by CBLowerBound increased weight
+        double last_weight;
         // indicator whether an optimal node (bound close enough to bestvalue and no violations) was found
         int found_optimal_node;
         double bound_optimal_node;
@@ -836,7 +839,7 @@ extern "C" {
     int  DDSIP_ChgProb(int, int);
     int  DDSIP_LowerBound(void);
     int  DDSIP_Heuristics(int *, int, int);
-    int  DDSIP_SolChk(double *);
+    int  DDSIP_SolChk(double *, int);
     int  DDSIP_UpperBound(int, int);
     void DDSIP_EvaluateScenarioSolutions (int *);
     int  DDSIP_RestoreBoundAndType(void);

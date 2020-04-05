@@ -57,7 +57,7 @@ DDSIP_CheckRedundancy (int automatic)
     char probname[50];
     cutpool_t *currentCut, *previousCut;
 
-    if ((automatic && DDSIP_bb->cutNumber < cutCnt + 2) || (DDSIP_bb->cutCntr < 2))
+    if ((automatic && DDSIP_bb->cutNumber < cutCnt + 5) || (DDSIP_bb->cutCntr < 10))
         return;
     if (!DDSIP_bb->cutpool)
     {

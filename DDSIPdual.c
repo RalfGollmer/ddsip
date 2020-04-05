@@ -1232,7 +1232,7 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
                 inhMult_bound = obj;
             }
             // test Lagrange multipliers from DDSIP_bb->bestdual
-            while (tmp_bestdual && obj < DDSIP_bb->bestvalue - DDSIP_Dmin (0.3*DDSIP_param->relgap, 5.e-9)*(fabs(DDSIP_bb->bestvalue)+1.e-10))
+            while (tmp_bestdual && obj < DDSIP_bb->bestvalue - DDSIP_Dmin (0.3*DDSIP_param->relgap, 2.5e-9)*(fabs(DDSIP_bb->bestvalue)+1.e-12))
             {
                 if (tmp_bestdual->node_nr != (int) DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual + 1]
                     && (!DDSIP_MultEqual (DDSIP_bb->local_bestdual, tmp_bestdual->dual))
@@ -1501,7 +1501,7 @@ if(DDSIP_param->outlev > 20)
 //////////////////////////
                     if (tmp_maxbound)
                     {
-                        if (DDSIP_param->cb_test_line && max_bound < DDSIP_bb->bestvalue - 0.01*DDSIP_param->relgap*(fabs(DDSIP_bb->bestvalue)+1.e-10))
+                        if (DDSIP_param->cb_test_line && max_bound < DDSIP_bb->bestvalue - DDSIP_Dmin (0.49*DDSIP_param->relgap, 2.5e-9)*(fabs(DDSIP_bb->bestvalue) + 1e-12))
                         {
                             // but first try a point on the line between inherited and best multipliers
                             if (cnt == 2)
@@ -1884,7 +1884,7 @@ if(DDSIP_param->outlev > 20)
     }
     DDSIP_bb->last_dualitcnt = DDSIP_bb->dualitcnt;
 
-    if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - DDSIP_Dmin (0.5*DDSIP_param->relgap, 1.e-8)*(fabs(DDSIP_bb->bestvalue) + 1e-10))
+    if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - DDSIP_Dmin (0.5*DDSIP_param->relgap, 2.5e-9)*(fabs(DDSIP_bb->bestvalue) + 1e-12))
     {
         memcpy (DDSIP_node[DDSIP_bb->curnode]->dual, DDSIP_bb->local_bestdual, sizeof (double) * (DDSIP_bb->dimdual + 3));
         if (DDSIP_node[DDSIP_bb->curnode]->bound >= DDSIP_bb->bestvalue)
@@ -1977,7 +1977,7 @@ if(DDSIP_param->outlev > 20)
                 && (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time) < DDSIP_param->timelim)
                 && DDSIP_bb->dualdescitcnt < DDSIP_bb->current_itlim
                 && DDSIP_bb->dualitcnt < DDSIP_param->cbtotalitlim && !(obj > DDSIP_bb->bestvalue - DDSIP_param->accuracy)
-                && (DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue) * DDSIP_Dmax (DDSIP_Dmin (0.5*DDSIP_param->relgap, 1.e-9), 2.e-12))
+                && (DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_bb->bestvalue - (fabs(DDSIP_bb->bestvalue) + 1.e-12) * DDSIP_Dmax (DDSIP_Dmin (0.5*DDSIP_param->relgap, 2.5e-9), 2.e-12))
                 && cycleCnt < 2)
         {
             if ((DDSIP_bb->no_reduced_front == 1) &&
@@ -3047,9 +3047,9 @@ while (tmp1_bestdual)
                 DDSIP_Print2 ("termination status: no violation of nonanticipativity. ------------------------------------", "\n", 0, 0);
                 DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
             }
-            else if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - DDSIP_Dmin (0.5*DDSIP_param->relgap, 1.e-8)*(fabs(DDSIP_bb->bestvalue) + 1e-10))
+            else if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - DDSIP_Dmin (0.5*DDSIP_param->relgap, 2.5e-9)*(fabs(DDSIP_bb->bestvalue) + 1e-12))
             {
-                if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue + (fabs(DDSIP_bb->bestvalue) + 1e-10) * DDSIP_Dmax (DDSIP_Dmin (0.5*DDSIP_param->relgap, 1.e-9), 2.e-10))
+                if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue +  2.e-10 * (fabs(DDSIP_bb->bestvalue) + 1e-12))
                 {
                     DDSIP_bb->skip = 2;
                     DDSIP_bb->cutoff++;

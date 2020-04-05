@@ -2686,8 +2686,7 @@ NEXT_TRY:
 #endif
         //DEBUGOUT
 
-        //if (!DDSIP_bb->violations && relax < 2 && (!(DDSIP_param->riskmod) || (!(DDSIP_param->riskmod) < 0 && DDSIP_param->riskalg == 1)))
-        if (!DDSIP_bb->violations)
+        if (!DDSIP_bb->violations && (!(DDSIP_param->riskmod) || (DDSIP_param->riskmod > 0 && DDSIP_param->riskalg == 1)))
         {
             if (relax < 2)
             {
@@ -3286,7 +3285,9 @@ if (DDSIP_param->outlev > 21)
                             for (j = 0; j < DDSIP_bb->firstvar; j++)
                                 DDSIP_bb->bestsol[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[0][j];
                             if (DDSIP_param->outlev)
-                                fprintf (DDSIP_bb->moreoutfile, "\t(Current best bound)\n");
+                                fprintf (DDSIP_bb->moreoutfile, "\t(Current best bound, improvement %16.12g, %g%%)\n",DDSIP_bb->bestvalue-tmpbestvalue,1e+2*(DDSIP_bb->bestvalue-tmpbestvalue)/(fabs(DDSIP_bb->bestvalue) + 1.e-16));
+                            // Print a line of output
+                            DDSIP_PrintStateUB (0);
                             // copy second stage solutions of current best
                             for (k = 0; k < DDSIP_param->scenarios; k++)
                             {

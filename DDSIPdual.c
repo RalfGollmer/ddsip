@@ -964,10 +964,9 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
                 {
                     fprintf (DDSIP_outfile, "  |%17d%88d cuts\n", DDSIP_bb->dualdescitcnt, DDSIP_bb->cutAdded);
                 }
-		cpu_hrs = DDSIP_bb->cutAdded;
                 DDSIP_bb->cutAdded = 0;
             }
-            if (cpu_hrs)
+            if (DDSIP_bb->cutCntr)
             {
                 cnt = 1;
                 do
@@ -1977,7 +1976,7 @@ if(DDSIP_param->outlev > 20)
                 && (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time) < DDSIP_param->timelim)
                 && DDSIP_bb->dualdescitcnt < DDSIP_bb->current_itlim
                 && DDSIP_bb->dualitcnt < DDSIP_param->cbtotalitlim && !(obj > DDSIP_bb->bestvalue - DDSIP_param->accuracy)
-                && (DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_bb->bestvalue - (fabs(DDSIP_bb->bestvalue) + 1.e-12) * DDSIP_Dmax (DDSIP_Dmin (0.5*DDSIP_param->relgap, 2.5e-9), 2.e-12))
+                && (DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_bb->bestvalue - (fabs(DDSIP_bb->bestvalue) + 1.e-12) * DDSIP_Dmax (DDSIP_Dmin (0.5*DDSIP_param->relgap, 4e-9), 2.e-12))
                 && cycleCnt < 2)
         {
             if ((DDSIP_bb->no_reduced_front == 1) &&

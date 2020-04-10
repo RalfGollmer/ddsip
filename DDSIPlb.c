@@ -933,7 +933,7 @@ DDSIP_Warm (int iscen)
     {
         DDSIP_bb->effort[0]=2;
         // If not in the root node add solution of father
-        if (DDSIP_bb->curnode && DDSIP_node[DDSIP_bb->curnode]->step != dual)
+        if (DDSIP_bb->curnode && (DDSIP_node[DDSIP_bb->curnode]->step != dual || !DDSIP_bb->dualitcnt))
         {
             // Copy solution from father node to the problem (see initialization of subbound and solut)
             sprintf (DDSIP_bb->Names[0],"Father_%d",scen+1);
@@ -3920,8 +3920,10 @@ NEXT_SCEN:
                 status = mipstatus;
                 if (DDSIP_param->outlev)
                 {
-                    printf ("WARNING: Problem infeasible for scenario %d in node %d (CBLowerBound)\n", scen + 1, DDSIP_bb->curnode);
-                    fprintf (DDSIP_bb->moreoutfile, "WARNING: Problem infeasible for scenario %d in node %d (CBLowerBound)\n", scen + 1, DDSIP_bb->curnode);
+                    printf ("WARNING: Problem infeasible or unbounded for scenario %d in node %d (CBLowerBound)\n", scen + 1, DDSIP_bb->curnode);
+                    fprintf (DDSIP_bb->moreoutfile, "WARNING: Problem infeasible or unbounded for scenario %d in node %d (CBLowerBound)\n", scen + 1, DDSIP_bb->curnode);
+		    if (!DDSIP_bb->curnode)
+                       fprintf (DDSIP_outfile, "ERROR: Problem infeasible or unbounded for scenario %d in node %d (CBLowerBound)\n", scen + 1, DDSIP_bb->curnode);
                 }
                 if ((DDSIP_bb->dualitcnt && DDSIP_bb->newTry < 6) || (!DDSIP_bb->dualitcnt && DDSIP_bb->newTry < 3))
                 {
@@ -3934,7 +3936,7 @@ NEXT_SCEN:
                 {
                     DDSIP_bb->newTry = 0;
                     DDSIP_node[DDSIP_bb->curnode]->bound = DDSIP_infty;
-                    fprintf (DDSIP_outfile, "         Problem infeasible for scenario %d in node %d (CBLowerBound)\n", scen + 1, DDSIP_bb->curnode);
+                    fprintf (DDSIP_outfile, "         Problem infeasible or unbounded for scenario %d in node %d (CBLowerBound)\n", scen + 1, DDSIP_bb->curnode);
                 }
                 goto TERMINATE;
             }
@@ -4558,6 +4560,11 @@ NEXT_SCEN:
         // Save first stage in best point
         for (j = 0; j < DDSIP_param->scenarios; j++)
         {
+	    if (!DDSIP_node[DDSIP_bb->curnode]->first_sol[j])
+	    {
+		    fprintf (DDSIP_outfile, "ERROR: DDSIP_node[%d]->first_sol[%d] = %p\n", DDSIP_bb->curnode, j,  DDSIP_node[DDSIP_bb->curnode]->first_sol[j]);
+		    exit(99);
+	    }
             if (!DDSIP_bb->bestfirst[j].first_sol)
             {
                 DDSIP_bb->bestfirst[j].first_sol = (double *) DDSIP_Alloc(sizeof(double),DDSIP_bb->firstvar+3,"bestfirst.first_sol(CBLowerBound)");

@@ -299,7 +299,7 @@ DDSIP_NoSolution (int stat)
 int
 DDSIP_Infeasible (int stat)
 {
-    if ((stat == CPX_STAT_INFEASIBLE) || (stat == CPXERR_PRESLV_INForUNBD)
+    if ((stat == CPX_STAT_INFEASIBLE) || (stat == CPXERR_PRESLV_INForUNBD) || (stat == CPXMIP_UNBOUNDED)
             || (stat == CPXERR_SUBPROB_SOLVE) || (stat == CPXMIP_INForUNBD) || (stat == CPXMIP_INFEASIBLE))
         return 1;
     else

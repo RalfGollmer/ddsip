@@ -1094,11 +1094,11 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
                         old_obj = DDSIP_bb->currentDualObjVal;
                         obj = DDSIP_bb->dualObjVal;
                     }
-      if (DDSIP_param->outlev)
+                    cpu_mins = DDSIP_bb->cutAdded;
+      if (DDSIP_param->outlev > 21)
       {
           fprintf (DDSIP_bb->moreoutfile, "### vor  EvaluateScenarioSolutions %d: cutAdded= %d, cutCntr= %d\n", cnt, DDSIP_bb->cutAdded, DDSIP_bb->cutCntr);
       }
-                    cpu_mins = -DDSIP_bb->cutAdded;
                     if (!DDSIP_killsignal)
                     {
 #ifdef ONLYHEUR12
@@ -1114,16 +1114,16 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
                     }
                     else
                         break;
-      if (DDSIP_param->outlev)
+      if (DDSIP_param->outlev > 21)
       {
           fprintf (DDSIP_bb->moreoutfile, "### nach EvaluateScenarioSolutions %d: cutAdded= %d, cutCntr= %d\n", cnt, DDSIP_bb->cutAdded, DDSIP_bb->cutCntr);
       }
-                    cpu_mins += DDSIP_bb->cutAdded;
-                    if (DDSIP_param->outlev && cpu_mins)
+                    if (DDSIP_param->outlev && (cpu_hrs = DDSIP_bb->cutAdded - cpu_mins))
                     {
-                        fprintf (DDSIP_outfile, "  |%17d%88d cuts\n", DDSIP_bb->dualdescitcnt, DDSIP_bb->cutAdded);
-                        DDSIP_bb->cutAdded = 0;
+                        fprintf (DDSIP_outfile, "  |%17d%88d cuts\n", DDSIP_bb->dualdescitcnt, cpu_hrs);
                     }
+                    cpu_mins = DDSIP_bb->cutAdded;
+                    DDSIP_bb->cutAdded = 0;
                 } while (cpu_mins && (((obj - old_obj)/(fabs(obj)+1e-16) > 4.e-12) || (noIncreaseCounter < 3))
                          && cnt < DDSIP_param->numberReinits && rgap > 99.*DDSIP_param->relgap);
                 if (DDSIP_param->outlev && DDSIP_bb->cutAdded)
@@ -2000,7 +2000,7 @@ if(DDSIP_param->outlev > 20)
             if (DDSIP_param->outlev > 8)
             {
                 printf ("\nDescent step %d    next weight %g,  last weight %g\n", DDSIP_bb->dualdescitcnt, next_weight, last_weight);
-                fprintf (DDSIP_bb->moreoutfile, "\nDescent step %d    next weight %g,  last weight %g\n", DDSIP_bb->dualdescitcnt, next_weight, last_weight);
+                fprintf (DDSIP_bb->moreoutfile, "\nDescent step %d    next weight %g\n", DDSIP_bb->dualdescitcnt, next_weight);
             }
             DDSIP_bb->keepSols = 0;
 

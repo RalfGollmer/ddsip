@@ -637,7 +637,10 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
 //#ifdef DEBUG
             if (DDSIP_param->outlev > 20)
             {
-                fprintf (DDSIP_bb->moreoutfile," ------------ feasCheckOnly= %d, rest_bound= %18.12g\n", feasCheckOnly, rest_bound);
+		if (feasCheckOnly == 2)
+                    fprintf (DDSIP_bb->moreoutfile," ------------ feasCheckOnly= %d\n", feasCheckOnly);
+		else
+                    fprintf (DDSIP_bb->moreoutfile," ------------ feasCheckOnly= %d, rest_bound= %18.12g\n", feasCheckOnly, rest_bound);
             }
 //#endif
 

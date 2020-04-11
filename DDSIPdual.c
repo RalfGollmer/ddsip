@@ -1669,8 +1669,8 @@ if(DDSIP_param->outlev > 20)
                             {
                                 // try a extrapolated point on the line between inherited and best multipliers
                                 for (status=0; status < DDSIP_bb->dimdual; status++)
-                                    DDSIP_node[DDSIP_bb->curnode]->dual[status] =  1.004 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                 - 0.004 * tmp_maxbound->dual[status];
+                                    DDSIP_node[DDSIP_bb->curnode]->dual[status] =  1.002 * DDSIP_bb->startinfo_multipliers[status]
+                                                                                 - 0.002 * tmp_maxbound->dual[status];
 #ifdef DEBUG
                                     if (DDSIP_param->outlev > 21 && DDSIP_param->outlev < DDSIP_current_lambda_outlev)
                                     {
@@ -1731,8 +1731,8 @@ if(DDSIP_param->outlev > 20)
                             {
                                 // try a point on the line between inherited and best multipliers
                                 for (status=0; status < DDSIP_bb->dimdual; status++)
-                                    DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.992 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                + 0.008 * tmp_maxbound->dual[status];
+                                    DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.998 * DDSIP_bb->startinfo_multipliers[status]
+                                                                                + 0.002 * tmp_maxbound->dual[status];
 #ifdef DEBUG
                                     if (DDSIP_param->outlev > 21 && DDSIP_param->outlev < DDSIP_current_lambda_outlev)
                                     {

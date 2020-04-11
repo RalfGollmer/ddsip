@@ -2628,20 +2628,39 @@ NEXT_TRY:
                 for (j = 1; j < DDSIP_param->scenarios; j++)
                     DDSIP_node[DDSIP_bb->curnode]->BoundNoLag += DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag[j] * DDSIP_data->prob[j];
             }
-            for (scen = 0; scen < DDSIP_param->scenarios; scen++)
-                for (i = 0; i < DDSIP_bb->firstvar; i++)
-                    for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
-                            j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
-                    {
-                        lagr += DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] * (DDSIP_node[DDSIP_bb->curnode]->first_sol[scen])[i];
-                    }
-            if (DDSIP_param->outlev > 3)
-            {
-                fprintf (DDSIP_bb->moreoutfile,"        Objective value of solution = %.10g, Lagrangean part = %.10g\n",tmpbestvalue,lagr);
-                if (DDSIP_param->outlev > 29)
+	    else
+	    {
+                // check whether all Lagrange parameters are zero
+                for (i=0; i<DDSIP_bb->dimdual; i++)
+                    if (DDSIP_node[DDSIP_bb->curnode]->dual[i])
+                        break;
+                if (i < DDSIP_bb->dimdual)
                 {
-                    printf ("        Objective value of solution = %.10g, Lagrangean part = %.10g\n",tmpbestvalue,lagr);
+                    // there are non-zero multipliers
+                    if (DDSIP_param->outlev > 3)
+                    {
+                        for (scen = 0; scen < DDSIP_param->scenarios; scen++)
+                            for (i = 0; i < DDSIP_bb->firstvar; i++)
+                                for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
+                                        j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
+                                {
+                                    lagr += DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] * (DDSIP_node[DDSIP_bb->curnode]->first_sol[scen])[i];
+                                }
+                        fprintf (DDSIP_bb->moreoutfile,"        Objective value of solution = %.10g, Lagrangean part = %.10g\n",tmpbestvalue,lagr);
+                        if (DDSIP_param->outlev > 29)
+                        {
+                            printf ("        Objective value of solution = %.10g, Lagrangean part = %.10g\n",tmpbestvalue,lagr);
+                        }
+                    }
                 }
+		else
+                {
+                    // the current bound is without influence of the Lagrangean
+                    memcpy (DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag, DDSIP_node[DDSIP_bb->curnode]->subbound, DDSIP_param->scenarios*sizeof(double));
+                    DDSIP_node[DDSIP_bb->curnode]->BoundNoLag = DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag[0] * DDSIP_data->prob[0];
+                    for (j = 1; j < DDSIP_param->scenarios; j++)
+                        DDSIP_node[DDSIP_bb->curnode]->BoundNoLag += DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag[j] * DDSIP_data->prob[j];
+                    }
             }
         }
 #endif

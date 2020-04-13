@@ -2571,7 +2571,7 @@ NEXT_TRY:
                             }
                             else if ((abs(DDSIP_param->riskmod) <= 3 && next_weight > 5.e-5) || (abs(DDSIP_param->riskmod) > 3 && next_weight > 1.e-4))
                             {
-                                if (repeated_increase > 2 + (next_weight < 0.05?1:0))
+                                if (repeated_increase > 2 + (next_weight < 0.05?1:0) + (next_weight < 0.002?2:0))
                                 {
                                     if (weight_decreases > 1 && (next_weight > 0.049 || reduction_factor > 0.6))
                                     {

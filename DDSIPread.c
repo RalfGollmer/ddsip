@@ -1555,7 +1555,7 @@ DDSIP_ReadSpec ()
     DDSIP_param->prematureStop = 1;
 #endif
 #ifdef ADDBENDERSCUTS
-    DDSIP_param->addBendersCuts = (int) floor (DDSIP_ReadDbl (specfile, "ADDBEN", " ADD BENDERS CUTS", 1., 1, 0., 2.) + 0.1);
+    DDSIP_param->addBendersCuts = (int) floor (DDSIP_ReadDbl (specfile, "ADDBEN", " ADD BENDERS CUTS", DDSIP_param->stocrhs || DDSIP_param->stocmat, 1, 0., 2.) + 0.1);
     if (DDSIP_param->addBendersCuts)
     {
         DDSIP_param->alwaysBendersCuts = 1;
@@ -1571,7 +1571,7 @@ DDSIP_ReadSpec ()
     }
 #endif
 #ifdef ADDINTEGERCUTS
-    DDSIP_param->addIntegerCuts = (int) floor (DDSIP_ReadDbl (specfile, "ADDINT", " ADD INTEGER CUTS", 1., 1, 0., 1.) + 0.1);
+    DDSIP_param->addIntegerCuts = (int) floor (DDSIP_ReadDbl (specfile, "ADDINT", " ADD INTEGER CUTS", DDSIP_param->stocrhs || DDSIP_param->stocmat, 1, 0., 1.) + 0.1);
 #endif
     if (DDSIP_param->addBendersCuts || DDSIP_param->addIntegerCuts)
     {

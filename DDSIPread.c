@@ -1910,7 +1910,7 @@ DDSIP_ReadData ()
     fclose (datafile);
 
     // Check if some scenarios are identical
-    if (DDSIP_param->stocrhs)
+    if (DDSIP_param->stocrhs && DDSIP_param->scenarios < 10000)
     {
         status = 0;
         for (i = 0; i < DDSIP_param->scenarios; i++)
@@ -1955,7 +1955,7 @@ DDSIP_ReadData ()
         {
             if (!(i%10))
                 fprintf (checkfile, "\n%6d |\t",i);
-            fprintf (checkfile, "%8.4f\t", DDSIP_data->prob[i]);
+            fprintf (checkfile, "%12.8g\t", DDSIP_data->prob[i]);
         }
         fprintf (checkfile, "\n");
 
@@ -1966,7 +1966,7 @@ DDSIP_ReadData ()
             {
                 if(!(i%10))
                     fprintf (checkfile, "\n%6d |\t",i);
-                fprintf (checkfile, "%8.4f\t", DDSIP_data->rhs[i * DDSIP_param->stocrhs + j]);
+                fprintf (checkfile, "%12.8g\t", DDSIP_data->rhs[i * DDSIP_param->stocrhs + j]);
             }
             fprintf (checkfile, "\n");
         }
@@ -2058,7 +2058,7 @@ DDSIP_ReadData ()
             for (j = 0; j < DDSIP_param->stoccost; j++)
             {
                 for (i = 0; i < DDSIP_param->scenarios; i++)
-                    fprintf (checkfile, "%f\t", DDSIP_data->cost[i * DDSIP_param->stoccost + j]);
+                    fprintf (checkfile, "%12.8g\t", DDSIP_data->cost[i * DDSIP_param->stoccost + j]);
                 fprintf (checkfile, "\n");
             }
 

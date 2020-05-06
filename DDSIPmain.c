@@ -335,6 +335,7 @@ main (int argc, char * argv[])
         printf ("\t Total initialization time: %4.2f seconds.\n", DDSIP_GetCpuTime ());
         fprintf (DDSIP_bb->moreoutfile, " Total initialization time: %4.2f seconds.\n", DDSIP_GetCpuTime ());
     }
+    fprintf (DDSIP_outfile, " Total initialization time: %4.2f seconds.\n", DDSIP_GetCpuTime ());
 #ifndef _WIN32
     sprintf (astring, "grep 'MHz' /proc/cpuinfo|sort -r|head -1 >> %s\n", DDSIP_outfname);
     i = system (astring);
@@ -498,7 +499,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
                                          )
                                        )
                                      ) ||
-                                     (abs(DDSIP_param->riskmod) != 5 && DDSIP_bb->curnode <= DDSIP_param->cbBreakIters && DDSIP_bb->curnode > DDSIP_param->cbBreakIters*.5 &&
+                                     (abs(DDSIP_param->riskmod) != 5 && DDSIP_bb->curnode <= DDSIP_param->cbBreakIters && DDSIP_bb->curnode > DDSIP_param->cbBreakIters*.48 &&
                                           (CBFORALL || (DDSIP_node[DDSIP_bb->curnode]->numInheritedSols > (DDSIP_Imin(DDSIP_param->scenarios/20,2)+(DDSIP_param->scenarios+1)/2))))
                                    )
                 )

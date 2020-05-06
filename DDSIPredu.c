@@ -397,10 +397,11 @@ DDSIP_CheckRedundancy (int automatic)
 //            printf  (" *** redundancy check problem %s written successfully\n", probname);
 //        }
 //#endif
-        if (DDSIP_param->outlev)
+        if (DDSIP_param->outlev > 30)
+        {
             fprintf (DDSIP_bb->moreoutfile, " *** redundancy check problem objective = %g\n", objval);
-        if (DDSIP_param->outlev > 21)
             fprintf (DDSIP_bb->moreoutfile, "    %4d Cuts out of %d tested\n", k+1, DDSIP_bb->cutCntr);
+        }
         // if the objval is nonnegative, the cut is redundant
         // we leave cuts with "not really positive" objval in - to be sorted out by the solver
         if (objval >= DDSIP_param->accuracy)
@@ -411,13 +412,13 @@ DDSIP_CheckRedundancy (int automatic)
                 if (statusget)
                 {
                     fprintf (DDSIP_bb->moreoutfile, "######## Cut %4d is redundant\n", currentCut->number);
-                    if (DDSIP_param->outlev > 21 || !automatic)
+                    if (DDSIP_param->outlev > 30 || !automatic)
                         fprintf (DDSIP_outfile, "    ######## Cut %4d is redundant\n", currentCut->number);
                 }
                 else
                 {
                     fprintf (DDSIP_bb->moreoutfile, "######## %s is redundant\n", rowname[0]);
-                    if (DDSIP_param->outlev > 21 || !automatic)
+                    if (DDSIP_param->outlev > 30 || !automatic)
                         fprintf (DDSIP_outfile, "    ######## %s is redundant\n", rowname[0]);
                 }
             }
@@ -457,7 +458,7 @@ DDSIP_CheckRedundancy (int automatic)
                             fprintf (DDSIP_bb->moreoutfile, " ### ERROR: delrows for row %d of core problem failed, status for getrowname = %d (DDSIP_bb->nocon = %d)\n", DDSIP_bb->nocon + DDSIP_bb->cutCntr - k -1, statusget,  DDSIP_bb->nocon);
                     }
                 }
-                else if (DDSIP_param->outlev > 21)
+                else if (DDSIP_param->outlev > 30)
                 {
                     if (!statusget)
                     {
@@ -521,9 +522,9 @@ DDSIP_CheckRedundancy (int automatic)
     }
     else
     {
-        fprintf (DDSIP_outfile, "    ++++++++ %d of the %d cuts are redundant\n", ind, DDSIP_bb->cutCntr);
+        fprintf (DDSIP_outfile, "++++++++ %2d of the %d cuts are redundant  ->  %3d cuts\n", ind, DDSIP_bb->cutCntr, DDSIP_bb->cutCntr - ind);
         if (DDSIP_param->outlev)
-            fprintf (DDSIP_bb->moreoutfile, "++++++++ %d of the %d cuts are redundant\n", ind, DDSIP_bb->cutCntr);
+            fprintf (DDSIP_bb->moreoutfile, "++++++++ %2d of the %d cuts are redundant  -> %3d cuts\n", ind, DDSIP_bb->cutCntr, DDSIP_bb->cutCntr - ind);
         if (DDSIP_param->deleteRedundantCuts)
             DDSIP_bb->cutCntr -= ind;
     }

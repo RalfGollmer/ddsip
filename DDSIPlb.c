@@ -450,7 +450,7 @@ DDSIP_GetBranchIndex (double *dispnorm)
             }
         }
         if (DDSIP_param->outlev > 19)
-            fprintf (DDSIP_bb->moreoutfile,"\tGetBranchIndex: index %d, diff %3d  dist %8.5g, maxdist %8.5g mindiff %d maxdiff %3d\n",DDSIP_node[DDSIP_bb->curnode]->branchind,cur_diff,cur_dist,maxdist,mindiff,maxdiff);
+            fprintf (DDSIP_bb->moreoutfile,"\tGetBranchIndex: index %d, diff %3d  dist %8.5g, maxdist %8.5g mindiff %d maxdiff %3d\n",DDSIP_bb->firstindex[DDSIP_node[DDSIP_bb->curnode]->branchind],cur_diff,cur_dist,maxdist,mindiff,maxdiff);
     }
     else if (cnt) // i.e. cnt == 1
         DDSIP_node[DDSIP_bb->curnode]->branchind = index[cnt-1];
@@ -1222,7 +1222,7 @@ int
 DDSIP_LowerBound (void)
 {
     double objval, bobjval, tmpbestbound = 0.0, tmpbestvalue = 0.0, tmpfeasbound = 0.0, worst_case_lb = -1.e+10;
-    double we, wr, mipgap, d, time_start, time_end, wall_secs, cpu_secs, gap, meanGap;
+    double we, wr, mipgap, d, time_start, time_end, wall_secs, cpu_secs, gap, meanGap, maxGap;
 #ifdef DEBUG
     double time_lap;
 #endif
@@ -1363,7 +1363,7 @@ DDSIP_LowerBound (void)
         rest_bound = -DDSIP_param->scenarios*DDSIP_infty;
     // LowerBound problem for each scenario
     //****************************************************************************
-    meanGap = 0.;
+    maxGap = meanGap = 0.;
     nrCuts = DDSIP_bb->cutCntr;
     for (iscen = 0; iscen < DDSIP_param->scenarios; iscen++)
     {
@@ -1942,6 +1942,7 @@ NEXT_TRY:
 	    if (fabs(gap) < 2.e-13)
                 gap = 0.;
             meanGap += DDSIP_data->prob[scen] * gap;
+            maxGap   = DDSIP_Dmax (maxGap, gap);
             time_end = DDSIP_GetCpuTime ();
             time_start = time_end-time_start;
 #ifdef SHIFT
@@ -2507,13 +2508,13 @@ NEXT_TRY:
     {
         if ((DDSIP_node[DDSIP_bb->curnode]->bound <  DDSIP_bb->bestvalue + DDSIP_param->accuracy) && (tmpbestvalue > DDSIP_bb->bestvalue + DDSIP_param->accuracy))
         {
-            fprintf(DDSIP_outfile, "          WARNING: node %d is possibly not cut off just due to the MIP gaps. mean MIP gap = %g%%, upper bound= %16.12g\n",
-                                   DDSIP_bb->curnode, meanGap, tmpbestvalue);
+            fprintf(DDSIP_outfile, "          WARNING: node %d is possibly not cut off just due to the MIP gaps. max MIP gap = %g%%, upper bound= %16.12g\n",
+                                   DDSIP_bb->curnode, maxGap, tmpbestvalue);
             if (DDSIP_param->outlev)
             {
-                printf("          WARNING: node %d is possibly not cut off just due to the MIP gaps. mean MIP gap = %g%%, upper bound= %16.12g\n", DDSIP_bb->curnode, meanGap, tmpbestvalue);
-                fprintf(DDSIP_bb->moreoutfile, "          WARNING: node %d is possibly not cut off just due to the MIP gaps. mean MIP gap = %g%%, upper bound= %16.12g\n",
-                                               DDSIP_bb->curnode, meanGap, tmpbestvalue);
+                printf("          WARNING: node %d is possibly not cut off just due to the MIP gaps. max MIP gap = %g%%, upper bound= %16.12g\n", DDSIP_bb->curnode, maxGap, tmpbestvalue);
+                fprintf(DDSIP_bb->moreoutfile, "          WARNING: node %d is possibly not cut off just due to the MIP gaps. max MIP gap = %g%%, upper bound= %16.12g\n",
+                                               DDSIP_bb->curnode, maxGap, tmpbestvalue);
             }
             DDSIP_bb->bestBound = 1;
         }
@@ -2799,13 +2800,13 @@ NEXT_TRY:
                 if ((!DDSIP_param->riskmod || (DDSIP_param->riskmod && !DDSIP_param->riskalg)) && !DDSIP_param->cb)
                     DDSIP_bb->skip = -1;
                 // Update if better solution was found
-                if (DDSIP_bb->heurval < DDSIP_bb->bestvalue)
+                if (DDSIP_bb->heurval < DDSIP_bb->bestvalue - 1.e-14)
                 {
 //////////////////////////////////////////////////////////////////
 if (DDSIP_param->outlev > 21)
 {
-    fprintf (DDSIP_bb->moreoutfile, "############ new suggested upper bound %18.12g is less than bestvalue %18.12g, skip= %d #############\n",
-                                     DDSIP_bb->heurval, DDSIP_bb->bestvalue, DDSIP_bb->skip);
+    fprintf (DDSIP_bb->moreoutfile, "############ new suggested upper bound %18.12g is less than bestvalue %18.12g by %g, skip= %d #############\n",
+                                     DDSIP_bb->heurval, DDSIP_bb->bestvalue, DDSIP_bb->bestvalue -  DDSIP_bb->heurval, DDSIP_bb->skip);
 }
 //////////////////////////////////////////////////////////////////
                     if (DDSIP_bb->skip == -1)
@@ -4708,7 +4709,7 @@ NEXT_SCEN:
             weight = cb_get_last_weight(DDSIP_bb->dualProblem);
             DDSIP_bb->last_weight = weight;
             if (DDSIP_param->cb_increaseWeight && !DDSIP_bb->weight_reset &&
-                 ((weight < 0.95 &&
+                 ((weight < 4. &&
                      (DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) > 5.e-3 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 1.)) ||
                  ((DDSIP_node[DDSIP_bb->curnode]->bound - tmpbestbound) > 0.1 * (fabs(DDSIP_node[DDSIP_bb->curnode]->bound) + 1.)))
                )

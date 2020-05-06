@@ -388,13 +388,6 @@ DDSIP_SolChk (double* cutViolation, int test_equality)
                 }
                 break;
             }
-//            else
-//            {
-//                if (DDSIP_param->outlev > 21)
-//                {
-//                    fprintf (DDSIP_bb->moreoutfile, " ...doesn't violate cut %d.\n", currentCut->number);
-//                }
-//            }
             currentCut = currentCut->prev;
         }
     }
@@ -913,7 +906,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                         
                                         }
                                         time_lap = DDSIP_GetCpuTime ();
-                                        if (!status && (viol > 1e-3) && (fabs(viol - oldviol)/viol > 1.1e-8))
+                                        if (!status && (viol > 2e-4) && (fabs(viol - oldviol)/viol > 1.1e-8))
                                         {
                                             int rmatbeg;
                                             int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->firstvar + 1), "rmatind(UpperBound)");
@@ -925,7 +918,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                             int *cmatind = (int *) DDSIP_Alloc (sizeof (int), numRows, "cmatind(UpperBound)");
                                             double lhs, min_entry = 1.e+20, max_entry = 0.;
                                             double *cmatval = (double *) DDSIP_Alloc (sizeof (double), numRows, "cmatval (UpperBound)");
-                                            int col_nonzeros, surplus, ii;
+                                            int col_nonzeros, surplus, ii, icnt;
 
                                             oldviol = viol;
 
@@ -997,44 +990,57 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                     }
                                                 }
                                                 if (i > 1)
-                                                    rhs = lhs + viol*security_factor;
-                                                else
-                                                    rhs = lhs + viol;
-                                                i = 1;
-#ifdef CHECKIDENTICAL
-                                                // Check whether cut with identical matval was already added.
-                                                // current one may be dominated!
-                                                // This is possible with continued check of the same solution for other scens
-                                                newCut = DDSIP_bb->cutpool;
-                                                while (newCut)
                                                 {
-                                                    for (k = 0; k < DDSIP_data->firstvar; k++)
+                                                    icnt = i;
+                                                    rhs = lhs + (viol*security_factor - 4.e-15);
+                                                    if (rhs > lhs)
+                                                        i = 1;
+                                                    else
+                                                        i = 0;
+                                                }
+                                                else
+                                                {
+                                                    icnt = i;
+                                                    rhs = lhs + (viol - 4.e-15);
+                                                    i = 1;
+                                                }
+#ifdef CHECKIDENTICAL
+                                                if (i)
+                                                {
+                                                    // Check whether cut with identical matval was already added.
+                                                    // current one may be dominated!
+                                                    // This is possible with continued check of the same solution for other scens
+                                                    newCut = DDSIP_bb->cutpool;
+                                                    while (newCut)
                                                     {
-                                                        if (!DDSIP_Equal (rmatval[k], newCut->matval[k]))
+                                                        for (k = 0; k < DDSIP_data->firstvar; k++)
                                                         {
+                                                            if (!DDSIP_Equal (rmatval[k], newCut->matval[k]))
+                                                            {
 #ifdef DEBUG
 if (DDSIP_param->outlev)
 {
   fprintf(DDSIP_bb->moreoutfile, "### 1 ### check for identical cut: Cut no. %d is different, index %d: %22.16g - %22.16g = %g \n", newCut->number, k, rmatval[k], newCut->matval[k],rmatval[k] - newCut->matval[k]);
 }
 #endif
-                                                            break;
+                                                                break;
+                                                            }
                                                         }
-                                                    }
-                                                    if (k < DDSIP_data->firstvar)
-                                                        newCut = newCut->prev;
-                                                    else
-                                                    {
+                                                        if (k < DDSIP_data->firstvar)
+                                                            newCut = newCut->prev;
+                                                        else
+                                                        {
 ////////////////////
 if (DDSIP_param->outlev > 21)
 {
   fprintf(DDSIP_bb->moreoutfile, "### 1 ### check for identical cut: Cut no. %d is identical, rhs was: %g, now: %g ###\n", newCut->number, newCut->rhs, rhs);
 }
 ////////////////////
-                                                        if (rhs > newCut->rhs)
-                                                            newCut->rhs = rhs;
-                                                        i = 0;
-                                                        break;
+                                                            if (rhs > newCut->rhs)
+                                                                newCut->rhs = rhs;
+                                                            i = 0;
+                                                            break;
+                                                        }
                                                     }
                                                 }
 #endif
@@ -1046,7 +1052,7 @@ if (DDSIP_param->outlev > 21)
                                                     sprintf (rowstore, "DDSIPBendersCut%.04d",DDSIP_bb->cutNumber);
                                                     if (DDSIP_param->outlev)
                                                     {
-                                                        fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %.14g, lhs= %.14g, min/max coeff %.6g/%.6g rhs= %.14g ############\n", rowstore, Bs+1, viol, lhs, min_entry, max_entry, rhs);
+                                                        fprintf (DDSIP_bb->moreoutfile," ##### adding cut %s  (infeas. scen %2d), violation %.14g, lhs= %.14g, min/max coeff %.6g/%.6g, #: %d rhs= %.14g ######n", rowstore, Bs+1, viol, lhs, min_entry, max_entry, icnt, rhs);
                                                         //fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %g ############\n", rowstore, Bs+1, viol);
                                                         if (DDSIP_param->outlev > 8)
                                                            printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
@@ -1394,7 +1400,7 @@ if (DDSIP_param->outlev > 21)
                             }
                             
                             time_lap = DDSIP_GetCpuTime ();
-                            if (!status && (viol > 1e-1) && (fabs(viol - oldviol)/viol > 1.1e-8))
+                            if (!status && (viol > 2e-4) && (fabs(viol - oldviol)/viol > 1.1e-8))
                             {
                                 int rmatbeg;
                                 int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_data->firstvar + 1), "rmatind(UpperBound)");
@@ -1406,7 +1412,7 @@ if (DDSIP_param->outlev > 21)
                                 int *cmatind = (int *) DDSIP_Alloc (sizeof (int), numRows, "cmatind(UpperBound)");
                                 double lhs, min_entry = 1.e+20, max_entry = 0.;
                                 double *cmatval = (double *) DDSIP_Alloc (sizeof (double), numRows, "cmatval (UpperBound)");
-                                int col_nonzeros, surplus, ii;
+                                int col_nonzeros, surplus, ii, icnt;
 
                                 oldviol = viol;
 
@@ -1478,44 +1484,57 @@ if (DDSIP_param->outlev > 21)
                                         }
                                     }
                                     if (i > 1)
-                                        rhs = lhs + viol*security_factor;
-                                    else
-                                        rhs = lhs + viol;
-                                    i = 1;
-#ifdef CHECKIDENTICAL
-                                    // Check whether cut with identical matval was already added.
-                                    // current one may be dominated!
-                                    // This is possible with continued check of the same solution for other scens
-                                    newCut = DDSIP_bb->cutpool;
-                                    while (newCut)
                                     {
-                                        for (k = 0; k < DDSIP_data->firstvar; k++)
+                                        icnt = i;
+                                        rhs = lhs + (viol*security_factor - 4.e-15);
+                                        if (rhs > lhs)
+                                            i = 1;
+                                        else
+                                            i = 0;
+                                    }
+                                    else
+                                    {
+                                        icnt = i;
+                                        rhs = lhs + (viol - 4.e-15);
+                                        i = 1;
+                                    }
+#ifdef CHECKIDENTICAL
+                                    if (i)
+                                    {
+                                        // Check whether cut with identical matval was already added.
+                                        // current one may be dominated!
+                                        // This is possible with continued check of the same solution for other scens
+                                        newCut = DDSIP_bb->cutpool;
+                                        while (newCut)
                                         {
-                                            if (!DDSIP_Equal (rmatval[k], newCut->matval[k]))
+                                            for (k = 0; k < DDSIP_data->firstvar; k++)
                                             {
-#ifdef DEBUG
-                                                if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
+                                                if (!DDSIP_Equal (rmatval[k], newCut->matval[k]))
                                                 {
-                                                  fprintf(DDSIP_bb->moreoutfile, "### 2 ### check for identical cut: Cut no. %d is different, index %d: %22.16g - %22.16g = %g \n", newCut->number, k, rmatval[k], newCut->matval[k],rmatval[k] - newCut->matval[k]);
-                                                }
+#ifdef DEBUG
+                                                    if (DDSIP_param->outlev /*&& DDSIP_bb->curnode > 25*/)
+                                                    {
+                                                      fprintf(DDSIP_bb->moreoutfile, "### 2 ### check for identical cut: Cut no. %d is different, index %d: %22.16g - %22.16g = %g \n", newCut->number, k, rmatval[k], newCut->matval[k],rmatval[k] - newCut->matval[k]);
+                                                    }
 #endif
+                                                    break;
+                                                }
+                                            }
+                                            if (k < DDSIP_data->firstvar)
+                                                newCut = newCut->prev;
+                                            else
+                                            {
+//////////////////// DEBUG output
+                                                if (DDSIP_param->outlev > 20)
+                                                {
+                                                  fprintf(DDSIP_bb->moreoutfile, "### 2 ### check for identical cut: Cut no. %d is identical, rhs was: %g, now: %g ###\n", newCut->number, newCut->rhs, rhs);
+                                                }
+//////////////////// DEBUG output
+                                                if (rhs > newCut->rhs)
+                                                    newCut->rhs = rhs;
+                                                i = 0;
                                                 break;
                                             }
-                                        }
-                                        if (k < DDSIP_data->firstvar)
-                                            newCut = newCut->prev;
-                                        else
-                                        {
-//////////////////// DEBUG output
-                                            if (DDSIP_param->outlev > 20)
-                                            {
-                                              fprintf(DDSIP_bb->moreoutfile, "### 2 ### check for identical cut: Cut no. %d is identical, rhs was: %g, now: %g ###\n", newCut->number, newCut->rhs, rhs);
-                                            }
-//////////////////// DEBUG output
-                                            if (rhs > newCut->rhs)
-                                                newCut->rhs = rhs;
-                                            i = 0;
-                                            break;
                                         }
                                     }
 #endif
@@ -1527,8 +1546,7 @@ if (DDSIP_param->outlev > 21)
                                         sprintf (rowstore, "DDSIPBendersCut%.04d",DDSIP_bb->cutNumber);
                                         if (DDSIP_param->outlev)
                                         {
-                                            fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %.14g, lhs= %.14g, min/max coeff %.6g/%.6g rhs= %.14g ############\n", rowstore, Bs+1, viol, lhs, min_entry, max_entry, rhs);
-                                            //fprintf (DDSIP_bb->moreoutfile," ############ adding cut %s  (infeas. scen %2d), violation %g ############\n", rowstore, Bs+1, viol);
+                                            fprintf (DDSIP_bb->moreoutfile," ##### adding cut %s  (infeas. scen %2d), violation %.14g, lhs= %.14g, min/max coeff %.6g/%.6g, #: %d rhs= %.14g ######n", rowstore, Bs+1, viol, lhs, min_entry, max_entry, icnt, rhs);
                                             if (DDSIP_param->outlev > 8)
                                                 printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
                                         }

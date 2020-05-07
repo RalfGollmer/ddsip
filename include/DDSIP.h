@@ -379,6 +379,8 @@ extern "C" {
         double  bound;
         double  weight;
         int     node_nr;
+        double  mean_diff;
+        double  nr_uses;
         struct bbest_l *next;
     } bbest_t;
 

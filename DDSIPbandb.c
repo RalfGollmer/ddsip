@@ -510,9 +510,9 @@ DDSIP_InitNewNodes (void)
     }
     if (DDSIP_param->outlev > 4)
     {
-        fprintf (DDSIP_bb->moreoutfile,"**node %d inherited %d solutions from node %d\n",
+        fprintf (DDSIP_bb->moreoutfile,"##**node %d inherited %d solutions from node %d\n",
                  DDSIP_bb->nonode, (DDSIP_node[DDSIP_bb->nonode])->numInheritedSols, DDSIP_bb->curnode);
-        fprintf (DDSIP_bb->moreoutfile,"**node %d inherited %d solutions from node %d\n",
+        fprintf (DDSIP_bb->moreoutfile,"##**node %d inherited %d solutions from node %d\n",
                  DDSIP_bb->nonode + 1, (DDSIP_node[DDSIP_bb->nonode + 1])->numInheritedSols, DDSIP_bb->curnode);
     }
     DDSIP_bb->cutAdded = 0;

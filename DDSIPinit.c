@@ -654,7 +654,7 @@ DDSIP_InitStages (void)
         }
         while (i < DDSIP_bb->novar)
         {
-            if (!strncmp(DDSIP_param->prefix,colname[i],length))
+            if (strlen(colname[i]) >= (unsigned) length && !strncmp(DDSIP_param->prefix,colname[i],length))
             {
                 firindex[cnt] = i;
                 if ((ctype[i] == 'B') || (ctype[i] == 'I'))

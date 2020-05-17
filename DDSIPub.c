@@ -403,7 +403,7 @@ DDSIP_SolChk (double* cutViolation, int test_equality)
 int
 DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
 {
-    int status, scen, iscen, mipstatus = 0, nr;
+    int status, scen, iscen, mipstatus = 0, nr, integerCutAdded = 0, BendersCutsChecked = 0;
     int i, j, k, Bi, Bs, fs, prematureStop = 0;
     int *index;
     int wall_hrs, wall_mins,cpu_hrs, cpu_mins;
@@ -415,7 +415,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     double *mipx, *values;
     double *subsol;
 
-    double we, wr, d, mipgap, oldviol = DDSIP_infty, viol;
+    double we, wr, d, miptol, mipgap, oldviol = DDSIP_infty, viol;
     double rhs;
 #ifdef DEACTIVATECUTS
     double *cutrhs, *deactivatedrhs;
@@ -426,6 +426,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     double * sort_array;
     security_factor = 1.0 - DDSIP_param->cut_security_tol;
 
+    BendersCutsChecked = (DDSIP_param->addBendersCuts) ? 0 : 1;
     // if the user has supplied a start point, there is no useful information for additional variables
     if (DDSIP_bb->DDSIP_step == adv || DDSIP_bb->DDSIP_step == eev)
     {
@@ -627,11 +628,15 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     {
         rest_bound = DDSIP_node[DDSIP_bb->curnode]->bound;
     }
+    status = CPXgetdblparam (DDSIP_env,CPX_PARAM_EPGAP,&miptol);
 //#ifdef DEBUG
             if (DDSIP_param->outlev > 20)
             {
 		if (feasCheckOnly == 2)
-                    fprintf (DDSIP_bb->moreoutfile," ------------ feasCheckOnly= %d\n", feasCheckOnly);
+                {
+                    //fprintf (DDSIP_bb->moreoutfile," ------------ feasCheckOnly= %d\n", feasCheckOnly);
+                    status = CPXsetdblparam (DDSIP_env,CPX_PARAM_EPGAP,0.9);
+                }
 		else
                     fprintf (DDSIP_bb->moreoutfile," ------------ feasCheckOnly= %d, rest_bound= %18.12g\n", feasCheckOnly, rest_bound);
             }
@@ -639,7 +644,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
 
     // UpperBound single-scenario problems
     meanGap = tmpprob = tmpbestvalue = 0.;
-    nr = (feasCheckOnly > 0) ? 1 : DDSIP_param->scenarios;
+    nr = (feasCheckOnly > 0) ? ((feasCheckOnly == 2 && !DDSIP_param->addBendersCuts) ? DDSIP_Imin (DDSIP_bb->shifts + 5, DDSIP_param->scenarios) : 1) : DDSIP_param->scenarios;
     for (iscen = 0; iscen < nr; iscen++)
     {
         scen = DDSIP_bb->ub_scen_order[iscen];
@@ -653,7 +658,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
             goto TERMINATE;
         }
         nodes_1st = nodes_2nd = -1;
-        if (feasCheckOnly < 1)
+        if (feasCheckOnly < 1 || (feasCheckOnly == 2 && !DDSIP_param->addBendersCuts))
         {
             if (DDSIP_param-> outlev || DDSIP_param->cpxubscr)
             {
@@ -704,14 +709,14 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     mipgap = 1.e+30;
                 }
                 time_lap = DDSIP_GetCpuTime ();
-#ifdef DEBUG
+//#ifdef DEBUG
                 if (DDSIP_param->cpxubscr ||  DDSIP_param->outlev > 11)
                 {
                     printf ("      UB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
                     if (DDSIP_param->outlev)
                         fprintf (DDSIP_bb->moreoutfile,"      UB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
                 }
-#endif
+//#endif
                 if (DDSIP_param->watchkappa)
                 {
                     double maxkappaval, stablekappaval, suspiciouskappaval, unstablekappaval, illposedkappaval;
@@ -1050,6 +1055,7 @@ if (DDSIP_param->outlev > 21)
                                                     DDSIP_bb->cutCntr++;
                                                     rowname[0] = rowstore;
                                                     sprintf (rowstore, "DDSIPBendersCut%.04d",DDSIP_bb->cutNumber);
+						    mipstatus = CPXMIP_INFEASIBLE;
                                                     if (DDSIP_param->outlev)
                                                     {
                                                         fprintf (DDSIP_bb->moreoutfile," ##### adding cut %s  (infeas. scen %2d), violation %.14g, lhs= %.14g, min/max coeff %.6g/%.6g, #: %d rhs= %.14g ######\n", rowstore, Bs+1, viol, lhs, min_entry, max_entry, icnt, rhs);
@@ -1284,24 +1290,24 @@ if (DDSIP_param->outlev > 21)
                     }
                 }
             }
+            else
+            {
+                DDSIP_bb->skip = -2;
+            }
+            mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
             if ((k = CPXgetnummipstarts(DDSIP_env, DDSIP_lp)) > 3)
             {
                 status    = CPXdelmipstarts (DDSIP_env, DDSIP_lp, 2, k-1);
             }
-            // Infeasible, unbounded .. ?
-            if (!DDSIP_Infeasible (mipstatus))
-                mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
-            else
-                DDSIP_bb->skip = -2;
         }
-        else // feasCheckOnly
+        //else // feasCheckOnly
+        //{
+        //    mipstatus = CPXMIP_INFEASIBLE;
+        //}
+        time_start = DDSIP_GetCpuTime ();
+        if (DDSIP_NoSolution (mipstatus) || (feasCheckOnly == 2))
         {
-            mipstatus = CPXMIP_INFEASIBLE;
-        }
-        if (DDSIP_NoSolution (mipstatus))
-        {
-            time_start = DDSIP_GetCpuTime ();
-            if (feasCheckOnly < 1)
+            if (feasCheckOnly < 1 || DDSIP_NoSolution (mipstatus))
             {
                 if (DDSIP_param->outlev)
                 {
@@ -1315,7 +1321,7 @@ if (DDSIP_param->outlev > 21)
             }
 #ifdef ADDBENDERSCUTS
             if (DDSIP_bb->DDSIP_step != adv && DDSIP_bb->DDSIP_step != eev &&
-                (DDSIP_param->addBendersCuts))
+                !BendersCutsChecked)
             {
                 CPXLPptr     DDSIP_dual_lp  = NULL;
                 cutpool_t * newCut;
@@ -1326,7 +1332,7 @@ if (DDSIP_param->outlev > 21)
                     end = (DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 11 && DDSIP_param->testOtherScens) || !nrScenarios) ? DDSIP_param->scenarios : nrScenarios;
 		    if (feasCheckOnly == 2 && (DDSIP_bb->dualitcnt > 1 || DDSIP_bb->curnode))
                     {
-                        end = DDSIP_bb->shifts;
+                        end = DDSIP_Imin (DDSIP_bb->shifts + 2, DDSIP_param->scenarios);
                     }
                 }
                 else
@@ -1544,6 +1550,7 @@ if (DDSIP_param->outlev > 21)
                                         DDSIP_bb->cutCntr++;
                                         rowname[0] = rowstore;
                                         sprintf (rowstore, "DDSIPBendersCut%.04d",DDSIP_bb->cutNumber);
+                                        mipstatus = CPXMIP_INFEASIBLE;
                                         if (DDSIP_param->outlev)
                                         {
                                             fprintf (DDSIP_bb->moreoutfile," ##### adding cut %s  (infeas. scen %2d), violation %.14g, lhs= %.14g, min/max coeff %.6g/%.6g, #: %d rhs= %.14g ######\n", rowstore, Bs+1, viol, lhs, min_entry, max_entry, icnt, rhs);
@@ -1623,6 +1630,7 @@ if (DDSIP_param->outlev > 21)
                         fprintf (DDSIP_outfile, "ERROR: Failed to switch off preprocessing back to on.\n");
                     }
                 }
+                BendersCutsChecked = 1;
                 if (DDSIP_param->outlev > 20)
                 {
                     time_end = DDSIP_GetCpuTime ();
@@ -1630,10 +1638,12 @@ if (DDSIP_param->outlev > 21)
                 }
             }
 #endif
+            status = CPXsetdblparam (DDSIP_env,CPX_PARAM_EPGAP,miptol);
 #ifdef ADDINTEGERCUTS
             //if all first-stage variables are binary ones, we can add an inequality, cutting off this point
-            if (DDSIP_bb->DDSIP_step != adv && DDSIP_bb->DDSIP_step != eev &&
-                (DDSIP_param->addIntegerCuts && DDSIP_param->heuristic > 3 && (feasCheckOnly < 2)))
+            if (!integerCutAdded && DDSIP_bb->DDSIP_step != adv && DDSIP_bb->DDSIP_step != eev &&
+                DDSIP_NoSolution (mipstatus) &&
+                (DDSIP_param->addIntegerCuts && DDSIP_param->heuristic > 3 && ((feasCheckOnly < 2) || ((DDSIP_bb->curnode < 3) && (DDSIP_bb->dualdescitcnt < 2) && DDSIP_bb->dualitcnt))))
             {
                 int rmatbeg;
                 int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_bb->novar), "rmatind(UpperBound)");
@@ -1643,8 +1653,9 @@ if (DDSIP_param->outlev > 21)
                 char *rowstore = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_varname, "colstore(UpperBound)");
 #ifdef CHECKINTEGERCUT
                 double objv = DDSIP_infty;
-                CPXLPptr     DDSIP_dual_lp  = NULL;
+                CPXLPptr     DDSIP_dual_lp  = NULL; 
 #endif
+		integerCutAdded = 1;
                 rowname[0] = rowstore;
                 rhs = 1.;
                 sense = 'G';
@@ -1817,7 +1828,7 @@ if (DDSIP_param->outlev > 21)
             if (feasCheckOnly < 1)
             {
 	        //shift this infeasible scenario to first place, such that next time it is checked first
-                if (feasCheckOnly < 1 && (iscen || !DDSIP_bb->shifts))
+                if (/*feasCheckOnly < 1 &&*/ (iscen || !DDSIP_bb->shifts))
                 {
 #ifdef DEBUG
                     if(DDSIP_param->outlev > 20)
@@ -1880,6 +1891,8 @@ if (DDSIP_param->outlev > 21)
                     }
                 }
             }
+            if (integerCutAdded && feasCheckOnly && BendersCutsChecked)
+	        break;
             if (feasCheckOnly)
                 continue;
             goto TERMINATE;
@@ -2027,6 +2040,8 @@ if (DDSIP_param->outlev > 21)
                 }
             }
         }
+        if (integerCutAdded && feasCheckOnly && BendersCutsChecked)
+	    break;
     }				// end for iscen=..
     if (feasCheckOnly > 0)
         goto TERMINATE;

@@ -1576,9 +1576,10 @@ DDSIP_ReadSpec ()
     if (DDSIP_param->addBendersCuts || DDSIP_param->addIntegerCuts)
     {
         DDSIP_param->numberReinits  = (int) floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 25., 1, 0., DDSIP_bigint) + 0.1);
-        DDSIP_param->numberScenReeval  = (int) floor (DDSIP_ReadDbl (specfile, "SCENRE", " NR OF SCENARIO REEVALUATIONS", (DDSIP_param->addBendersCuts?((DDSIP_param->cb && DDSIP_param->cb_depth > -1)?3:2):-1), 1, -DDSIP_bigint, (DDSIP_param->addBendersCuts?DDSIP_bigint:-1)) + 0.1);
+        DDSIP_param->numberScenReeval  = (int) floor (DDSIP_ReadDbl (specfile, "SCENRE", " NR OF SCENARIO REEVALUATIONS", (((DDSIP_param->cb && DDSIP_param->cb_depth > -1)?3:2)), 1, -DDSIP_bigint, DDSIP_bigint) + 0.1);
+        //DDSIP_param->numberScenReeval  = (int) floor (DDSIP_ReadDbl (specfile, "SCENRE", " NR OF SCENARIO REEVALUATIONS", (DDSIP_param->addBendersCuts?((DDSIP_param->cb && DDSIP_param->cb_depth > -1)?3:2):-1), 1, -DDSIP_bigint, (DDSIP_param->addBendersCuts?DDSIP_bigint:-1)) + 0.1);
         DDSIP_param->deactivate_cuts= (int) floor (DDSIP_ReadDbl (specfile, "DEACTI", " DEACTIVATE CUTS IN UB", 0., 1, 0., 1) + 0.1);
-        DDSIP_param->redundancyCheck = (int) floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", DDSIP_param->deactivate_cuts, 1, 0., 1.) + 0.1);
+        DDSIP_param->redundancyCheck = (int) floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", DDSIP_param->deactivate_cuts, 1, 0., DDSIP_param->addBendersCuts ? 1.:0.) + 0.1);
         if (DDSIP_param->redundancyCheck)
             DDSIP_param->deleteRedundantCuts = (int) floor (DDSIP_ReadDbl (specfile, "DELRED", " DELETE REDUNDANT CUTS", 1., 1, 0., 1.) + 0.1);
         else

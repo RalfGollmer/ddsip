@@ -127,14 +127,14 @@ DDSIP_PrintState (int noiter)
           )
        )
     {
-        printf ("*%6d  %6d %6d ", DDSIP_bb->curnode, DDSIP_bb->nonode, DDSIP_bb->nofront);
-        fprintf (DDSIP_outfile, "*%6d  %6d %6d ", DDSIP_bb->curnode, DDSIP_bb->nonode, DDSIP_bb->nofront);
+        printf ("*%6d  %6d %6d ", DDSIP_bb->curnode, DDSIP_bb->nonode, DDSIP_bb->no_reduced_front);
+        fprintf (DDSIP_outfile, "*%6d  %6d %6d ", DDSIP_bb->curnode, DDSIP_bb->nonode, DDSIP_bb->no_reduced_front);
         f_long = 1;
     }
     else
     {
-        printf (" %6d  %6d %6d ", DDSIP_bb->curnode, DDSIP_bb->nonode, DDSIP_bb->nofront);
-        fprintf (DDSIP_outfile, " %6d  %6d %6d ", DDSIP_bb->curnode, DDSIP_bb->nonode, DDSIP_bb->nofront);
+        printf (" %6d  %6d %6d ", DDSIP_bb->curnode, DDSIP_bb->nonode, DDSIP_bb->no_reduced_front);
+        fprintf (DDSIP_outfile, " %6d  %6d %6d ", DDSIP_bb->curnode, DDSIP_bb->nonode, DDSIP_bb->no_reduced_front);
         f_long = 0;
     }
 

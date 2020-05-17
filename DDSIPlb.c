@@ -2117,7 +2117,7 @@ NEXT_TRY:
                     if (DDSIP_param->outlev>= DDSIP_first_stage_outlev)
                         fprintf (DDSIP_bb->moreoutfile, "\n");
 		    //
-		    if (DDSIP_param->addBendersCuts && (DDSIP_param->numberScenReeval > -1) && (DDSIP_bb->curnode < 9) && (j = DDSIP_bb->cutCntr))
+		    if ((DDSIP_param->addBendersCuts || DDSIP_param->addIntegerCuts) && (DDSIP_param->numberScenReeval > -1) && (DDSIP_bb->curnode < 9) && (j = DDSIP_bb->cutCntr))
 		    {
                         // check feasibility for other scenarios and possibly add cuts
                         tmp = DDSIP_bb->sug[DDSIP_param->nodelim + 2];
@@ -4252,7 +4252,7 @@ NEXT_SCEN:
                     if (DDSIP_param->outlev >= DDSIP_first_stage_outlev)
                         fprintf (DDSIP_bb->moreoutfile, "\n");
 		    //
-		    if (DDSIP_param->addBendersCuts && (DDSIP_param->numberScenReeval > -1) && ((!(DDSIP_bb->curnode) && (DDSIP_bb->dualdescitcnt < 3)) || ((DDSIP_bb->curnode < 11) && !DDSIP_bb->dualdescitcnt)) && (j = DDSIP_bb->cutCntr))
+		    if ((DDSIP_param->addBendersCuts || DDSIP_param->addIntegerCuts) && (DDSIP_param->numberScenReeval > -1) && ((!(DDSIP_bb->curnode) && (DDSIP_bb->dualdescitcnt < 3)) || ((DDSIP_bb->curnode < 11) && !DDSIP_bb->dualdescitcnt)) && (j = DDSIP_bb->cutCntr))
 		    {
                         // check feasibility for other scenarios and possibly add cuts
                         tmp = DDSIP_bb->sug[DDSIP_param->nodelim + 2];

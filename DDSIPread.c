@@ -65,19 +65,30 @@ DDSIP_Find (FILE * specfile, const char *pattern)
     // Only the first occurence of the pattern is relevant.
     while (!find && i < DDSIP_max_str_ln && (c = fgetc (specfile)) != EOF)
     {
+        if (!in_string && (isspace(c) && c != '*'))
+            continue;
         if (in_string && (isspace(c)||c=='*'))
         {
             str[i] = '\0';
             if (!strncmp (str, pattern, DDSIP_Imin (DDSIP_unique, (int) strlen (pattern))))
                 find = 1;
             if (c=='*')
+            {
                 DDSIP_SkipToEOL (specfile);
+		in_string = 0;
+            }
             i = 0;
         }
-        else
+        else if (!isspace(c) && c != '*')
         {
             in_string = 1;
             str[i++] = (char) c;
+        }
+	else if (c == '*')
+        {
+            DDSIP_SkipToEOL (specfile);
+            in_string = 0;
+            i = 0;
         }
     }
 
@@ -106,6 +117,8 @@ DDSIP_ReadDbl (FILE * specfile, const char *pattern, const char *text, double de
     val = defval;
     while (!find && i < DDSIP_max_str_ln && (c = fgetc (specfile)) != EOF)
     {
+        if (!in_string && (isspace(c) && c != '*'))
+            continue;
         if (in_string && isspace (c))
         {
             str[i] = '\0';
@@ -120,7 +133,10 @@ DDSIP_ReadDbl (FILE * specfile, const char *pattern, const char *text, double de
             else
             {
                 if (c != '\n')
+		{
                     DDSIP_SkipToEOL (specfile);
+		    in_string = 0;
+		}
                 i = 0;
             }
         }
@@ -235,6 +251,8 @@ DDSIP_ReadDblVec (FILE * specfile, const char *pattern, const char *text, double
     *number = 0;
     while (!find && i < DDSIP_max_str_ln && (c = fgetc (specfile)) != EOF)
     {
+        if (!in_string && (isspace(c) && c != '*'))
+            continue;
         if (in_string && isspace (c))
         {
             str[i] = '\0';
@@ -366,6 +384,8 @@ DDSIP_ReadString (FILE * specfile, const char *pattern, const char *text)
     string = NULL;
     while (!find && i < DDSIP_max_str_ln && (c = fgetc (specfile)) != EOF)
     {
+        if (!in_string && (isspace(c) && c != '*'))
+            continue;
         if (in_string && isspace (c))
         {
             str[i] = '\0';
@@ -380,6 +400,7 @@ DDSIP_ReadString (FILE * specfile, const char *pattern, const char *text)
             if (c=='*')
             {
                 DDSIP_SkipToEOL (specfile);
+                in_string = 0;
                 i = 0;
             }
             else
@@ -1237,7 +1258,7 @@ DDSIP_ReadSpec ()
     else
         DDSIP_param->bestboundfreq= 80;
         //DDSIP_param->bestboundfreq= 100;
-    DDSIP_param->btTolerance = DDSIP_ReadDbl (specfile, "BTTOLE", " BACKTRACKING TOL", 2.e-1, 0, 1.e-4, 1.);
+    DDSIP_param->btTolerance = DDSIP_ReadDbl (specfile, "BTTOLE", " BACKTRACKING TOL", 2.e-1, 0, 1.e-6, 1.);
     DDSIP_param->period = (int) floor (DDSIP_ReadDbl (specfile, "PERIOD", " HEUR PERIOD ITERS", 32., 1, 1., 10000.) + 0.1);
     DDSIP_param->rgapsmall = (int) floor (DDSIP_ReadDbl (specfile, "TOLSMA", " HEUR SMALL RGAP ITERS", 16., 1, 1., 1.*DDSIP_param->period) + 0.1);
 
@@ -2301,8 +2322,24 @@ DDSIP_AdvStart (void)
 {
     char fname[DDSIP_ln_fname];
     FILE *advfile;
-    int i, k;
+    int i, k, ind, status, maxVarNameLength;
     double tmp;
+    char tmpdata[DDSIP_max_str_ln];
+    char *colstore = NULL, **colname = NULL;
+
+    maxVarNameLength = DDSIP_Imin (128, DDSIP_max_str_ln);
+
+    colname = (char **) malloc (sizeof(char *) * (DDSIP_data->novar));
+    colstore = (char *) malloc (sizeof(char) * (DDSIP_data->novar)*(maxVarNameLength+1));
+    status = CPXgetcolname (DDSIP_env, DDSIP_lp, colname, colstore, (DDSIP_data->novar)*(maxVarNameLength+1), &k, 0, (DDSIP_data->novar)-1);
+    if ( status )
+    {
+        fprintf (stderr, "XXX ERROR: Failed to get column names.\n");
+        fprintf (DDSIP_outfile, "XXX ERROR: Failed to get column names.\n");
+        CPXgeterrorstring (DDSIP_env, status, tmpdata);
+        fprintf (stderr, "%s", tmpdata);
+        exit (1);
+    }
 
     printf ("Enter file name for start info: ");
     k = scanf ("%s", fname);
@@ -2339,7 +2376,48 @@ DDSIP_AdvStart (void)
         DDSIP_bb->adv_sol = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar, "DDSIP_bb->adv_sol(sipread)");
         for (i = 0; i < DDSIP_data->firstvar; i++)
         {
-            k = fscanf (advfile, "%lf", DDSIP_bb->adv_sol + i);
+            ind = -1;
+            if((k = DDSIP_ReadWord (advfile, tmpdata, maxVarNameLength)))
+            {
+                for (k = 0; k < (DDSIP_data->novar); k++)
+                {
+                    if (!strcmp(tmpdata, colname[k]))
+                    {
+                        if (DDSIP_bb->firstindex_reverse[k] < 0)
+                        {
+                            fprintf (DDSIP_outfile, "XXX ERROR: column name '%s' specified in the startinfo file is no first-stage variable.\n", tmpdata);
+                            return 1;
+                        }
+                        else
+                        {
+                            ind = DDSIP_bb->firstindex_reverse[k];
+                        }
+                        break;
+                    }
+                }
+                if (k ==  (DDSIP_data->novar))
+                {
+                    printf ("XXX ERROR: column name '%s' specified in the startinfo file not found in the problem.\n", tmpdata);
+                    fprintf (DDSIP_outfile, "XXX ERROR: column name '%s' specified in the startinfo file not found in the problem.\n", tmpdata);
+                    exit(1);
+                }
+            }
+            else
+            {
+                fprintf (DDSIP_outfile, "XXX ERROR: did not find startinfo for all first-stage variables.\n");
+                exit(1);
+            }
+            if (ind < 0 || ind >= DDSIP_data->firstvar)
+            {
+                printf ("ERROR: Wrong index (%d) in startinfo file.\n", ind);
+                fprintf (DDSIP_outfile, "ERROR: Wrong index (%d) in startinfo file.\n", ind);
+                return 1;
+            }
+            if (fscanf (advfile, "%lf", DDSIP_bb->adv_sol + ind) < 1)
+            {
+                fprintf (DDSIP_outfile, "XXX ERROR: did not find startinfo value for first-stage variable %s.\n", tmpdata);
+                exit(1);
+            }
         }
     }
 
@@ -2356,6 +2434,8 @@ DDSIP_AdvStart (void)
         fprintf (DDSIP_outfile, "   multiplier read successfully: %d\n", DDSIP_bb->initial_multiplier);
     }
     fclose (advfile);
+    DDSIP_Free ((void **) &(colstore));
+    DDSIP_Free ((void **) &(colname));
 
     return 0;
 }

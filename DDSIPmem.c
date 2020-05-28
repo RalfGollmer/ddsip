@@ -380,6 +380,22 @@ DDSIP_FreeBb ()
         fclose (DDSIP_bb->moreoutfile);
         DDSIP_bb->moreoutfile = NULL;
     }
+#ifndef NEOS
+#ifndef _WIN32
+    {
+        char command[256];
+        sprintf(command,"ls -l %s*; gzip -f9 %s; ls -l %s*", DDSIP_solfname, DDSIP_solfname, DDSIP_solfname);
+        i = system (command);
+        if (DDSIP_param->outlev)
+        {
+            if (i)
+                fprintf (DDSIP_bb->moreoutfile, "  return code of 'gzip -9 %s': %d\n", DDSIP_solfname, i);
+            sprintf(command,"ls -l %s*; gzip -f9 %s; ls -l %s*", DDSIP_moreoutfname, DDSIP_moreoutfname, DDSIP_moreoutfname);
+            i = system (command);
+        }
+    }
+#endif
+#endif
 }
 
 //==========================================================================

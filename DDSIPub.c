@@ -471,10 +471,10 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
             if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
             {
                 ih = (int) floor ((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] + 0.5);
-                fprintf (DDSIP_bb->moreoutfile, " %21d", ih);
+                fprintf (DDSIP_bb->moreoutfile, " %22d", ih);
             }
             else
-                fprintf (DDSIP_bb->moreoutfile, " %21.15g", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j]);
+                fprintf (DDSIP_bb->moreoutfile, " %22.16g", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j]);
 
             if (!((j + 1) % 5))
                 fprintf (DDSIP_bb->moreoutfile, "\n");

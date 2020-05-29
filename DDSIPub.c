@@ -898,16 +898,16 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                             if (DDSIP_param->outlev > 21)
                                             {
                                                 if (status == CPXERR_NOT_DUAL_UNBOUNDED)
-                                                    fprintf (DDSIP_bb->moreoutfile," ------------ LP infeasible for scen. %3d, dualfarkas returned CPXERR_NOT_DUAL_UNBOUNDED (%6.2f) ---------------\n", Bs+1, time_end - time_lap);
+                                                    fprintf (DDSIP_bb->moreoutfile," --%4d ---------- LP infeasible for scen. %3d, dualfarkas returned CPXERR_NOT_DUAL_UNBOUNDED (%6.2f) ---------------\n", Bi+1,  Bs+1, time_end - time_lap);
                                                 else
-                                                    fprintf (DDSIP_bb->moreoutfile," ------------ LP infeasible for scen. %3d, dualfarkas returned %d (%6.2f) ---------------\n", Bs+1, status, time_end - time_lap);
+                                                    fprintf (DDSIP_bb->moreoutfile," --%4d ---------- LP infeasible for scen. %3d, dualfarkas returned %d (%6.2f) ---------------\n", Bi+1,  Bs+1, status, time_end - time_lap);
                                             }
                                             time_lap = DDSIP_GetCpuTime ();
                                         }
                                         else
                                         {
                                             if (DDSIP_param->outlev > 21)
-                                                fprintf (DDSIP_bb->moreoutfile," ------------ LP infeasible for scen. %3d, violation %g, oldviol %g (%6.2f) ---------------\n", Bs+1, viol, oldviol, time_end - time_lap);
+                                                fprintf (DDSIP_bb->moreoutfile," --%4d ---------- LP infeasible for scen. %3d, violation %g, oldviol %g (%6.2f) ---------------\n", Bi+1, Bs+1, viol, oldviol, time_end - time_lap);
                                         
                                         }
                                         time_lap = DDSIP_GetCpuTime ();
@@ -1125,7 +1125,7 @@ if (DDSIP_param->outlev > 21)
                                     else
                                     {
                                         if (DDSIP_param->outlev > 21)
-                                            fprintf (DDSIP_bb->moreoutfile," ------------ LP   feasible for scen. %3d  (%6.2f) ---------------\n", Bs+1, time_end - time_lap);
+                                            fprintf (DDSIP_bb->moreoutfile," --%4d ---------- LP   feasible for scen. %3d  (%6.2f) ---------------\n", Bi+1, Bs+1, time_end - time_lap);
                                     }
                                 }
                                 if (DDSIP_dual_lp != NULL)
@@ -1393,16 +1393,16 @@ if (DDSIP_param->outlev > 21)
                                 if (DDSIP_param->outlev > 21)
                                 {
                                     if (status == CPXERR_NOT_DUAL_UNBOUNDED)
-                                        fprintf (DDSIP_bb->moreoutfile," ------------ LP infeasible for scen. %3d, dualfarkas returned CPXERR_NOT_DUAL_UNBOUNDED (%6.2f) ---------------\n", Bs+1, time_end - time_lap);
+                                        fprintf (DDSIP_bb->moreoutfile," --%4d ---------- LP infeasible for scen. %3d, dualfarkas returned CPXERR_NOT_DUAL_UNBOUNDED (%6.2f) ---------------\n", Bi+1, Bs+1, time_end - time_lap);
                                     else
-                                        fprintf (DDSIP_bb->moreoutfile," ------------ LP infeasible for scen. %3d, dualfarkas returned %d (%6.2f) ---------------\n", Bs+1, status, time_end - time_lap);
+                                        fprintf (DDSIP_bb->moreoutfile," --%4d ---------- LP infeasible for scen. %3d, dualfarkas returned %d (%6.2f) ---------------\n", Bi+1, Bs+1, status, time_end - time_lap);
                                 }
                                 time_lap = DDSIP_GetCpuTime ();
                             }
                             else
                             {
                                 if (DDSIP_param->outlev > 21)
-                                    fprintf (DDSIP_bb->moreoutfile," ------------ LP infeasible for scen. %3d, violation %g, oldviol %g (%6.2f) ---------------\n", Bs+1, viol, oldviol, time_end - time_lap);
+                                    fprintf (DDSIP_bb->moreoutfile," --%4d ---------- LP infeasible for scen. %3d, violation %g, oldviol %g (%6.2f) ---------------\n", Bi+1, Bs+1, viol, oldviol, time_end - time_lap);
                             }
                             
                             time_lap = DDSIP_GetCpuTime ();
@@ -1614,7 +1614,7 @@ if (DDSIP_param->outlev > 21)
                         else
                         {
                             if (DDSIP_param->outlev > 21)
-                                fprintf (DDSIP_bb->moreoutfile," ------------ LP   feasible for scen. %3d  (%6.2f) ---------------\n", Bs+1, time_end - time_lap);
+                                fprintf (DDSIP_bb->moreoutfile," --%4d ---------- LP   feasible for scen. %3d  (%6.2f) ---------------\n", Bi+1, Bs+1, time_end - time_lap);
                         }
                     }
                     if (DDSIP_dual_lp != NULL)

@@ -1222,7 +1222,7 @@ int
 DDSIP_LowerBound (void)
 {
     double objval, bobjval, tmpbestbound = 0.0, tmpbestvalue = 0.0, tmpfeasbound = 0.0, worst_case_lb = -1.e+10;
-    double we, wr, mipgap, d, time_start, time_end, wall_secs, cpu_secs, gap, meanGap, maxGap;
+    double we, wr, mipgap, d, time_start, time_end, time_help, wall_secs, cpu_secs, gap, meanGap, maxGap;
 #ifdef DEBUG
     double time_lap;
 #endif
@@ -1944,12 +1944,12 @@ NEXT_TRY:
             meanGap += DDSIP_data->prob[scen] * gap;
             maxGap   = DDSIP_Dmax (maxGap, gap);
             time_end = DDSIP_GetCpuTime ();
-            time_start = time_end-time_start;
+            time_help = time_end-time_start;
 #ifdef SHIFT
             if (DDSIP_param->hot == 4)
             {
                 // prepare for shifting difficult scenarios to the end such that they can make use of more mipstarts
-                DDSIP_bb->aggregate_time[iscen] = time_start + 1e3*gap;
+                DDSIP_bb->aggregate_time[iscen] = time_help + 1e3*gap;
             }
 #endif
             time (&DDSIP_bb->cur_time);
@@ -1979,7 +1979,7 @@ NEXT_TRY:
                          iscen + 1, scen + 1, objval, bobjval, gap, mipstatus);
                 fprintf (DDSIP_bb->moreoutfile,
                          "\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%7.2fs n:%5d",
-                         wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
+                         wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_help, nodes_1st);
                 if (nodes_2nd >= 0)
                     fprintf (DDSIP_bb->moreoutfile, " +%4d)", nodes_2nd - nodes_1st); 
                 else
@@ -3221,7 +3221,7 @@ if (DDSIP_param->outlev > 21)
                                     if (DDSIP_param->outlev)
                                     {
                                         time_end = DDSIP_GetCpuTime ();
-                                        time_start = time_end-time_start;
+                                        time_help = time_end-time_start;
                                         DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                                         DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
                                         if (mipstatus == CPXMIP_OPTIMAL)
@@ -3246,7 +3246,7 @@ if (DDSIP_param->outlev > 21)
                                                  iscen + 1, scen + 1, objval, bobjval, gap, mipstatus);
                                         fprintf (DDSIP_bb->moreoutfile,
                                                  "\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%7.2fs n:%5d",
-                                                 wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
+                                                 wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_help, nodes_1st);
                                         if (nodes_2nd >= 0)
                                             fprintf (DDSIP_bb->moreoutfile, " +%4d)", nodes_2nd - nodes_1st); 
                                         else
@@ -3378,7 +3378,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
 {
 #ifdef CONIC_BUNDLE
     double objval, bobjval, tmpbestbound = 0.0, tmpupper = 0.0, maxdispersion = 0.;
-    double wr, mipgap, time_start, time_end, wall_secs, cpu_secs, gap, meanGap, maxGap;
+    double wr, mipgap, time_start, time_end, time_help, wall_secs, cpu_secs, gap, meanGap, maxGap;
 #ifdef DEBUG
     double we, time_lap;
 #endif
@@ -4118,13 +4118,13 @@ NEXT_SCEN:
             meanGap += DDSIP_data->prob[scen] * gap;
             maxGap   = DDSIP_Dmax (maxGap, gap);
             time_end = DDSIP_GetCpuTime ();
-            time_start = time_end-time_start;
+            time_help = time_end-time_start;
             time (&DDSIP_bb->cur_time);
 #ifdef SHIFT
             if (shift_in_cb)
             {
                 // prepare for shifting difficult scenarios to the end such that they can make use of more mipstarts
-                DDSIP_bb->aggregate_time[scen] += difftime (DDSIP_bb->cur_time, startTime) + 0.1*time_start + 1.e3*gap;
+                DDSIP_bb->aggregate_time[scen] += difftime (DDSIP_bb->cur_time, startTime) + 0.1*time_help + 1.e3*gap;
             }
 #endif
             // Debugging information
@@ -4154,7 +4154,7 @@ NEXT_SCEN:
                          iscen + 1, scen + 1, objval, bobjval, gap, mipstatus);
                 fprintf (DDSIP_bb->moreoutfile,
                          "\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%7.2fs n:%5d",
-                         wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
+                         wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_help, nodes_1st);
                 if (nodes_2nd >= 0)
                     fprintf (DDSIP_bb->moreoutfile, " +%4d)", nodes_2nd - nodes_1st); 
                 else

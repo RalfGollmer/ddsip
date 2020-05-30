@@ -803,7 +803,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         time_end = DDSIP_GetCpuTime ();
                         time_help = time_end-time_start;
                         // in order to sort the scenarios which take much longer to the end (hopefully often not to be evaluated due to premature stop)
-                        sort_array[iscen] = time_start;
+                        sort_array[iscen] = time_help;
                         DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                         DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
                         status = DDSIP_GetCpxSolution (mipstatus, &objval, &bobjval, mipx);
@@ -1922,7 +1922,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
             time_end = DDSIP_GetCpuTime ();
             time_help = time_end-time_start;
             // in order to sort the scenarios which take much longer to the end (hopefully often not to be evaluated due to premature stop)
-            sort_array[iscen] = time_start;
+            sort_array[iscen] = time_help;
             // Debugging information
             if (mipstatus == CPXMIP_TIME_LIM_FEAS)
                 timeLimit = 1;

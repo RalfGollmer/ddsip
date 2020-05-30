@@ -1,14 +1,14 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
-	Copyright to:      University of Duisburg-Essen
+    Copyright to:      University of Duisburg-Essen
     Language:          C
-	Description:
-	The main procedures in this file are called `Bound' and `Branch'.
-	The first one is invoked to delete nodes in the branch-and-bound tree
-	after a new upper bound has been obtained. The second procedure creates
-	new nodes in the tree and prepares the evaluation of these nodes.
+    Description:
+    The main procedures in this file are called `Bound' and `Branch'.
+    The first one is invoked to delete nodes in the branch-and-bound tree
+    after a new upper bound has been obtained. The second procedure creates
+    new nodes in the tree and prepares the evaluation of these nodes.
 
-	License:
-	This file is part of DDSIP.
+    License:
+    This file is part of DDSIP.
 
     DDSIP is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -133,8 +133,8 @@ DDSIP_InitNewNodes (void)
         DDSIP_node[DDSIP_bb->nonode]->cbReturn32 = DDSIP_node[DDSIP_bb->curnode]->cbReturn32;
         DDSIP_node[DDSIP_bb->nonode + 1]->cbReturn32 = DDSIP_node[DDSIP_bb->curnode]->cbReturn32;
         if (DDSIP_param->outlev > 20)
-           fprintf (DDSIP_bb->moreoutfile, "##########  DDSIP_node[%d]->depth= %d < ->cbReturn32 = %d + 3 -> nodes %d and %d inherit cbReturn\n",
-                    DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->depth, DDSIP_node[DDSIP_bb->curnode]->cbReturn32, DDSIP_bb->nonode, DDSIP_bb->nonode+1);
+            fprintf (DDSIP_bb->moreoutfile, "##########  DDSIP_node[%d]->depth= %d < ->cbReturn32 = %d + 3 -> nodes %d and %d inherit cbReturn\n",
+                     DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->depth, DDSIP_node[DDSIP_bb->curnode]->cbReturn32, DDSIP_bb->nonode, DDSIP_bb->nonode+1);
     }
     else
     {
@@ -718,12 +718,12 @@ DDSIP_Bound (void)
             DDSIP_node[DDSIP_bb->front[i]]->cutAdded = 1;
         if ((!(DDSIP_bb->found_optimal_node) && (DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bestvalue*factor + DDSIP_bb->correct_bounding)
             ) ||
-            ( (DDSIP_bb->found_optimal_node) && (DDSIP_bb->found_optimal_node != DDSIP_bb->front[i] || DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bestvalue + 2.*DDSIP_bb->correct_bounding) &&
-             ((DDSIP_node[DDSIP_bb->front[i]]->violations && (DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bound_optimal_node + DDSIP_bb->correct_bounding)) ||
-              (!(DDSIP_node[DDSIP_bb->front[i]]->violations) && (DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bestvalue))
-             )
-            ) ||
-            DDSIP_Equal (DDSIP_node[DDSIP_bb->front[i]]->bound, DDSIP_infty)
+                ( (DDSIP_bb->found_optimal_node) && (DDSIP_bb->found_optimal_node != DDSIP_bb->front[i] || DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bestvalue + 2.*DDSIP_bb->correct_bounding) &&
+                  ((DDSIP_node[DDSIP_bb->front[i]]->violations && (DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bound_optimal_node + DDSIP_bb->correct_bounding)) ||
+                   (!(DDSIP_node[DDSIP_bb->front[i]]->violations) && (DDSIP_node[DDSIP_bb->front[i]]->bound > DDSIP_bb->bestvalue))
+                  )
+                ) ||
+                DDSIP_Equal (DDSIP_node[DDSIP_bb->front[i]]->bound, DDSIP_infty)
            )
         {
             // debug info
@@ -739,8 +739,8 @@ DDSIP_Bound (void)
                 fprintf (DDSIP_bb->moreoutfile, " Bounding: delete node %d, bound: %.16g, bestvalue: %.16g, previous bestbound: %.16g\n", DDSIP_bb->front[i],
                          DDSIP_node[DDSIP_bb->front[i]]->bound, DDSIP_bb->bestvalue, DDSIP_bb->bestbound);
                 fprintf (DDSIP_bb->moreoutfile, "                  node %d, bound - bestvalue = %.16g, bound - (bestvalue*factor) = %.16g, accuracy= %g\n", DDSIP_bb->front[i],
-                        DDSIP_node[DDSIP_bb->front[i]]->bound- DDSIP_bb->bestvalue,
-                        DDSIP_node[DDSIP_bb->front[i]]->bound- (DDSIP_bb->bestvalue*factor), DDSIP_param->accuracy);
+                         DDSIP_node[DDSIP_bb->front[i]]->bound- DDSIP_bb->bestvalue,
+                         DDSIP_node[DDSIP_bb->front[i]]->bound- (DDSIP_bb->bestvalue*factor), DDSIP_param->accuracy);
             }
             // mark ist as a leaf
             DDSIP_node[DDSIP_bb->front[i]]->leaf = 1;
@@ -889,9 +889,9 @@ DDSIP_Bound (void)
                             // use best bound of all nodes if the best bound within the last nodes is too big and more often if
                             // we have at least one feasible point
                             if ((!DDSIP_bb->Dive &&
-                                 (bestAmongTheLast > threshold || DDSIP_bb->bestBound ||
-                                 ((fabs (DDSIP_bb->bestvalue) < DDSIP_infty) && !(DDSIP_bb->noiter % 50)))) ||
-                                (DDSIP_bb->Dive && bestAmongTheLast > threshold)
+                                    (bestAmongTheLast > threshold || DDSIP_bb->bestBound ||
+                                     ((fabs (DDSIP_bb->bestvalue) < DDSIP_infty) && !(DDSIP_bb->noiter % 50)))) ||
+                                    (DDSIP_bb->Dive && bestAmongTheLast > threshold)
                                )
                             {
                                 for  (i = 0; i < DDSIP_bb->nofront; i++)
@@ -927,7 +927,7 @@ DDSIP_Bound (void)
                                     if ((DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound - DDSIP_bb->bestbound) / (fabs(DDSIP_bb->bestbound) + DDSIP_param->accuracy) > 1.e-12)
                                         break;
                                     front_node_bound[DDSIP_bb->front_nodes_sorted[i]] = !(DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->solved) ?
-                                             -DDSIP_infty : 2*DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->violations - DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->dispnorm - DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->depth;
+                                            -DDSIP_infty : 2*DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->violations - DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->dispnorm - DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->depth;
                                 }
                             }
                             else
@@ -1145,24 +1145,24 @@ DDSIP_Bound (void)
                 {
                     if (DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->solved)
                         fprintf (DDSIP_bb->moreoutfile,
-                             "%-4d %-4d %-20.16g  %-9d  inf         %-6d %-12.6g %-12.6g %-11.5g %5d   %-6d %-6d %d\n",
-                             i+1, DDSIP_bb->front_nodes_sorted[i], DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound,
-                             DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->violations,
-                             DDSIP_bb->firstindex[DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neoind],
-                             DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neolb, DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neoub,
-                             DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neoub-DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neolb,
-                             DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->depth,
-                             DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->leaf, DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->solved,
-                             DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->cutAdded);
+                                 "%-4d %-4d %-20.16g  %-9d  inf         %-6d %-12.6g %-12.6g %-11.5g %5d   %-6d %-6d %d\n",
+                                 i+1, DDSIP_bb->front_nodes_sorted[i], DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound,
+                                 DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->violations,
+                                 DDSIP_bb->firstindex[DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neoind],
+                                 DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neolb, DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neoub,
+                                 DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neoub-DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neolb,
+                                 DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->depth,
+                                 DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->leaf, DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->solved,
+                                 DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->cutAdded);
                     else
                         fprintf (DDSIP_bb->moreoutfile,
-                             "%-4d %-4d %-20.16g             inf         %-6d %-12.6g %-12.6g %-11.5g %5d   %-6d %-6d\n",
-                             i+1, DDSIP_bb->front_nodes_sorted[i], DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound,
-                             DDSIP_bb->firstindex[DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neoind],
-                             DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neolb, DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neoub,
-                             DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neoub-DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neolb,
-                             DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->depth,
-                             DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->leaf, DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->solved);
+                                 "%-4d %-4d %-20.16g             inf         %-6d %-12.6g %-12.6g %-11.5g %5d   %-6d %-6d\n",
+                                 i+1, DDSIP_bb->front_nodes_sorted[i], DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound,
+                                 DDSIP_bb->firstindex[DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neoind],
+                                 DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neolb, DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neoub,
+                                 DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neoub-DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->neolb,
+                                 DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->depth,
+                                 DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->leaf, DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->solved);
                 }
                 else
                     fprintf (DDSIP_bb->moreoutfile,
@@ -1191,7 +1191,7 @@ DDSIP_Bound (void)
         i = 0;
         while (i < DDSIP_bb->nofront && status)
         {
-            /*	  if (!(DDSIP_node[DDSIP_bb->front[i]]->dispnorm <= DDSIP_param->nulldisp) && !DDSIP_node[DDSIP_bb->front[i]]->leaf)  */
+            /*      if (!(DDSIP_node[DDSIP_bb->front[i]]->dispnorm <= DDSIP_param->nulldisp) && !DDSIP_node[DDSIP_bb->front[i]]->leaf)  */
             /* 13.9.2005: Knoten mit kleiner dispnorm werden nicht abgeschnitten, aber auch nicht ausgewaehlt, wenn
              *            dispnorm > nulldisp, aber < accuracy
              *            Loesung: schneide auch solche Knoten weg.                                                     */

@@ -1,12 +1,12 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
-	Copyright to:      University of Duisburg-Essen
+    Copyright to:      University of Duisburg-Essen
    Language:          C
-	Description:
-	This file contains procedures to restore the original problem during the
-	branch-and-bound algorithm
+    Description:
+    This file contains procedures to restore the original problem during the
+    branch-and-bound algorithm
 
-	License:
-	This file is part of DDSIP.
+    License:
+    This file is part of DDSIP.
 
     DDSIP is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

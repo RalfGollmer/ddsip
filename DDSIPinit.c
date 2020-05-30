@@ -1,11 +1,11 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
-	Copyright to:      University of Duisburg-Essen
+    Copyright to:      University of Duisburg-Essen
     Language:          C
-	Description:
-	Initializations: Set cplex parameters, bbtype, advanced solution, sort scenarios
+    Description:
+    Initializations: Set cplex parameters, bbtype, advanced solution, sort scenarios
 
-	License:
-	This file is part of DDSIP.
+    License:
+    This file is part of DDSIP.
 
     DDSIP is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -357,27 +357,27 @@ DDSIP_BbTypeInit (void)
     if (!DDSIP_param->riskalg && !DDSIP_param->scalarization)
         switch (abs (DDSIP_param->riskmod))
         {
-            // ExpExc
+        // ExpExc
         case 1:
             DDSIP_bb->secvar++;
             DDSIP_bb->seccon++;
             break;
-            // ExcProb
+        // ExcProb
         case 2:
             DDSIP_bb->secvar++;
             DDSIP_bb->seccon++;
             break;
-            // SemDev
+        // SemDev
         case 3:
             DDSIP_bb->secvar++;
             DDSIP_bb->seccon++;
             break;
-            // WorstCase
+        // WorstCase
         case 4:
             DDSIP_bb->firstvar++;
             DDSIP_bb->seccon++;
             break;
-            // TVaR
+        // TVaR
         case 5:
             DDSIP_bb->firstvar++;
             DDSIP_bb->secvar++;
@@ -985,8 +985,8 @@ DDSIP_DetectStageRows (void)
     DDSIP_Free ((void **) &(rmatbeg));
     DDSIP_Free ((void **) &(rmatind));
     DDSIP_Free ((void **) &(rmatval));
-    return 0;   
-} // DDSIP_DetectStageRows 
+    return 0;
+} // DDSIP_DetectStageRows
 
 //==========================================================================
 // For use of advanced solutions we need some initializations and an additional constraint

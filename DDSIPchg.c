@@ -1,12 +1,12 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
-	Copyright to:      University of Duisburg-Essen
+    Copyright to:      University of Duisburg-Essen
     Language:          C
-	Description:
-	The procedures in this file are used to modify the problem according to
-	the current scenarios during the branch-and-bound algorithm.
+    Description:
+    The procedures in this file are used to modify the problem according to
+    the current scenarios during the branch-and-bound algorithm.
 
-	License:
-	This file is part of DDSIP.
+    License:
+    This file is part of DDSIP.
 
     DDSIP is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -71,7 +71,7 @@ DDSIP_ChgBounds (int print)
     {
         for (i = 0; i < DDSIP_bb->curbdcnt; i++)
             if (DDSIP_bb->bestsol[DDSIP_bb->curind[i]] < DDSIP_bb->curlb[i] - (fabs(DDSIP_bb->curlb[i])+1.)*DDSIP_param->accuracy ||
-                DDSIP_bb->bestsol[DDSIP_bb->curind[i]] > DDSIP_bb->curub[i] + (fabs(DDSIP_bb->curub[i])+1.)*DDSIP_param->accuracy)
+                    DDSIP_bb->bestsol[DDSIP_bb->curind[i]] > DDSIP_bb->curub[i] + (fabs(DDSIP_bb->curub[i])+1.)*DDSIP_param->accuracy)
             {
                 DDSIP_bb->bestsol_in_curnode = 0;
                 break;
@@ -287,7 +287,7 @@ DDSIP_ChgProb (int scen, int multipliers)
                         for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
                                 j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
                             //if (fabs (DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]]) > 1.e-18)
-                                fprintf (DDSIP_bb->moreoutfile, " first-stage var: %d, scen: %d, naind[%d]= %d: koeff: %g, dual=%g, cost add: %g\n", i, scen,j, DDSIP_data->naind[j],  DDSIP_data->naval[j], DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]],  DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen]);
+                            fprintf (DDSIP_bb->moreoutfile, " first-stage var: %d, scen: %d, naind[%d]= %d: koeff: %g, dual=%g, cost add: %g\n", i, scen,j, DDSIP_data->naind[j],  DDSIP_data->naval[j], DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]],  DDSIP_data->naval[j] * DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]] / DDSIP_data->prob[scen]);
                     }
                     fprintf (DDSIP_bb->moreoutfile, "\n");
                 }

@@ -1,12 +1,12 @@
 /*  Authors:            Andreas M"arkert, Ralf Gollmer
-	Copyright to:      University of Duisburg-Essen
+    Copyright to:      University of Duisburg-Essen
     Language:          C
-	Description:
-	A few small functions for signal handling, cpu time, minimum, maximum,
-	feasibility test, and error handling w.r.t. cplex errors
+    Description:
+    A few small functions for signal handling, cpu time, minimum, maximum,
+    feasibility test, and error handling w.r.t. cplex errors
 
-	License:
-	This file is part of DDSIP.
+    License:
+    This file is part of DDSIP.
 
     DDSIP is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

@@ -1,12 +1,12 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
-	Copyright to:      University of Duisburg-Essen
+    Copyright to:      University of Duisburg-Essen
     Language:          C
-	Description:
-	Here we check all termination criteria and perform a postprocessing
-	if one criterion is fulfilled.
+    Description:
+    Here we check all termination criteria and perform a postprocessing
+    if one criterion is fulfilled.
 
-	License:
-	This file is part of DDSIP.
+    License:
+    This file is part of DDSIP.
 
     DDSIP is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ DDSIP_Continue (int *noiter, int *boundstat)
     double sum;
     // determine wall time
     time (&DDSIP_bb->cur_time);
-    
+
     (*noiter)++;
     // User termination
     // Control C

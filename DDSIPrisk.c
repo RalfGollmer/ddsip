@@ -1,11 +1,11 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
-	Copyright to:      University of Duisburg-Essen
+    Copyright to:      University of Duisburg-Essen
     Language:          C
-	Description:
-	This file implements the (mean-)risk models supported by DDSIP.
+    Description:
+    This file implements the (mean-)risk models supported by DDSIP.
 
-	License:
-	This file is part of DDSIP.
+    License:
+    This file is part of DDSIP.
 
     DDSIP is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ DDSIP_ExpExcess (void)
     else
         obj[0] = 1.;
 
-    lb[0] = 0.;			//DDSIP_param->risktarget;
+    lb[0] = 0.;            //DDSIP_param->risktarget;
     ub[0] = DDSIP_infty;
     ctype[0] = 'C';
     colname[0] = & (colstore[0]);
@@ -80,7 +80,7 @@ DDSIP_ExpExcess (void)
     DDSIP_Free ((void **) &(obj));
 
     // Add constraint
-    rhs[0] = -DDSIP_param->risktarget;	//0.0;
+    rhs[0] = -DDSIP_param->risktarget;    //0.0;
     sense[0] = 'G';
 
     status = CPXnewrows (DDSIP_env, DDSIP_lp, 1, rhs, sense, NULL, NULL);
@@ -509,7 +509,7 @@ DDSIP_SemDevGetNodeTarget (void)
                     return status;
                 }
             }
-            else			// Solution exists
+            else            // Solution exists
             {
                 status = CPXgetobjval (DDSIP_env, DDSIP_lp, &objval);
                 if (status)
@@ -555,7 +555,7 @@ DDSIP_SemDevGetNodeTarget (void)
         else
             tmpbestbound += DDSIP_data->prob[scen] * DDSIP_Dmin (bobjval, objval);
 
-    }				// end for scen
+    }                // end for scen
     //****************************************************************************
 
     //  if (tmpbestbound<DDSIP_infty)
@@ -949,7 +949,7 @@ DDSIP_RiskModel (void)
     {
         printf (" Value-at-risk at prob. %g\n", DDSIP_param->risklevel);
         fprintf (DDSIP_outfile, " Value-at-risk at prob. %g\n", DDSIP_param->risklevel);
-        status = 0;			//VaR (param);
+        status = 0;            //VaR (param);
         if (status)
             return status;
     }
@@ -958,7 +958,7 @@ DDSIP_RiskModel (void)
     {
         printf (" Standard deviation.\n");
         fprintf (DDSIP_outfile, " Standard deviation.\n");
-        status = 0;			//SD (param);
+        status = 0;            //SD (param);
         if (status)
             return status;
     }
@@ -1354,35 +1354,35 @@ DDSIP_RiskObjective (double *scensol)
 
     switch (abs (DDSIP_param->riskmod))
     {
-        // Expected excess
+    // Expected excess
     case 1:
         DDSIP_bb->currisk = DDSIP_bb->curriskval[0];
         break;
-        // Excess Probabilities
+    // Excess Probabilities
     case 2:
         DDSIP_bb->currisk = DDSIP_bb->curriskval[1];
         break;
-        // Semideviation
+    // Semideviation
     case 3:
         DDSIP_bb->currisk = DDSIP_bb->curriskval[2];
         break;
-        // Worst Case Costs
+    // Worst Case Costs
     case 4:
         DDSIP_bb->currisk = DDSIP_bb->curriskval[3];
         break;
-        // Tail Value-at-Risk
+    // Tail Value-at-Risk
     case 5:
         DDSIP_bb->currisk = DDSIP_bb->curriskval[4];
         break;
-        // VaR
+    // VaR
     case 6:
         DDSIP_bb->currisk = DDSIP_bb->curriskval[5];
         break;
-        // Standard deviation
+    // Standard deviation
     case 7:
         DDSIP_bb->currisk = DDSIP_bb->curriskval[6];
         break;
-        // Error
+    // Error
     default:
         status = 1;
     }

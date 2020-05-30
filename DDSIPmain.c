@@ -1,14 +1,14 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
-	Copyright to:      University of Duisburg-Essen
+    Copyright to:      University of Duisburg-Essen
     Language:          C
 
-	Description:
+    Description:
     This file contains the main procedure of DDSIP --
     a decomposition method for two-stage stochastic mixed-integer programs
     based on the Lagrangian relaxation of nonanticipativity and on
     branch-and-bound.
 
-	License:
+    License:
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
@@ -50,8 +50,8 @@ const int DDSIP_maxparam = 64;
 const int DDSIP_maxrisk = 7;
 
 // Large values
-const int DDSIP_bigint      = 10000000;	   // Upper bound on integer parameters
-const double DDSIP_bigvalue = 1.0e9;	   // Just to detect the print format
+const int DDSIP_bigint      = 10000000;       // Upper bound on integer parameters
+const double DDSIP_bigvalue = 1.0e9;       // Just to detect the print format
 const double DDSIP_infty    = CPX_INFBOUND; // is 1.0e20; -- Infinity
 
 // Output directory
@@ -219,10 +219,11 @@ main (int argc, char * argv[])
     if (DDSIP_param->annotationFile)
     {
         status = CPXreadcopyannotations (DDSIP_env, DDSIP_lp, DDSIP_param->annotationFile);
-        if ( status ) {
-           fprintf (stderr, "ERROR: Failed to read and copy the annotation data from file %s.\n", DDSIP_param->annotationFile);
-           fprintf (DDSIP_outfile, "ERROR: Failed to read and copy the annotation data from file %s.\n", DDSIP_param->annotationFile);
-           goto TERMINATE;
+        if ( status )
+        {
+            fprintf (stderr, "ERROR: Failed to read and copy the annotation data from file %s.\n", DDSIP_param->annotationFile);
+            fprintf (DDSIP_outfile, "ERROR: Failed to read and copy the annotation data from file %s.\n", DDSIP_param->annotationFile);
+            goto TERMINATE;
         }
     }
 
@@ -435,19 +436,19 @@ main (int argc, char * argv[])
                 printf ("\t\t EEV:  No solution found.\n");
             fprintf (DDSIP_outfile, "-EEV:     No solution found.\n");
         }
-    }				// END if (EV)
+    }                // END if (EV)
     // stop here if NODELIM is zero
-     if (!(DDSIP_param->nodelim))
-         goto TERMINATE;
+    if (!(DDSIP_param->nodelim))
+        goto TERMINATE;
     // Print cplex log to debugfile
     if (DDSIP_param->outlev > 51)
     {
 #ifdef CPLEX_12_8
-       if ((status = CPXsetlogfilename (DDSIP_env, DDSIP_moreoutfname, "a")))
-           goto TERMINATE;
+        if ((status = CPXsetlogfilename (DDSIP_env, DDSIP_moreoutfname, "a")))
+            goto TERMINATE;
 #else
-       if ((status = CPXsetlogfile (DDSIP_env, DDSIP_bb->moreoutfile)))
-           goto TERMINATE;
+        if ((status = CPXsetlogfile (DDSIP_env, DDSIP_bb->moreoutfile)))
+            goto TERMINATE;
 #endif
     }
 
@@ -471,11 +472,11 @@ main (int argc, char * argv[])
 #ifdef CONIC_BUNDLE
 #ifdef DEBUG
 ////////////////////////////////////////////
-if (DDSIP_bb->curnode && DDSIP_param->outlev)
-{ 
-if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
-  fprintf(DDSIP_bb->moreoutfile, "######## last node %d step=dual, leaf= %d,  dualdescitcnt = %d, DDSIP_bb->cutoff= %d\n",DDSIP_bb->curnode-1,(DDSIP_node[DDSIP_bb->curnode-1])->leaf,DDSIP_bb->dualdescitcnt,DDSIP_bb->cutoff);
-}
+        if (DDSIP_bb->curnode && DDSIP_param->outlev)
+        {
+            if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
+                fprintf(DDSIP_bb->moreoutfile, "######## last node %d step=dual, leaf= %d,  dualdescitcnt = %d, DDSIP_bb->cutoff= %d\n",DDSIP_bb->curnode-1,(DDSIP_node[DDSIP_bb->curnode-1])->leaf,DDSIP_bb->dualdescitcnt,DDSIP_bb->cutoff);
+        }
 ////////////////////////////////////////////
 #endif
 
@@ -483,27 +484,27 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
             fprintf (DDSIP_bb->moreoutfile, "########## DDSIP_node[%d]->cbReturn32 = %d -> no ConicBundle\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->cbReturn32);
         // Dual method
         if ((/*!DDSIP_bb->curnode || */!DDSIP_node[DDSIP_bb->curnode]->cbReturn32) &&
-            ((DDSIP_param->cb > 0 && (!(DDSIP_bb->curnode % abs(DDSIP_param->cb))) && (abs(DDSIP_param->riskmod) != 4 || DDSIP_bb->curnode)) ||
-             (DDSIP_param->cb < 0 && (((DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->cb_depth) && abs(DDSIP_param->riskmod) != 4) ||
-                                      (abs(DDSIP_param->riskmod) == 5 && DDSIP_node[DDSIP_bb->curnode]->depth == 8) ||
-                                      (DDSIP_bb->curnode > DDSIP_param->cbBreakIters && 
-                                        ((!(DDSIP_bb->curnode % abs(DDSIP_param->cb))) ||
-                                         (!((DDSIP_bb->curnode+1) % -DDSIP_param->cb)) ||
-                                         (DDSIP_bb->curnode%200 > 199 - DDSIP_param->cbContinuous) ||
-                                         (DDSIP_bb->curnode < DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters) ||
-                                         ((DDSIP_bb->curnode  >= 2*DDSIP_param->cbBreakIters) && (DDSIP_bb->curnode < DDSIP_param->cbContinuous + 2*DDSIP_param->cbBreakIters)) ||
-                                         ((DDSIP_bb->cutoff > 6) &&
+                ((DDSIP_param->cb > 0 && (!(DDSIP_bb->curnode % abs(DDSIP_param->cb))) && (abs(DDSIP_param->riskmod) != 4 || DDSIP_bb->curnode)) ||
+                 (DDSIP_param->cb < 0 && (((DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->cb_depth) && abs(DDSIP_param->riskmod) != 4) ||
+                                          (abs(DDSIP_param->riskmod) == 5 && DDSIP_node[DDSIP_bb->curnode]->depth == 8) ||
+                                          (DDSIP_bb->curnode > DDSIP_param->cbBreakIters &&
+                                           ((!(DDSIP_bb->curnode % abs(DDSIP_param->cb))) ||
+                                            (!((DDSIP_bb->curnode+1) % -DDSIP_param->cb)) ||
+                                            (DDSIP_bb->curnode%200 > 199 - DDSIP_param->cbContinuous) ||
+                                            (DDSIP_bb->curnode < DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters) ||
+                                            ((DDSIP_bb->curnode  >= 2*DDSIP_param->cbBreakIters) && (DDSIP_bb->curnode < DDSIP_param->cbContinuous + 2*DDSIP_param->cbBreakIters)) ||
+                                            ((DDSIP_bb->cutoff > 6) &&
                                              (((DDSIP_bb->no_reduced_front < 51) && (DDSIP_bb->curnode % -DDSIP_param->cb) < DDSIP_param->cbContinuous)
-                                             || (((DDSIP_node[DDSIP_bb->curnode-1])->step == dual) && (DDSIP_node[DDSIP_bb->curnode-1])->leaf /*&& (DDSIP_bb->dualdescitcnt < 11)*/)
+                                              || (((DDSIP_node[DDSIP_bb->curnode-1])->step == dual) && (DDSIP_node[DDSIP_bb->curnode-1])->leaf /*&& (DDSIP_bb->dualdescitcnt < 11)*/)
                                              )
+                                            )
+                                           )
+                                          ) ||
+                                          (abs(DDSIP_param->riskmod) != 5 && DDSIP_bb->curnode <= DDSIP_param->cbBreakIters && DDSIP_bb->curnode > DDSIP_param->cbBreakIters*.48 &&
+                                           (CBFORALL || (DDSIP_node[DDSIP_bb->curnode]->numInheritedSols > (DDSIP_Imin(DDSIP_param->scenarios/20,2)+(DDSIP_param->scenarios+1)/2))))
                                          )
-                                       )
-                                     ) ||
-                                     (abs(DDSIP_param->riskmod) != 5 && DDSIP_bb->curnode <= DDSIP_param->cbBreakIters && DDSIP_bb->curnode > DDSIP_param->cbBreakIters*.48 &&
-                                          (CBFORALL || (DDSIP_node[DDSIP_bb->curnode]->numInheritedSols > (DDSIP_Imin(DDSIP_param->scenarios/20,2)+(DDSIP_param->scenarios+1)/2))))
-                                   )
+                 )
                 )
-            )
            )
         {
             DDSIP_bb->DDSIP_step = DDSIP_node[DDSIP_bb->curnode]->step = dual;
@@ -581,17 +582,17 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
                                             fprintf (DDSIP_bb->moreoutfile, "scen %d solution violates cut %d.\n", i+1, currentCut->number);
 #endif
                                         if ((cnt = (int) ((((DDSIP_node[0])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
-                                        for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
-                                        {
+                                            for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
                                             {
-                                                if (((DDSIP_node[0])->first_sol)[j]
-                                                  && ((DDSIP_node[0])->first_sol)[i] == ((DDSIP_node[0])->first_sol)[j])
                                                 {
-                                                    ((DDSIP_node[0])->first_sol)[j] = NULL;
-                                                    cnt--;
+                                                    if (((DDSIP_node[0])->first_sol)[j]
+                                                            && ((DDSIP_node[0])->first_sol)[i] == ((DDSIP_node[0])->first_sol)[j])
+                                                    {
+                                                        ((DDSIP_node[0])->first_sol)[j] = NULL;
+                                                        cnt--;
+                                                    }
                                                 }
                                             }
-                                        }
                                         DDSIP_Free ((void **) &(((DDSIP_node[0])->first_sol)[i]));
                                         break;
                                     }
@@ -600,19 +601,19 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
                             }
                             else
                             {
-                               if ((cnt = (int) ((((DDSIP_node[0])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
-                               for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
-                               {
-                                   {
-                                       if (((DDSIP_node[0])->first_sol)[j]
-                                         && ((DDSIP_node[0])->first_sol)[i] == ((DDSIP_node[0])->first_sol)[j])
-                                       {
-                                           ((DDSIP_node[0])->first_sol)[j] = NULL;
-                                           cnt--;
-                                       }
-                                   }
-                               }
-                               DDSIP_Free ((void **) &(((DDSIP_node[0])->first_sol)[i]));
+                                if ((cnt = (int) ((((DDSIP_node[0])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
+                                    for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
+                                    {
+                                        {
+                                            if (((DDSIP_node[0])->first_sol)[j]
+                                                    && ((DDSIP_node[0])->first_sol)[i] == ((DDSIP_node[0])->first_sol)[j])
+                                            {
+                                                ((DDSIP_node[0])->first_sol)[j] = NULL;
+                                                cnt--;
+                                            }
+                                        }
+                                    }
+                                DDSIP_Free ((void **) &(((DDSIP_node[0])->first_sol)[i]));
                             }
                         }
                     }
@@ -631,7 +632,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
                         fprintf (DDSIP_outfile, " %6d %82d. reinit: %8d cuts\n", 0, cntr, DDSIP_bb->cutAdded);
                     }
                     if ((DDSIP_node[0]->bound - old_bound)/(fabs(old_bound) + 1e-16) < 1.e-7 ||
-                        (DDSIP_bb->bestvalue - DDSIP_node[0]->bound)/(fabs(DDSIP_bb->bestvalue) + 1e-16) < 0.5*DDSIP_param->relgap)
+                            (DDSIP_bb->bestvalue - DDSIP_node[0]->bound)/(fabs(DDSIP_bb->bestvalue) + 1e-16) < 0.5*DDSIP_param->relgap)
                         break;
                 }
                 if (DDSIP_param->deleteRedundantCuts)
@@ -641,7 +642,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
             {
                 // Print a line of output at the first, the last and each `ith' node
                 if (!DDSIP_bb->noiter || (!((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq)) || (DDSIP_param->outlev && (DDSIP_node[DDSIP_bb->curnode])->step == dual))
-                        DDSIP_PrintState (DDSIP_bb->noiter);
+                    DDSIP_PrintState (DDSIP_bb->noiter);
                 if (DDSIP_bb->cutAdded && DDSIP_param->outlev > 1)
                 {
                     fprintf (DDSIP_outfile, " %6d%101d cuts\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
@@ -656,7 +657,7 @@ if((DDSIP_node[DDSIP_bb->curnode-1])->step == dual)
                 DDSIP_PrintState (DDSIP_bb->noiter);
         }
         if (!DDSIP_bb->curnode)
-             DDSIP_bb->cutCntr0 = DDSIP_bb->cutNumber;
+            DDSIP_bb->cutCntr0 = DDSIP_bb->cutNumber;
         else if (DDSIP_param->alwaysBendersCuts)
         {
             if (DDSIP_bb->curnode == 24)

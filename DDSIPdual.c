@@ -1,12 +1,12 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
-	Copyright to:      University of Duisburg-Essen
+    Copyright to:      University of Duisburg-Essen
     Language:          C
-	Description:
-	This file contains the implementation of the dual method, i.e. all
-	functions required by ConicBundle of C. Helmberg.
+    Description:
+    This file contains the implementation of the dual method, i.e. all
+    functions required by ConicBundle of C. Helmberg.
 
-	License:
-	This file is part of DDSIP.
+    License:
+    This file is part of DDSIP.
 
     DDSIP is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -263,7 +263,7 @@ ONCE_AGAIN:
 
     // Calculate new subgradient H * x
     // Initialization
-    memset (subgradient, '\0', sizeof (double) * DDSIP_bb->dimdual); 
+    memset (subgradient, '\0', sizeof (double) * DDSIP_bb->dimdual);
 
     if (DDSIP_param->scalarization && DDSIP_bb->skip != 2)
     {
@@ -306,7 +306,7 @@ ONCE_AGAIN:
                     for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
                             j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
                     {
-			k = DDSIP_data->naind[j];
+                        k = DDSIP_data->naind[j];
                         h = DDSIP_data->naval[j] * (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][i];
                         subgradient[k] -= h;
 #ifdef CANCELLATION
@@ -426,11 +426,11 @@ DDSIP_DualOpt (void)
     double reduction_factor = 0.50;
     double nfactor;
     minfirst = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar,
-               "minfirst(DualOpt)");
+                                       "minfirst(DualOpt)");
     maxfirst = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->firstvar,
-               "maxfirst(DualOpt)");
+                                       "maxfirst(DualOpt)");
     center_point = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual,
-                           "center_point(DualOpt)");
+                                           "center_point(DualOpt)");
 
     DDSIP_bb->DDSIP_step = dual;
     if (DDSIP_bb->curnode >= DDSIP_param->cbBreakIters)
@@ -439,7 +439,7 @@ DDSIP_DualOpt (void)
         DDSIP_bb->current_itlim = DDSIP_param->cbrootitlim;
     else
         DDSIP_bb->current_itlim = (DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->cb_depth)?
-                                   DDSIP_param->cb_depth_iters:(DDSIP_param->cbitlim+1)/2;
+                                  DDSIP_param->cb_depth_iters:(DDSIP_param->cbitlim+1)/2;
     DDSIP_bb->last_dualitcnt = 0;
     diff = -1.;
     inherited_bound = DDSIP_node[DDSIP_bb->curnode]->bound;
@@ -510,8 +510,8 @@ DDSIP_DualOpt (void)
     cb_set_eval_limit (p, DDSIP_param->cbtotalitlim);
     cb_set_max_bundlesize (p, (void *) DDSIP_DualUpdate, DDSIP_param->cbbundlesz);
     cb_set_max_new_subgradients (p, (void *) DDSIP_DualUpdate, DDSIP_param->cbmaxsubg);
-    cb_set_inner_update_limit 	(p, DDSIP_param->cb_maxsteps + 2);
-    
+    cb_set_inner_update_limit     (p, DDSIP_param->cb_maxsteps + 2);
+
     // The choice of the starting weight influences the convergence and results of Conic Bundle.
     // Is there a generally good choice?
     // More testing has to be done!
@@ -527,8 +527,8 @@ DDSIP_DualOpt (void)
             {
                 start_weight = (start_weight-cpu_secs)*0.5  + cpu_secs;
 //#############
-if(DDSIP_param->outlev)
-fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
+                if(DDSIP_param->outlev)
+                    fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
 //#############
             }
             if (DDSIP_param->riskmod == 4)
@@ -679,7 +679,7 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
             DDSIP_node[DDSIP_bb->curnode]->BoundNoLag = DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag[0] * DDSIP_data->prob[0];
             for (j = 1; j < DDSIP_param->scenarios; j++)
                 DDSIP_node[DDSIP_bb->curnode]->BoundNoLag += DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag[j] * DDSIP_data->prob[j];
-        //////////////////////////////
+            //////////////////////////////
             if (DDSIP_param->outlev > 21)
             {
 //                for (j = 0; j < DDSIP_param->scenarios; j++)
@@ -688,7 +688,7 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
 //                }
                 fprintf (DDSIP_bb->moreoutfile, " ## -----------------------\n ## node %d  BoundNoLag:         %24.15g\n ## -----------------------\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->BoundNoLag);
             }
-        //////////////////////////////
+            //////////////////////////////
         }
         if (DDSIP_param->outlev)
         {
@@ -698,29 +698,29 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
             DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
             if (diff > 0.)
             {
-                    DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
-                    time (&DDSIP_bb->cur_time);
-                    DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
-                    if (DDSIP_bb->initial_multiplier)
-                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  startinfo mult.   %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
+                time (&DDSIP_bb->cur_time);
+                DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
+                if (DDSIP_bb->initial_multiplier)
+                    fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  startinfo mult.   %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                              DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
                              DDSIP_node[DDSIP_bb->curnode]->bound, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
-                    else
-                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g       zero mult.   %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                else
+                    fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g       zero mult.   %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                              DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
                              DDSIP_node[DDSIP_bb->curnode]->bound, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
             }
             else
             {
-                    DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
-                    time (&DDSIP_bb->cur_time);
-                    DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
-                    if (DDSIP_bb->initial_multiplier)
-                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  startinfo mult.   %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
+                time (&DDSIP_bb->cur_time);
+                DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
+                if (DDSIP_bb->initial_multiplier)
+                    fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  startinfo mult.   %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                              DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
                              DDSIP_node[DDSIP_bb->curnode]->bound, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
-                    else
-                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g       zero mult.   %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                else
+                    fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g       zero mult.   %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
                              DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
                              DDSIP_node[DDSIP_bb->curnode]->bound, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
             }
@@ -937,7 +937,7 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
             // use the result of set_center as initial dualObjVal
             if(DDSIP_param->outlev > 10)
                 fprintf(DDSIP_bb->moreoutfile," after 1. reinit: currentDualObjVal = %20.14g, old_obj= %20.14g, incr.= %g\n", DDSIP_bb->currentDualObjVal, old_obj, DDSIP_bb->dualObjVal-old_obj);
-	    if (inherited_bound <= -DDSIP_infty)
+            if (inherited_bound <= -DDSIP_infty)
                 inherited_bound = obj;
 
             if (DDSIP_param->outlev)
@@ -1069,12 +1069,12 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
                         DDSIP_node[DDSIP_bb->curnode]->BoundNoLag = DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag[0] * DDSIP_data->prob[0];
                         for (j = 1; j < DDSIP_param->scenarios; j++)
                             DDSIP_node[DDSIP_bb->curnode]->BoundNoLag += DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag[j] * DDSIP_data->prob[j];
-                    //////////////////////////////
+                        //////////////////////////////
                         if (DDSIP_param->outlev > 21)
                         {
                             fprintf (DDSIP_bb->moreoutfile, " ## -----------------------\n ## node %d  BoundNoLag:         %24.15g\n ## -----------------------\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->BoundNoLag);
                         }
-                    //////////////////////////////
+                        //////////////////////////////
                     }
                     if (cnt > DDSIP_param->numberReinits)
                         break;
@@ -1134,10 +1134,10 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
                         obj = DDSIP_bb->dualObjVal;
                     }
                     cpu_mins = DDSIP_bb->cutAdded;
-      if (DDSIP_param->outlev > 21)
-      {
-          fprintf (DDSIP_bb->moreoutfile, "### vor  EvaluateScenarioSolutions %d: cutAdded= %d, cutCntr= %d\n", cnt, DDSIP_bb->cutAdded, DDSIP_bb->cutCntr);
-      }
+                    if (DDSIP_param->outlev > 21)
+                    {
+                        fprintf (DDSIP_bb->moreoutfile, "### vor  EvaluateScenarioSolutions %d: cutAdded= %d, cutCntr= %d\n", cnt, DDSIP_bb->cutAdded, DDSIP_bb->cutCntr);
+                    }
                     if (!DDSIP_killsignal)
                     {
 #ifdef ONLYHEUR12
@@ -1153,18 +1153,19 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
                     }
                     else
                         break;
-      if (DDSIP_param->outlev > 21)
-      {
-          fprintf (DDSIP_bb->moreoutfile, "### nach EvaluateScenarioSolutions %d: cutAdded= %d, cutCntr= %d\n", cnt, DDSIP_bb->cutAdded, DDSIP_bb->cutCntr);
-      }
+                    if (DDSIP_param->outlev > 21)
+                    {
+                        fprintf (DDSIP_bb->moreoutfile, "### nach EvaluateScenarioSolutions %d: cutAdded= %d, cutCntr= %d\n", cnt, DDSIP_bb->cutAdded, DDSIP_bb->cutCntr);
+                    }
                     if (DDSIP_param->outlev && (cpu_hrs = DDSIP_bb->cutAdded - cpu_mins))
                     {
                         fprintf (DDSIP_outfile, "  |%17d%88d cuts\n", DDSIP_bb->dualdescitcnt, cpu_hrs);
                     }
                     cpu_mins = DDSIP_bb->cutAdded;
                     DDSIP_bb->cutAdded = 0;
-                } while (cpu_mins && (((obj - old_obj)/(fabs(obj)+1e-16) > 4.e-12) || (noIncreaseCounter < 6))
-                         && cnt < DDSIP_param->numberReinits && rgap > 99.*DDSIP_param->relgap);
+                }
+                while (cpu_mins && (((obj - old_obj)/(fabs(obj)+1e-16) > 4.e-12) || (noIncreaseCounter < 6))
+                        && cnt < DDSIP_param->numberReinits && rgap > 99.*DDSIP_param->relgap);
                 if (DDSIP_param->outlev && DDSIP_bb->cutAdded)
                 {
                     fprintf (DDSIP_outfile, "  |%17d%88d cuts\n", DDSIP_bb->dualdescitcnt, DDSIP_bb->cutAdded);
@@ -1174,7 +1175,7 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
                 {
                     if (DDSIP_param->outlev > 10)
                     {
-                       fprintf (DDSIP_bb->moreoutfile, " ########  total number of cuts added: %3d  #########################\n", DDSIP_bb->cutCntr);
+                        fprintf (DDSIP_bb->moreoutfile, " ########  total number of cuts added: %3d  #########################\n", DDSIP_bb->cutCntr);
                     }
                     fprintf (DDSIP_outfile, "  | %16d  --- %82d cuts total ---\n", 0, DDSIP_bb->cutCntr);
                     if (DDSIP_param->cb_increaseWeight && obj > inherited_bound + 1.e-3 && DDSIP_param->cbrootitlim > 5)
@@ -1207,7 +1208,7 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
     {
         if (DDSIP_param->outlev > 20)
         {
-           fprintf (DDSIP_bb->moreoutfile, " ######## update inhMult_bound  (=%.14g) to obj (=%.14g) #########################\n", inhMult_bound, obj);
+            fprintf (DDSIP_bb->moreoutfile, " ######## update inhMult_bound  (=%.14g) to obj (=%.14g) #########################\n", inhMult_bound, obj);
         }
         inhMult_bound = obj;
     }
@@ -1218,14 +1219,14 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
         {
             if (DDSIP_param->outlev > 20)
             {
-               fprintf (DDSIP_bb->moreoutfile, " ######## update inherited_bound (=%.14g) to obj (=%.14g) #########################\n", inherited_bound, obj);
+                fprintf (DDSIP_bb->moreoutfile, " ######## update inherited_bound (=%.14g) to obj (=%.14g) #########################\n", inherited_bound, obj);
             }
             inherited_bound = obj;
         }
         DDSIP_bb->keepSols = 0;
         if (DDSIP_param->cb_checkBestdual && DDSIP_bb->bestdual_cnt &&
-            (DDSIP_bb->bestvalue == DDSIP_infty || diff < 0.97*(DDSIP_bb->bestvalue - DDSIP_bb->bestbound)) &&
-            (DDSIP_bb->dualObjVal < DDSIP_bb->bestvalue - DDSIP_Dmax(1.e-11,0.5*DDSIP_param->relgap)*(fabs(DDSIP_bb->bestvalue)+1.e-10)))
+                (DDSIP_bb->bestvalue == DDSIP_infty || diff < 0.97*(DDSIP_bb->bestvalue - DDSIP_bb->bestbound)) &&
+                (DDSIP_bb->dualObjVal < DDSIP_bb->bestvalue - DDSIP_Dmax(1.e-11,0.5*DDSIP_param->relgap)*(fabs(DDSIP_bb->bestvalue)+1.e-10)))
         {
             bbest_t * tmp_bestdual, * tmp_previous, * tmp_maxbound = NULL, * tmp_minbound = NULL, * tmp_minprevious = NULL;
             double max_weight, max_bound, min_bound;
@@ -1245,23 +1246,23 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                 if (diff > 0.)
                 {
-                        DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
-                        time (&DDSIP_bb->cur_time);
-                        DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
-                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  mult. node %5g  %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                 DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
-                                 DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 1], DDSIP_bb->dualObjVal, diff,
-                                 wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                    DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
+                    time (&DDSIP_bb->cur_time);
+                    DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
+                    fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  mult. node %5g  %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                             DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
+                             DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 1], DDSIP_bb->dualObjVal, diff,
+                             wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                 }
                 else
                 {
-                        DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
-                        time (&DDSIP_bb->cur_time);
-                        DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
-                        fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  mult. node %5g  %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                 DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
-                                 DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 1], DDSIP_bb->dualObjVal, diff,
-                                 wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                    DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
+                    time (&DDSIP_bb->cur_time);
+                    DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
+                    fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  mult. node %5g  %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                             DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight,
+                             DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 1], DDSIP_bb->dualObjVal, diff,
+                             wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                 }
             }
             old_obj = obj = DDSIP_bb->dualObjVal;
@@ -1269,7 +1270,7 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
             {
                 if (DDSIP_param->outlev > 20)
                 {
-                   fprintf (DDSIP_bb->moreoutfile, " ######## update inhMult_bound  (=%.14g) to obj (=%.14g) #########################\n", inhMult_bound, obj);
+                    fprintf (DDSIP_bb->moreoutfile, " ######## update inhMult_bound  (=%.14g) to obj (=%.14g) #########################\n", inhMult_bound, obj);
                 }
                 inhMult_bound = obj;
             }
@@ -1277,8 +1278,8 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
             while (tmp_bestdual && obj < DDSIP_bb->bestvalue - DDSIP_Dmin (0.3*DDSIP_param->relgap, 2.5e-9)*(fabs(DDSIP_bb->bestvalue)+1.e-12))
             {
                 if (tmp_bestdual->node_nr != (int) DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual + 1]
-                    && (!DDSIP_MultEqual (DDSIP_bb->local_bestdual, tmp_bestdual->dual))
-                    && (!DDSIP_MultEqual (DDSIP_bb->startinfo_multipliers, tmp_bestdual->dual))
+                        && (!DDSIP_MultEqual (DDSIP_bb->local_bestdual, tmp_bestdual->dual))
+                        && (!DDSIP_MultEqual (DDSIP_bb->startinfo_multipliers, tmp_bestdual->dual))
                    )
                 {
                     memcpy (DDSIP_node[DDSIP_bb->curnode]->dual, tmp_bestdual->dual, sizeof (double) * DDSIP_bb->dimdual);
@@ -1286,14 +1287,14 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
                     if (DDSIP_param->cb_increaseWeight || DDSIP_param->cb_reduceWeight)
                     {
                         next_weight = last_weight =
-                            //DDSIP_Dmin(
-                            //10.*fabs(DDSIP_bb->bestbound) + 1.,
-                            DDSIP_param->cbfactor*DDSIP_param->cbweight + (1. - DDSIP_param->cbfactor)*
-                            last_weight > tmp_bestdual->weight?
-                            (0.7*last_weight + 0.3*tmp_bestdual->weight):
-                            (0.3*last_weight + 0.7*tmp_bestdual->weight)
-                            //  )
-                           ;
+                                          //DDSIP_Dmin(
+                                          //10.*fabs(DDSIP_bb->bestbound) + 1.,
+                                          DDSIP_param->cbfactor*DDSIP_param->cbweight + (1. - DDSIP_param->cbfactor)*
+                                          last_weight > tmp_bestdual->weight?
+                                          (0.7*last_weight + 0.3*tmp_bestdual->weight):
+                                          (0.3*last_weight + 0.7*tmp_bestdual->weight)
+                                          //  )
+                                          ;
                         max_weight = DDSIP_Dmax (max_weight, next_weight);
                         cb_set_next_weight (p, next_weight);
                     }
@@ -1338,10 +1339,10 @@ fprintf(DDSIP_bb->moreoutfile, "### new start_weight= %.8g\n", start_weight);
                     tmp_bestdual->mean_diff = (tmp_bestdual->nr_uses * tmp_bestdual->mean_diff + diff)/(tmp_bestdual->nr_uses + 1.);
                     tmp_bestdual->nr_uses += 1.;
 //*********************
-if (DDSIP_param->outlev > 20)
-{
-    fprintf (DDSIP_bb->moreoutfile, "  Lagrangian from node %d used %g times, diff= %16.12g, mean_diff= %16.12g\n", tmp_bestdual->node_nr, tmp_bestdual->nr_uses, diff, tmp_bestdual->mean_diff);
-}
+                    if (DDSIP_param->outlev > 20)
+                    {
+                        fprintf (DDSIP_bb->moreoutfile, "  Lagrangian from node %d used %g times, diff= %16.12g, mean_diff= %16.12g\n", tmp_bestdual->node_nr, tmp_bestdual->nr_uses, diff, tmp_bestdual->mean_diff);
+                    }
 //*********************
                     if (obj < min_bound)
                     {
@@ -1398,25 +1399,25 @@ if (DDSIP_param->outlev > 20)
                                 DDSIP_bb->bestdual = tmp_bestdual;
 //######################
 #ifdef DEBUG
-if (DDSIP_param->outlev > 10)
-{
-int jj = 1;
-bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
-fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d\n", tmp1_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
-while (tmp1_bestdual)
-{
-   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
-   tmp1_bestdual = tmp1_bestdual->next;
-}
-}
+                                if (DDSIP_param->outlev > 10)
+                                {
+                                    int jj = 1;
+                                    bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
+                                    fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d\n", tmp1_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
+                                    while (tmp1_bestdual)
+                                    {
+                                        fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
+                                        tmp1_bestdual = tmp1_bestdual->next;
+                                    }
+                                }
 #endif
 //######################
                                 tmp_bestdual = tmp_previous;
                             }
                         }
                         if (max_bound > DDSIP_bb->bestvalue - fabs (DDSIP_bb->bestvalue) * DDSIP_param->accuracy ||
-                            //diff > DDSIP_Dmax(1.e-1, 1.e+2*DDSIP_param->relgap) * (fabs(obj) + 1.e-12) ||
-                            (DDSIP_bb->bestvalue < DDSIP_infty && (obj - DDSIP_bb->bestbound) > 0.975*(DDSIP_bb->bestvalue - DDSIP_bb->bestbound)))
+                                //diff > DDSIP_Dmax(1.e-1, 1.e+2*DDSIP_param->relgap) * (fabs(obj) + 1.e-12) ||
+                                (DDSIP_bb->bestvalue < DDSIP_infty && (obj - DDSIP_bb->bestbound) > 0.975*(DDSIP_bb->bestvalue - DDSIP_bb->bestbound)))
                         {
                             // cutoff or sufficient increase reached
                             old_obj = obj;
@@ -1458,17 +1459,17 @@ while (tmp1_bestdual)
                                 DDSIP_bb->bestdual = tmp_bestdual;
 //######################
 #ifdef DEBUG
-if (DDSIP_param->outlev > 10)
-{
-int jj = 1;
-bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
-fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d\n", tmp1_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
-while (tmp1_bestdual)
-{
-   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
-   tmp1_bestdual = tmp1_bestdual->next;
-}
-}
+                                if (DDSIP_param->outlev > 10)
+                                {
+                                    int jj = 1;
+                                    bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
+                                    fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d\n", tmp1_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
+                                    while (tmp1_bestdual)
+                                    {
+                                        fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
+                                        tmp1_bestdual = tmp1_bestdual->next;
+                                    }
+                                }
 #endif
 //######################
                                 tmp_bestdual =  tmp_previous;
@@ -1488,17 +1489,17 @@ while (tmp1_bestdual)
                             DDSIP_bb->bestdual = tmp_bestdual;
 //######################
 //#ifdef DEBUG
-if (DDSIP_param->outlev > 10)
-{
-int jj = 1;
-bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
-fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d\n", tmp1_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
-while (tmp1_bestdual)
-{
-   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
-   tmp1_bestdual = tmp1_bestdual->next;
-}
-}
+                            if (DDSIP_param->outlev > 10)
+                            {
+                                int jj = 1;
+                                bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
+                                fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d\n", tmp1_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
+                                while (tmp1_bestdual)
+                                {
+                                    fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
+                                    tmp1_bestdual = tmp1_bestdual->next;
+                                }
+                            }
 //#endif
 //######################
                             tmp_bestdual =  tmp_previous;
@@ -1508,14 +1509,14 @@ while (tmp1_bestdual)
                 tmp_previous = tmp_bestdual;
                 tmp_bestdual = tmp_bestdual->next;
 //#ifdef DEBUG
-if (DDSIP_param->outlev > 20)
-{
-fprintf (DDSIP_bb->moreoutfile, " ### tmp_bestdual now: %p, tmp_minbound: %p", tmp_bestdual, tmp_minbound);
-if (tmp_minbound)
-    fprintf (DDSIP_bb->moreoutfile, ", ->next: %p\n", tmp_minbound->next);
-else
-    fprintf (DDSIP_bb->moreoutfile, "\n");
-}
+                if (DDSIP_param->outlev > 20)
+                {
+                    fprintf (DDSIP_bb->moreoutfile, " ### tmp_bestdual now: %p, tmp_minbound: %p", tmp_bestdual, tmp_minbound);
+                    if (tmp_minbound)
+                        fprintf (DDSIP_bb->moreoutfile, ", ->next: %p\n", tmp_minbound->next);
+                    else
+                        fprintf (DDSIP_bb->moreoutfile, "\n");
+                }
 //#endif
             }
             // if all were tested put the multiplier which gave the minimal diff and then the minimal mean_diff to the end of the list
@@ -1527,16 +1528,16 @@ else
                 tmp_minmean = tmp_bestdual = DDSIP_bb->bestdual;
                 while (tmp_bestdual)
                 {
-                   if (tmp_bestdual == tmp_minbound)
-                       tmp_minprevious = tmp_previous;
-                   if (tmp_bestdual->mean_diff < h)
-                   {
-                       h = tmp_bestdual->mean_diff;
-                       tmp_minmean = tmp_bestdual;
-                       tmp_meanprevious = tmp_previous;
-                   }
-                   tmp_previous = tmp_bestdual;
-                   tmp_bestdual = tmp_bestdual->next;
+                    if (tmp_bestdual == tmp_minbound)
+                        tmp_minprevious = tmp_previous;
+                    if (tmp_bestdual->mean_diff < h)
+                    {
+                        h = tmp_bestdual->mean_diff;
+                        tmp_minmean = tmp_bestdual;
+                        tmp_meanprevious = tmp_previous;
+                    }
+                    tmp_previous = tmp_bestdual;
+                    tmp_bestdual = tmp_bestdual->next;
                 }
                 tmp_last = tmp_previous;
                 if (tmp_minprevious)
@@ -1561,19 +1562,19 @@ else
                 }
 //######################
 //#ifdef DEBUG
-if (DDSIP_param->outlev > 20)
-{
-int jj = 1;
-bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
-fprintf (DDSIP_bb->moreoutfile, " ## diff of last iter: shifted mult. from node %d to end of bestdual list, #entries: %d\n", tmp_minbound->node_nr, DDSIP_bb->bestdual_cnt);
-while (tmp1_bestdual)
-{
-   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, mean_diff %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->mean_diff, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
-   tmp1_bestdual = tmp1_bestdual->next;
-}
-}
-if (DDSIP_param->outlev)
-   fprintf (DDSIP_bb->moreoutfile, " ##   tmp_minmean= %p != tmp_minbound= %p : %d)\n",tmp_minmean, tmp_minbound, tmp_minmean != tmp_minbound);
+                if (DDSIP_param->outlev > 20)
+                {
+                    int jj = 1;
+                    bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
+                    fprintf (DDSIP_bb->moreoutfile, " ## diff of last iter: shifted mult. from node %d to end of bestdual list, #entries: %d\n", tmp_minbound->node_nr, DDSIP_bb->bestdual_cnt);
+                    while (tmp1_bestdual)
+                    {
+                        fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, mean_diff %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->mean_diff, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
+                        tmp1_bestdual = tmp1_bestdual->next;
+                    }
+                }
+                if (DDSIP_param->outlev)
+                    fprintf (DDSIP_bb->moreoutfile, " ##   tmp_minmean= %p != tmp_minbound= %p : %d)\n",tmp_minmean, tmp_minbound, tmp_minmean != tmp_minbound);
 //#endif
 //######################
                 if (tmp_minmean != tmp_minbound)
@@ -1583,14 +1584,14 @@ if (DDSIP_param->outlev)
                     tmp_minmean = tmp_bestdual = DDSIP_bb->bestdual;
                     while (tmp_bestdual)
                     {
-                       if (tmp_bestdual->mean_diff < h)
-                       {
-                           h = tmp_bestdual->mean_diff;
-                           tmp_minmean = tmp_bestdual;
-                           tmp_meanprevious = tmp_previous;
-                       }
-                       tmp_previous = tmp_bestdual;
-                       tmp_bestdual = tmp_bestdual->next;
+                        if (tmp_bestdual->mean_diff < h)
+                        {
+                            h = tmp_bestdual->mean_diff;
+                            tmp_minmean = tmp_bestdual;
+                            tmp_meanprevious = tmp_previous;
+                        }
+                        tmp_previous = tmp_bestdual;
+                        tmp_bestdual = tmp_bestdual->next;
                     }
                     if (tmp_meanprevious)
                     {
@@ -1612,17 +1613,17 @@ if (DDSIP_param->outlev)
                     }
 //######################
 //#ifdef DEBUG
-if (DDSIP_param->outlev > 20)
-{
-int jj = 1;
-bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
-fprintf (DDSIP_bb->moreoutfile, " ## mean diff: shifted mult. from node %d to end of bestdual list, #entries: %d\n", tmp_minmean->node_nr, DDSIP_bb->bestdual_cnt);
-while (tmp1_bestdual)
-{
-   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, mean_diff %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->mean_diff, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
-   tmp1_bestdual = tmp1_bestdual->next;
-}
-}
+                    if (DDSIP_param->outlev > 20)
+                    {
+                        int jj = 1;
+                        bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
+                        fprintf (DDSIP_bb->moreoutfile, " ## mean diff: shifted mult. from node %d to end of bestdual list, #entries: %d\n", tmp_minmean->node_nr, DDSIP_bb->bestdual_cnt);
+                        while (tmp1_bestdual)
+                        {
+                            fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, mean_diff %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->mean_diff, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
+                            tmp1_bestdual = tmp1_bestdual->next;
+                        }
+                    }
 //#endif
 //######################
                 }
@@ -1638,8 +1639,8 @@ while (tmp1_bestdual)
                 if (max_bound >= inhMult_bound)
                 {
 //////////////////////////
-if(DDSIP_param->outlev > 20)
-    fprintf(DDSIP_bb->moreoutfile, "### max_bound (%g) >= inhMult_bound (%g), tmp_maxbound= %p\n", max_bound, inhMult_bound, tmp_maxbound);
+                    if(DDSIP_param->outlev > 20)
+                        fprintf(DDSIP_bb->moreoutfile, "### max_bound (%g) >= inhMult_bound (%g), tmp_maxbound= %p\n", max_bound, inhMult_bound, tmp_maxbound);
 //////////////////////////
                     if (tmp_maxbound)
                     {
@@ -1650,43 +1651,43 @@ if(DDSIP_param->outlev > 20)
                             {
                                 for (status=0; status < DDSIP_bb->dimdual; status++)
                                     DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.00002 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                + 0.99998 * tmp_maxbound->dual[status];
+                                            + 0.99998 * tmp_maxbound->dual[status];
                             }
                             else
                             {
 #if MIX == 0
                                 for (status=0; status < DDSIP_bb->dimdual; status++)
-                                        DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.008 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                    + 0.992 * tmp_maxbound->dual[status];
+                                    DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.008 * DDSIP_bb->startinfo_multipliers[status]
+                                            + 0.992 * tmp_maxbound->dual[status];
 #else
                                 if (!tmp_b2)
                                 {
                                     for (status=0; status < DDSIP_bb->dimdual; status++)
                                         DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.010 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                    + 0.990 * tmp_maxbound->dual[status];
+                                                + 0.990 * tmp_maxbound->dual[status];
                                 }
                                 else
                                 {
 #if MIX == 1
                                     double h1, h2;
 #ifdef DEBUG
-if (DDSIP_param->outlev)
-    fprintf(DDSIP_bb->moreoutfile, "# MIX 1, factor %g\n", MIXFACTOR);
+                                    if (DDSIP_param->outlev)
+                                        fprintf(DDSIP_bb->moreoutfile, "# MIX 1, factor %g\n", MIXFACTOR);
 #endif
                                     h2 = MIXFACTOR*(b_b2 - inhMult_bound)/(b_b1 + b_b2 - 2.*inhMult_bound);
                                     h1 = 1. - h2;
                                     for (status=0; status < DDSIP_bb->dimdual; status++)
                                         DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.008 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                    + 0.992 * (h1*tmp_b1[status]+h2*tmp_b2[status]);
+                                                + 0.992 * (h1*tmp_b1[status]+h2*tmp_b2[status]);
 #elif MIX == 2
 #ifdef DEBUG
-if (DDSIP_param->outlev)
-    fprintf(DDSIP_bb->moreoutfile, "# MIX 2\n");
+                                    if (DDSIP_param->outlev)
+                                        fprintf(DDSIP_bb->moreoutfile, "# MIX 2\n");
 #endif
                                     for (status=0; status < DDSIP_bb->dimdual; status++)
                                         DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.00002 * DDSIP_bb->startinfo_multipliers[status] +
-                                                                                      0.99998 * (0.002 * tmp_b2[status]
-                                                                                              + 0.998 * tmp_b1[status]);
+                                                0.99998 * (0.002 * tmp_b2[status]
+                                                           + 0.998 * tmp_b1[status]);
 #endif
                                 }
 #endif
@@ -1715,7 +1716,7 @@ if (DDSIP_param->outlev)
                                 DDSIP_Free ((void **) &(maxfirst));
                                 DDSIP_Free ((void **) &(center_point));
                                 return status;
-                                }
+                            }
                             if (DDSIP_param->outlev)
                             {
                                 DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
@@ -1725,14 +1726,14 @@ if (DDSIP_param->outlev)
                                 if (diff > 0.)
                                 {
                                     fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  + line between    %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                                 DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
-                                                 DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                                             DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
+                                             DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                 }
                                 else
                                 {
                                     fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  + line between    %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                                 DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
-                                                 DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                                             DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
+                                             DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                 }
                             }
                             if (DDSIP_bb->currentDualObjVal >= max_bound)
@@ -1749,20 +1750,20 @@ if (DDSIP_param->outlev)
                                 {
                                     for (status=0; status < DDSIP_bb->dimdual; status++)
                                         DDSIP_node[DDSIP_bb->curnode]->dual[status] = -0.001 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                     + 1.001 * tmp_maxbound->dual[status];
+                                                + 1.001 * tmp_maxbound->dual[status];
                                 }
                                 else
                                 {
 #if MIX == 0
                                     for (status=0; status < DDSIP_bb->dimdual; status++)
                                         DDSIP_node[DDSIP_bb->curnode]->dual[status] = -0.012 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                     + 1.012 * tmp_maxbound->dual[status];
+                                                + 1.012 * tmp_maxbound->dual[status];
 #else
                                     if (!tmp_b2)
                                     {
                                         for (status=0; status < DDSIP_bb->dimdual; status++)
                                             DDSIP_node[DDSIP_bb->curnode]->dual[status] = -0.01 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                         + 1.01 * tmp_maxbound->dual[status];
+                                                    + 1.01 * tmp_maxbound->dual[status];
                                     }
                                     else
                                     {
@@ -1772,12 +1773,12 @@ if (DDSIP_param->outlev)
                                         h1 = 1. - h2;
                                         for (status=0; status < DDSIP_bb->dimdual; status++)
                                             DDSIP_node[DDSIP_bb->curnode]->dual[status] = -0.01 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                         + 1.01 * (h1*tmp_b1[status]+h2*tmp_b2[status]);
+                                                    + 1.01 * (h1*tmp_b1[status]+h2*tmp_b2[status]);
 #elif MIX == 2
                                         for (status=0; status < DDSIP_bb->dimdual; status++)
-                                           DDSIP_node[DDSIP_bb->curnode]->dual[status] = -0.00002 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                        + 1.00002 * (-0.002 * tmp_b2[status]
-                                                                                                  + 1.002 * tmp_b1[status]);
+                                            DDSIP_node[DDSIP_bb->curnode]->dual[status] = -0.00002 * DDSIP_bb->startinfo_multipliers[status]
+                                                    + 1.00002 * (-0.002 * tmp_b2[status]
+                                                                 + 1.002 * tmp_b1[status]);
 #endif
                                     }
 #endif
@@ -1816,14 +1817,14 @@ if (DDSIP_param->outlev)
                                     if (diff > 0.)
                                     {
                                         fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  + line extrap.    %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                                     DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
-                                                     DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                                                 DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
+                                                 DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                     }
                                     else
                                     {
                                         fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  + line extrap.    %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                                     DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
-                                                     DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                                                 DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
+                                                 DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                     }
                                 }
                                 if (DDSIP_bb->currentDualObjVal >= max_bound)
@@ -1842,7 +1843,7 @@ if (DDSIP_param->outlev)
                                 }
                             }
                         }
-                        else 
+                        else
                         {
                             if (memcmp(DDSIP_bb->local_bestdual, tmp_maxbound->dual, sizeof (double) * (DDSIP_bb->dimdual)))
                             {
@@ -1860,8 +1861,8 @@ if (DDSIP_param->outlev)
                 {
                     cnt = 1;
 //////////////////////////
-if(DDSIP_param->outlev > 20)
-    fprintf(DDSIP_bb->moreoutfile, "### max_bound (%g) < inherited_bound (%g), tmp_maxbound= %p\n", max_bound, inherited_bound, tmp_maxbound);
+                    if(DDSIP_param->outlev > 20)
+                        fprintf(DDSIP_bb->moreoutfile, "### max_bound (%g) < inherited_bound (%g), tmp_maxbound= %p\n", max_bound, inherited_bound, tmp_maxbound);
 //////////////////////////
                     if (DDSIP_param->cb_test_line)
                     {
@@ -1871,22 +1872,22 @@ if(DDSIP_param->outlev > 20)
                                 // try a extrapolated point on the line between inherited and best multipliers
                                 for (status=0; status < DDSIP_bb->dimdual; status++)
                                     DDSIP_node[DDSIP_bb->curnode]->dual[status] =  1.006 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                 - 0.006 * tmp_maxbound->dual[status];
-                                    //DDSIP_node[DDSIP_bb->curnode]->dual[status] =  1.002 * DDSIP_bb->startinfo_multipliers[status]
-                                    //                                             - 0.002 * tmp_maxbound->dual[status];
+                                            - 0.006 * tmp_maxbound->dual[status];
+                                //DDSIP_node[DDSIP_bb->curnode]->dual[status] =  1.002 * DDSIP_bb->startinfo_multipliers[status]
+                                //                                             - 0.002 * tmp_maxbound->dual[status];
 #ifdef DEBUG
-                                    if (DDSIP_param->outlev > 21 && DDSIP_param->outlev < DDSIP_current_lambda_outlev)
+                                if (DDSIP_param->outlev > 21 && DDSIP_param->outlev < DDSIP_current_lambda_outlev)
+                                {
+                                    int i;
+                                    fprintf (DDSIP_bb->moreoutfile, "\nCurrent lambda (line extr. %d) for node %d: (%p)\n", tmp_maxbound->node_nr, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->dual);
+                                    for (i = 0; i < DDSIP_bb->dimdual; i++)
                                     {
-                                        int i;
-                                        fprintf (DDSIP_bb->moreoutfile, "\nCurrent lambda (line extr. %d) for node %d: (%p)\n", tmp_maxbound->node_nr, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->dual);
-                                        for (i = 0; i < DDSIP_bb->dimdual; i++)
-                                        {
-                                            fprintf (DDSIP_bb->moreoutfile, " %14.8g,", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
-                                            if (!((i+1)%10))
-                                                fprintf (DDSIP_bb->moreoutfile, "\n");
-                                        }
-                                        fprintf(DDSIP_bb->moreoutfile, "\n");
+                                        fprintf (DDSIP_bb->moreoutfile, " %14.8g,", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
+                                        if (!((i+1)%10))
+                                            fprintf (DDSIP_bb->moreoutfile, "\n");
                                     }
+                                    fprintf(DDSIP_bb->moreoutfile, "\n");
+                                }
 #endif
                                 if ((status = cb_set_new_center_point (p, DDSIP_node[DDSIP_bb->curnode]->dual)))
                                 {
@@ -1908,14 +1909,14 @@ if(DDSIP_param->outlev > 20)
                                     if (diff > 0.)
                                     {
                                         fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  - line extrap.    %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                                     DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
-                                                     DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                                                 DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
+                                                 DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                     }
                                     else
                                     {
                                         fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  - line extrap.    %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                                     DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
-                                                     DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                                                 DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
+                                                 DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                     }
                                 }
                                 if (DDSIP_bb->currentDualObjVal >= inhMult_bound)
@@ -1935,20 +1936,20 @@ if(DDSIP_param->outlev > 20)
                                 // try a point on the line between inherited and best multipliers
                                 for (status=0; status < DDSIP_bb->dimdual; status++)
                                     DDSIP_node[DDSIP_bb->curnode]->dual[status] = 0.992 * DDSIP_bb->startinfo_multipliers[status]
-                                                                                + 0.008 * tmp_maxbound->dual[status];
+                                            + 0.008 * tmp_maxbound->dual[status];
 #ifdef DEBUG
-                                    if (DDSIP_param->outlev > 21 && DDSIP_param->outlev < DDSIP_current_lambda_outlev)
+                                if (DDSIP_param->outlev > 21 && DDSIP_param->outlev < DDSIP_current_lambda_outlev)
+                                {
+                                    int i;
+                                    fprintf (DDSIP_bb->moreoutfile, "\nCurrent lambda (line betw. %d) for node %d: (%p)\n", tmp_maxbound->node_nr, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->dual);
+                                    for (i = 0; i < DDSIP_bb->dimdual; i++)
                                     {
-                                        int i;
-                                        fprintf (DDSIP_bb->moreoutfile, "\nCurrent lambda (line betw. %d) for node %d: (%p)\n", tmp_maxbound->node_nr, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->dual);
-                                        for (i = 0; i < DDSIP_bb->dimdual; i++)
-                                        {
-                                            fprintf (DDSIP_bb->moreoutfile, " %14.8g,", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
-                                            if (!((i+1)%10))
-                                                fprintf (DDSIP_bb->moreoutfile, "\n");
-                                        }
-                                        fprintf(DDSIP_bb->moreoutfile, "\n");
+                                        fprintf (DDSIP_bb->moreoutfile, " %14.8g,", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
+                                        if (!((i+1)%10))
+                                            fprintf (DDSIP_bb->moreoutfile, "\n");
                                     }
+                                    fprintf(DDSIP_bb->moreoutfile, "\n");
+                                }
 #endif
                                 if ((status = cb_set_new_center_point (p, DDSIP_node[DDSIP_bb->curnode]->dual)))
                                 {
@@ -1970,14 +1971,14 @@ if(DDSIP_param->outlev > 20)
                                     if (diff > 0.)
                                     {
                                         fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  - line between    %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                                     DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
-                                                     DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                                                 DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
+                                                 DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                     }
                                     else
                                     {
                                         fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  - line between    %-20.14g diff. %-13.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                                     DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
-                                                     DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                                                 DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
+                                                 DDSIP_bb->dualObjVal, diff, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                                     }
                                 }
                                 if (DDSIP_bb->currentDualObjVal >= inhMult_bound)
@@ -2024,7 +2025,7 @@ if(DDSIP_param->outlev > 20)
                     {
                         if (DDSIP_param->outlev > 20)
                         {
-                           fprintf (DDSIP_bb->moreoutfile, " ######## update inhMult_bound  (=%.14g) to obj (=%.14g) #########################\n", inhMult_bound, obj);
+                            fprintf (DDSIP_bb->moreoutfile, " ######## update inhMult_bound  (=%.14g) to obj (=%.14g) #########################\n", inhMult_bound, obj);
                         }
                         inhMult_bound = obj;
                     }
@@ -2034,20 +2035,20 @@ if(DDSIP_param->outlev > 20)
                         time (&DDSIP_bb->cur_time);
                         DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                         fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  mult. node %5g  %-20.14g %30dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                            DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
+                                 DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
                                  DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 1], obj,
                                  wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                     }
                 }
             }
         }
-        
+
         old_obj = obj = DDSIP_bb->dualObjVal;
         DDSIP_bb->last_dualitcnt = DDSIP_bb->dualitcnt;
         if (DDSIP_param->cb_increaseWeight &&
-            ((DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->cb_depth ||
-             ((DDSIP_bb->bestvalue - obj) < DDSIP_Dmin (1.e4*DDSIP_param->relgap, 1.e-5)*(fabs(DDSIP_bb->bestvalue)+1.e-10))) &&
-              next_weight < 10.))
+                ((DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->cb_depth ||
+                  ((DDSIP_bb->bestvalue - obj) < DDSIP_Dmin (1.e4*DDSIP_param->relgap, 1.e-5)*(fabs(DDSIP_bb->bestvalue)+1.e-10))) &&
+                 next_weight < 10.))
         {
             last_weight = next_weight *= 2.5;
             cb_set_next_weight (p, next_weight);
@@ -2093,7 +2094,7 @@ if(DDSIP_param->outlev > 20)
         {
             DDSIP_bb->cutoff++;
             if (DDSIP_bb->dualitcnt == 1)
-               DDSIP_bb->dualdescitcnt = -1;
+                DDSIP_bb->dualdescitcnt = -1;
         }
         //
         if ((DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue)/(fabs(DDSIP_bb->bestvalue)+1.e-10) > DDSIP_param->accuracy)
@@ -2118,26 +2119,26 @@ if(DDSIP_param->outlev > 20)
             if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 1.e-11*fabs(DDSIP_bb->bestvalue))
                 DDSIP_bb->skip = -2;
             if ((DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue*nfactor) &&
-                (!(DDSIP_bb->found_optimal_node) || (DDSIP_bb->found_optimal_node && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node)))
+                    (!(DDSIP_bb->found_optimal_node) || (DDSIP_bb->found_optimal_node && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node)))
             {
-    //////////////////////////////////////////////////////////////////
-                   if (DDSIP_param->outlev > 20)
-                       fprintf (DDSIP_bb->moreoutfile, "########## setting found_optimal_node: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*nfactor (%20.15g) = %.8g\n",
-                                DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,
-                                DDSIP_bb->bestvalue*nfactor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*nfactor);
-    //////////////////////////////////////////////////////////////////
+                //////////////////////////////////////////////////////////////////
+                if (DDSIP_param->outlev > 20)
+                    fprintf (DDSIP_bb->moreoutfile, "########## setting found_optimal_node: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*nfactor (%20.15g) = %.8g\n",
+                             DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,
+                             DDSIP_bb->bestvalue*nfactor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*nfactor);
+                //////////////////////////////////////////////////////////////////
                 DDSIP_bb->found_optimal_node = DDSIP_bb->curnode;
                 DDSIP_bb->bound_optimal_node = DDSIP_node[DDSIP_bb->curnode]->bound;
             }
-    //////////////////////////////////////////////////////////////////
+            //////////////////////////////////////////////////////////////////
             else
             {
-               if (DDSIP_param->outlev > 20)
-                   fprintf (DDSIP_bb->moreoutfile, "########## else: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bound_optimal_node (%20.15g) = %.8g, - bestvalue*nfactor (%20.15g) = %.8g\n",
-                            DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bound_optimal_node, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bound_optimal_node,
-                            DDSIP_bb->bestvalue*nfactor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*nfactor);
+                if (DDSIP_param->outlev > 20)
+                    fprintf (DDSIP_bb->moreoutfile, "########## else: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bound_optimal_node (%20.15g) = %.8g, - bestvalue*nfactor (%20.15g) = %.8g\n",
+                             DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bound_optimal_node, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bound_optimal_node,
+                             DDSIP_bb->bestvalue*nfactor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*nfactor);
             }
-    //////////////////////////////////////////////////////////////////
+            //////////////////////////////////////////////////////////////////
         }
     }
     else if ((DDSIP_bb->no_reduced_front == 1) && (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*DDSIP_param->relgap))
@@ -2173,7 +2174,7 @@ if(DDSIP_param->outlev > 20)
 //            DDSIP_param->files = outfiles;
 //        }
 ////////////////////////////////////////////////////////////////////////////////////
-	DDSIP_bb->last_weight = last_weight = next_weight;
+        DDSIP_bb->last_weight = last_weight = next_weight;
         DDSIP_bb->last_dualitcnt = DDSIP_bb->dualitcnt;
         while ((!cb_termination_code (p)) && DDSIP_bb->violations && DDSIP_bb->skip != 2
                 && (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time) < DDSIP_param->timelim)
@@ -2351,11 +2352,11 @@ NEXT_TRY:
                 j = (obj <= old_obj);
                 // if the step did not increase the bound, increase the weight
                 if (((next_weight - last_weight  <= 0.5*last_weight) || (DDSIP_bb->dualdescitcnt == 1 && DDSIP_bb->weight_reset == 1)) &&
-                    (!DDSIP_param->cb_inherit || j ||
-                    (!j &&
-                     ((DDSIP_bb->dualdescitcnt == 1 &&
-                       DDSIP_bb->dualitcnt < DDSIP_Imin(DDSIP_param->cb_maxsteps, 11) + init_iters) ||
-                     DDSIP_bb->dualdescitcnt > 1))))
+                        (!DDSIP_param->cb_inherit || j ||
+                         (!j &&
+                          ((DDSIP_bb->dualdescitcnt == 1 &&
+                            DDSIP_bb->dualitcnt < DDSIP_Imin(DDSIP_param->cb_maxsteps, 11) + init_iters) ||
+                           DDSIP_bb->dualdescitcnt > 1))))
                 {
                     DDSIP_bb->weight_reset = 0;
                     if (j || obj <= inherited_bound)
@@ -2700,10 +2701,10 @@ NEXT_TRY:
 ///////////////
                         // if the center point is not local_bestdual (may occur when maxsteps reached) - set center point to local_bestdual
                         if (cur_iters > 2 && DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2] &&
-                            memcmp(DDSIP_bb->local_bestdual, center_point, sizeof (double) * (DDSIP_bb->dimdual)) &&
-                            (int) DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2] != DDSIP_bb->dualitcnt &&
-                            (obj - old_obj)/(fabs(old_obj) + 1.e-10) > 1.e-8 &&
-                            DDSIP_bb->dualdescitcnt < DDSIP_bb->current_itlim)
+                                memcmp(DDSIP_bb->local_bestdual, center_point, sizeof (double) * (DDSIP_bb->dimdual)) &&
+                                (int) DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2] != DDSIP_bb->dualitcnt &&
+                                (obj - old_obj)/(fabs(old_obj) + 1.e-10) > 1.e-8 &&
+                                DDSIP_bb->dualdescitcnt < DDSIP_bb->current_itlim)
                         {
                             if (DDSIP_param->outlev > 10)
                                 fprintf(DDSIP_bb->moreoutfile,"############### set center point to bestdual from iter %g ##################\n",DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2]);
@@ -2931,11 +2932,11 @@ NEXT_TRY:
 ///////////     ///////////
                         else if (DDSIP_bb->dualdescitcnt == 1 && DDSIP_param->cb_increaseWeight && (next_weight - last_weight) < 0.1*last_weight && cur_iters > DDSIP_param->cb_maxsteps + 4)
                         {
-                                next_weight *= 1.1;
-                                cb_set_next_weight (p, next_weight);
+                            next_weight *= 1.1;
+                            cb_set_next_weight (p, next_weight);
 ///////////     ///////////
-                                if (DDSIP_param->outlev > 10)
-                                    fprintf(DDSIP_bb->moreoutfile,"###############  increased next weight to %g ##################\n",next_weight);
+                            if (DDSIP_param->outlev > 10)
+                                fprintf(DDSIP_bb->moreoutfile,"###############  increased next weight to %g ##################\n",next_weight);
 ///////////     ///////////
                         }
                         if (DDSIP_param->outlev > 10)
@@ -3113,7 +3114,7 @@ NEXT_TRY:
         if (DDSIP_bb->dualdescitcnt && DDSIP_bb->local_bestdual[DDSIP_bb->dimdual+1] == DDSIP_bb->curnode &&
                 (!DDSIP_bb->bestdual || DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestdual_max ||
                  (obj > DDSIP_bb->bestvalue - 5.*fabs(DDSIP_bb->bestvalue)*(DDSIP_param->relgap)) ||
-                  DDSIP_bb->curnode < 6)
+                 DDSIP_bb->curnode < 6)
            )
         {
             bbest_t * tmp_bestdual;
@@ -3166,16 +3167,16 @@ NEXT_TRY:
                     fprintf (DDSIP_bb->moreoutfile, " ## added mult. from node %d to bestdual list, #entries: %d, bestdual_max: %17.14g, mult.=%g\n", DDSIP_bb->curnode, DDSIP_bb->bestdual_cnt, DDSIP_bb->bestdual_max, DDSIP_bb->bestdual->weight);
 //######################
 #ifdef DEBUG
-if (DDSIP_param->outlev > 10)
-{
-int jj = 1;
-bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
-while (tmp1_bestdual)
-{
-   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
-   tmp1_bestdual = tmp1_bestdual->next;
-}
-}
+                if (DDSIP_param->outlev > 10)
+                {
+                    int jj = 1;
+                    bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
+                    while (tmp1_bestdual)
+                    {
+                        fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
+                        tmp1_bestdual = tmp1_bestdual->next;
+                    }
+                }
 #endif
 //######################
                 if (DDSIP_bb->bestdual_cnt > DDSIP_param->cb_bestdualListLength)
@@ -3190,24 +3191,24 @@ while (tmp1_bestdual)
                     }
                     tmp_previous->next = NULL;
                     if (DDSIP_param->outlev > 10)
-                     fprintf (DDSIP_bb->moreoutfile, " ##         set %p->next of entry from node %d of bestdual list to %p\n", tmp_previous, tmp_previous->node_nr, tmp_previous->next);
+                        fprintf (DDSIP_bb->moreoutfile, " ##         set %p->next of entry from node %d of bestdual list to %p\n", tmp_previous, tmp_previous->node_nr, tmp_previous->next);
                     DDSIP_bb->bestdual_cnt--;
                     if (DDSIP_param->outlev > 10)
-                     fprintf (DDSIP_bb->moreoutfile, " ## delete last entry from node %d from bestdual list, #entries: %d\n", tmp_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
+                        fprintf (DDSIP_bb->moreoutfile, " ## delete last entry from node %d from bestdual list, #entries: %d\n", tmp_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
                     DDSIP_Free ((void **) &(tmp_bestdual->dual));
                     DDSIP_Free ((void **) &(tmp_bestdual));
 //######################
 #ifdef DEBUG
-if (DDSIP_param->outlev > 10)
-{
-int jj = 1;
-bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
-while (tmp1_bestdual)
-{
-   fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
-   tmp1_bestdual = tmp1_bestdual->next;
-}
-}
+                    if (DDSIP_param->outlev > 10)
+                    {
+                        int jj = 1;
+                        bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
+                        while (tmp1_bestdual)
+                        {
+                            fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
+                            tmp1_bestdual = tmp1_bestdual->next;
+                        }
+                    }
 #endif
                 }
                 memcpy (DDSIP_node[DDSIP_bb->curnode]->dual, DDSIP_bb->local_bestdual, sizeof (double) * (DDSIP_bb->dimdual + 3));
@@ -3232,8 +3233,8 @@ while (tmp1_bestdual)
             i_scen = cb_termination_code (p);
             if (i_scen == 32)
             {
-                 DDSIP_node[DDSIP_bb->curnode]->cbReturn32 = DDSIP_node[DDSIP_bb->curnode]->depth;
-                 if (DDSIP_param->outlev > 20)
+                DDSIP_node[DDSIP_bb->curnode]->cbReturn32 = DDSIP_node[DDSIP_bb->curnode]->depth;
+                if (DDSIP_param->outlev > 20)
                     fprintf (DDSIP_bb->moreoutfile, "########## DDSIP_node[%d]->cbReturn32 = %d\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->depth);
             }
             //if (obj > DDSIP_bb->bestvalue)
@@ -3260,11 +3261,11 @@ while (tmp1_bestdual)
                         fprintf (DDSIP_bb->moreoutfile, "########## skip=+2 for DDSIP_bb->bestsol_in_curnode=%d, DDSIP_node[%d]->bound (%20.15g) - bestvalue = %.8g\n", DDSIP_bb->bestsol_in_curnode, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue);
                 }
                 else if (DDSIP_bb->found_optimal_node && /* !DDSIP_bb->bestsol_in_curnode && */
-                     DDSIP_node[DDSIP_bb->curnode]->violations > 0.4*DDSIP_param->scenarios && (DDSIP_bb->no_reduced_front > 1))
+                         DDSIP_node[DDSIP_bb->curnode]->violations > 0.4*DDSIP_param->scenarios && (DDSIP_bb->no_reduced_front > 1))
                 {
-                     DDSIP_bb->skip = -2;
-                     if (DDSIP_param->outlev > 20)
-                         fprintf (DDSIP_bb->moreoutfile, "########## skip=-2 for DDSIP_bb->bestsol_in_curnode=%d, DDSIP_node[%d]->bound (%20.15g) - bestvalue = %.8g\n", DDSIP_bb->bestsol_in_curnode, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue);
+                    DDSIP_bb->skip = -2;
+                    if (DDSIP_param->outlev > 20)
+                        fprintf (DDSIP_bb->moreoutfile, "########## skip=-2 for DDSIP_bb->bestsol_in_curnode=%d, DDSIP_node[%d]->bound (%20.15g) - bestvalue = %.8g\n", DDSIP_bb->bestsol_in_curnode, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue);
                 }
                 if (DDSIP_bb->no_reduced_front == 1)
                     DDSIP_Print2 ("termination status: gap reached. --------------------------------------------------------------", "\n", 0, 0);
@@ -3274,26 +3275,26 @@ while (tmp1_bestdual)
                     if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 1.e-11*fabs(DDSIP_bb->bestvalue))
                         DDSIP_bb->skip = -2;
                     if ((DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue*nfactor) &&
-                        (!(DDSIP_bb->found_optimal_node) || (DDSIP_bb->found_optimal_node && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node)))
+                            (!(DDSIP_bb->found_optimal_node) || (DDSIP_bb->found_optimal_node && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node)))
                     {
-    //////////////////////////////////////////////////////////////////
-                           if (DDSIP_param->outlev > 20)
-                               fprintf (DDSIP_bb->moreoutfile, "########## setting found_optimal_node: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*nfactor (%20.15g) = %.8g\n",
-                                        DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,
-                                        DDSIP_bb->bestvalue*nfactor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*nfactor);
-    //////////////////////////////////////////////////////////////////
+                        //////////////////////////////////////////////////////////////////
+                        if (DDSIP_param->outlev > 20)
+                            fprintf (DDSIP_bb->moreoutfile, "########## setting found_optimal_node: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bestvalue (%20.15g) = %.8g, - bestvalue*nfactor (%20.15g) = %.8g\n",
+                                     DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,
+                                     DDSIP_bb->bestvalue*nfactor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*nfactor);
+                        //////////////////////////////////////////////////////////////////
                         DDSIP_bb->found_optimal_node = DDSIP_bb->curnode;
                         DDSIP_bb->bound_optimal_node = DDSIP_node[DDSIP_bb->curnode]->bound;
                     }
-    //////////////////////////////////////////////////////////////////
+                    //////////////////////////////////////////////////////////////////
                     else
                     {
-                       if (DDSIP_param->outlev > 20)
-                           fprintf (DDSIP_bb->moreoutfile, "########## else: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bound_optimal_node (%20.15g) = %.8g, - bestvalue*nfactor (%20.15g) = %.8g\n",
-                                    DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bound_optimal_node, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bound_optimal_node,
-                                    DDSIP_bb->bestvalue*nfactor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*nfactor);
+                        if (DDSIP_param->outlev > 20)
+                            fprintf (DDSIP_bb->moreoutfile, "########## else: found_optimal_node= %d, DDSIP_node[%d]->bound (%20.15g) - bound_optimal_node (%20.15g) = %.8g, - bestvalue*nfactor (%20.15g) = %.8g\n",
+                                     DDSIP_bb->found_optimal_node, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bound_optimal_node, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bound_optimal_node,
+                                     DDSIP_bb->bestvalue*nfactor, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue*nfactor);
                     }
-    //////////////////////////////////////////////////////////////////
+                    //////////////////////////////////////////////////////////////////
                 }
                 DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
             }
@@ -3366,7 +3367,7 @@ while (tmp1_bestdual)
             DDSIP_node[DDSIP_bb->curnode]->BoundNoLag = DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag[0] * DDSIP_data->prob[0];
             for (j = 1; j < DDSIP_param->scenarios; j++)
                 DDSIP_node[DDSIP_bb->curnode]->BoundNoLag += DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag[j] * DDSIP_data->prob[j];
-        //////////////////////////////
+            //////////////////////////////
             if (DDSIP_param->outlev > 21)
             {
                 for (j = 0; j < DDSIP_param->scenarios; j++)
@@ -3375,7 +3376,7 @@ while (tmp1_bestdual)
                 }
                 fprintf (DDSIP_bb->moreoutfile, " ## -----------------------\n ## node %d  BoundNoLag:         %24.15g\n ## -----------------------\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->BoundNoLag);
             }
-        //////////////////////////////
+            //////////////////////////////
             obj = DDSIP_bb->dualObjVal;
             if (DDSIP_param->outlev)
             {
@@ -3383,19 +3384,19 @@ while (tmp1_bestdual)
                 time (&DDSIP_bb->cur_time);
                 DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
                 fprintf (DDSIP_outfile, "  |--------------------- %4d  %-16.12g ----------------- zero mult.   %-20.14g %30dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                             DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal,
-                                             DDSIP_node[DDSIP_bb->curnode]->bound, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                         DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal,
+                         DDSIP_node[DDSIP_bb->curnode]->bound, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
             }
-        
+
             // most probably this never happens...
             if (obj > DDSIP_node[DDSIP_bb->curnode]->bound)
             {
                 memcpy (DDSIP_bb->local_bestdual, DDSIP_bb->startinfo_multipliers, sizeof (double) * (DDSIP_bb->dimdual));
-    ////////////////////////////
-    if (DDSIP_param->outlev && inherited_bound > -DDSIP_infty)
-       fprintf (DDSIP_outfile, " ###### zero mult. increased bound %22.14g by %g\n", DDSIP_node[DDSIP_bb->curnode]->bound, obj-DDSIP_node[DDSIP_bb->curnode]->bound);
-    ////////////////////////////
-    
+                ////////////////////////////
+                if (DDSIP_param->outlev && inherited_bound > -DDSIP_infty)
+                    fprintf (DDSIP_outfile, " ###### zero mult. increased bound %22.14g by %g\n", DDSIP_node[DDSIP_bb->curnode]->bound, obj-DDSIP_node[DDSIP_bb->curnode]->bound);
+                ////////////////////////////
+
                 DDSIP_node[DDSIP_bb->curnode]->bound = obj;
             }
             if (DDSIP_node[DDSIP_bb->curnode]->depth < DDSIP_Imax(DDSIP_param->cb_depth, 3))

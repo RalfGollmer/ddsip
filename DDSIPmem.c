@@ -1,12 +1,12 @@
 /*  Authors:            Andreas M"arkert, Ralf Gollmer
-	Copyright to:      University of Duisburg-Essen
+    Copyright to:      University of Duisburg-Essen
     Language:          C
 
-	Description:
-	This file contains procedures to manage the memory use of the program.
+    Description:
+    This file contains procedures to manage the memory use of the program.
 
-	License:
-	This file is part of DDSIP.
+    License:
+    This file is part of DDSIP.
 
     DDSIP is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -120,20 +120,23 @@ DDSIP_FreeNode (int nono)
     int scen, j, cnt;
     if (DDSIP_param->hot)
         DDSIP_Free ((void **) &(DDSIP_node[nono]->solut));
-    for (scen = 0; scen < DDSIP_param->scenarios; scen++)
+    if ((DDSIP_node[nono])->first_sol)
     {
-        if (((DDSIP_node[nono])->first_sol)[scen]
-                && (cnt = (int) ((((DDSIP_node[nono])->first_sol)[scen])[DDSIP_data->firstvar] - 0.9)))
-            for (j = scen + 1; cnt && j < DDSIP_param->scenarios; j++)
-            {
-                if (((DDSIP_node[nono])->first_sol)[j]
-                        && (((DDSIP_node[nono])->first_sol)[scen] == ((DDSIP_node[nono])->first_sol)[j]))
+        for (scen = 0; scen < DDSIP_param->scenarios; scen++)
+        {
+            if (((DDSIP_node[nono])->first_sol)[scen]
+                    && (cnt = (int) ((((DDSIP_node[nono])->first_sol)[scen])[DDSIP_data->firstvar] - 0.9)))
+                for (j = scen + 1; cnt && j < DDSIP_param->scenarios; j++)
                 {
-                    ((DDSIP_node[nono])->first_sol)[j] = NULL;
-                    cnt--;
+                    if (((DDSIP_node[nono])->first_sol)[j]
+                            && (((DDSIP_node[nono])->first_sol)[scen] == ((DDSIP_node[nono])->first_sol)[j]))
+                    {
+                        ((DDSIP_node[nono])->first_sol)[j] = NULL;
+                        cnt--;
+                    }
                 }
-            }
-        DDSIP_Free ((void **) &((DDSIP_node[nono]->first_sol)[scen]));
+            DDSIP_Free ((void **) &((DDSIP_node[nono]->first_sol)[scen]));
+        }
     }
     DDSIP_Free ((void **) &(DDSIP_node[nono]->first_sol));
     DDSIP_Free ((void **) &(DDSIP_node[nono]->cursubsol));
@@ -375,11 +378,6 @@ DDSIP_FreeBb ()
             }
         }
     }
-    if (DDSIP_bb->moreoutfile != NULL)
-    {
-        fclose (DDSIP_bb->moreoutfile);
-        DDSIP_bb->moreoutfile = NULL;
-    }
 #ifndef NEOS
 #ifndef _WIN32
     {
@@ -389,13 +387,28 @@ DDSIP_FreeBb ()
         if (DDSIP_param->outlev)
         {
             if (i)
-                fprintf (DDSIP_bb->moreoutfile, "  return code of 'gzip -9 %s': %d\n", DDSIP_solfname, i);
+            {
+                fprintf (DDSIP_bb->moreoutfile, "XXX  return code of 'gzip -9 %s': %d\n", DDSIP_solfname, i);
+                printf ("XXX  return code of 'gzip -9 %s': %d\n", DDSIP_solfname, i);
+            }
+            if (DDSIP_bb->moreoutfile != NULL)
+            {
+                fclose (DDSIP_bb->moreoutfile);
+                DDSIP_bb->moreoutfile = NULL;
+            }
             sprintf(command,"ls -l %s*; gzip -f9 %s; ls -l %s*", DDSIP_moreoutfname, DDSIP_moreoutfname, DDSIP_moreoutfname);
             i = system (command);
+            if (i)
+                printf ("XXX  return code of 'gzip -9 %s': %d\n", DDSIP_moreoutfname, i);
         }
     }
 #endif
 #endif
+    if (DDSIP_bb->moreoutfile != NULL)
+    {
+        fclose (DDSIP_bb->moreoutfile);
+        DDSIP_bb->moreoutfile = NULL;
+    }
 }
 
 //==========================================================================

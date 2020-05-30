@@ -1,12 +1,12 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
-	Copyright to:      University of Duisburg-Essen
+    Copyright to:      University of Duisburg-Essen
     Language:          C
-	Description:
-	LowerBound expected value problem (EV), i.e. the deterministic problem
-	with the expected value of the scenarios.
+    Description:
+    LowerBound expected value problem (EV), i.e. the deterministic problem
+    with the expected value of the scenarios.
 
-	License:
-	This file is part of DDSIP.
+    License:
+    This file is part of DDSIP.
 
     DDSIP is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -148,24 +148,24 @@ DDSIP_ExpValProb (void)
         DDSIP_translate_time (time_end,&cpu_hrs,&cpu_mins,&cpu_secs);
         if (mipstatus == CPXMIP_OPTIMAL)
             fprintf (DDSIP_bb->moreoutfile,
-                 "    exp. val. prob:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%)     \t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d)",
-                 objval, bobjval, gap,
-                 wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
+                     "    exp. val. prob:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%)     \t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d)",
+                     objval, bobjval, gap,
+                     wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
         else if (mipstatus == CPXMIP_OPTIMAL_TOL)
             fprintf (DDSIP_bb->moreoutfile,
-                 "    exp. val. prob:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) tol.\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d)",
-                 objval, bobjval, gap,
-                 wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
+                     "    exp. val. prob:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) tol.\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d)",
+                     objval, bobjval, gap,
+                     wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
         else if (mipstatus == CPXMIP_TIME_LIM_FEAS)
             fprintf (DDSIP_bb->moreoutfile,
-                 "    exp. val. prob:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) TIME\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d)",
-                 objval, bobjval, gap,
-                 wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
+                     "    exp. val. prob:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) TIME\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d)",
+                     objval, bobjval, gap,
+                     wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
         else
             fprintf (DDSIP_bb->moreoutfile,
-                 "    exp. val. prob:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) %-4d\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d)",
-                 objval, bobjval, gap, mipstatus,
-                 wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
+                     "    exp. val. prob:  Best=%-20.14g\tBound=%-20.14g (%9.4g%%) %-4d\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%6.2fs n: %4d)",
+                     objval, bobjval, gap, mipstatus,
+                     wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_start, nodes_1st);
     }
     // Returns sometimes rubbish, don't know why..
     if (!DDSIP_bb->adv_sol)

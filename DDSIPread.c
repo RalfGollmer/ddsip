@@ -75,7 +75,7 @@ DDSIP_Find (FILE * specfile, const char *pattern)
             if (c=='*')
             {
                 DDSIP_SkipToEOL (specfile);
-		in_string = 0;
+                in_string = 0;
             }
             i = 0;
         }
@@ -84,7 +84,7 @@ DDSIP_Find (FILE * specfile, const char *pattern)
             in_string = 1;
             str[i++] = (char) c;
         }
-	else if (c == '*')
+        else if (c == '*')
         {
             DDSIP_SkipToEOL (specfile);
             in_string = 0;
@@ -133,10 +133,10 @@ DDSIP_ReadDbl (FILE * specfile, const char *pattern, const char *text, double de
             else
             {
                 if (c != '\n')
-		{
+                {
                     DDSIP_SkipToEOL (specfile);
-		    in_string = 0;
-		}
+                    in_string = 0;
+                }
                 i = 0;
             }
         }
@@ -166,7 +166,7 @@ DDSIP_ReadDbl (FILE * specfile, const char *pattern, const char *text, double de
                     floor (lb + 0.1), floor (lb + 0.1), floor (ub + 0.1));
             fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting: %s = %.0f.\n", text, floor (val + 0.1));
             fprintf (DDSIP_outfile, "*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
-                    floor (lb + 0.1), floor (lb + 0.1), floor (ub + 0.1));
+                     floor (lb + 0.1), floor (lb + 0.1), floor (ub + 0.1));
             val = (int) floor (lb + 0.1);
         }
         else
@@ -188,7 +188,7 @@ DDSIP_ReadDbl (FILE * specfile, const char *pattern, const char *text, double de
                     floor (ub + 0.1), floor (lb + 0.1), floor (ub + 0.1));
             fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting: %s = %.0f.\n", text, floor (val + 0.1));
             fprintf (DDSIP_outfile, "*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
-                    floor (ub + 0.1), floor (lb + 0.1), floor (ub + 0.1));
+                     floor (ub + 0.1), floor (lb + 0.1), floor (ub + 0.1));
             val = (int) floor (ub + 0.1);
         }
         else
@@ -277,7 +277,7 @@ DDSIP_ReadDblVec (FILE * specfile, const char *pattern, const char *text, double
                                         floor (lb + 0.1), floor (lb + 0.1), floor (ub + 0.1));
                                 fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting: %s = %d.\n", text, i);
                                 fprintf (DDSIP_outfile, "*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
-                                        floor (lb + 0.1), floor (lb + 0.1), floor (ub + 0.1));
+                                         floor (lb + 0.1), floor (lb + 0.1), floor (ub + 0.1));
                                 val[ih] = (int) floor (lb + 0.1);
                             }
                             else
@@ -298,7 +298,7 @@ DDSIP_ReadDblVec (FILE * specfile, const char *pattern, const char *text, double
                                         floor (ub + 0.1), floor (lb + 0.1), floor (ub + 0.1));
                                 fprintf (DDSIP_outfile, "*Warning: Illegal parameter setting: %s = %d.\n", text, i);
                                 fprintf (DDSIP_outfile, "*         Reset parameter to %.0f (Parameter range: %.0f - %.0f).\n",
-                                        floor (ub + 0.1), floor (lb + 0.1), floor (ub + 0.1));
+                                         floor (ub + 0.1), floor (lb + 0.1), floor (ub + 0.1));
                                 val[ih] = (int) floor (ub + 0.1);
                             }
                             else
@@ -440,7 +440,7 @@ DDSIP_ReadString (FILE * specfile, const char *pattern, const char *text)
                 exit (1);
             }
         }
-        
+
         fprintf (DDSIP_outfile, " %-8s  %-40s ", pattern, text);
         fprintf (DDSIP_outfile, "    %12s\n", string);
         if (!i)
@@ -465,7 +465,7 @@ DDSIP_ReadString (FILE * specfile, const char *pattern, const char *text)
 // into the given string array. stringlength has to specify the number of chars string can hold (including the terminating \0)
 // It returns the length of the string read (excluding the terminating \0)
 
-int 
+int
 DDSIP_ReadWord (FILE * infile, char *string, int stringlength)
 {
     int i;
@@ -540,10 +540,10 @@ DDSIP_ReadCpxPara (FILE * specfile)
         }
         // Read as long as the following patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
-               strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
-               strncmp (str, "CPLEXEEV", 8) &&
-               strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
-               strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
+                strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
+                strncmp (str, "CPLEXEEV", 8) &&
+                strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
+                strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
         {
             DDSIP_param->cpxwhich[cnt] = atoi (str);
             if (fscanf (specfile, "%lf", &DDSIP_param->cpxwhat[cnt++]) != 1)
@@ -609,10 +609,10 @@ DDSIP_ReadCpxPara (FILE * specfile)
         }
         // Read as long as the other patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
-               strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
-               strncmp (str, "CPLEXEEV", 8) &&
-               strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
-               strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
+                strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
+                strncmp (str, "CPLEXEEV", 8) &&
+                strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
+                strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
         {
             if (str[0] != '*')
             {
@@ -686,10 +686,10 @@ DDSIP_ReadCpxPara (FILE * specfile)
         }
         // Read as long as the other patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
-               strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
-               strncmp (str, "CPLEXEEV", 8) &&
-               strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
-               strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
+                strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
+                strncmp (str, "CPLEXEEV", 8) &&
+                strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
+                strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
         {
             if (str[0] != '*')
             {
@@ -762,10 +762,10 @@ DDSIP_ReadCpxPara (FILE * specfile)
         }
         // Read as long as the other patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
-               strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
-               strncmp (str, "CPLEXEEV", 8) &&
-               strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
-               strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
+                strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
+                strncmp (str, "CPLEXEEV", 8) &&
+                strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
+                strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
         {
             if (str[0] != '*')
             {
@@ -839,10 +839,10 @@ DDSIP_ReadCpxPara (FILE * specfile)
         }
         // Read as long as the other patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
-               strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
-               strncmp (str, "CPLEXEEV", 8) &&
-               strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
-               strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
+                strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
+                strncmp (str, "CPLEXEEV", 8) &&
+                strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
+                strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
         {
             if (str[0] != '*')
             {
@@ -916,10 +916,10 @@ DDSIP_ReadCpxPara (FILE * specfile)
         }
         // Read as long as the other patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
-               strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
-               strncmp (str, "CPLEXEEV", 8) &&
-               strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
-               strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
+                strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
+                strncmp (str, "CPLEXEEV", 8) &&
+                strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
+                strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
         {
             if (str[0] != '*')
             {
@@ -993,10 +993,10 @@ DDSIP_ReadCpxPara (FILE * specfile)
         }
         // Read as long as the other patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
-               strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
-               strncmp (str, "CPLEXEEV", 8) &&
-               strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
-               strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
+                strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
+                strncmp (str, "CPLEXEEV", 8) &&
+                strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
+                strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
         {
             if (str[0] != '*')
             {
@@ -1071,10 +1071,10 @@ DDSIP_ReadCpxPara (FILE * specfile)
         }
         // Read as long as the other patterns aren't met
         while (strncmp (str, "CPLEXLB", 7)   && strncmp (str, "CPLEXUB", 7) &&
-               strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
-               strncmp (str, "CPLEXEEV", 8) &&
-               strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
-               strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
+                strncmp (str, "CPLEX2LB", 8)  && strncmp (str, "CPLEX2UB", 8) &&
+                strncmp (str, "CPLEXEEV", 8) &&
+                strncmp (str, "CPLEXDUAL", 8)  && strncmp (str, "CPLEX2DUAL", 9) &&
+                strncmp (str, "CPLEXEND", 8)  && cnt < DDSIP_maxparam && atoi (str))
         {
             if (str[0] != '*')
             {
@@ -1257,7 +1257,7 @@ DDSIP_ReadSpec ()
         DDSIP_param->bestboundfreq= (int) floor(DDSIP_ReadDbl (specfile, "BESTFR", " BEST BOUND FREQUENCY", DDSIP_Dmin(24., 2.*DDSIP_param->scenarios), 1, 0., DDSIP_bigint) + 0.1);
     else
         DDSIP_param->bestboundfreq= 80;
-        //DDSIP_param->bestboundfreq= 100;
+    //DDSIP_param->bestboundfreq= 100;
     DDSIP_param->btTolerance = DDSIP_ReadDbl (specfile, "BTTOLE", " BACKTRACKING TOL", 2.e-1, 0, 1.e-6, 1.);
     DDSIP_param->period = (int) floor (DDSIP_ReadDbl (specfile, "PERIOD", " HEUR PERIOD ITERS", 32., 1, 1., 10000.) + 0.1);
     DDSIP_param->rgapsmall = (int) floor (DDSIP_ReadDbl (specfile, "TOLSMA", " HEUR SMALL RGAP ITERS", 16., 1, 1., 1.*DDSIP_param->period) + 0.1);
@@ -1288,40 +1288,40 @@ DDSIP_ReadSpec ()
         DDSIP_param->heuristic_vector[1] = 11;
         switch (DDSIP_param->heuristic_order)
         {
-            case 1:
-                // rounded means at the end
-                for (i = 2; i< 9; i++)
-                {
-                    DDSIP_param->heuristic_vector[i]     = i + 2;
-                }
-                for (i = 1; i< 4; i++)
-                {
-                    DDSIP_param->heuristic_vector[i + 8] = i;
-                    DDSIP_param->heuristic_vector[i + 11] = i + 20;
-                }
-                break;
-            case 2:
-                // rounded means in the middle
-                for (i = 1; i< 4; i++)
-                {
-                    DDSIP_param->heuristic_vector[i + 1]     = i + 3;
-                    DDSIP_param->heuristic_vector[i + 4] = i;
-                    DDSIP_param->heuristic_vector[i + 11] = i + 20;
-                }
-                for (i = 7; i< 11; i++)
-                    DDSIP_param->heuristic_vector[i + 1] = i;
-                break;
-            default:
-                // rounded means at the beginning
-                for (i = 1; i< 4; i++)
-                {
-                    DDSIP_param->heuristic_vector[i + 1]  = i;
-                    DDSIP_param->heuristic_vector[i + 11] = i + 20;
-                }
-                for (i = 4; i< 11; i++)
-                {
-                    DDSIP_param->heuristic_vector[i + 1]  = i;
-                }
+        case 1:
+            // rounded means at the end
+            for (i = 2; i< 9; i++)
+            {
+                DDSIP_param->heuristic_vector[i]     = i + 2;
+            }
+            for (i = 1; i< 4; i++)
+            {
+                DDSIP_param->heuristic_vector[i + 8] = i;
+                DDSIP_param->heuristic_vector[i + 11] = i + 20;
+            }
+            break;
+        case 2:
+            // rounded means in the middle
+            for (i = 1; i< 4; i++)
+            {
+                DDSIP_param->heuristic_vector[i + 1]     = i + 3;
+                DDSIP_param->heuristic_vector[i + 4] = i;
+                DDSIP_param->heuristic_vector[i + 11] = i + 20;
+            }
+            for (i = 7; i< 11; i++)
+                DDSIP_param->heuristic_vector[i + 1] = i;
+            break;
+        default:
+            // rounded means at the beginning
+            for (i = 1; i< 4; i++)
+            {
+                DDSIP_param->heuristic_vector[i + 1]  = i;
+                DDSIP_param->heuristic_vector[i + 11] = i + 20;
+            }
+            for (i = 4; i< 11; i++)
+            {
+                DDSIP_param->heuristic_vector[i + 1]  = i;
+            }
         }
         DDSIP_param->heuristic_num = 12;
         DDSIP_param->heuristic_auto = 1;
@@ -1613,7 +1613,7 @@ DDSIP_ReadSpec ()
         DDSIP_param->redundancyCheck = 0;
         DDSIP_param->deleteRedundantCuts = 0;
     }
-    
+
     fprintf (DDSIP_outfile, "-----------------------------------------------------------\n");
     if (DDSIP_param->riskmod < 0)
         DDSIP_param->prematureStop = 0;
@@ -1756,7 +1756,7 @@ DDSIP_ReadData ()
     char checkstr[DDSIP_max_str_ln];
     char tmpdata[DDSIP_max_str_ln];
     char *colstore = NULL, **colname = NULL, *rowstore = NULL, **rowname = NULL;
-    
+
 
     FILE *datafile;
     FILE *checkfile;

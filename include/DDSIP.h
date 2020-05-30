@@ -286,7 +286,7 @@ extern "C" {
 #ifdef ADDBENDERSCUTS
         // add Benders cuts?
         int addBendersCuts;
-	int deactivate_cuts;
+        int deactivate_cuts;
         int alwaysBendersCuts;
         int testOtherScens;
         int numberReinits;

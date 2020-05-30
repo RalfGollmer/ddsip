@@ -1,12 +1,12 @@
 /*  Authors:            Andreas M"arkert, Ralf Gollmer
-	Copyright to:      University of Duisburg-Essen
+    Copyright to:      University of Duisburg-Essen
     Language:          C
-	Description: ,
-	This file contains the implementation of the different heuristics to
-	get a suggestion for an upper bound.
+    Description: ,
+    This file contains the implementation of the different heuristics to
+    get a suggestion for an upper bound.
 
-	License:
-	This file is part of DDSIP.
+    License:
+    This file is part of DDSIP.
 
     DDSIP is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -50,7 +50,8 @@ DDSIP_RoundDown (double *average)
 
     for (j = 0; j < DDSIP_bb->firstvar; j++)
     {
-        if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N') {
+        if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
+        {
             ((DDSIP_bb->sug[DDSIP_param->nodelim + 2])->firstval)[j] = floor (average[j] + 0.00001);
         }
         else
@@ -68,7 +69,8 @@ DDSIP_RoundUp (double *average)
 
     for (j = 0; j < DDSIP_bb->firstvar; j++)
     {
-        if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N') {
+        if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
+        {
             (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = ceil (average[j]-0.00001);
         }
         else
@@ -86,7 +88,8 @@ DDSIP_RoundNear (double *average)
 
     for (j = 0; j < DDSIP_bb->firstvar; j++)
     {
-        if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N') {
+        if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
+        {
             (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[j] = floor (average[j] + 0.50001);
         }
         else
@@ -182,7 +185,8 @@ DDSIP_CloseToAverage (double *average)
     for (i = 0; i < DDSIP_param->scenarios; i++)
     {
         deviation = 0.0;
-        for (j = 0; j < DDSIP_bb->firstvar; j++) {
+        for (j = 0; j < DDSIP_bb->firstvar; j++)
+        {
             tmp = average[j] - (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][j];
             deviation = deviation + tmp*tmp;
         }
@@ -542,10 +546,10 @@ DDSIP_OneTenth (int nrScenarios, int feasCheckOnly)
     }
     else if (DDSIP_param->outlev)
     {
-            fprintf(DDSIP_bb->moreoutfile, " %d candidates:  ", cnt);
-            for (i = cnt-1; i >= 0; i--)
-               fprintf(DDSIP_bb->moreoutfile, " %d", unind[i] + 1);
-            fprintf(DDSIP_bb->moreoutfile, "\n");
+        fprintf(DDSIP_bb->moreoutfile, " %d candidates:  ", cnt);
+        for (i = cnt-1; i >= 0; i--)
+            fprintf(DDSIP_bb->moreoutfile, " %d", unind[i] + 1);
+        fprintf(DDSIP_bb->moreoutfile, "\n");
     }
 
     for (i = cnt-1; i >= 0; i--)
@@ -727,7 +731,7 @@ DDSIP_Heuristics (int *comb, int nrScenarios, int feasCheckOnly)
             fprintf (DDSIP_bb->moreoutfile, "maximal sum         ");
         status = DDSIP_MaxSum ();
         break;
-    case 11:			// all scen solutions occurring sufficiently often
+    case 11:            // all scen solutions occurring sufficiently often
         status = DDSIP_OneTenth (nrScenarios, feasCheckOnly);
         break;
     case 12:
@@ -735,7 +739,7 @@ DDSIP_Heuristics (int *comb, int nrScenarios, int feasCheckOnly)
             fprintf (DDSIP_bb->moreoutfile, "all scen. sols ");
         status = DDSIP_All (nrScenarios, feasCheckOnly);
         break;
-    case 13:			// Combined heuristic 4 and 5
+    case 13:            // Combined heuristic 4 and 5
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "combine 4 and 5     ");
         if (*comb == 5)
@@ -749,7 +753,7 @@ DDSIP_Heuristics (int *comb, int nrScenarios, int feasCheckOnly)
             *comb = 5;
         }
         break;
-    case 14:			// Combined heuristic 3 and 5
+    case 14:            // Combined heuristic 3 and 5
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "combine 3 and 5     ");
         if (*comb == 3)
@@ -819,7 +823,7 @@ DDSIP_Heuristics (int *comb, int nrScenarios, int feasCheckOnly)
 void
 DDSIP_BoundConsistent (void)
 {
-int i;
+    int i;
     for (i = 0; i < DDSIP_bb->firstvar; i++)
     {
         if (((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i] - DDSIP_bb->uborg[i])/(fabs(DDSIP_bb->uborg[i])+ 1.)) > 1.e-9)
@@ -827,7 +831,7 @@ int i;
             printf ("   high suggestion for variable %d: sug=%20.18f ub=%20.18f, difference=%lg\n",i,
                     (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->uborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->uborg[i]);
             if (DDSIP_param->outlev &&
-                (((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i] - DDSIP_bb->uborg[i])/(fabs(DDSIP_bb->uborg[i])+ 1.e+2)) > DDSIP_param->accuracy))
+                    (((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i] - DDSIP_bb->uborg[i])/(fabs(DDSIP_bb->uborg[i])+ 1.e+2)) > DDSIP_param->accuracy))
             {
                 fprintf (DDSIP_bb->moreoutfile,"   high suggestion for variable %d: sug=%20.18f ub=%20.18f, difference=%lg\n",i,
                          (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->uborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->uborg[i]);
@@ -842,7 +846,7 @@ int i;
                 printf ("   low suggestion for variable %d: sug=%16.8g lb=%16.8g, difference=%lg\n",i,
                         (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->lborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->lborg[i]);
                 if (DDSIP_param->outlev &&
-                    (((DDSIP_bb->lborg[i] - DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i])/(fabs(DDSIP_bb->lborg[i])+ 1.e+2)) > DDSIP_param->accuracy))
+                        (((DDSIP_bb->lborg[i] - DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval[i])/(fabs(DDSIP_bb->lborg[i])+ 1.e+2)) > DDSIP_param->accuracy))
                 {
                     fprintf (DDSIP_bb->moreoutfile,"   low suggestion for variable %d: sug=%16.10g lb=%16.10g, difference=%lg\n",i,
                              (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i],DDSIP_bb->lborg[i],(DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]-DDSIP_bb->lborg[i]);

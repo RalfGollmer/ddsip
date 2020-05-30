@@ -1,8 +1,8 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
     Copyright:         University of Duisburg-Essen
     Language:          C
-	Description:
-	This file contains an auxiliary program for DDSIP.
+    Description:
+    This file contains an auxiliary program for DDSIP.
         It's sole purpose is to read the model file and to write a list of variables
         and constraints with their indices in the internal CPLEX representation.
         These indices are needed for the specification of the locations of
@@ -10,7 +10,7 @@
         You don't need this for problems with stochastic rhs and costs only.
 
     License:
-	This file is part of DDSIP.
+    This file is part of DDSIP.
 
     DDSIP is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

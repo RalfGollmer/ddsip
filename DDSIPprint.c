@@ -1,12 +1,12 @@
 /*  Authors:           Andreas M"arkert, Ralf Gollmer
-	Copyright to:      University of Duisburg-Essen
+    Copyright to:      University of Duisburg-Essen
    Language:          C
 
-	Description:
-	This procedure prints a line of output when invoked.
+    Description:
+    This procedure prints a line of output when invoked.
 
-	License:
-	This file is part of DDSIP.
+    License:
+    This file is part of DDSIP.
 
     DDSIP is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ DDSIP_PrintErrorMsg (int status)
     else if (status == 133)
         fprintf (stderr, "ERROR: FSD-algorithm and dual method cannot be combined.\n");
     /*    else if (status==135) */
-    /*  DDSIP_	fprintf (stderr,"ERROR: Unsupported file extension of core file.\n"); */
+    /*  DDSIP_    fprintf (stderr,"ERROR: Unsupported file extension of core file.\n"); */
     else if (status == 137)
         fprintf (stderr, "ERROR: Inconsistent start value(s).\n");
     else if (status > 1000)
@@ -122,9 +122,9 @@ DDSIP_PrintState (int noiter)
     }
 
     if (!(DDSIP_bb->violations) &&
-          ( ((DDSIP_bb->found_optimal_node) && (DDSIP_bb->curnode == DDSIP_bb->found_optimal_node)) ||
-           (!(DDSIP_bb->found_optimal_node) && (fabs(DDSIP_bb->bestvalue - DDSIP_node[DDSIP_bb->curnode]->bound)/(fabs(DDSIP_bb->bestvalue) + 3.e-16) < 8.e-16))
-          )
+            ( ((DDSIP_bb->found_optimal_node) && (DDSIP_bb->curnode == DDSIP_bb->found_optimal_node)) ||
+              (!(DDSIP_bb->found_optimal_node) && (fabs(DDSIP_bb->bestvalue - DDSIP_node[DDSIP_bb->curnode]->bound)/(fabs(DDSIP_bb->bestvalue) + 3.e-16) < 8.e-16))
+            )
        )
     {
         printf ("*%6d  %6d %6d ", DDSIP_bb->curnode, DDSIP_bb->nonode, DDSIP_bb->no_reduced_front);
@@ -261,12 +261,12 @@ DDSIP_PrintState (int noiter)
     time (&DDSIP_bb->cur_time);
     DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
     printf ("  %3dh %02d:%02.0f  %3dh %02d:%02.0f %7d %5d\n", wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs,DDSIP_node[DDSIP_bb->curnode]->father,DDSIP_node[DDSIP_bb->curnode]->depth);
-    fprintf (DDSIP_outfile,"  %3dh %02d:%02.0f  %3dh %02d:%02.0f %7d %5d\n" ,wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs,DDSIP_node[DDSIP_bb->curnode]->father,DDSIP_node[DDSIP_bb->curnode]->depth);
+    fprintf (DDSIP_outfile,"  %3dh %02d:%02.0f  %3dh %02d:%02.0f %7d %5d\n",wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs,DDSIP_node[DDSIP_bb->curnode]->father,DDSIP_node[DDSIP_bb->curnode]->depth);
     // A headline is printed every 20th call
     if (DDSIP_bb->curnode &&
-        ((DDSIP_param->cb && ((DDSIP_param->outlev  && !(noiter % (DDSIP_param->logfreq * DDSIP_Imax(abs(DDSIP_param->cb),15)))) ||
-                              (!DDSIP_param->outlev && !(noiter % (DDSIP_param->logfreq * 20))))) ||
-         (!DDSIP_param->cb && !(noiter % (DDSIP_param->logfreq * 20)))))
+            ((DDSIP_param->cb && ((DDSIP_param->outlev  && !(noiter % (DDSIP_param->logfreq * DDSIP_Imax(abs(DDSIP_param->cb),15)))) ||
+                                  (!DDSIP_param->outlev && !(noiter % (DDSIP_param->logfreq * 20))))) ||
+             (!DDSIP_param->cb && !(noiter % (DDSIP_param->logfreq * 20)))))
     {
 #ifndef _WIN32
         if (!(noiter % (DDSIP_param->logfreq * 40)) || !(noiter % (2 * DDSIP_param->logfreq * DDSIP_Imax(abs(DDSIP_param->cb),15))))

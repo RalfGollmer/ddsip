@@ -220,7 +220,8 @@ DDSIP_InitNewNodes (void)
         {
             DDSIP_node[DDSIP_bb->nonode]->neolb = DDSIP_Dmax (DDSIP_node[i]->neolb, DDSIP_node[DDSIP_bb->nonode]->neolb);
             DDSIP_node[DDSIP_bb->nonode + 1]->neoub = DDSIP_Dmin (DDSIP_node[i]->neoub, DDSIP_node[DDSIP_bb->nonode + 1]->neoub);
-            //fprintf (stderr," bandb: new nodes variable %d upd in node %d lb= %g, ub= %g\n",DDSIP_node[DDSIP_bb->curnode]->branchind,i,DDSIP_node[DDSIP_bb->nonode]->neolb,DDSIP_node[DDSIP_bb->nonode + 1]->neoub);
+            if (DDSIP_param->outlev)
+                fprintf (DDSIP_bb->moreoutfile," bandb: new nodes variable %d update in node %d lb= %.16g, ub= %.16g\n",DDSIP_node[DDSIP_bb->curnode]->branchind,i,DDSIP_node[DDSIP_bb->nonode]->neolb,DDSIP_node[DDSIP_bb->nonode + 1]->neoub);
         }
         i = DDSIP_node[i]->father;
     }
@@ -228,25 +229,23 @@ DDSIP_InitNewNodes (void)
     {
         if (DDSIP_param->outlev > 2)
             fprintf (DDSIP_bb->moreoutfile,
-                     "ERROR: Correcting bounds of new nodes (bandb): was: lb=%18.12g, ub=%18.12g, diff=%g\n",
+                     "ERROR: Correcting bounds of new nodes (bandb): was: lb=%.16g, ub=%.16g, diff=%g\n",
                      DDSIP_node[DDSIP_bb->nonode]->neolb, DDSIP_node[DDSIP_bb->nonode + 1]->neoub,
                      (DDSIP_node[DDSIP_bb->nonode]->neolb) - (DDSIP_node[DDSIP_bb->nonode + 1]->neoub));
-        fprintf (stderr,
-                 "ERROR: Correcting bounds of new nodes (bandb): was: lb=%18.12g, ub=%18.12g, diff=%g\n",
-                 DDSIP_node[DDSIP_bb->nonode]->neolb, DDSIP_node[DDSIP_bb->nonode + 1]->neoub,
-                 (DDSIP_node[DDSIP_bb->nonode]->neolb) - (DDSIP_node[DDSIP_bb->nonode + 1]->neoub));
         DDSIP_node[DDSIP_bb->nonode]->neolb = DDSIP_node[DDSIP_bb->nonode + 1]->neoub;
     }
 
     // branchval = the value chosen in DDSIPlb according to branchstrat
     branchval = DDSIP_node[DDSIP_bb->curnode]->branchval;
-
+ 
     // Correction needed ?
     if (branchval < DDSIP_node[DDSIP_bb->nonode]->neolb || branchval > DDSIP_node[DDSIP_bb->nonode + 1]->neoub)
     {
+        if (DDSIP_param->outlev > 10)
+            fprintf (DDSIP_bb->moreoutfile, "Correcting branchval (bandb): %.16g : neolb= %.16g, neoub= %.16g\n", branchval, DDSIP_node[DDSIP_bb->nonode]->neolb, DDSIP_node[DDSIP_bb->nonode + 1]->neoub);
         branchval = DDSIP_Dmax (DDSIP_Dmin (branchval, DDSIP_node[DDSIP_bb->nonode + 1]->neoub - 1.e-15), DDSIP_node[DDSIP_bb->nonode]->neolb + 1.e-15);
         if (DDSIP_param->outlev > 10)
-            fprintf (DDSIP_bb->moreoutfile, "Correcting branchval (bandb): %f\n", branchval);
+            fprintf (DDSIP_bb->moreoutfile, "Corrected  branchval (bandb): %.16g\n", branchval);
     }
     // The remaining bounds (upper bd. of left node and lower bd. of right node)
     // depend on branchval

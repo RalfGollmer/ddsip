@@ -1464,7 +1464,7 @@ DDSIP_LowerBound (void)
                     fprintf (DDSIP_bb->moreoutfile, "\n    First-stage solution:\n");
                     for (j = 0; j < DDSIP_bb->firstvar; j++)
                     {
-                        fprintf (DDSIP_bb->moreoutfile," %21.14g", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
+                        fprintf (DDSIP_bb->moreoutfile," %22.15g", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
                         if (!((j + 1) % 5))
                             fprintf (DDSIP_bb->moreoutfile, "\n");
                     }
@@ -2044,7 +2044,7 @@ NEXT_TRY:
                             {
                                 for (j = 0; j < DDSIP_bb->firstvar; j++)
                                 {
-                                    fprintf (DDSIP_bb->moreoutfile," %21.14g", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
+                                    fprintf (DDSIP_bb->moreoutfile," %22.15g", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
                                     if (!((j + 1) % 5))
                                         fprintf (DDSIP_bb->moreoutfile, "\n");
                                 }
@@ -2084,7 +2084,7 @@ NEXT_TRY:
                         // Print something
                         if (DDSIP_param->outlev >= DDSIP_first_stage_outlev && i_scen >= scen)
                         {
-                            fprintf (DDSIP_bb->moreoutfile," %21.14g", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
+                            fprintf (DDSIP_bb->moreoutfile," %22.15g", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
                             if (!((j + 1) % 5))
                                 fprintf (DDSIP_bb->moreoutfile, "\n");
                         }
@@ -2099,13 +2099,15 @@ NEXT_TRY:
                             {
                                 if (DDSIP_bb->curind[k] == j)
                                 {
-                                    if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] < DDSIP_bb->curlb[k] && (DDSIP_bb->curlb[k]-(DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j])/(fabs(DDSIP_bb->curlb[k])+1e-9)> 1.e-10)
+                                    //if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] < DDSIP_bb->curlb[k] && (DDSIP_bb->curlb[k]-(DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j])/(fabs(DDSIP_bb->curlb[k])+1e-9)> 1.e-10)
+                                    if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] < DDSIP_bb->curlb[k] && ((DDSIP_bb->curlb[k]-(DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j])/(fabs(DDSIP_bb->curlb[k])+1e-9)) > 1.e-13)
                                     {
                                         if (DDSIP_param->outlev)
                                             fprintf(DDSIP_bb->moreoutfile, "\nXXX WARNING: first-stage variable %d of solution to scenario %d with value %18.16g violates its lower bound %18.16g by %g\n\n",j+1,scen+1,(DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j], DDSIP_bb->curlb[k], DDSIP_bb->curlb[k]-(DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
                                         fprintf(DDSIP_outfile, "XXX WARNING: first-stage variable %d of solution to scenario %d with value %18.16g violates its lower bound %18.16g by %g\n",j+1,scen+1,(DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j], DDSIP_bb->curlb[k], DDSIP_bb->curlb[k]-(DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
                                     }
-                                    if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] > DDSIP_bb->curub[k] && ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]-DDSIP_bb->curub[k])/(fabs(DDSIP_bb->curub[k])+1e-9) > 1e-10)
+                                    //if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] > DDSIP_bb->curub[k] && ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]-DDSIP_bb->curub[k])/(fabs(DDSIP_bb->curub[k])+1e-9) > 1e-10)
+                                    if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] > DDSIP_bb->curub[k] && (((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]-DDSIP_bb->curub[k])/(fabs(DDSIP_bb->curub[k])+1e-9)) > 1.e-13)
                                     {
                                         if (DDSIP_param->outlev)
                                             fprintf(DDSIP_bb->moreoutfile, "\nXXX WARNING: first-stage variable %d of solution to scenario %d with value %18.16g violates its upper bound %18.16g by %g\n\n",j+1,scen+1,(DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j], DDSIP_bb->curub[k], (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]-DDSIP_bb->curub[k]);
@@ -2182,7 +2184,7 @@ NEXT_TRY:
                     DDSIP_bb->cur_secstage[scen][j] = mipx[DDSIP_bb->secondindex[j]];
                     if (DDSIP_param->outlev >= DDSIP_second_stage_outlev)
                     {
-                        fprintf (DDSIP_bb->moreoutfile, " %21.14g",  mipx[DDSIP_bb->secondindex[j]]);
+                        fprintf (DDSIP_bb->moreoutfile, " %22.15g",  mipx[DDSIP_bb->secondindex[j]]);
                         if (!((j + 1) % 5))
                             fprintf (DDSIP_bb->moreoutfile, "\n");
                     }
@@ -3281,7 +3283,7 @@ NEXT_TRY:
                                         DDSIP_bb->cur_secstage[scen][j] = mipx[DDSIP_bb->secondindex[j]];
                                         if (DDSIP_param->outlev >= DDSIP_second_stage_outlev)
                                         {
-                                            fprintf (DDSIP_bb->moreoutfile, " %21.14g",  mipx[DDSIP_bb->secondindex[j]]);
+                                            fprintf (DDSIP_bb->moreoutfile, " %22.15g",  mipx[DDSIP_bb->secondindex[j]]);
                                             if (!((j + 1) % 5))
                                                 fprintf (DDSIP_bb->moreoutfile, "\n");
                                         }
@@ -3958,7 +3960,8 @@ NEXT_SCEN:
                 {
                     DDSIP_bb->newTry = 0;
                     DDSIP_node[DDSIP_bb->curnode]->bound = DDSIP_infty;
-                    fprintf (DDSIP_outfile, "         Problem infeasible or unbounded for scenario %d in node %d (CBLowerBound)\n", scen + 1, DDSIP_bb->curnode);
+                    if (!DDSIP_bb->curnode)
+                        fprintf (DDSIP_outfile, "         Problem infeasible or unbounded for scenario %d in node %d (CBLowerBound)\n", scen + 1, DDSIP_bb->curnode);
                 }
                 goto TERMINATE;
             }
@@ -4243,7 +4246,7 @@ NEXT_SCEN:
                         // Print something
                         if (DDSIP_param->outlev >= DDSIP_first_stage_outlev)
                         {
-                            fprintf (DDSIP_bb->moreoutfile," %21.14g", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
+                            fprintf (DDSIP_bb->moreoutfile," %22.15g", (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j]);
                             if (!((j + 1) % 5))
                                 fprintf (DDSIP_bb->moreoutfile, "\n");
                         }
@@ -4309,7 +4312,7 @@ NEXT_SCEN:
                         fprintf (DDSIP_bb->moreoutfile, "    Second-stage solution:\n");
                         for (j = 0; j < DDSIP_bb->secvar; j++)
                         {
-                            fprintf (DDSIP_bb->moreoutfile, " %21.14g",  mipx[DDSIP_bb->secondindex[j]]);
+                            fprintf (DDSIP_bb->moreoutfile, " %22.15g",  mipx[DDSIP_bb->secondindex[j]]);
                             if (!((j + 1) % 5))
                                 fprintf (DDSIP_bb->moreoutfile, "\n");
                         }

@@ -381,6 +381,7 @@ extern "C" {
         int     node_nr;
         double  mean_diff;
         double  nr_uses;
+        double  cutoffs;
         struct bbest_l *next;
     } bbest_t;
 

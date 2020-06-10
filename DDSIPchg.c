@@ -192,7 +192,6 @@ DDSIP_ChgProb (int scen, int multipliers)
             {
                 if(!scen)
                 {
-                    fprintf (DDSIP_bb->moreoutfile, "\n Lagrangemult. in OF: in CB from %p ---------------------\n", DDSIP_node[DDSIP_bb->curnode]->dual);
                     fprintf (DDSIP_bb->moreoutfile, "DDSIP_ChgProb: Current lambda for node %d:\n", DDSIP_bb->curnode);
                     for (i = 0; i < DDSIP_bb->dimdual; i++)
                     {
@@ -266,8 +265,6 @@ DDSIP_ChgProb (int scen, int multipliers)
             {
                 if(!scen)
                 {
-                    fprintf (DDSIP_bb->moreoutfile,
-                             "\n Lagrangemult. in OF: in solve from %p ---------------------\n", DDSIP_node[DDSIP_bb->curnode]->dual);
                     fprintf (DDSIP_bb->moreoutfile, "DDSIP_ChgProb: Current lambda for node %d:\n", DDSIP_bb->curnode);
                     for (i = 0; i < DDSIP_bb->dimdual; i++)
                     {

@@ -634,6 +634,12 @@ if (DDSIP_param->outlev > 20)
                 memcpy (DDSIP_node[DDSIP_bb->curnode]->dual, tmp1_maxcutoffs->dual, sizeof (double) * DDSIP_bb->dimdual);
                 DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual+1] = tmp1_maxcutoffs->node_nr;
 		DDSIP_bb->dualitcnt--;
+//*********************
+                    if (DDSIP_param->outlev > 20)
+                    {
+                        fprintf (DDSIP_bb->moreoutfile, "## cutoffmax: node %3d: multiplier from node %d: cutoffs= %g\n",DDSIP_bb->curnode,tmp1_maxcutoffs->node_nr,tmp1_maxcutoffs->cutoffs);
+                    }
+//*********************
                 cb_set_next_weight (p, next_weight);
                 if ((status = cb_set_new_center_point (p, DDSIP_node[DDSIP_bb->curnode]->dual)))
                 {

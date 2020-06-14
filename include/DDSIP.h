@@ -159,6 +159,8 @@ extern "C" {
         int cb_checkBestdual;
         // upper bounds plus cuts for solution of initial evaluation in CBLowerBound up to node no
         int cb_cutnodes;
+        // for cutoffs >= cb_cutoffs use multipliers first
+        double cb_cutoffs;
 #endif
 
         // 3. Branch-and-bound

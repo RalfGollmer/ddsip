@@ -1566,7 +1566,7 @@ if (DDSIP_param->outlev > 20)
                             if (DDSIP_param->outlev > 20)
                             {
                                 fprintf (DDSIP_bb->moreoutfile, " ##   multiplier from node %d: cutoffs increased to: %g\n",tmp_bestdual->node_nr,tmp_bestdual->cutoffs);
-                                fprintf (DDSIP_bb->moreoutfile, " ##   because obj %.15g > %g, diff= %g\n",obj,DDSIP_bb->bestvalue - 2e-9 * fabs (DDSIP_bb->bestvalue),obj-(DDSIP_bb->bestvalue - 2e-9 * fabs (DDSIP_bb->bestvalue)));
+                                fprintf (DDSIP_bb->moreoutfile, " ##   because obj %.15g > %.15g, diff= %g\n",obj,DDSIP_bb->bestvalue - 2e-9 * fabs (DDSIP_bb->bestvalue),obj-(DDSIP_bb->bestvalue - 2e-9 * fabs (DDSIP_bb->bestvalue)));
                             }
                         }
                         if (DDSIP_param->outlev)

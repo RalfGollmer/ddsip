@@ -233,10 +233,10 @@ DDSIP_SolChk (double* cutViolation, int test_equality)
             if (DDSIP_bb->firsttype[i] == 'B' || DDSIP_bb->firsttype[i] == 'I' || DDSIP_bb->firsttype[i] == 'N')
             {
                 ih = (int) floor ((DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i] + 0.5);
-                fprintf (DDSIP_bb->moreoutfile, " %21d,", ih);
+                fprintf (DDSIP_bb->moreoutfile, " %22d,", ih);
             }
             else
-                fprintf (DDSIP_bb->moreoutfile, " %21.15g,", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]);
+                fprintf (DDSIP_bb->moreoutfile, " %22.16g,", (DDSIP_bb->sug[DDSIP_param->nodelim + 2]->firstval)[i]);
 
             if (!((i + 1) % 5))
                 fprintf (DDSIP_bb->moreoutfile, "\n");
@@ -997,7 +997,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                 if (i > 1)
                                                 {
                                                     icnt = i;
-                                                    rhs = lhs + (viol*security_factor - 4.e-15);
+                                                    rhs = lhs + (viol*security_factor - 4.e-16);
                                                     if (rhs > lhs)
                                                         i = 1;
                                                     else
@@ -1006,7 +1006,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                 else
                                                 {
                                                     icnt = i;
-                                                    rhs = lhs + (viol - 4.e-15);
+                                                    rhs = lhs + (viol - 4.e-16);
                                                     i = 1;
                                                 }
 #ifdef CHECKIDENTICAL
@@ -1492,7 +1492,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                     if (i > 1)
                                     {
                                         icnt = i;
-                                        rhs = lhs + (viol*security_factor - 4.e-15);
+                                        rhs = lhs + (viol*security_factor - 4.e-16);
                                         if (rhs > lhs)
                                             i = 1;
                                         else
@@ -1501,7 +1501,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                     else
                                     {
                                         icnt = i;
-                                        rhs = lhs + (viol - 4.e-15);
+                                        rhs = lhs + (viol - 4.e-16);
                                         i = 1;
                                     }
 #ifdef CHECKIDENTICAL

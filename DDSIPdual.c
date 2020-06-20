@@ -1250,54 +1250,37 @@ if (DDSIP_param->outlev > 20)
                             else
                                 rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[DDSIP_bb->curnode]->bound) / (fabs (DDSIP_bb->bestvalue) + DDSIP_param->accuracy);
                             rgap = DDSIP_Dmin (rgap, 100.0);
-                            if (!DDSIP_bb->curnode && DDSIP_bb->bestvalue > DDSIP_infty)
+                            if (!DDSIP_bb->cutAdded)
                             {
-                                if (!DDSIP_Equal (fabs (DDSIP_bb->bestvalue), 0.0))
-                                    rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[DDSIP_bb->curnode]->bound) / fabs (DDSIP_bb->bestvalue);
-                                else
-                                    rgap = 100. * (DDSIP_bb->bestvalue -DDSIP_node[DDSIP_bb->curnode]->bound) / (fabs (DDSIP_bb->bestvalue) + DDSIP_param->accuracy);
-                                rgap = DDSIP_Dmin (rgap, 100.0);
-                                if (!DDSIP_bb->cutAdded)
-                                {
-                                    printf ("  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g               %10.4g%%  %3dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                            0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, rgap, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
-                                    fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g               %10.4g%%  %3dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                             0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, rgap, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
-                                }
-                                else
-                                {
-                                    printf ("  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g %8d cuts %10.4g%%  %3dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                            0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->cutAdded, rgap, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
-                                    fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g %8d cuts %10.4g%%  %3dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                             0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->cutAdded, rgap, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
-                                }
+                                printf ("  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g               %10.4g%%  %3dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                                        0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, rgap, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                                fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g               %10.4g%%  %3dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                                         0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, rgap, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                             }
                             else
                             {
-                                if (!DDSIP_bb->cutAdded)
-                                {
-                                    printf ("  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g %30dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                            0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
-                                    fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g %30dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                             0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
-                                }
-                                else
-                                {
-                                    printf ("  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g %8d cuts %16dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                            0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->cutAdded, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
-                                    fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g %8d cuts %16dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                             0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->cutAdded, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
-                                }
+                                printf ("  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g %8d cuts %10.4g%%  %3dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                                        0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->cutAdded, rgap, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                                fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g %8d cuts %10.4g%%  %3dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                                         0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->cutAdded, rgap, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
                             }
                         }
                         else
                         {
-                            printf ("  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g %30dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                    0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
-                            fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g  mult. node %5g  %-20.14g incr.  %-12.7g %10dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                                     DDSIP_bb->dualdescitcnt, DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal, last_weight,
-                                     DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 1], DDSIP_bb->currentDualObjVal, diff,
-                                     wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                            if (!DDSIP_bb->cutAdded)
+                            {
+                                printf ("  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g %30dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                                        0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                                fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g %30dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                                         0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                            }
+                            else
+                            {
+                                printf ("  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g %8d cuts %16dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                                        0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->cutAdded, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                                fprintf (DDSIP_outfile, "  | %16d  %7d  %-16.12g %-11.6g                    %-20.14g %8d cuts %16dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                                         0, DDSIP_bb->dualitcnt, DDSIP_bb->dualObjVal, last_weight, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->cutAdded, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                            }
                         }
                     }
                     if (DDSIP_bb->currentDualObjVal > old_obj)

@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #define CHECKINTEGERCUT
 #define DEACTIVATECUTS
+#define SECURITYSHIFT 2e-16
 //#define CHECKIDENTICAL
 //#define DEBUG
 
@@ -997,7 +998,11 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                 if (i > 1)
                                                 {
                                                     icnt = i;
-                                                    rhs = lhs + (viol*security_factor - 4.e-16);
+#ifdef SECURITYSHIFT
+                                                    rhs = lhs + (viol*security_factor - SECURITYSHIFT);
+#else
+                                                    rhs = lhs + viol*security_factor;
+#endif
                                                     if (rhs > lhs)
                                                         i = 1;
                                                     else
@@ -1006,7 +1011,11 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                 else
                                                 {
                                                     icnt = i;
-                                                    rhs = lhs + (viol - 4.e-16);
+#ifdef SECURITYSHIFT
+                                                    rhs = lhs + (viol - SECURITYSHIFT);
+#else
+                                                    rhs = lhs + viol;
+#endif
                                                     i = 1;
                                                 }
 #ifdef CHECKIDENTICAL
@@ -1492,7 +1501,11 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                     if (i > 1)
                                     {
                                         icnt = i;
-                                        rhs = lhs + (viol*security_factor - 4.e-16);
+#ifdef SECURITYSHIFT
+                                        rhs = lhs + (viol*security_factor - SECURITYSHIFT);
+#else
+                                        rhs = lhs + viol*security_factor;
+#endif
                                         if (rhs > lhs)
                                             i = 1;
                                         else
@@ -1501,7 +1514,11 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                     else
                                     {
                                         icnt = i;
-                                        rhs = lhs + (viol - 4.e-16);
+#ifdef SECURITYSHIFT
+                                        rhs = lhs + (viol - SECURITYSHIFT);
+#else
+                                        rhs = lhs + viol;
+#endif
                                         i = 1;
                                     }
 #ifdef CHECKIDENTICAL

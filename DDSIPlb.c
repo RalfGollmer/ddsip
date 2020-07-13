@@ -3534,7 +3534,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
     // Change bounds according to node in bb tree
     if (DDSIP_bb->curbdcnt)
     {
-        if (!(DDSIP_bb->dualitcnt))
+        if (DDSIP_bb->dualitcnt <= 0)
             status = DDSIP_ChgBounds (1);
         else
             status = DDSIP_ChgBounds (0);

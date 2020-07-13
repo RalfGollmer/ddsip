@@ -1446,14 +1446,13 @@ if (DDSIP_param->outlev > 20)
                     if (DDSIP_param->cb_increaseWeight || DDSIP_param->cb_reduceWeight)
                     {
                         next_weight = last_weight =
-                                          //DDSIP_Dmin(
-                                          //10.*fabs(DDSIP_bb->bestbound) + 1.,
+                                      DDSIP_Dmin(50.*fabs(DDSIP_bb->bestbound) + 1.,
                                           DDSIP_param->cbfactor*DDSIP_param->cbweight + (1. - DDSIP_param->cbfactor)*
                                           last_weight > tmp_bestdual->weight?
                                           (0.7*last_weight + 0.3*tmp_bestdual->weight):
                                           (0.3*last_weight + 0.7*tmp_bestdual->weight)
-                                          //  )
-                                          ;
+                                      )
+                                      ;
                         max_weight = DDSIP_Dmax (max_weight, next_weight);
                         cb_set_next_weight (p, next_weight);
                     }

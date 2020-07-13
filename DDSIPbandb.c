@@ -995,7 +995,7 @@ DDSIP_Bound (void)
                     DDSIP_qsort_ins_A (front_node_bound, DDSIP_bb->front_nodes_sorted, 0, DDSIP_bb->nofront-1);
                     for  (i = 0; i < DDSIP_bb->nofront; i++)
                     {
-                        if (DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound > DDSIP_bb->bestbound + fabs(DDSIP_bb->bestbound)*1.e-15)
+                        if (DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound > DDSIP_bb->bestbound + fabs(DDSIP_bb->bestbound)*1.e-15 || DDSIP_node[DDSIP_bb->front[i]]->leaf)
                             break;
                         front_node_bound[DDSIP_bb->front_nodes_sorted[i]] = !(DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->solved) ?
                                 -DDSIP_infty : 2*DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->violations + DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->dispnorm - DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->depth;

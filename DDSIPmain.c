@@ -469,6 +469,7 @@ main (int argc, char * argv[])
     {
         // the cuts from the root node are contained in every following node model, there is no need to check their violation
         // for the scenario solutions. But the rounding heuristics could violate a cut, so keep them.
+        result = DDSIP_bb->cutCntr;
 #ifdef CONIC_BUNDLE
 #ifdef DEBUG
 ////////////////////////////////////////////
@@ -538,7 +539,8 @@ main (int argc, char * argv[])
             double old_bound;
             int cntr, maxCntr;
 
-            DDSIP_bb->cutAdded = 0;
+            DDSIP_bb->cutAdded = DDSIP_bb->cutCntr - result;
+            result = DDSIP_bb->cutCntr;
             DDSIP_EvaluateScenarioSolutions (&comb);
             cntr = 0;
             if (DDSIP_node[DDSIP_bb->curnode]->step != dual)
@@ -557,7 +559,7 @@ main (int argc, char * argv[])
                 {
                     fprintf (DDSIP_outfile, " %6d%101d cuts\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
                 }
-                while ((DDSIP_bb->cutAdded || DDSIP_node[0]->step == dual) && cntr < maxCntr)
+                while ((DDSIP_bb->cutAdded || result > 0  || DDSIP_node[0]->step == dual) && cntr < maxCntr)
                 {
                     old_bound = DDSIP_node[0]->bound;
                     // Free the solutions from former LowerBound

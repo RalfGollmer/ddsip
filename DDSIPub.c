@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #define CHECKINTEGERCUT
 #define DEACTIVATECUTS
-#define SECURITYSHIFT 2e-12
+#define SECURITYSHIFT 2e-11
 
 //#define DEBUG
 

@@ -676,7 +676,7 @@ if (DDSIP_param->outlev > 20)
                 {
                     old_obj = obj;
                     //cutoff reached
-                    tmp1_maxcutoffs->cutoffs += 1.;
+                    tmp1_maxcutoffs->cutoffs += 1.1;
                     if (DDSIP_param->outlev > 20)
                         fprintf (DDSIP_bb->moreoutfile, " ## increase in node %3d:   multiplier from node %d: cutoffs= %g\n",DDSIP_bb->curnode ,tmp1_maxcutoffs->node_nr,tmp1_maxcutoffs->cutoffs);
                 }
@@ -685,7 +685,7 @@ if (DDSIP_param->outlev > 20)
                     if (obj >  DDSIP_bb->bestvalue - DDSIP_Dmin(0.5*DDSIP_param->relgap,4.e-9)*(fabs(DDSIP_bb->bestvalue) + 1e-9))
                     {
                         //within relgap
-                        tmp1_maxcutoffs->cutoffs += 0.7;
+                        tmp1_maxcutoffs->cutoffs += 1.0;
                         if (DDSIP_param->outlev > 20)
                             fprintf (DDSIP_bb->moreoutfile, " ## increase in node %3d:   multiplier from node %d: cutoffs= %g\n",DDSIP_bb->curnode ,tmp1_maxcutoffs->node_nr,tmp1_maxcutoffs->cutoffs);
                     }
@@ -693,13 +693,13 @@ if (DDSIP_param->outlev > 20)
                     {
                         if (diff/fabs(DDSIP_node[DDSIP_bb->curnode]->bound) < -0.01)
                         {
-                            tmp1_maxcutoffs->cutoffs -= 0.5;
+                            tmp1_maxcutoffs->cutoffs -= 0.9;
                             if (DDSIP_param->outlev > 20)
                                 fprintf (DDSIP_bb->moreoutfile, " ## DECREASE in node %3d:   multiplier from node %d: cutoffs= %g\n",DDSIP_bb->curnode ,tmp1_maxcutoffs->node_nr,tmp1_maxcutoffs->cutoffs);
                         }
                         else if (diff/fabs(DDSIP_node[DDSIP_bb->curnode]->bound) < -0.001)
                         {
-                            tmp1_maxcutoffs->cutoffs -= 0.3;
+                            tmp1_maxcutoffs->cutoffs -= 0.6;
                             if (DDSIP_param->outlev > 20)
                                 fprintf (DDSIP_bb->moreoutfile, " ## DECREASE in node %3d:   multiplier from node %d: cutoffs= %g\n",DDSIP_bb->curnode ,tmp1_maxcutoffs->node_nr,tmp1_maxcutoffs->cutoffs);
                         }

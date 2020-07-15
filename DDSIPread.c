@@ -1533,7 +1533,7 @@ DDSIP_ReadSpec ()
             DDSIP_param->cbrootitlim = 0;
         }
         else
-            DDSIP_param->cbrootitlim = (int) floor (DDSIP_ReadDbl (specfile, "CBRITL", " CB DESCENT ITERATIONS IN ROOT", 9, 1, 0., DDSIP_bigint) + 0.1);
+            DDSIP_param->cbrootitlim = (int) floor (DDSIP_ReadDbl (specfile, "CBRITL", " CB DESCENT ITERATIONS IN ROOT", 9, 1, -DDSIP_bigint, DDSIP_bigint) + 0.1);
 
         DDSIP_param->cb_depth = (int) floor (DDSIP_ReadDbl (specfile, "CBDEPT", " CB UNTIL DEPTH", 1., 1, -DDSIP_bigint, DDSIP_bigint) + 0.1);
         DDSIP_param->cb_depth_iters = (int) floor (DDSIP_ReadDbl (specfile, "CBDITL", " CB DEPTH ITERS", 10., 1, 2., DDSIP_bigint) + 0.1);

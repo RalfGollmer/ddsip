@@ -486,7 +486,8 @@ main (int argc, char * argv[])
         // Dual method
         if ((/*!DDSIP_bb->curnode || */!DDSIP_node[DDSIP_bb->curnode]->cbReturn32) &&
                 ((DDSIP_param->cb > 0 && (!(DDSIP_bb->curnode % abs(DDSIP_param->cb))) && (abs(DDSIP_param->riskmod) != 4 || DDSIP_bb->curnode)) ||
-                 (DDSIP_param->cb < 0 && (((DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->cb_depth) && abs(DDSIP_param->riskmod) != 4) ||
+                 (DDSIP_param->cb < 0 && (DDSIP_bb->curnode || (!DDSIP_bb->curnode && DDSIP_param->cbrootitlim >= 0)) &&
+                                         (((DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->cb_depth) && abs(DDSIP_param->riskmod) != 4) ||
                                           (abs(DDSIP_param->riskmod) == 5 && DDSIP_node[DDSIP_bb->curnode]->depth == 8) ||
                                           (DDSIP_bb->curnode > DDSIP_param->cbBreakIters &&
                                            ((!(DDSIP_bb->curnode % abs(DDSIP_param->cb))) ||

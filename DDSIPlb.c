@@ -231,7 +231,7 @@ DDSIP_GetBranchIndex (double *dispnorm)
         // Get maximal branching order among variables with sufficient dispersion norm
         while (j < DDSIP_bb->firstvar)
         {
-            if (dispnorm[j] > DDSIP_Dmax(DDSIP_param->nulldisp, (exp(-0.5*DDSIP_bb->order[j])+0.5)*DDSIP_node[DDSIP_bb->curnode]->dispnorm))
+            if (dispnorm[j] > DDSIP_Dmax(DDSIP_Dmax (0.5*(DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N'), DDSIP_param->nulldisp), (exp(-0.5*DDSIP_bb->order[j])+0.5)*DDSIP_node[DDSIP_bb->curnode]->dispnorm))
                 maxord = DDSIP_Imax (maxord, DDSIP_bb->order[j]);
             j++;
         }
@@ -269,7 +269,7 @@ DDSIP_GetBranchIndex (double *dispnorm)
         {
             for (j = 0; j < DDSIP_bb->firstvar; j++)
             {
-                if (dispnorm[j] > DDSIP_param->nulldisp && (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N'))
+                if (dispnorm[j] > 0.5 && (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N'))
                 {
                     h = DDSIP_Dmax (h,dispnorm[j]);
                 }
@@ -608,7 +608,7 @@ READY:
             hlb = DDSIP_Dmin (hlb,h);
             hub = DDSIP_Dmax (hub,h);
         }
-        fprintf (DDSIP_bb->moreoutfile,"\tchosen branch index: %d, branchval= %18.16g  (min= %.16g, max= %.16g) dispersion= %g\n",DDSIP_bb->firstindex[DDSIP_node[DDSIP_bb->curnode]->branchind],DDSIP_node[DDSIP_bb->curnode]->branchval,hlb,hub,dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind]);
+        fprintf (DDSIP_bb->moreoutfile,"\tchosen branch index in node %3d: %d, branchval= %18.16g  (min= %.16g, max= %.16g) dispersion= %g\n", DDSIP_bb->curnode,DDSIP_bb->firstindex[DDSIP_node[DDSIP_bb->curnode]->branchind],DDSIP_node[DDSIP_bb->curnode]->branchval,hlb,hub,dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind]);
     }
 
     DDSIP_Free ((void **) &(index));
@@ -1873,6 +1873,9 @@ NEXT_TRY:
                 // Numerical errors?
                 for (j = 0; j < DDSIP_bb->firstvar; j++)
                 {
+                    // Make integer variables values integer
+                    if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
+                        mipx[DDSIP_bb->firstindex[j]] = floor (mipx[DDSIP_bb->firstindex[j]] + 0.1);
 #ifdef CHECK_BOUNDS
                     // outside of bounds?
                     // loose - restrict the first-stage variables inside of original bounds (disregarding branching)
@@ -2076,11 +2079,14 @@ NEXT_TRY:
                         fprintf (DDSIP_bb->moreoutfile, "    First-stage solution:\n");
                     for (j = 0; j < DDSIP_bb->firstvar; j++)
                     {
-                        // Collect solution vector
-                        if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
-                            (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] = floor (mipx[DDSIP_bb->firstindex[j]] + 0.1);
-                        else
-                            (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] = mipx[DDSIP_bb->firstindex[j]];
+                        //// Collect solution vector
+                        //if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
+                        //    (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] = floor (mipx[DDSIP_bb->firstindex[j]] + 0.1);
+                        //else
+                        //    (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] = mipx[DDSIP_bb->firstindex[j]];
+
+                        (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] = mipx[DDSIP_bb->firstindex[j]];
+
                         // Print something
                         if (DDSIP_param->outlev >= DDSIP_first_stage_outlev && i_scen >= scen)
                         {
@@ -2088,9 +2094,6 @@ NEXT_TRY:
                             if (!((j + 1) % 5))
                                 fprintf (DDSIP_bb->moreoutfile, "\n");
                         }
-                        // Calculate minimum and maximum of each component
-                        minfirst[j] = DDSIP_Dmin ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j], minfirst[j]);
-                        maxfirst[j] = DDSIP_Dmax ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j], maxfirst[j]);
                         ///////////////////
                         // Check for violations of bounds by the CPLEX solution
                         if (DDSIP_param->outlev > 5)
@@ -2170,12 +2173,12 @@ NEXT_TRY:
                             goto NEXT_TRY;
                         }
                     }
-                    //
-                    for (j = 0; j < DDSIP_bb->firstvar; j++)
-                    {
-                        minfirst[j] = DDSIP_Dmin ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j], minfirst[j]);
-                        maxfirst[j] = DDSIP_Dmax ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j], maxfirst[j]);
-                    }
+                }
+                //
+                for (j = 0; j < DDSIP_bb->firstvar; j++)
+                {
+                    minfirst[j] = DDSIP_Dmin ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j], minfirst[j]);
+                    maxfirst[j] = DDSIP_Dmax ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j], maxfirst[j]);
                 }
                 if (DDSIP_param->outlev >= DDSIP_second_stage_outlev)
                     fprintf (DDSIP_bb->moreoutfile, "    Second-stage solution:\n");
@@ -2524,7 +2527,7 @@ NEXT_TRY:
         }
         // Count number of differences within first stage solution in current node
         // DDSIP_bb->violations=k means differences in k components
-        if (DDSIP_param->outlev > 34)
+        if (DDSIP_param->outlev > 24)
         {
             colname = (char **) DDSIP_Alloc (sizeof (char *), (DDSIP_bb->firstvar + DDSIP_bb->secvar), "colname(LowerBound)");
             colstore = (char *) DDSIP_Alloc (sizeof (char), (DDSIP_bb->firstvar + DDSIP_bb->secvar) * DDSIP_ln_varname, "colstore(LowerBound)");
@@ -2549,7 +2552,7 @@ NEXT_TRY:
                 DDSIP_bb->violations++;
                 maxdispersion = DDSIP_Dmax (maxdispersion, maxfirst[j]-minfirst[j]);
                 // More Output
-                if (DDSIP_param->outlev > 34)
+                if (DDSIP_param->outlev > 24)
                 {
                     fprintf (DDSIP_bb->moreoutfile, "Deviation of variable %d: min=%16.14g\t max=%16.14g\t diff=%16.14g  \t%s\n", j, minfirst[j], maxfirst[j], maxfirst[j] - minfirst[j], colname[DDSIP_bb->firstindex[j]]);
                 }
@@ -4043,6 +4046,9 @@ NEXT_SCEN:
                     // Numerical errors?
                     for (j = 0; j < DDSIP_bb->firstvar; j++)
                     {
+                        // Make integer variables values integer
+                        if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
+                            mipx[DDSIP_bb->firstindex[j]] = floor (mipx[DDSIP_bb->firstindex[j]] + 0.1);
 #ifdef CHECK_BOUNDS
                         // outside of bounds?
                         // loose - restrict the first-stage variables inside of original bounds (disregarding branching)
@@ -4251,8 +4257,8 @@ NEXT_SCEN:
                                 fprintf (DDSIP_bb->moreoutfile, "\n");
                         }
                         // Calculate minimum and maximum of each component
-                        minfirst[j] = DDSIP_Dmin (mipx[DDSIP_bb->firstindex[j]], minfirst[j]);
-                        maxfirst[j] = DDSIP_Dmax (mipx[DDSIP_bb->firstindex[j]], maxfirst[j]);
+                        //minfirst[j] = DDSIP_Dmin (mipx[DDSIP_bb->firstindex[j]], minfirst[j]);
+                        //maxfirst[j] = DDSIP_Dmax (mipx[DDSIP_bb->firstindex[j]], maxfirst[j]);
                     }
                     if (DDSIP_param->outlev >= DDSIP_first_stage_outlev)
                         fprintf (DDSIP_bb->moreoutfile, "\n");
@@ -4305,6 +4311,12 @@ NEXT_SCEN:
                                 fprintf (DDSIP_bb->moreoutfile, " --> scenario reevaluation %d\n", nrFeasCheck);
                             goto NEXT_SCEN;
                         }
+                    }
+                    for (j = 0; j < DDSIP_bb->firstvar; j++)
+                    {
+                        // Calculate minimum and maximum of each component
+                        minfirst[j] = DDSIP_Dmin (mipx[DDSIP_bb->firstindex[j]], minfirst[j]);
+                        maxfirst[j] = DDSIP_Dmax (mipx[DDSIP_bb->firstindex[j]], maxfirst[j]);
                     }
                     //
                     if (DDSIP_param->outlev >= DDSIP_second_stage_outlev)

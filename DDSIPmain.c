@@ -469,7 +469,7 @@ main (int argc, char * argv[])
     {
         // the cuts from the root node are contained in every following node model, there is no need to check their violation
         // for the scenario solutions. But the rounding heuristics could violate a cut, so keep them.
-        result = DDSIP_bb->cutCntr;
+        result = DDSIP_bb->cutNumber;
 #ifdef CONIC_BUNDLE
 #ifdef DEBUG
 ////////////////////////////////////////////
@@ -538,11 +538,14 @@ main (int argc, char * argv[])
         if (!DDSIP_bb->skip || DDSIP_bb->skip == -1 || DDSIP_bb->skip == -11)
         {
             double old_bound;
-            int cntr, maxCntr;
+            int cntr, maxCntr, nowAdded;
 
-            DDSIP_bb->cutAdded = DDSIP_bb->cutCntr - result;
-            result = DDSIP_bb->cutCntr;
+            DDSIP_bb->cutAdded = DDSIP_bb->cutNumber - result;
             DDSIP_EvaluateScenarioSolutions (&comb);
+if (DDSIP_param->outlev)
+{
+    fprintf (DDSIP_bb->moreoutfile, "0: nach EvaluateScenarios cutAdded= %3d, cutNumber= %3d\n", DDSIP_bb->cutAdded, DDSIP_bb->cutNumber);
+}
             cntr = 0;
             if (DDSIP_node[DDSIP_bb->curnode]->step != dual)
                 maxCntr = DDSIP_param->numberReinits;
@@ -560,7 +563,7 @@ main (int argc, char * argv[])
                 {
                     fprintf (DDSIP_outfile, " %6d%101d cuts\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
                 }
-                while ((DDSIP_bb->cutAdded || result > 0  || DDSIP_node[0]->step == dual) && cntr < maxCntr)
+                while ((DDSIP_bb->cutAdded || DDSIP_node[0]->step == dual) && cntr < maxCntr)
                 {
                     old_bound = DDSIP_node[0]->bound;
                     // Free the solutions from former LowerBound
@@ -620,19 +623,21 @@ main (int argc, char * argv[])
                             }
                         }
                     }
+                    result = DDSIP_bb->cutNumber;
                     DDSIP_node[0]->step = DDSIP_bb->DDSIP_step = solve;
                     // status=1 means there was no solution found to a scenario problem
                     if ((status = DDSIP_LowerBound ()))
                         goto TERMINATE;
-                    DDSIP_bb->cutAdded = 0;
+                    DDSIP_bb->cutAdded = DDSIP_bb->cutNumber - result;
+                    nowAdded = DDSIP_bb->cutAdded;
                     DDSIP_EvaluateScenarioSolutions (&comb);
-                    cntr++;
+                    nowAdded = DDSIP_bb->cutAdded - nowAdded;
                     DDSIP_bb->bestbound = DDSIP_node[0]->bound;
                     DDSIP_bb->noiter++;
                     DDSIP_PrintState (1);
-                    if (DDSIP_bb->cutAdded && DDSIP_param->outlev)
+                    if (nowAdded && DDSIP_param->outlev)
                     {
-                        fprintf (DDSIP_outfile, " %6d %82d. reinit: %8d cuts\n", 0, cntr, DDSIP_bb->cutAdded);
+                        fprintf (DDSIP_outfile, " %6d %82d. reinit: %8d cuts\n", 0, cntr, nowAdded);
                     }
                     if ((DDSIP_node[0]->bound - old_bound)/(fabs(old_bound) + 1e-16) < 1.e-7 ||
                             (DDSIP_bb->bestvalue - DDSIP_node[0]->bound)/(fabs(DDSIP_bb->bestvalue) + 1e-16) < 0.5*DDSIP_param->relgap)

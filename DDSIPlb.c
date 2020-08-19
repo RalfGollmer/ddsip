@@ -2237,7 +2237,7 @@ NEXT_TRY:
         }                // end else
     }                // end for iscen
     if ((j = DDSIP_bb->cutCntr - nrCuts))
-        fprintf (DDSIP_outfile, " %6d%101d cuts\n", DDSIP_bb->curnode, j);
+        fprintf (DDSIP_outfile, " %6d%101d cuts -\n", DDSIP_bb->curnode, j);
 
     if (DDSIP_bb->bestvalue < 0.)
     {

@@ -541,11 +541,9 @@ main (int argc, char * argv[])
             int cntr, maxCntr, nowAdded;
 
             DDSIP_bb->cutAdded = DDSIP_bb->cutNumber - result;
+            nowAdded = DDSIP_bb->cutNumber;
             DDSIP_EvaluateScenarioSolutions (&comb);
-if (DDSIP_param->outlev)
-{
-    fprintf (DDSIP_bb->moreoutfile, "0: nach EvaluateScenarios cutAdded= %3d, cutNumber= %3d\n", DDSIP_bb->cutAdded, DDSIP_bb->cutNumber);
-}
+            nowAdded = DDSIP_bb->cutNumber - nowAdded;
             cntr = 0;
             if (DDSIP_node[DDSIP_bb->curnode]->step != dual)
                 maxCntr = DDSIP_param->numberReinits;
@@ -561,10 +559,11 @@ if (DDSIP_param->outlev)
                 DDSIP_PrintState (DDSIP_bb->noiter);
                 if (DDSIP_bb->cutAdded && DDSIP_param->outlev)
                 {
-                    fprintf (DDSIP_outfile, " %6d%101d cuts\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
+                    fprintf (DDSIP_outfile, " %6d%101d cuts (UB)\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
                 }
                 while ((DDSIP_bb->cutAdded || DDSIP_node[0]->step == dual) && cntr < maxCntr)
                 {
+                    cntr++;
                     old_bound = DDSIP_node[0]->bound;
                     // Free the solutions from former LowerBound
                     for (i = 0; i < DDSIP_param->scenarios; i++)
@@ -637,7 +636,7 @@ if (DDSIP_param->outlev)
                     DDSIP_PrintState (1);
                     if (nowAdded && DDSIP_param->outlev)
                     {
-                        fprintf (DDSIP_outfile, " %6d %82d. reinit: %8d cuts\n", 0, cntr, nowAdded);
+                        fprintf (DDSIP_outfile, " %6d %82d. reinit: %8d cuts (UB)\n", 0, cntr, nowAdded);
                     }
                     if ((DDSIP_node[0]->bound - old_bound)/(fabs(old_bound) + 1e-16) < 1.e-7 ||
                             (DDSIP_bb->bestvalue - DDSIP_node[0]->bound)/(fabs(DDSIP_bb->bestvalue) + 1e-16) < 0.5*DDSIP_param->relgap)
@@ -651,9 +650,9 @@ if (DDSIP_param->outlev)
                 // Print a line of output at the first, the last and each `ith' node
                 if (!DDSIP_bb->noiter || (!((DDSIP_bb->noiter + 1) % DDSIP_param->logfreq)) || (DDSIP_param->outlev && (DDSIP_node[DDSIP_bb->curnode])->step == dual))
                     DDSIP_PrintState (DDSIP_bb->noiter);
-                if (DDSIP_bb->cutAdded && DDSIP_param->outlev > 1)
+                if (nowAdded && DDSIP_param->outlev > 1)
                 {
-                    fprintf (DDSIP_outfile, " %6d%101d cuts\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
+                    fprintf (DDSIP_outfile, " %6d%101d cuts (UB)\n", DDSIP_bb->curnode, nowAdded);
                 }
             }
         }

@@ -3593,13 +3593,13 @@ NEXT_TRY:
                 // do upper bounding for these solutions, too
                 if (!DDSIP_bb->curnode && DDSIP_bb->cutAdded && DDSIP_param->outlev)
                 {
-                    fprintf (DDSIP_outfile, " %6d%101d cuts\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
+                    fprintf (DDSIP_outfile, " %6d%101d cuts (lb)\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
                 }
                 DDSIP_bb->cutAdded = 0;
                 DDSIP_EvaluateScenarioSolutions (&comb);
                 if (DDSIP_bb->cutAdded && DDSIP_param->outlev)
                 {
-                    fprintf (DDSIP_outfile, " %6d%101d cuts\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
+                    fprintf (DDSIP_outfile, " %6d%101d cuts (UB)\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
                 }
                 DDSIP_bb->skip = 0;
             }

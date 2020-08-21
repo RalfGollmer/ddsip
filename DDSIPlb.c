@@ -410,7 +410,9 @@ DDSIP_GetBranchIndex (double *dispnorm)
             }
             if (!((abs(DDSIP_param->riskmod) == 4) && (index[j] == DDSIP_bb->firstvar - 1)) &&
                     ((DDSIP_param->equalbranch == 1) ||
-                     (!DDSIP_param->equalbranch && ((DDSIP_bb->curnode < 11) || ((DDSIP_bb->curnode > 25) && (DDSIP_bb->curnode%10 >= 6))))
+                     //(!DDSIP_param->equalbranch && ((DDSIP_bb->curnode < 11) || ((DDSIP_bb->curnode > 25) && (DDSIP_bb->curnode%10 >= 6))))
+                     ((!DDSIP_param->equalbranch && ((DDSIP_bb->curnode < 16) || ((DDSIP_bb->curnode > 25) && (DDSIP_bb->curnode%10 >= 6)))) &&
+                       ((DDSIP_node[DDSIP_bb->curnode]->depth < 1 || DDSIP_node[DDSIP_bb->curnode]->depth > DDSIP_param->depth_uneq)))
                     )
                )
             {
@@ -2237,7 +2239,7 @@ NEXT_TRY:
         }                // end else
     }                // end for iscen
     if ((j = DDSIP_bb->cutCntr - nrCuts))
-        fprintf (DDSIP_outfile, " %6d%101d cuts -\n", DDSIP_bb->curnode, j);
+        fprintf (DDSIP_outfile, " %6d%101d cuts (lb)\n", DDSIP_bb->curnode, j);
 
     if (DDSIP_bb->bestvalue < 0.)
     {

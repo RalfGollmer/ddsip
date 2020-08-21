@@ -214,6 +214,8 @@ extern "C" {
         int   intfirst;
         // Branch on variables with dividing equally first
         int   equalbranch;
+        // Branch on variables with dividing most unequally at depth 1 and 2
+        int   depth_uneq;
         // Bounding strategy
         int   boundstrat;
         // for boundstrat 10: frequency of using best bound

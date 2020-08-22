@@ -1251,7 +1251,10 @@ DDSIP_ReadSpec ()
     DDSIP_param->branchdir   = (int) floor (DDSIP_ReadDbl (specfile, "BRADIR", " BRANCHING DIRECTION", -1., 1, -1., 1.) + 0.1);
     DDSIP_param->branchstrat = (int) floor (DDSIP_ReadDbl (specfile, "BRASTR", " BRANCHING STRATEGY", 2., 1, 0., 2.) + 0.1);
     DDSIP_param->equalbranch = (int) floor (DDSIP_ReadDbl (specfile, "BRAEQU", " EQUAL DIVIDE BRANCHING", 0., 1, -1., 1.) + 0.1);
-    DDSIP_param->depth_uneq  = (int) floor (DDSIP_ReadDbl (specfile, "UNEQUA", " DEPTH LIM UNEQUAL BRANCH", 2., 1, 0., 100.) + 0.1);
+    if (!DDSIP_param->equalbranch)
+        DDSIP_param->depth_uneq  = (int) floor (DDSIP_ReadDbl (specfile, "UNEQUA", " DEPTH LIM UNEQUAL BRANCH", 2., 1, 0., 100.) + 0.1);
+    else
+        DDSIP_param->depth_uneq  = 0;
     DDSIP_param->intfirst    = (int) floor (DDSIP_ReadDbl (specfile, "INTFIR", " BRANCH INTEGER FIRST", 1., 1, 0., 1.) + 0.1);
     DDSIP_param->boundstrat  = (int) floor (DDSIP_ReadDbl (specfile, "BOUSTR", " BOUNDING STRATEGY", 10., 1, 0., 10.) + 0.1);
     if (DDSIP_param->boundstrat == 10)

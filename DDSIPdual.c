@@ -1573,19 +1573,19 @@ if (DDSIP_param->outlev > 20)
                                 tmp_bestdual->next = DDSIP_bb->bestdual;
                                 DDSIP_bb->bestdual = tmp_bestdual;
 //######################
-#ifdef DEBUG
+//#ifdef DEBUG
                                 if (DDSIP_param->outlev > 10)
                                 {
                                     int jj = 1;
                                     bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
-                                    fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d\n", tmp1_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
+                                    fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d\n", tmp_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
                                     while (tmp1_bestdual)
                                     {
                                         fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual, tmp1_bestdual->next);
                                         tmp1_bestdual = tmp1_bestdual->next;
                                     }
                                 }
-#endif
+//#endif
 //######################
                                 tmp_bestdual = tmp_previous;
                             }
@@ -1633,19 +1633,19 @@ if (DDSIP_param->outlev > 20)
                                 tmp_bestdual->next = DDSIP_bb->bestdual;
                                 DDSIP_bb->bestdual = tmp_bestdual;
 //######################
-#ifdef DEBUG
+//#ifdef DEBUG
                                 if (DDSIP_param->outlev > 10)
                                 {
                                     int jj = 1;
                                     bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
-                                    fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d\n", tmp1_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
+                                    fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d, max_bound= %g\n", tmp_bestdual->node_nr, DDSIP_bb->bestdual_cnt, max_bound);
                                     while (tmp1_bestdual)
                                     {
                                         fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, cutoffs %g (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual->cutoffs, tmp1_bestdual, tmp1_bestdual->next);
                                         tmp1_bestdual = tmp1_bestdual->next;
                                     }
                                 }
-#endif
+//#endif
 //######################
                                 tmp_bestdual =  tmp_previous;
                             }
@@ -1668,7 +1668,7 @@ if (DDSIP_param->outlev > 20)
                             {
                                 int jj = 1;
                                 bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
-                                fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d\n", tmp1_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
+                                fprintf (DDSIP_bb->moreoutfile, " ## shifted mult. from node %d to top of bestdual list, #entries: %d, max_bound= %g\n", tmp_bestdual->node_nr, DDSIP_bb->bestdual_cnt, max_bound);
                                 while (tmp1_bestdual)
                                 {
                                     fprintf (DDSIP_bb->moreoutfile, " ##   %d:  node %2d  bound %16.12g, weight %g, cutoffs %g (%p next= %p)\n",jj++,tmp1_bestdual->node_nr,tmp1_bestdual->bound, tmp1_bestdual->weight, tmp1_bestdual->cutoffs, tmp1_bestdual, tmp1_bestdual->next);

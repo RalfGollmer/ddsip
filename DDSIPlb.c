@@ -412,7 +412,7 @@ DDSIP_GetBranchIndex (double *dispnorm)
                     ((DDSIP_param->equalbranch == 1) ||
                      //(!DDSIP_param->equalbranch && ((DDSIP_bb->curnode < 11) || ((DDSIP_bb->curnode > 25) && (DDSIP_bb->curnode%10 >= 6))))
                      ((!DDSIP_param->equalbranch && ((DDSIP_bb->curnode < 16) || ((DDSIP_bb->curnode > 25) && (DDSIP_bb->curnode%10 >= 6)))) &&
-                       ((DDSIP_node[DDSIP_bb->curnode]->depth < 1 || DDSIP_node[DDSIP_bb->curnode]->depth > DDSIP_param->depth_uneq)))
+                       ((!DDSIP_bb->curnode || DDSIP_node[DDSIP_bb->curnode]->depth > DDSIP_param->depth_uneq)))
                     )
                )
             {

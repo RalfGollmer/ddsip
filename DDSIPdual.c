@@ -1544,7 +1544,7 @@ if (DDSIP_param->outlev > 20)
                         else if (obj >  DDSIP_bb->bestvalue - DDSIP_Dmin(0.5*DDSIP_param->relgap,4.e-9)*(fabs(DDSIP_bb->bestvalue) + 1e-9))
                         {
                             //within relgap
-                            tmp_bestdual->cutoffs += 0.7;
+                            tmp_bestdual->cutoffs += 0.9;
                             if (DDSIP_param->outlev > 20)
                             {
                                 fprintf (DDSIP_bb->moreoutfile, " ##   multiplier from node %d: cutoffs increased to: %g\n",tmp_bestdual->node_nr,tmp_bestdual->cutoffs);

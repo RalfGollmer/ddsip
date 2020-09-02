@@ -557,7 +557,7 @@ main (int argc, char * argv[])
                 double lhs;
                 cutpool_t *currentCut;
                 DDSIP_PrintState (DDSIP_bb->noiter);
-                if (DDSIP_bb->cutAdded && DDSIP_param->outlev)
+                if (nowAdded && DDSIP_param->outlev)
                 {
                     fprintf (DDSIP_outfile, " %6d%101d cuts (UB)\n", DDSIP_bb->curnode, nowAdded);
                 }

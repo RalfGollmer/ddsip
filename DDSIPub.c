@@ -1579,7 +1579,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
             //if all first-stage variables are binary ones, we can add an inequality, cutting off this point
             if (!integerCutAdded && DDSIP_bb->DDSIP_step != adv && DDSIP_bb->DDSIP_step != eev &&
                     DDSIP_NoSolution (mipstatus) &&
-                    (DDSIP_param->addIntegerCuts && DDSIP_param->heuristic > 3 && ((feasCheckOnly < 2) || ((DDSIP_bb->curnode < 3) && (DDSIP_bb->dualdescitcnt < 2) && DDSIP_bb->dualitcnt))))
+                    (DDSIP_param->addIntegerCuts && DDSIP_param->heuristic > 3 && ((feasCheckOnly < 2) || ((DDSIP_bb->curnode < 9) && (DDSIP_bb->dualdescitcnt < 2) && (DDSIP_bb->DDSIP_step == solve || DDSIP_bb->dualitcnt)))))
             {
                 int rmatbeg;
                 int *rmatind = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_bb->novar), "rmatind(UpperBound)");

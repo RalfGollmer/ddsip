@@ -1478,6 +1478,8 @@ if (DDSIP_param->outlev > 20)
                         if ((status = cb_set_new_center_point (p, DDSIP_node[DDSIP_bb->curnode]->dual)))
                         {
                             fprintf (stderr, "set_new_center_point returned %d\n", status);
+                            if (DDSIP_param->outlev)
+                                fprintf (DDSIP_bb->moreoutfile, "set_new_center_point returned %d\n", status);
                             cb_destruct_problem (&p);
                             DDSIP_Free ((void **) &(minfirst));
                             DDSIP_Free ((void **) &(maxfirst));

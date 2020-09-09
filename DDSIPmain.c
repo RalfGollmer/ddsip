@@ -517,7 +517,7 @@ main (int argc, char * argv[])
                 else
                 {
                     DDSIP_bb->skip = 1;
-                    DDSIP_node[DDSIP_bb->curnode]->bound = DDSIP_infty;
+                    //DDSIP_node[DDSIP_bb->curnode]->bound = DDSIP_infty;
                 }
             }
         }

@@ -1117,13 +1117,18 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         }
                         if (iscen > DDSIP_bb->shifts + 3)
                         {
-                            wall_secs = cpu_secs = sort_array[DDSIP_bb->shifts];
+                            wall_secs = 0.;
+                            for (wall_hrs = 0; wall_hrs <= DDSIP_bb->shifts; wall_hrs++)
+                            {
+                                wall_secs += sort_array[wall_hrs];
+                            }
+                            cpu_secs = sort_array[DDSIP_bb->shifts];
                             for (wall_hrs = DDSIP_bb->shifts+1; wall_hrs <= iscen; wall_hrs++)
                             {
                                 cpu_secs = DDSIP_Dmax (cpu_secs, sort_array[wall_hrs]);
                                 wall_secs += sort_array[wall_hrs];
                             }
-                            wall_secs /= (1.01 + iscen - DDSIP_bb->shifts);
+                            wall_secs /= (1.05 + iscen);
                             if (timeLimit)
                                 viol = 7.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
                             else
@@ -1764,7 +1769,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
             if (feasCheckOnly < 1)
             {
                 //shift this infeasible scenario to first place, such that next time it is checked first
-                if (/*feasCheckOnly < 1 &&*/ (iscen || !DDSIP_bb->shifts))
+                if (iscen || !DDSIP_bb->shifts)
                 {
 #ifdef DEBUG
                     if(DDSIP_param->outlev > 20)

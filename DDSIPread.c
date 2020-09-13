@@ -1886,8 +1886,8 @@ DDSIP_ReadData ()
         }
         else
         {
-            printf ("ERROR: Failed to read scenario keyword %d (%s)\n", i, checkstr);
-            fprintf (DDSIP_outfile, "ERROR: Failed to read scenario keyword %d (%s)\n", i, checkstr);
+            printf ("ERROR: Failed to read scenario keyword no. %d (found %s)\n", i+1, checkstr);
+            fprintf (DDSIP_outfile, "ERROR: Failed to read scenario keyword no. %d (found %s)\n", i+1, checkstr);
             return 1;
         }
 
@@ -1921,8 +1921,8 @@ DDSIP_ReadData ()
             /* for the NEOS server it is an error to have probabilities nearly zero */
             if (DDSIP_data->prob[j] < 1e-12)
             {
-                printf ("XXX ERROR: probability of scenario %d too small - exiting.\n",j);
-                fprintf (DDSIP_outfile, "XXX ERROR: probability of scenario %d too small - exiting.\n",j);
+                printf ("XXX ERROR: probability of scenario %d too small - exiting.\n",j+1);
+                fprintf (DDSIP_outfile, "XXX ERROR: probability of scenario %d too small - exiting.\n",j+1);
                 exit (111);
             }
 #endif
@@ -2067,8 +2067,8 @@ DDSIP_ReadData ()
                 }
             else
             {
-                printf ("ERROR: Failed to read scenarios keyword\n");
-                fprintf (DDSIP_outfile, "ERROR: Failed to read scenarios keyword\n");
+                printf ("ERROR: Failed to read scenario keyword no. %d (found %s)\n", i+1, checkstr);
+                fprintf (DDSIP_outfile, "ERROR: Failed to read scenario keyword no. %d (found %s)\n", i+1, checkstr);
                 return 1;
             }
         }
@@ -2198,8 +2198,8 @@ DDSIP_ReadData ()
                 }
             else
             {
-                printf ("ERROR: Failed to read scenarios keyword in %s \n", fname);
-                fprintf (DDSIP_outfile, "ERROR: Failed to read scenarios keyword in %s \n", fname);
+                printf ("ERROR: Failed to read scenario keyword no. %d (found %s)\n", i+1, checkstr);
+                fprintf (DDSIP_outfile, "ERROR: Failed to read scenario keyword no. %d (found %s)\n", i+1, checkstr);
                 return 1;
             }
         }

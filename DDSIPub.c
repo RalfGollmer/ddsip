@@ -1125,7 +1125,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                             }
                             wall_secs /= (1.01 + iscen - DDSIP_bb->shifts);
                             if (timeLimit)
-                                viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                                viol = 7.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
                             else
                                 viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
 //#ifdef DEBUG

@@ -1695,6 +1695,10 @@ if (DDSIP_param->outlev > 20)
                         fprintf (DDSIP_bb->moreoutfile, "\n");
                 }
 //#endif
+                time (&DDSIP_bb->cur_time);
+		// stop loop if time limit was reached
+                if (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time) > DDSIP_param->timelim)
+                    break;
             }
             // if all were tested put the multiplier which gave the minimal diff and then the minimal mean_diff to the end of the list
             if (!tmp_bestdual && tmp_minbound && tmp_minbound->next)

@@ -755,7 +755,8 @@ if (DDSIP_param->outlev > 20)
                     old_obj = obj;
                 }
                 diff = obj - inherited_bound;
-                if (obj > DDSIP_bb->bestvalue + 1e-14 * fabs (DDSIP_bb->bestvalue))
+                if ((DDSIP_param->cb_checkBestdual) &&
+                    obj > DDSIP_bb->bestvalue + 1e-14 * fabs (DDSIP_bb->bestvalue))
                 {
                     bbest_t * tmp1_bestdual = DDSIP_bb->bestdual;
                     while (tmp1_bestdual)
@@ -3306,7 +3307,8 @@ NEXT_TRY:
             time (&DDSIP_bb->cur_time);
         }
         // store multipliers from node with highest dual bound up to now - if they are different
-        if (DDSIP_bb->dualdescitcnt && DDSIP_bb->local_bestdual[DDSIP_bb->dimdual+1] == DDSIP_bb->curnode &&
+        if ((DDSIP_param->cb_checkBestdual) &&
+                DDSIP_bb->dualdescitcnt && DDSIP_bb->local_bestdual[DDSIP_bb->dimdual+1] == DDSIP_bb->curnode &&
                 (!DDSIP_bb->bestdual || DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestdual_max ||
                  (obj > DDSIP_bb->bestvalue - 5.*fabs(DDSIP_bb->bestvalue)*(DDSIP_param->relgap)) ||
                  DDSIP_bb->curnode < 6)

@@ -354,7 +354,8 @@ DDSIP_InitNewNodes (void)
         if ((abs(DDSIP_param->riskmod) != 3 && (DDSIP_bb->curnode || (abs(DDSIP_param->riskmod) != 4 && abs(DDSIP_param->riskmod) != 5)) && (DDSIP_node[DDSIP_bb->curnode])->step != dual))
         {
             if ((((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_bb->firstvar + 1]) < DDSIP_param->maxinherit ||
-                    (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[i] == CPXMIP_OPTIMAL || (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[i] == CPXMIP_OPTIMAL_TOL)
+                    (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[i] == CPXMIP_OPTIMAL ||
+                    ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[i] == CPXMIP_OPTIMAL_TOL && (((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_bb->firstvar + 1]) < 2.*DDSIP_param->maxinherit))
             {
                 if (((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_node[DDSIP_bb->nonode]->neoind] <= DDSIP_node[DDSIP_bb->nonode]->neoub)
                 {
@@ -462,7 +463,8 @@ DDSIP_InitNewNodes (void)
             }
             else
             {
-                if (DDSIP_param->outlev > 23)
+                //if (DDSIP_param->outlev > 23)
+                if (DDSIP_param->outlev > 21)
                 {
                     fprintf (DDSIP_bb->moreoutfile,"##scenario %d solution not passed on due to inheritance level (%g identical scen. solutions)\n",
                              i+1, (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar]);

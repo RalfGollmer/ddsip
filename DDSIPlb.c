@@ -1404,6 +1404,7 @@ DDSIP_LowerBound (void)
             if (fabs(gap) < 2.e-13)
                 gap = 0.;
             meanGap += DDSIP_data->prob[scen] * gap;
+            maxGap   = DDSIP_Dmax (maxGap, gap);
             time (&DDSIP_bb->cur_time);
             if (DDSIP_param->outlev)
             {

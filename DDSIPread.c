@@ -1570,8 +1570,8 @@ DDSIP_ReadSpec ()
         DDSIP_param->cb_changetol = (int) floor (DDSIP_ReadDbl (specfile, "CBCHAN", " CB CHANGE TOLERANCE", 0., 1, 0., 1.) + 0.1);
         DDSIP_param->cb_reduceWeight = (int) floor (DDSIP_ReadDbl (specfile, "CBREDU", " CB REDUCE WEIGHT", 1., 1, 0., 1.) + 0.1);
         DDSIP_param->cb_increaseWeight = (int) floor (DDSIP_ReadDbl (specfile, "CBINCR", " CB INCREASE WEIGHT", 1., 1, 0., 1.) + 0.1);
-        DDSIP_param->cb_checkBestdual = (int) floor (DDSIP_ReadDbl (specfile, "CBCHEC", " CB CHECK BESTDUAL", 1., 1, 0., 1.) + 0.1);
-        DDSIP_param->cb_bestdualListLength= (int) floor (DDSIP_ReadDbl (specfile, "CBLIST", " CB BESTDUAL LIST LENGTH", 5., 1, 1., 50.) + 0.1);
+        DDSIP_param->cb_bestdualListLength= (int) floor (DDSIP_ReadDbl (specfile, "CBLIST", " CB BESTDUAL LIST LENGTH", 5., 1, 0., 50.) + 0.1);
+        DDSIP_param->cb_checkBestdual = (int) floor (DDSIP_ReadDbl (specfile, "CBCHEC", " CB CHECK BESTDUAL", (DDSIP_param->cb_bestdualListLength > 0), 1, 0., (DDSIP_param->cb_bestdualListLength > 0)) + 0.1);
         DDSIP_param->cb_test_line = (int) floor (DDSIP_ReadDbl (specfile, "CBLINE", " CB TEST LINE", 1., 1, 0., 1.) + 0.1);
         DDSIP_param->cb_cutnodes = (int) floor (DDSIP_ReadDbl (specfile, "CBCUTN", " CB CUTS UP TO NODE", 4., 1, 0., 100.) + 0.1);
         DDSIP_param->cb_cutoffs = DDSIP_ReadDbl (specfile, "CBCUTO", " CB CUTOFFS LIMIT", 1.2, 0, 0., DDSIP_infty);

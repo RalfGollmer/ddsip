@@ -266,7 +266,7 @@ DDSIP_SolChk (double* cutViolation, int test_equality)
                             fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (same node).\n");
                         if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
                             printf ("... multiple suggestion (same node).\n");
-                        if (test_equality != 2)
+                        //if (test_equality != 2)
                             DDSIP_bb->skip = 4;
                         return 0;
                     }
@@ -291,8 +291,7 @@ DDSIP_SolChk (double* cutViolation, int test_equality)
                         fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (same node).\n");
                     if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
                         printf ("... multiple suggestion (same node).\n");
-                    if (test_equality != 2)
-                        DDSIP_bb->skip = 4;
+                    DDSIP_bb->skip = 4;
                     return 0;
                 }
                 tmp = tmp->next;
@@ -350,8 +349,7 @@ DDSIP_SolChk (double* cutViolation, int test_equality)
                                     fprintf (DDSIP_bb->moreoutfile, "... multiple suggestion (node %d).\n", i);
                                 if (DDSIP_param->cpxscr || DDSIP_param->outlev > 10)
                                     printf ("... multiple suggestion (node %d).\n", i);
-                                if (test_equality != 2)
-                                    DDSIP_bb->skip = 4;
+                                DDSIP_bb->skip = 4;
                                 return 0;
                             }
                             tmp = tmp->next;

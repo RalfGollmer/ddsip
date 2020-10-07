@@ -353,120 +353,121 @@ DDSIP_InitNewNodes (void)
         // for asd model the same applies in all nodes due to changes of target
         if ((abs(DDSIP_param->riskmod) != 3 && (DDSIP_bb->curnode || (abs(DDSIP_param->riskmod) != 4 && abs(DDSIP_param->riskmod) != 5)) && (DDSIP_node[DDSIP_bb->curnode])->step != dual))
         {
-            if ((((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_bb->firstvar + 1]) < DDSIP_param->maxinherit ||
-                    (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[i] == CPXMIP_OPTIMAL ||
-                    ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[i] == CPXMIP_OPTIMAL_TOL && (((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_bb->firstvar + 1]) < 2.*DDSIP_param->maxinherit))
+            cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar]);
+            ((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_bb->firstvar + 1] += 1.;
+            if (((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_node[DDSIP_bb->nonode]->neoind] <= DDSIP_node[DDSIP_bb->nonode]->neoub)
             {
-                if (((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_node[DDSIP_bb->nonode]->neoind] <= DDSIP_node[DDSIP_bb->nonode]->neoub)
+                if (DDSIP_param->outlev > 79)
                 {
-                    if (DDSIP_param->outlev > 79)
-                    {
-                        fprintf (DDSIP_bb->moreoutfile,"  DDSIP_node[%d]->first_sol[%d][%d]= %.15g <= %.15g = DDSIP_node[%d]->neoub\n",DDSIP_bb->curnode,i,DDSIP_node[DDSIP_bb->nonode]->neoind, ((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_node[DDSIP_bb->nonode]->neoind],DDSIP_node[DDSIP_bb->nonode]->neoub, DDSIP_bb->nonode);
-                    }
-                    (DDSIP_node[DDSIP_bb->nonode]->first_sol)[i] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i];
-                    (DDSIP_node[DDSIP_bb->nonode]->cursubsol)[i] = (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[i];
-                    //      subbbound is passed via memcpy above
-                    (DDSIP_node[DDSIP_bb->nonode]->mipstatus)[i] = (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[i];
-                    (DDSIP_node[DDSIP_bb->nonode]->ref_scenobj)[i] = (DDSIP_node[DDSIP_bb->curnode]->ref_scenobj)[i];
-                    //count the level of inheriting
-                    (DDSIP_node[DDSIP_bb->nonode]->first_sol)[i][DDSIP_bb->firstvar + 1] += 1.0;
-                    DDSIP_node[DDSIP_bb->nonode]->numInheritedSols += (int) (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar];
-                    if (DDSIP_param->outlev > 23)
-                    {
-                        fprintf (DDSIP_bb->moreoutfile,"  node %d inherited solution of scenario %d from node %d (%g identical scen. solutions)\n",
-                                 DDSIP_bb->nonode, i + 1, DDSIP_bb->curnode, (DDSIP_node[DDSIP_bb->nonode]->first_sol)[i][DDSIP_bb->firstvar]);
-                    }
-                    //do the same for identical solutions
-                    if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
-                        for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
-                        {
-                            if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
-                                    && ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]) == (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])))
-                            {
-                                (DDSIP_node[DDSIP_bb->nonode]->first_sol)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i];
-                                (DDSIP_node[DDSIP_bb->nonode]->cursubsol)[j] = (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j];
-                                (DDSIP_node[DDSIP_bb->nonode]->mipstatus)[j] = (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j];
-                                (DDSIP_node[DDSIP_bb->nonode]->ref_scenobj)[j] = (DDSIP_node[DDSIP_bb->curnode]->ref_scenobj)[j];
-                                (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j] = NULL;
-                                cnt--;
-                                if (DDSIP_param->outlev > 23)
-                                {
-                                    fprintf (DDSIP_bb->moreoutfile,"  node %d inherited solution of scenario %d from node %d (%g identical scen. solutions)\n",
-                                             DDSIP_bb->nonode, j + 1, DDSIP_bb->curnode, (DDSIP_node[DDSIP_bb->nonode]->first_sol)[j][DDSIP_bb->firstvar]);
-                                }
-                                (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j] = NULL;
-                            }
-                        }
-                    (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i] = NULL;
+                    fprintf (DDSIP_bb->moreoutfile,"  DDSIP_node[%d]->first_sol[%d][%d]= %.15g <= %.15g = DDSIP_node[%d]->neoub\n",DDSIP_bb->curnode,i,DDSIP_node[DDSIP_bb->nonode]->neoind, ((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_node[DDSIP_bb->nonode]->neoind],DDSIP_node[DDSIP_bb->nonode]->neoub, DDSIP_bb->nonode);
                 }
-                else if (((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_node[DDSIP_bb->nonode]->neoind] >= DDSIP_node[DDSIP_bb->nonode + 1]->neolb)
+                //do check for inheritance conditions for all identical solutions
+                for (j = i; cnt && j < DDSIP_param->scenarios; j++)
                 {
-                    if (DDSIP_param->outlev > 79)
+                    if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
+                            && ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]) == (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])))
                     {
-                        fprintf (DDSIP_bb->moreoutfile,"  DDSIP_node[%d]->first_sol[%d][%d]= %.15g >= %.15g = DDSIP_node[%d]->neolb\n",DDSIP_bb->curnode,i,DDSIP_node[DDSIP_bb->nonode]->neoind, ((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_node[DDSIP_bb->nonode]->neoind],DDSIP_node[DDSIP_bb->nonode + 1]->neolb, DDSIP_bb->nonode + 1);
-                    }
-                    (DDSIP_node[DDSIP_bb->nonode + 1]->first_sol)[i] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i];
-                    (DDSIP_node[DDSIP_bb->nonode + 1]->cursubsol)[i] = (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[i];
-                    //      subbbound is passed via memcpy above
-                    (DDSIP_node[DDSIP_bb->nonode + 1]->mipstatus)[i] = (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[i];
-                    (DDSIP_node[DDSIP_bb->nonode + 1]->ref_scenobj)[i] = (DDSIP_node[DDSIP_bb->curnode]->ref_scenobj)[i];
-                    //count the level of inheriting
-                    (DDSIP_node[DDSIP_bb->nonode + 1]->first_sol)[i][DDSIP_bb->firstvar + 1] += 1.0;
-                    DDSIP_node[DDSIP_bb->nonode + 1]->numInheritedSols += (int) (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar];
-                    if (DDSIP_param->outlev > 23)
-                    {
-                        fprintf (DDSIP_bb->moreoutfile,"  node %d inherited solution of scenario %d from node %d (%g identical scen. solutions)\n",
-                                 DDSIP_bb->nonode+1, i + 1, DDSIP_bb->curnode, (DDSIP_node[DDSIP_bb->nonode+1]->first_sol)[i][DDSIP_bb->firstvar]);
-                    }
-                    //do the same for identical solutions
-                    if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
-                        for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
+                        if ((((DDSIP_node[DDSIP_bb->curnode])->first_sol[j])[DDSIP_bb->firstvar + 1]) <= DDSIP_param->maxinherit ||
+                                (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j] == CPXMIP_OPTIMAL ||
+                                ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j] == CPXMIP_OPTIMAL_TOL && (((DDSIP_node[DDSIP_bb->curnode])->first_sol[j])[DDSIP_bb->firstvar + 1]) < 2.*DDSIP_param->maxinherit))
                         {
-                            if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
-                                    && ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]) == (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])))
-                            {
-                                (DDSIP_node[DDSIP_bb->nonode + 1]->first_sol)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i];
-                                (DDSIP_node[DDSIP_bb->nonode + 1]->cursubsol)[j] = (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j];
-                                (DDSIP_node[DDSIP_bb->nonode + 1]->mipstatus)[j] = (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j];
-                                (DDSIP_node[DDSIP_bb->nonode + 1]->ref_scenobj)[j] = (DDSIP_node[DDSIP_bb->curnode]->ref_scenobj)[j];
+                            (DDSIP_node[DDSIP_bb->nonode]->first_sol)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i];
+                            (DDSIP_node[DDSIP_bb->nonode]->cursubsol)[j] = (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j];
+                            (DDSIP_node[DDSIP_bb->nonode]->mipstatus)[j] = (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j];
+                            (DDSIP_node[DDSIP_bb->nonode]->ref_scenobj)[j] = (DDSIP_node[DDSIP_bb->curnode]->ref_scenobj)[j];
+			    if (j > i)
                                 (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j] = NULL;
-                                cnt--;
-                                if (DDSIP_param->outlev > 23)
-                                {
-                                    fprintf (DDSIP_bb->moreoutfile,"  node %d inherited solution of scenario %d from node %d (%g identical scen. solutions)\n",
-                                             DDSIP_bb->nonode+1, j + 1, DDSIP_bb->curnode, (DDSIP_node[DDSIP_bb->nonode+1]->first_sol)[j][DDSIP_bb->firstvar]);
-                                }
+                            if (DDSIP_param->outlev > 23)
+                            {
+                                fprintf (DDSIP_bb->moreoutfile,"  node %d inherited solution of scenario %d from node %d (%g identical scen. solutions), mipstatus %d, inh_level %g\n",
+                                     DDSIP_bb->nonode, j + 1, DDSIP_bb->curnode, (DDSIP_node[DDSIP_bb->nonode]->first_sol)[j][DDSIP_bb->firstvar],
+                                     (DDSIP_node[DDSIP_bb->nonode]->mipstatus)[j], ((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_bb->firstvar + 1]);
+                            }
+			    if (j > i)
+                                (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j] = NULL;
+                            cnt--;
+                        }
+                        else
+                        {
+                            if (DDSIP_param->outlev > 21)
+                            {
+                                fprintf (DDSIP_bb->moreoutfile,"  node %d NOT inherited solution of scenario %d from node %d due to status (%g identical scen. solutions), mipstatus %d, inh_level %g\n",
+                                     DDSIP_bb->nonode, j + 1, DDSIP_bb->curnode, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j][DDSIP_bb->firstvar],
+                                     (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j], ((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_bb->firstvar + 1]);
+                            }
+                            ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i])[DDSIP_bb->firstvar] -= 1.;
+			    if (j > i)
+                            {
                                 (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j] = NULL;
                             }
+                            cnt--;
                         }
-                    (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i] = NULL;
+                    }
                 }
-                else
-                {
-                    if (DDSIP_param->outlev > 23)
-                    {
-                        fprintf (DDSIP_bb->moreoutfile,"##scenario %d solution not passed on (%g identical scen. solutions)\n",
-                                 i+1, (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar]);
-                    }
-                    if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
-                        for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
-                        {
-                            if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
-                                    && ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]) == (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])))
-                            {
-                                ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j] = NULL;
-                                cnt--;
-                            }
-                        }
+                DDSIP_node[DDSIP_bb->nonode]->numInheritedSols += (int) (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar];
+                if(fabs((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar]) < 0.2)
                     DDSIP_Free ((void **) &(((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]));
+                else
+                    (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i] = NULL;
+            }
+            else if (((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_node[DDSIP_bb->nonode]->neoind] >= DDSIP_node[DDSIP_bb->nonode + 1]->neolb)
+            {
+                if (DDSIP_param->outlev > 79)
+                {
+                    fprintf (DDSIP_bb->moreoutfile,"  DDSIP_node[%d]->first_sol[%d][%d]= %.15g >= %.15g = DDSIP_node[%d]->neolb\n",DDSIP_bb->curnode,i,DDSIP_node[DDSIP_bb->nonode + 1]->neoind, ((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_node[DDSIP_bb->nonode + 1]->neoind],DDSIP_node[DDSIP_bb->nonode + 1]->neolb, DDSIP_bb->nonode + 1);
                 }
+                //do check for inheritance conditions for all identical solutions
+                for (j = i; cnt && j < DDSIP_param->scenarios; j++)
+                {
+                    if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
+                            && ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]) == (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])))
+                    {
+                        if ((((DDSIP_node[DDSIP_bb->curnode])->first_sol[j])[DDSIP_bb->firstvar + 1]) <= DDSIP_param->maxinherit ||
+                                (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j] == CPXMIP_OPTIMAL ||
+                                ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j] == CPXMIP_OPTIMAL_TOL && (((DDSIP_node[DDSIP_bb->curnode])->first_sol[j])[DDSIP_bb->firstvar + 1]) < 2.*DDSIP_param->maxinherit))
+                        {
+                            (DDSIP_node[DDSIP_bb->nonode + 1]->first_sol)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i];
+                            (DDSIP_node[DDSIP_bb->nonode + 1]->cursubsol)[j] = (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j];
+                            (DDSIP_node[DDSIP_bb->nonode + 1]->mipstatus)[j] = (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j];
+                            (DDSIP_node[DDSIP_bb->nonode + 1]->ref_scenobj)[j] = (DDSIP_node[DDSIP_bb->curnode]->ref_scenobj)[j];
+                            if (DDSIP_param->outlev > 23)
+                            {
+                                fprintf (DDSIP_bb->moreoutfile,"  node %d inherited solution of scenario %d from node %d (%g identical scen. solutions), mipstatus %d, inh_level %g\n",
+                                     DDSIP_bb->nonode + 1, j + 1, DDSIP_bb->curnode, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j][DDSIP_bb->firstvar],
+                                     (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j], ((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_bb->firstvar + 1]);
+                            }
+			    if (j > i)
+                                (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j] = NULL;
+                            cnt--;
+                        }
+			    else
+                        {
+                            if (DDSIP_param->outlev > 21)
+                            {
+                                fprintf (DDSIP_bb->moreoutfile,"  node %d NOT inherited solution of scenario %d from node %d due to status (%g identical scen. solutions), mipstatus %d, inh_level %g\n",
+                                     DDSIP_bb->nonode + 1, j + 1, DDSIP_bb->curnode, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j][DDSIP_bb->firstvar],
+                                     (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j], ((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_bb->firstvar + 1]);
+                            }
+                            ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i])[DDSIP_bb->firstvar] -= 1.;
+                            if (j > i)
+                            {
+                                (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j] = NULL;
+                            }
+                            cnt--;
+                        }
+                    }
+                }
+                DDSIP_node[DDSIP_bb->nonode + 1]->numInheritedSols += (int) (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar];
+                if(fabs((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar]) < 0.2)
+                    DDSIP_Free ((void **) &(((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]));
+                else
+                    (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i] = NULL;
             }
             else
             {
-                //if (DDSIP_param->outlev > 23)
                 if (DDSIP_param->outlev > 21)
                 {
-                    fprintf (DDSIP_bb->moreoutfile,"##scenario %d solution not passed on due to inheritance level (%g identical scen. solutions)\n",
+                    fprintf (DDSIP_bb->moreoutfile,"##scenario %d solution not passed on (%g identical scen. solutions)\n",
                              i+1, (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar]);
                 }
                 if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
@@ -475,6 +476,11 @@ DDSIP_InitNewNodes (void)
                         if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
                                 && ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]) == (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])))
                         {
+                            if (DDSIP_param->outlev > 21)
+                            {
+                                fprintf (DDSIP_bb->moreoutfile,"##scenario %d solution not passed on (%g identical scen. solutions)\n",
+                                         i+1, (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar]);
+                            }
                             ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j] = NULL;
                             cnt--;
                         }

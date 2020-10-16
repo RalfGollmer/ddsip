@@ -2160,6 +2160,16 @@ NEXT_TRY:
                             fprintf (stderr, "ERROR: Failed to perform feasibility check\n");
                             return status;
                         }
+                        // reset CPLEX parameters to lb
+                        status = DDSIP_SetCpxPara (DDSIP_param->cpxnolb, DDSIP_param->cpxlbisdbl, DDSIP_param->cpxlbwhich, DDSIP_param->cpxlbwhat);
+                        if (status)
+                        {
+                            fprintf (stderr, "ERROR: Failed to set CPLEX parameters (LowerBound) \n");
+                            fprintf (DDSIP_outfile, "ERROR: Failed to set CPLEX parameters (LowerBound) \n");
+                            if (DDSIP_param->outlev)
+                                fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to set CPLEX parameters (LowerBound) \n");
+                            goto TERMINATE;
+                        }
                         nrFeasCheck++;
                         // Change bounds according to node in bb tree
                         if (DDSIP_bb->curbdcnt)
@@ -4298,6 +4308,14 @@ NEXT_SCEN:
                         {
                             fprintf (stderr, "ERROR: Failed to perform feasibility check\n");
                             return status;
+                        }
+                        if (use_LB_params)
+                        {
+                            status = DDSIP_SetCpxPara (DDSIP_param->cpxnolb, DDSIP_param->cpxlbisdbl, DDSIP_param->cpxlbwhich, DDSIP_param->cpxlbwhat);
+                        }
+                        else
+                        {
+                            status = DDSIP_SetCpxPara (DDSIP_param->cpxnodual, DDSIP_param->cpxdualisdbl, DDSIP_param->cpxdualwhich, DDSIP_param->cpxdualwhat);
                         }
                         nrFeasCheck++;
                         // Change bounds according to node in bb tree

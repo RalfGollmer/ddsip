@@ -1273,7 +1273,7 @@ DDSIP_ReadSpec ()
 
     DDSIP_param->heuristic_vector = NULL;
     DDSIP_param->heuristic_auto = 0;
-    if ((DDSIP_param->heuristic = (int) floor (DDSIP_ReadDbl (specfile, "HEURIS", " HEURISTIC", 100., 1, 0., 100.) + 0.1)) == 99)
+    if ((DDSIP_param->heuristic = (int) floor (DDSIP_ReadDbl (specfile, "HEURIS", " HEURISTIC", 100., 1, 0., 200.) + 0.1)) == 99)
     {
         DDSIP_param->heuristic_vector =
             DDSIP_ReadDblVec (specfile, "HEURIS", " HEURISTICVector", 3., 1, 0., 99., 12, &DDSIP_param->heuristic_num);
@@ -1284,7 +1284,7 @@ DDSIP_ReadSpec ()
         }
         DDSIP_param->interrupt_heur = (int) floor (DDSIP_ReadDbl (specfile, "INTHEU", " INTERRUPT HEURISTIC LOOP", 0., 1, -1., 1.) + 0.1);
     }
-    else if (DDSIP_param->heuristic == 100)
+    else if (DDSIP_param->heuristic >= 100)
     {
         DDSIP_param->heuristic_order = (int) floor (DDSIP_ReadDbl (specfile, "HEUROR", " HEURISTIC ORDER", 2., 1, 0., 3.) + 0.1);
         DDSIP_param->heuristic_vector = (double *) DDSIP_Alloc (sizeof (double), 15, "values(DDSIP_ReadDblVec)");

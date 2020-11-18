@@ -2311,8 +2311,10 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
     }
     else
     {
-        if (DDSIP_param->heuristic == 100)      // use subsequently different heuristics in the same node
+        if (DDSIP_param->heuristic >= 100)      // use subsequently different heuristics in the same node
         {
+            int heur;
+            heur = DDSIP_param->heuristic;
             for (i = 1; i < DDSIP_param->heuristic_num; i++)
             {
                 DDSIP_param->heuristic = (int) floor (DDSIP_param->heuristic_vector[i] + 0.1);
@@ -2341,7 +2343,7 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
                 }
             }
             // use (expensive) heuristic 12 using all single-scenario solutions as suggestions
-            if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || DDSIP_bb->curnode < 13 || use_heur12 || DDSIP_bb->noiter%250 > 247))
+            if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || (DDSIP_bb->curnode < 13 && heur == 100) || use_heur12 || DDSIP_bb->noiter%250 > 247))
             {
                 DDSIP_param->heuristic = 12;
                 if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))
@@ -2358,7 +2360,7 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
                 }
                 DDSIP_bb->heurval = tmpbestheur;
             }
-            DDSIP_param->heuristic = 100;
+            DDSIP_param->heuristic = heur;
         }
         else if (DDSIP_param->heuristic == 99)      // use subsequently different heuristics in the same node
         {

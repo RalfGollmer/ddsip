@@ -1251,6 +1251,15 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                             }
                         }
                     }
+                    else
+                    {
+                        if (mipstatus == CPXMIP_TIME_LIM_FEAS || mipstatus == CPXMIP_NODE_LIM_FEAS)
+                        {
+                            //if (DDSIP_param->outlev)
+                            //    fprintf (DDSIP_bb->moreoutfile,"      set status: %d to CPXMIP_OPTIMAL_TOL\n",mipstatus);
+                            mipstatus = CPXMIP_OPTIMAL_TOL;
+                        }
+                    }
                     // reset CPLEX parameters for 1st optimization
                     status = DDSIP_SetCpxPara (DDSIP_param->cpxnoub, DDSIP_param->cpxubisdbl, DDSIP_param->cpxubwhich, DDSIP_param->cpxubwhat);
                     if (status)
@@ -1265,7 +1274,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
             {
                 DDSIP_bb->skip = -2;
             }
-            mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
+            //mipstatus = CPXgetstat (DDSIP_env, DDSIP_lp);
             if ((k = CPXgetnummipstarts(DDSIP_env, DDSIP_lp)) > 3)
             {
                 status    = CPXdelmipstarts (DDSIP_env, DDSIP_lp, 2, k-1);

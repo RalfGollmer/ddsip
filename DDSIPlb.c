@@ -1595,9 +1595,9 @@ NEXT_TRY:
                     time_lap = DDSIP_GetCpuTime ();
                     if (DDSIP_param->cpxscr || DDSIP_param->outlev > 11)
                     {
-                        printf ("      LB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
+                        printf ("      LB: after 1st optimization: mipgap %% %-12g %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
                         if (DDSIP_param->outlev)
-                            fprintf (DDSIP_bb->moreoutfile,"      LB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
+                            fprintf (DDSIP_bb->moreoutfile,"      LB: after 1st optimization: mipgap %% %-12g %7d nodes  (%6.2fs), status: %d\n",mipgap*100.0,nodes_1st,time_lap-time_start,mipstatus);
                     }
 #endif
                     if (DDSIP_param->watchkappa)
@@ -1683,9 +1683,9 @@ NEXT_TRY:
                                 else
                                 {
                                     time_end = DDSIP_GetCpuTime ();
-                                    printf ("      LB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
+                                    printf ("      LB: after 2nd optimization: mipgap %% %-12g %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
                                     if (DDSIP_param->outlev)
-                                        fprintf (DDSIP_bb->moreoutfile,"      LB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
+                                        fprintf (DDSIP_bb->moreoutfile,"      LB: after 2nd optimization: mipgap %% %-12g %7d nodes  (%6.2fs), status: %d\n",mipgap*100.0,nodes_2nd,time_lap-time_start,mipstatus);
                                 }
                             }
 #endif
@@ -1736,7 +1736,11 @@ NEXT_TRY:
                         else
                         {
                             if (mipstatus == CPXMIP_TIME_LIM_FEAS || mipstatus == CPXMIP_NODE_LIM_FEAS)
+                            {
+                                if (DDSIP_param->outlev)
+                                    fprintf (DDSIP_bb->moreoutfile,"      set status: %d to CPXMIP_OPTIMAL_TOL\n",mipstatus);
                                 mipstatus = CPXMIP_OPTIMAL_TOL;
+                            }
                         }
                         // reset CPLEX parameters to lb
                         status = DDSIP_SetCpxPara (DDSIP_param->cpxnolb, DDSIP_param->cpxlbisdbl, DDSIP_param->cpxlbwhich, DDSIP_param->cpxlbwhat);
@@ -1914,11 +1918,11 @@ NEXT_TRY:
                 }
                 if (relax != 2)
                 {
-                    //if (mipstatus == CPXMIP_OPTIMAL)
-                    //{
-                    //    bobjval = objval;
-                    //}
-                    //else
+                    if (mipstatus == CPXMIP_OPTIMAL)
+                    {
+                        bobjval = objval;
+                    }
+                    else
                     {
                         status = CPXgetbestobjval (DDSIP_env, DDSIP_lp, &bobjval);
                         if (status)
@@ -2921,9 +2925,9 @@ NEXT_TRY:
                                             nodes_1st = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
                                             if (DDSIP_param->cpxscr || DDSIP_param->outlev > 11)
                                             {
-                                                printf ("      LB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
+                                                printf ("      LB: after 1st optimization: mipgap %% %-12g %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
                                                 if (DDSIP_param->outlev)
-                                                    fprintf (DDSIP_bb->moreoutfile,"      LB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
+                                                    fprintf (DDSIP_bb->moreoutfile,"      LB: after 1st optimization: mipgap %% %-12g %7d nodes  (%6.2fs), status: %d\n",mipgap*100.0,nodes_1st,time_lap-time_start,mipstatus);
                                             }
 #endif
                                             if (DDSIP_param->watchkappa)
@@ -3022,9 +3026,9 @@ NEXT_TRY:
                                                         else
                                                         {
                                                             time_end = DDSIP_GetCpuTime ();
-                                                            printf ("      LB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
+                                                            printf ("      LB: after 2nd optimization: mipgap %% %-12g %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
                                                             if (DDSIP_param->outlev)
-                                                                fprintf (DDSIP_bb->moreoutfile,"      LB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
+                                                                fprintf (DDSIP_bb->moreoutfile,"      LB: after 2nd optimization: mipgap %% %-12g %7d nodes  (%6.2fs), status: %d\n",mipgap*100.0,nodes_2nd,time_lap-time_start,mipstatus);
                                                         }
                                                     }
 #endif
@@ -3205,11 +3209,11 @@ NEXT_TRY:
                                                 mipx[DDSIP_bb->firstindex[j]] = 0.0;
                                         if (relax != 2)
                                         {
-                                            //if (mipstatus == CPXMIP_OPTIMAL)
-                                            //{
-                                            //    bobjval = objval;
-                                            //}
-                                            //else
+                                            if (mipstatus == CPXMIP_OPTIMAL)
+                                            {
+                                                bobjval = objval;
+                                            }
+                                            else
                                             {
                                                 status = CPXgetbestobjval (DDSIP_env, DDSIP_lp, &bobjval);
                                                 if (status)
@@ -3717,16 +3721,16 @@ NEXT_SCEN:
                         mipgap = 1.e+30;
                     }
 #ifdef DEBUG
-                    time_lap = DDSIP_GetCpuTime ();
+		    time_lap = DDSIP_GetCpuTime ();
                     if (DDSIP_param->cpxscr || DDSIP_param->outlev > 11)
                     {
-                        printf ("      CBLB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
+                        printf ("      CBLB: after 1st optimization: mipgap %% %-12g %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
                         if (DDSIP_param->outlev)
                         {
                             if (use_LB_params)
-                                fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)   - using CPLEX parameters for LB\n",mipgap*100.0,nodes_1st,time_lap-time_start);
+                                fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 1st optimization: mipgap %% %-12g %7d nodes  (%6.2fs), status: %d   - using CPLEX parameters for LB\n",mipgap*100.0,nodes_1st,time_lap-time_start, mipstatus);
                             else
-                                fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
+                                fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 1st optimization: mipgap %% %-12g %7d nodes  (%6.2fs), status: %d\n",mipgap*100.0,nodes_1st,time_lap-time_start, mipstatus);
                         }
                     }
 #endif
@@ -3838,13 +3842,13 @@ NEXT_SCEN:
                                 else
                                 {
                                     time_end = DDSIP_GetCpuTime ();
-                                    printf ("      CBLB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
+                                    printf ("      CBLB: after 2nd optimization: mipgap %% %-12g %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
                                     if (DDSIP_param->outlev)
                                     {
                                         if (use_LB_params)
-                                            fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)   - using CPLEX parameters for LB\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
+                                            fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 2nd optimization: mipgap %% %-12g %7d nodes  (%6.2fs), status: %d   - using CPLEX parameters for LB\n",mipgap*100.0,nodes_2nd,time_end-time_lap, mipstatus);
                                         else
-                                            fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
+                                            fprintf (DDSIP_bb->moreoutfile,"      CBLB: after 2nd optimization: mipgap %% %-12g %7d nodes  (%6.2fs), status: %d\n",mipgap*100.0,nodes_2nd,time_end-time_lap, mipstatus);
                                     }
                                 }
                             }
@@ -3896,7 +3900,11 @@ NEXT_SCEN:
                         else
                         {
                             if (mipstatus == CPXMIP_TIME_LIM_FEAS || mipstatus == CPXMIP_NODE_LIM_FEAS)
+                            {
+                                if (DDSIP_param->outlev)
+                                    fprintf (DDSIP_bb->moreoutfile,"      set status: %d to CPXMIP_OPTIMAL_TOL\n",mipstatus);
                                 mipstatus = CPXMIP_OPTIMAL_TOL;
+                            }
                         }
                         // reset CPLEX parameters to lb
                         status = DDSIP_SetCpxPara (DDSIP_param->cpxnodual, DDSIP_param->cpxdualisdbl, DDSIP_param->cpxdualwhich, DDSIP_param->cpxdualwhat);
@@ -4102,11 +4110,12 @@ NEXT_SCEN:
                     }
                     if (relax != 2)
                     {
-                        //if (mipstatus == CPXMIP_OPTIMAL)
-                        //{
-                        //    bobjval = objval;
-                        //}
-                        //else
+                        if (mipstatus == CPXMIP_OPTIMAL)
+                        {
+                            // bobjval might be different from objval it the CPLEX tree was exhausted
+                            bobjval = objval;
+                        }
+                        else
                         {
                             status = CPXgetbestobjval (DDSIP_env, DDSIP_lp, &bobjval);
                             if (status)

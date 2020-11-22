@@ -1255,8 +1255,10 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     {
                         if (mipstatus == CPXMIP_TIME_LIM_FEAS || mipstatus == CPXMIP_NODE_LIM_FEAS)
                         {
-                            //if (DDSIP_param->outlev)
-                            //    fprintf (DDSIP_bb->moreoutfile,"      set status: %d to CPXMIP_OPTIMAL_TOL\n",mipstatus);
+#ifdef DEBUG
+                            if (DDSIP_param->outlev)
+                                fprintf (DDSIP_bb->moreoutfile,"      set status: %d to CPXMIP_OPTIMAL_TOL\n",mipstatus);
+#endif
                             mipstatus = CPXMIP_OPTIMAL_TOL;
                         }
                     }

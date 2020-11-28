@@ -3502,7 +3502,13 @@ NEXT_TRY:
                 else if (DDSIP_bb->dualitcnt >= DDSIP_param->cbtotalitlim)
                     DDSIP_Print2 ("termination status: total iteration limit exceeded.", " --------------------------------------------------------------\n", 0, 0);
                 else if (cycleCnt >= 2)
-                    DDSIP_Print2 ("termination status: no bound increase achieved.", " --------------------------------------------------------------\n", 0, 0);
+                    {
+                        DDSIP_Print2 ("termination status: no bound increase achieved.", " --------------------------------------------------------------\n", 0, 0);
+                        // handle like return 32: du not use dual method in next children
+                        DDSIP_node[DDSIP_bb->curnode]->cbReturn32 = DDSIP_node[DDSIP_bb->curnode]->depth;
+                        if (DDSIP_param->outlev > 20)
+                            fprintf (DDSIP_bb->moreoutfile, "########## DDSIP_node[%d]->cbReturn32 = %d\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->depth);
+                    }
                 else if (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time) > DDSIP_param->timelim)
                     DDSIP_Print2 ("Time limit reached.", "\n", 0, 0);
                 else if (DDSIP_killsignal)

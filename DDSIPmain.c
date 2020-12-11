@@ -723,7 +723,6 @@ main (int argc, char * argv[])
     // Termination
 TERMINATE:
 
-
     DDSIP_PrintErrorMsg (status);
 
     printf ("\nOutput files in directory `%s'.\n", DDSIP_outdir);

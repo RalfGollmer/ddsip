@@ -2256,6 +2256,8 @@ NEXT_TRY:
                     fprintf (DDSIP_bb->moreoutfile, "\tLower bound of node %d >= %18.16g (-bestvalue = %g) cutoff after evaluation of %d scenarios, skip=%d\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,iscen+1,DDSIP_bb->skip);
                 }
                 DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
+                if ((j = DDSIP_bb->cutCntr - nrCuts))
+                    fprintf (DDSIP_outfile, " %6d%101d cuts (lb)\n", DDSIP_bb->curnode, j);
                 goto TERMINATE;
             }
         }                // end else
@@ -3383,6 +3385,9 @@ NEXT_TRY:
     }
 
 TERMINATE:
+
+//if(DDSIP_param->outlev)
+//   fprintf (DDSIP_bb->moreoutfile, "###### cutNumber: %3d, cutCntr: %3d\n", DDSIP_bb->cutNumber, DDSIP_bb->cutCntr);
 
     // Only if no errors, yet.
     if (!status)
@@ -5154,6 +5159,9 @@ NEXT_SCEN:
     }
     old_value = -(*objective_val);
 TERMINATE:
+
+//if(DDSIP_param->outlev)
+//   fprintf (DDSIP_bb->moreoutfile, "###### cutNumber: %3d, cutCntr: %3d\n", DDSIP_bb->cutNumber, DDSIP_bb->cutCntr);
 
     // Only if no errors, yet.
     if (!status || status == -111)

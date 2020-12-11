@@ -525,13 +525,17 @@ DDSIP_CheckRedundancy (int automatic)
         fprintf (DDSIP_outfile, "++++++++ %2d of the %d cuts are redundant  ->  %3d cuts\n", ind, DDSIP_bb->cutCntr, DDSIP_bb->cutCntr - ind);
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "++++++++ %2d of the %d cuts are redundant  -> %3d cuts\n", ind, DDSIP_bb->cutCntr, DDSIP_bb->cutCntr - ind);
-        if (DDSIP_param->deleteRedundantCuts)
-            DDSIP_bb->cutCntr -= ind;
+        //if (DDSIP_param->deleteRedundantCuts)
+        DDSIP_bb->cutCntr -= ind;
     }
 
     time_start = DDSIP_GetCpuTime ();
     if (DDSIP_param->outlev)
         fprintf (DDSIP_bb->moreoutfile, "### %6.2f sec  for checking redundancy of cuts\n",time_start-time_end);
+
+//if(DDSIP_param->outlev)
+//   fprintf (DDSIP_bb->moreoutfile, "###### after redundancy: cutNumber: %3d, cutCntr: %3d\n", DDSIP_bb->cutNumber, DDSIP_bb->cutCntr);
+
 
     status = CPXfreeprob (DDSIP_env, &redundancy);
 

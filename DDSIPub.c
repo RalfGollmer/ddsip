@@ -26,7 +26,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #define CHECKINTEGERCUT
 #define DEACTIVATECUTS
-#define SECURITYSHIFT 2e-11
+#define SECURITYSHIFT 5e-15
+
+//#define SCENSHIFTsmall
 
 //#define DEBUG
 
@@ -78,8 +80,8 @@ DDSIP_WarmUb ()
     }
     if (DDSIP_param->hot)
     {
-        // ADVIND must be 2 when using supplied start values or the last incumbent
-        status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 2);
+        // ADVIND must be 1 or 2 when using supplied start values or the last incumbent
+        status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 1);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
@@ -997,7 +999,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                 {
                                                     icnt = i;
 #ifdef SECURITYSHIFT
-                                                    rhs = lhs + (viol*security_factor - SECURITYSHIFT);
+                                                    rhs = lhs + (viol*security_factor - SECURITYSHIFT*lhs);
 #else
                                                     rhs = lhs + viol*security_factor;
 #endif
@@ -1010,7 +1012,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                 {
                                                     icnt = i;
 #ifdef SECURITYSHIFT
-                                                    rhs = lhs + (viol - SECURITYSHIFT);
+                                                    rhs = lhs + (viol - SECURITYSHIFT*lhs);
 #else
                                                     rhs = lhs + viol;
 #endif
@@ -1127,10 +1129,17 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                 wall_secs += sort_array[wall_hrs];
                             }
                             wall_secs /= (1.05 + iscen);
+#ifdef SCENSHIFTsmall
                             if (timeLimit)
-                                viol = 7.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                                viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
                             else
                                 viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+#else
+                            if (timeLimit)
+                                viol = 6.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                            else
+                                viol = 15.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+#endif
 //#ifdef DEBUG
                             if (DDSIP_param->outlev > 20)
                                 fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1.);
@@ -1312,7 +1321,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                 {
                     beg = 0;
                     end = (DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 11 && DDSIP_param->testOtherScens) || !nrScenarios) ? DDSIP_param->scenarios : nrScenarios;
-                    if (feasCheckOnly == 2 && (DDSIP_bb->dualitcnt > 1 || DDSIP_bb->curnode))
+                    if (feasCheckOnly == 2 && (DDSIP_bb->curnode || DDSIP_bb->dualdescitcnt))
                     {
                         end = DDSIP_Imin (DDSIP_bb->shifts + 2, DDSIP_param->scenarios);
                     }
@@ -1475,7 +1484,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                     {
                                         icnt = i;
 #ifdef SECURITYSHIFT
-                                        rhs = lhs + (viol*security_factor - SECURITYSHIFT);
+                                        rhs = lhs + (viol*security_factor - SECURITYSHIFT*lhs);
 #else
                                         rhs = lhs + viol*security_factor;
 #endif
@@ -1488,7 +1497,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                     {
                                         icnt = i;
 #ifdef SECURITYSHIFT
-                                        rhs = lhs + (viol - SECURITYSHIFT);
+                                        rhs = lhs + (viol - SECURITYSHIFT*lhs);
 #else
                                         rhs = lhs + viol;
 #endif
@@ -1526,9 +1535,13 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                         newCut->Benders = 1;
                                         DDSIP_bb->cutpool = newCut;
                                         rmatval = NULL;
-                                        if (feasCheckOnly == 2 && DDSIP_bb->dualitcnt > 1)
+                                        //if (feasCheckOnly == 2 && DDSIP_bb->dualitcnt > 1)
+                                        //{
+                                        //    end = DDSIP_param->scenarios;
+                                        //}
+                                        if (feasCheckOnly == 2 && (DDSIP_bb->curnode || DDSIP_bb->dualdescitcnt) && DDSIP_param->scenarios >= 10)
                                         {
-                                            end = DDSIP_param->scenarios;
+                                            end = DDSIP_Imin (DDSIP_bb->shifts + 2, DDSIP_param->scenarios);
                                         }
                                     }
                                     //shift this infeasible scenario to first place, such that next time it is checked first
@@ -1805,10 +1818,17 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         wall_secs += sort_array[wall_hrs];
                     }
                     wall_secs /= (0.01 + iscen - DDSIP_bb->shifts);
+#ifdef SCENSHIFT
                     if (timeLimit)
                         viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
                     else
                         viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+#else
+                    if (timeLimit)
+                        viol = 6.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                    else
+                        viol = 15.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+#endif
 //#ifdef DEBUG
                     if (DDSIP_param->outlev > 20)
                         fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1.);
@@ -1937,10 +1957,17 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         wall_secs += sort_array[wall_hrs];
                     }
                     wall_secs /= (0.01 + iscen - DDSIP_bb->shifts);
+#ifdef SCENSHIFT
                     if (timeLimit)
                         viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
                     else
                         viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+#else
+                    if (timeLimit)
+                        viol = 6.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                    else
+                        viol = 15.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+#endif
 //#ifdef DEBUG
                     if (DDSIP_param->outlev > 20)
                         fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > 5.2*wall_secs + 1.);
@@ -1982,7 +2009,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
 
             if (DDSIP_param->hot)
             {
-                status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 2);
+                status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 1);
                 if (status)
                 {
                     fprintf (DDSIP_outfile, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
@@ -2130,10 +2157,17 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
             wall_secs += sort_array[wall_hrs];
         }
         wall_secs /= (0.01 + DDSIP_param->scenarios - DDSIP_bb->shifts);
+#ifdef SCENSHIFT
         if (timeLimit)
             viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
         else
             viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+#else
+        if (timeLimit)
+            viol = 6.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+        else
+            viol = 15.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+#endif
 //#ifdef DEBUG
         if (DDSIP_param->outlev > 20)
             fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1.: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1.);
@@ -2275,14 +2309,17 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
             bound_sort_array[DDSIP_bb->ub_scen_order[i_scen]] = DDSIP_data->prob[DDSIP_bb->ub_scen_order[i_scen]] * (DDSIP_node[DDSIP_bb->curnode]->subbound)[DDSIP_bb->ub_scen_order[i_scen]];
         }
         DDSIP_qsort_ins_D (bound_sort_array, DDSIP_bb->ub_scen_order, DDSIP_bb->shifts, DDSIP_param->scenarios-1);
-        // insert the least-cost scenario after the first bb->shifts+1 scenarios - to be sure to check that for feasibility, too
-        if (DDSIP_bb->shifts < DDSIP_param->scenarios - 3)
+	if (DDSIP_param->addBendersCuts)
         {
-            int j;
-            i_scen = DDSIP_bb->ub_scen_order[DDSIP_param->scenarios - 1];
-            for (j = DDSIP_param->scenarios - 1; j>DDSIP_bb->shifts + 1; j--)
-                DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
-            DDSIP_bb->ub_scen_order[DDSIP_bb->shifts + 1] = i_scen;
+            // insert the least-cost scenario after the first bb->shifts+1 scenarios - to be sure to check that for feasibility, too
+            if (DDSIP_bb->shifts < DDSIP_param->scenarios - 3)
+            {
+                int j;
+                i_scen = DDSIP_bb->ub_scen_order[DDSIP_param->scenarios - 1];
+                for (j = DDSIP_param->scenarios - 1; j>DDSIP_bb->shifts + 1; j--)
+                    DDSIP_bb->ub_scen_order[j] = DDSIP_bb->ub_scen_order[j-1];
+                DDSIP_bb->ub_scen_order[DDSIP_bb->shifts + 1] = i_scen;
+            }
         }
         DDSIP_bb->ub_sorted = 1;
 
@@ -2347,14 +2384,13 @@ void DDSIP_EvaluateScenarioSolutions (int* comb)
                         }
                     }
                 }
-                if (DDSIP_killsignal)
-                {
-                    DDSIP_bb->skip = -5;
-                    break;
-                }
+            }
+            if (DDSIP_killsignal)
+            {
+                DDSIP_bb->skip = -5;
             }
             // use (expensive) heuristic 12 using all single-scenario solutions as suggestions
-            if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || (DDSIP_bb->curnode < 13 && heur == 100) || use_heur12 || DDSIP_bb->noiter%250 > 247))
+            if (!(DDSIP_param->interrupt_heur && DDSIP_bb->skip == -5) && (DDSIP_bb->heurSuccess || ((DDSIP_bb->curnode < 13 || DDSIP_node[DDSIP_bb->curnode]->depth < 4) && heur == 100) || use_heur12 || DDSIP_bb->noiter%250 > 247))
             {
                 DDSIP_param->heuristic = 12;
                 if (!DDSIP_Heuristics (comb, DDSIP_param->scenarios, 0))

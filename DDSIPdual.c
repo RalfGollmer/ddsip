@@ -192,15 +192,6 @@ DDSIP_DualUpdate (void *function_key, double *dual, double relprec,
     double * maxval = NULL, h_min;
 #endif
 
-    if (DDSIP_killsignal)
-    {
-        if (DDSIP_param->outlev)
-            fprintf (DDSIP_bb->moreoutfile, "\nTermination signal received.\n");
-        DDSIP_bb->dualObjVal = -DDSIP_infty;
-        *new_subg = 0;
-        return -1;
-    }
-
     // update node->dual
     memcpy (DDSIP_node[DDSIP_bb->curnode]->dual, dual, sizeof (double) * DDSIP_bb->dimdual);
 
@@ -233,7 +224,8 @@ ONCE_AGAIN:
             if (i)
             {
                 *new_subg = 0;
-                return -1;
+                DDSIP_bb->skip = 1;
+                return -111;
             }
             if (!i && DDSIP_bb->dualitcnt<2 && DDSIP_bb->curnode > 0)
             {
@@ -403,8 +395,9 @@ ONCE_AGAIN:
         fprintf (DDSIP_outfile, "\nTermination signal received.\n");
         if (DDSIP_param->outlev)
             fprintf (DDSIP_bb->moreoutfile, "\nTermination signal received.\n");
-        DDSIP_bb->dualObjVal = -DDSIP_infty;
-        DDSIP_bb->skip = 1;
+          *new_subg = 0;
+          DDSIP_bb->skip = -1;
+//        DDSIP_bb->dualObjVal = -DDSIP_infty;
     }
     return 0;
 }
@@ -420,7 +413,7 @@ DDSIP_DualOpt (void)
     double *maxfirst;
     double *center_point;
     double obj, old_obj, start_weight, diff;
-    int    wall_hrs, wall_mins, cpu_hrs, cpu_mins, limits_reset, cur_iters, current_maxsteps, repeated_increase = 2, weight_decreases = 0, many_iters = 0, cycleCnt  = 0;
+    int    wall_hrs, wall_mins, cpu_hrs, cpu_mins, limits_reset, cur_iters = 0, current_maxsteps, repeated_increase = 2, weight_decreases = 0, many_iters = 0, cycleCnt  = 0, nonzero_mult;
     double wall_secs, cpu_secs, inherited_bound, inhMult_bound = -1e+20, rgap;
     double old_cpxrelgap = 1.e-16, old_cpxtimelim = 1000000., old_cpxrelgap2 = 1.e-16, old_cpxtimelim2 = 1000000., last_weight, next_weight;
     double reduction_factor = 0.50;
@@ -513,7 +506,7 @@ DDSIP_DualOpt (void)
     cb_set_eval_limit (p, DDSIP_param->cbtotalitlim);
     cb_set_max_bundlesize (p, (void *) DDSIP_DualUpdate, DDSIP_param->cbbundlesz);
     cb_set_max_new_subgradients (p, (void *) DDSIP_DualUpdate, DDSIP_param->cbmaxsubg);
-    cb_set_inner_update_limit     (p, DDSIP_param->cb_maxsteps + 2);
+    cb_set_inner_update_limit (p, DDSIP_param->cb_maxsteps + 2);
 
     // The choice of the starting weight influences the convergence and results of Conic Bundle.
     // Is there a generally good choice?
@@ -682,7 +675,7 @@ if (DDSIP_param->outlev > 20)
                 }
 		else
                 {
-                    if (obj >  DDSIP_bb->bestvalue - DDSIP_Dmin(0.5*DDSIP_param->relgap,4.e-9)*(fabs(DDSIP_bb->bestvalue) + 1e-9))
+                    if (obj >  DDSIP_bb->bestvalue - DDSIP_Dmin(0.5*DDSIP_param->relgap,2.e-3)*(fabs(DDSIP_bb->bestvalue) + 1e-9))
                     {
                         //within relgap
                         tmp1_maxcutoffs->cutoffs += 1.0;
@@ -1544,7 +1537,7 @@ if (DDSIP_param->outlev > 20)
                             if (DDSIP_param->outlev > 20)
                                 fprintf (DDSIP_bb->moreoutfile, " ##   multiplier from node %d: cutoffs increased to: %g\n",tmp_bestdual->node_nr,tmp_bestdual->cutoffs);
                         }
-                        else if (obj >  DDSIP_bb->bestvalue - DDSIP_Dmin(0.5*DDSIP_param->relgap,4.e-9)*(fabs(DDSIP_bb->bestvalue) + 1e-9))
+                        else if (obj >  DDSIP_bb->bestvalue - DDSIP_Dmin(0.5*DDSIP_param->relgap,2.e-3)*(fabs(DDSIP_bb->bestvalue) + 1e-9))
                         {
                             //within relgap
                             tmp_bestdual->cutoffs += 0.9;
@@ -1826,7 +1819,7 @@ if (DDSIP_param->outlev > 20)
 //////////////////////////
                     if (tmp_maxbound)
                     {
-                        if (DDSIP_param->cb_test_line && max_bound < DDSIP_bb->bestvalue - DDSIP_Dmin (0.49*DDSIP_param->relgap, 2.5e-9)*(fabs(DDSIP_bb->bestvalue) + 1e-12))
+                        if (DDSIP_param->cb_test_line && (max_bound - inhMult_bound)/(fabs(max_bound)+1e-16) > 2e-16 && max_bound < DDSIP_bb->bestvalue - DDSIP_Dmin (0.49*DDSIP_param->relgap, 2.5e-9)*(fabs(DDSIP_bb->bestvalue) + 1e-12))
                         {
                             // but first try a point on the line between inherited and best multipliers
                             if (cnt == 2)
@@ -2048,7 +2041,7 @@ if (DDSIP_param->outlev > 20)
 //////////////////////////
                     if (DDSIP_param->cb_test_line)
                     {
-                        if (tmp_maxbound)
+                        if (tmp_maxbound && (inhMult_bound - max_bound)/(fabs(max_bound)+1e-16) > 4e-16)
                         {
                             {
                                 // try a extrapolated point on the line between inherited and best multipliers
@@ -2269,7 +2262,7 @@ if (DDSIP_param->outlev > 20)
     }
     DDSIP_bb->last_dualitcnt = DDSIP_bb->dualitcnt;
 
-    if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - DDSIP_Dmin (0.5*DDSIP_param->relgap, 8e-9)*(fabs(DDSIP_bb->bestvalue) + 1e-14))
+    if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - DDSIP_Dmin (0.5*DDSIP_param->relgap, 2e-3)*(fabs(DDSIP_bb->bestvalue) + 1e-14))
     {
         memcpy (DDSIP_node[DDSIP_bb->curnode]->dual, DDSIP_bb->local_bestdual, sizeof (double) * (DDSIP_bb->dimdual + 3));
         if (DDSIP_node[DDSIP_bb->curnode]->bound >= DDSIP_bb->bestvalue)
@@ -2292,6 +2285,11 @@ if (DDSIP_param->outlev > 20)
                 DDSIP_Print2 ("   --------- termination status: optimal. --------------------------------------------------------------", "\n", 0, 0);
             DDSIP_bb->skip = 3;
             DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
+        }
+        else if (DDSIP_killsignal)
+        {
+            if (DDSIP_param->outlev)
+                DDSIP_Print2 ("   --------- termination status: user interrupt. -------------------------------------------------------", "\n", 0, 0);
         }
         else
         {
@@ -2362,7 +2360,7 @@ if (DDSIP_param->outlev > 20)
                 && (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time) < DDSIP_param->timelim)
                 && DDSIP_bb->dualdescitcnt < DDSIP_bb->current_itlim
                 && DDSIP_bb->dualitcnt < DDSIP_param->cbtotalitlim && !(obj > DDSIP_bb->bestvalue - DDSIP_param->accuracy)
-                && (DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_bb->bestvalue - (fabs(DDSIP_bb->bestvalue) + 1.e-12) * DDSIP_Dmax (DDSIP_Dmin (0.3*DDSIP_param->relgap, 4e-9), 2.e-12))
+                && (DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_bb->bestvalue - (fabs(DDSIP_bb->bestvalue) + 1.e-12) * DDSIP_Dmax (DDSIP_Dmin (0.4*DDSIP_param->relgap, 2e-3), 5.e-12))
                 && cycleCnt < 2)
         {
             if ((DDSIP_bb->no_reduced_front == 1) &&
@@ -2417,9 +2415,17 @@ if (DDSIP_param->outlev > 20)
             /* status = cb_do_descent_step (p); */
             // /* DLW Dec 2014 - limit the number of null steps in order to avoid loops of reevaluations */
 NEXT_TRY:
+#if (CBVERSION != 1101)
             current_maxsteps = DDSIP_param->cb_maxsteps + (DDSIP_bb->dualdescitcnt==1?5:0) + ((DDSIP_bb->curnode < 5)?4:0);
             cb_set_inner_update_limit (p, current_maxsteps + 2);
             cb_status = cb_do_maxsteps(p, current_maxsteps); /* DLW Dec 2014 */
+#else
+	    if (DDSIP_param->cb_maxsteps > 0)
+                current_maxsteps = DDSIP_param->cb_maxsteps + (DDSIP_bb->dualdescitcnt==1?5:0) + ((DDSIP_bb->curnode < 5)?4:0);
+	    else
+                current_maxsteps = 0;
+            cb_status = cb_solve(p, current_maxsteps, 1);
+#endif
             // update dual solution
             cb_get_center (p,DDSIP_node[DDSIP_bb->curnode]->dual);
             if (DDSIP_bb->dualdescitcnt == 1)
@@ -2430,7 +2436,7 @@ NEXT_TRY:
                 // Killsignal
                 break;
             }
-            else if (cb_status)
+            else if (cb_status > 0)
             {
                 if (!DDSIP_bb->curnode)
                     fprintf (DDSIP_outfile, "############### cb_do_maxsteps returned %d, newTry= %d\n", cb_status, DDSIP_bb->newTry);
@@ -2506,6 +2512,7 @@ NEXT_TRY:
                 }
             }
 
+            cur_iters = DDSIP_bb->dualitcnt - DDSIP_bb->last_dualitcnt;
             if (DDSIP_bb->newTry)
             {
                 // increase weight
@@ -2691,7 +2698,13 @@ NEXT_TRY:
                             }
                             else
                             {
-                                next_weight = 1.1*last_weight;
+				if (many_iters < 6)
+                                {
+                                    many_iters++;
+                                    next_weight = 1.1*last_weight;
+                                }
+				else
+                                    next_weight = 8.*last_weight;
                                 cb_set_next_weight (p, next_weight);
                                 /////////
                                 if (DDSIP_param->outlev)
@@ -2895,6 +2908,7 @@ NEXT_TRY:
                         cur_iters = DDSIP_bb->dualitcnt - DDSIP_bb->last_dualitcnt;
                         cb_get_center (p,center_point);
 ///////////////
+#if (CBVERSION != 1101)
                         // if the center point is not local_bestdual (may occur when maxsteps reached) - set center point to local_bestdual
                         if (cur_iters > 2 && DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2] &&
                                 memcmp(DDSIP_bb->local_bestdual, center_point, sizeof (double) * (DDSIP_bb->dimdual)) &&
@@ -2916,6 +2930,7 @@ NEXT_TRY:
                             obj = DDSIP_bb->dualObjVal;
                             cpu_hrs++;
                         }
+#endif
                         start_weight = next_weight - last_weight;
                         if (DDSIP_bb->weight_reset == -1)
                         {
@@ -3428,11 +3443,11 @@ NEXT_TRY:
             printf ("   --------- ");
             fprintf (DDSIP_outfile, "   --------- ");
             i_scen = cb_termination_code (p);
-            if (i_scen == 32)
+            if (i_scen == 32 || (i_scen == 1 && !cur_iters && DDSIP_bb->dualdescitcnt == 1))
             {
                 DDSIP_node[DDSIP_bb->curnode]->cbReturn32 = DDSIP_node[DDSIP_bb->curnode]->depth;
                 if (DDSIP_param->outlev > 20)
-                    fprintf (DDSIP_bb->moreoutfile, "########## DDSIP_node[%d]->cbReturn32 = %d\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->depth);
+                    fprintf (DDSIP_bb->moreoutfile, "\n########## DDSIP_node[%d]->cbReturn32 = %d\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->depth);
             }
             //if (obj > DDSIP_bb->bestvalue)
             if ((obj - DDSIP_bb->bestvalue) > DDSIP_param->accuracy*(fabs(DDSIP_bb->bestvalue)+1.e-10))
@@ -3447,8 +3462,7 @@ NEXT_TRY:
                 DDSIP_Print2 ("termination status: no violation of nonanticipativity. ------------------------------------", "\n", 0, 0);
                 DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
             }
-            //else if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - DDSIP_Dmin (0.5*DDSIP_param->relgap, 2.5e-9)*(fabs(DDSIP_bb->bestvalue) + 1e-12))
-            else if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - DDSIP_Dmin (0.5*DDSIP_param->relgap, 8e-9)*(fabs(DDSIP_bb->bestvalue) + 1e-14))
+            else if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - DDSIP_Dmin (0.5*DDSIP_param->relgap, 2e-3)*(fabs(DDSIP_bb->bestvalue) + 1e-14))
             {
                 if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue +  2.e-10 * (fabs(DDSIP_bb->bestvalue) + 1e-12))
                 {
@@ -3498,9 +3512,9 @@ NEXT_TRY:
             else if (!i_scen)
             {
                 if (DDSIP_bb->dualdescitcnt >= DDSIP_bb->current_itlim)
-                    DDSIP_Print2 ("termination status: descent iteration limit exceeded.", " --------------------------------------------------------------\n", 0, 0);
+                    DDSIP_Print2 ("termination status: descent iteration limit reached.", " --------------------------------------------------------------\n", 0, 0);
                 else if (DDSIP_bb->dualitcnt >= DDSIP_param->cbtotalitlim)
-                    DDSIP_Print2 ("termination status: total iteration limit exceeded.", " --------------------------------------------------------------\n", 0, 0);
+                    DDSIP_Print2 ("termination status: total iteration limit reached.", " --------------------------------------------------------------\n", 0, 0);
                 else if (cycleCnt >= 2)
                     {
                         DDSIP_Print2 ("termination status: no bound increase achieved.", " --------------------------------------------------------------\n", 0, 0);
@@ -3543,84 +3557,106 @@ NEXT_TRY:
                         fprintf (DDSIP_bb->moreoutfile, "\nMaximum number of failures to increase the augmented model value exceeded in node %d:   changed weight in bestdual to last weight= %g\n", DDSIP_bb->curnode, DDSIP_bb->local_bestdual[DDSIP_bb->dimdual]);
                     }
                 }
+                else if (DDSIP_bb->dualitcnt >= DDSIP_param->cbtotalitlim)
+                    DDSIP_Print2 ("termination status: total iteration limit reached.", " --------------------------------------------------------------\n", 0, 0);
                 else if (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time) > DDSIP_param->timelim)
                     fprintf (DDSIP_outfile, "Total time limit exceeded.\n");
                 else
                     fprintf (DDSIP_outfile, "\n");
             }
         }
-////////////////////////////////////////////////////////////////////////////// computation of bounds for premature stop only when cutoff not yet decided
-        if (DDSIP_param->prematureStop && !DDSIP_killsignal && (DDSIP_bb->curnode || DDSIP_bb->initial_multiplier) && !DDSIP_node[DDSIP_bb->curnode]->leaf)
+
+        nonzero_mult = 0;
+        // check whether best multipliers are zero
+        for (wall_hrs = 0; wall_hrs < DDSIP_bb->dimdual; wall_hrs++)
         {
-            // Initialize multipliers with zero
-            memset (DDSIP_bb->startinfo_multipliers, '\0', sizeof (double) * (DDSIP_bb->dimdual));
-            DDSIP_bb->keepSols = 0;
-            if ((status = cb_set_new_center_point (p, DDSIP_bb->startinfo_multipliers)))
+            if (DDSIP_bb->local_bestdual[wall_hrs] != 0.)
             {
-                fprintf (stderr, "set_new_center_point returned %d\n", status);
+                nonzero_mult = 1;
+                break;
+            }
+        }
+////////////////////////////////////////////////////////////////////////////// computation of bounds for premature stop only when cutoff not yet decided
+        if (nonzero_mult)
+        {
+            if (DDSIP_param->prematureStop && !DDSIP_killsignal && (DDSIP_bb->curnode || DDSIP_bb->initial_multiplier) &&
+                !DDSIP_node[DDSIP_bb->curnode]->leaf)
+            {
+                // Initialize multipliers with zero
+                memset (DDSIP_bb->startinfo_multipliers, '\0', sizeof (double) * (DDSIP_bb->dimdual));
+                DDSIP_bb->keepSols = 0;
+                if ((status = cb_set_new_center_point (p, DDSIP_bb->startinfo_multipliers)))
+                {
+                    fprintf (stderr, "set_new_center_point returned %d\n", status);
+                    if (DDSIP_param->outlev)
+                        fprintf (DDSIP_bb->moreoutfile, "set_new_center_point returned %d\n", status);
+                    cb_destruct_problem (&p);
+                    DDSIP_Free ((void **) &(minfirst));
+                    DDSIP_Free ((void **) &(maxfirst));
+                    DDSIP_Free ((void **) &(center_point));
+                    return status;
+                }
+                memcpy (DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag, DDSIP_node[DDSIP_bb->curnode]->subbound, DDSIP_param->scenarios*sizeof(double));
+                DDSIP_node[DDSIP_bb->curnode]->BoundNoLag = DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag[0] * DDSIP_data->prob[0];
+                for (j = 1; j < DDSIP_param->scenarios; j++)
+                    DDSIP_node[DDSIP_bb->curnode]->BoundNoLag += DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag[j] * DDSIP_data->prob[j];
+                //////////////////////////////
+                if (DDSIP_param->outlev > 21)
+                {
+                    for (j = 0; j < DDSIP_param->scenarios; j++)
+                    {
+                        fprintf (DDSIP_bb->moreoutfile, " ## bound zero mult. scen %3d:  %24.15g\n", j+1, DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag[j]);
+                    }
+                    fprintf (DDSIP_bb->moreoutfile, " ## -----------------------\n ## node %d  BoundNoLag:         %24.15g\n ## -----------------------\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->BoundNoLag);
+                }
+                //////////////////////////////
+                obj = DDSIP_bb->dualObjVal;
                 if (DDSIP_param->outlev)
-                    fprintf (DDSIP_bb->moreoutfile, "set_new_center_point returned %d\n", status);
-                cb_destruct_problem (&p);
-                DDSIP_Free ((void **) &(minfirst));
-                DDSIP_Free ((void **) &(maxfirst));
-                DDSIP_Free ((void **) &(center_point));
-                return status;
+                {
+                    DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
+                    time (&DDSIP_bb->cur_time);
+                    DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
+                    fprintf (DDSIP_outfile, "  |--------------------- %4d  %-16.12g ----------------- zero mult.   %-20.14g %30dh %02d:%02.0f  %3dh %02d:%02.0f\n",
+                             DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal,
+                             DDSIP_node[DDSIP_bb->curnode]->bound, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
+                }
+    
+                // most probably this never happens...
+                if (obj > DDSIP_node[DDSIP_bb->curnode]->bound)
+                {
+                    memcpy (DDSIP_bb->local_bestdual, DDSIP_bb->startinfo_multipliers, sizeof (double) * (DDSIP_bb->dimdual));
+                    ////////////////////////////
+                    if (DDSIP_param->outlev && inherited_bound > -DDSIP_infty)
+                        fprintf (DDSIP_outfile, " ###### zero mult. increased bound %22.14g by %g\n", DDSIP_node[DDSIP_bb->curnode]->bound, obj-DDSIP_node[DDSIP_bb->curnode]->bound);
+                    ////////////////////////////
+    
+                    DDSIP_node[DDSIP_bb->curnode]->bound = obj;
+                }
+                if (DDSIP_node[DDSIP_bb->curnode]->depth < DDSIP_Imax(DDSIP_param->cb_depth, 3))
+                {
+                    // do upper bounding for these solutions, too
+                    if (!DDSIP_bb->curnode && DDSIP_bb->cutAdded && DDSIP_param->outlev)
+                    {
+                        fprintf (DDSIP_outfile, " %6d%101d cuts (lb)\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
+                    }
+                    DDSIP_bb->cutAdded = 0;
+                    DDSIP_EvaluateScenarioSolutions (&comb);
+                    if (DDSIP_bb->cutAdded && DDSIP_param->outlev)
+                    {
+                        fprintf (DDSIP_outfile, " %6d%101d cuts (UB)\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
+                    }
+                    DDSIP_bb->skip = 0;
+                }
+                if (DDSIP_param->outlev)
+                {
+                    fprintf (DDSIP_outfile, "   ------------------------------------------------------------------------------------------------------------------------------\n");
+                }
             }
+        }
+        else
+        {
             memcpy (DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag, DDSIP_node[DDSIP_bb->curnode]->subbound, DDSIP_param->scenarios*sizeof(double));
-            DDSIP_node[DDSIP_bb->curnode]->BoundNoLag = DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag[0] * DDSIP_data->prob[0];
-            for (j = 1; j < DDSIP_param->scenarios; j++)
-                DDSIP_node[DDSIP_bb->curnode]->BoundNoLag += DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag[j] * DDSIP_data->prob[j];
-            //////////////////////////////
-            if (DDSIP_param->outlev > 21)
-            {
-                for (j = 0; j < DDSIP_param->scenarios; j++)
-                {
-                    fprintf (DDSIP_bb->moreoutfile, " ## bound zero mult. scen %3d:  %24.15g\n", j+1, DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag[j]);
-                }
-                fprintf (DDSIP_bb->moreoutfile, " ## -----------------------\n ## node %d  BoundNoLag:         %24.15g\n ## -----------------------\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->BoundNoLag);
-            }
-            //////////////////////////////
-            obj = DDSIP_bb->dualObjVal;
-            if (DDSIP_param->outlev)
-            {
-                DDSIP_translate_time (DDSIP_GetCpuTime(),&cpu_hrs,&cpu_mins,&cpu_secs);
-                time (&DDSIP_bb->cur_time);
-                DDSIP_translate_time (difftime(DDSIP_bb->cur_time,DDSIP_bb->start_time),&wall_hrs,&wall_mins,&wall_secs);
-                fprintf (DDSIP_outfile, "  |--------------------- %4d  %-16.12g ----------------- zero mult.   %-20.14g %30dh %02d:%02.0f  %3dh %02d:%02.0f\n",
-                         DDSIP_bb->dualitcnt, DDSIP_bb->currentDualObjVal,
-                         DDSIP_node[DDSIP_bb->curnode]->bound, wall_hrs,wall_mins,wall_secs, cpu_hrs,cpu_mins,cpu_secs);
-            }
-
-            // most probably this never happens...
-            if (obj > DDSIP_node[DDSIP_bb->curnode]->bound)
-            {
-                memcpy (DDSIP_bb->local_bestdual, DDSIP_bb->startinfo_multipliers, sizeof (double) * (DDSIP_bb->dimdual));
-                ////////////////////////////
-                if (DDSIP_param->outlev && inherited_bound > -DDSIP_infty)
-                    fprintf (DDSIP_outfile, " ###### zero mult. increased bound %22.14g by %g\n", DDSIP_node[DDSIP_bb->curnode]->bound, obj-DDSIP_node[DDSIP_bb->curnode]->bound);
-                ////////////////////////////
-
-                DDSIP_node[DDSIP_bb->curnode]->bound = obj;
-            }
-            if (DDSIP_node[DDSIP_bb->curnode]->depth < DDSIP_Imax(DDSIP_param->cb_depth, 3))
-            {
-                // do upper bounding for these solutions, too
-                if (!DDSIP_bb->curnode && DDSIP_bb->cutAdded && DDSIP_param->outlev)
-                {
-                    fprintf (DDSIP_outfile, " %6d%101d cuts (lb)\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
-                }
-                DDSIP_bb->cutAdded = 0;
-                DDSIP_EvaluateScenarioSolutions (&comb);
-                if (DDSIP_bb->cutAdded && DDSIP_param->outlev)
-                {
-                    fprintf (DDSIP_outfile, " %6d%101d cuts (UB)\n", DDSIP_bb->curnode, DDSIP_bb->cutAdded);
-                }
-                DDSIP_bb->skip = 0;
-            }
-            if (DDSIP_param->outlev)
-            {
-                fprintf (DDSIP_outfile, "   ------------------------------------------------------------------------------------------------------------------------------\n");
-            }
+            DDSIP_node[DDSIP_bb->curnode]->BoundNoLag = DDSIP_node[DDSIP_bb->curnode]->bound;
         }
 ////////////////////////////////////////////////////////////////////////////// computation of bounds for premature stop only when no cutoff
     }
@@ -3791,6 +3827,15 @@ NEXT_TRY:
     DDSIP_Free ((void **) &(minfirst));
     DDSIP_Free ((void **) &(maxfirst));
     DDSIP_Free ((void **) &(center_point));
+//    if (DDSIP_killsignal)
+//    {
+//        if (DDSIP_param->outlev)
+//            fprintf (DDSIP_bb->moreoutfile, "\nTermination signal received.\n");
+//        DDSIP_bb->dualObjVal = -DDSIP_infty;
+//        *new_subg = 0;
+//        return -1;
+//    }
+
     return 0;
 }
 

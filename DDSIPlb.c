@@ -23,7 +23,7 @@
 
 //#define DEBUG
 
-#define SHIFT
+//#define SHIFT
 #define CBHOTSTART
 //#define CHECK_BOUNDS
 
@@ -416,7 +416,7 @@ DDSIP_GetBranchIndex (double *dispnorm)
                     )
                )
             {
-                if ((diff <= mindiff && dist > maxdist) || (diff < mindiff && dist > 0.8*maxdist) || (diff <= mindiff && dispnorm[index[j]] > dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind] && dist > 0.9*maxdist) || (diff < mindiff+3 && dispnorm[index[j]] > factor*dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind] && dist > maxdist + 1e-1))
+                if ((diff <= mindiff && dist > maxdist) || (diff < mindiff && dist > DDSIP_Dmax (1. - (mindiff - diff)*0.075, 0.4)*maxdist) || (diff <= mindiff && dispnorm[index[j]] > dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind] && dist > 0.9*maxdist) || (diff < mindiff+3 && dispnorm[index[j]] > factor*dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind] && dist > maxdist + 1e-1))
                 {
                     if (diff < mindiff)
                         maxdist = dist;
@@ -736,8 +736,8 @@ DDSIP_Warm (int iscen)
 //            added++;
 //        }
 
-        // ADVIND must be 2 when using start values
-        status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 2);
+        // ADVIND must be 1 or 2 when using start values
+        status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 1);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
@@ -763,7 +763,7 @@ DDSIP_Warm (int iscen)
 #ifdef CBHOTSTART
              || (DDSIP_node[DDSIP_bb->curnode]->step == dual &&
                  (DDSIP_param->cbhot > 2  ||
-                  (DDSIP_param->cbhot == 2 && !DDSIP_bb->curnode) ||
+                  (DDSIP_param->cbhot == 2 && DDSIP_bb->curnode < 4) ||
                   (DDSIP_param->cbhot == 1 && !DDSIP_bb->curnode && DDSIP_bb->dualdescitcnt < 3))
                 )
 #endif
@@ -771,12 +771,12 @@ DDSIP_Warm (int iscen)
     {
         int addMax = 14;
         if (DDSIP_param->cbhot > 2)
-            addMax = 24;
+            addMax = 25;
         else if (DDSIP_param->cbhot == 2)
-            addMax = 19;
+            addMax = 15;
 #ifdef DEBUG
         // print debugging info
-        if (DDSIP_param->outlev > 21)
+        if (DDSIP_param->outlev > 22)
         {
             fprintf (DDSIP_bb->moreoutfile,"      have %3d MIP starts (from previous iters)\n",added);
         }
@@ -785,7 +785,7 @@ DDSIP_Warm (int iscen)
         added = 0;
         inserted = 0;
         // If not in the root node
-        if (DDSIP_bb->curnode && DDSIP_node[DDSIP_bb->curnode]->step != dual)
+        if (DDSIP_bb->curnode && (DDSIP_node[DDSIP_bb->curnode]->step != dual || DDSIP_bb->dualdescitcnt < 3))
         {
             // Copy solutions from father node to the problem (see initialization of subbound and solut)
             for(j=0; j<DDSIP_param->scenarios; j++)
@@ -918,13 +918,13 @@ DDSIP_Warm (int iscen)
         }
 #ifdef DEBUG
         // print debugging info
-        if (DDSIP_param->outlev > 21)
+        if (DDSIP_param->outlev > 22)
         {
             fprintf (DDSIP_bb->moreoutfile,"      added %2d MIP starts (from other scens)\n",added);
         }
 #endif
-        // ADVIND must be 2 when using supplied start values
-        status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 2);
+        // ADVIND must be 1 or 2 when using supplied start values
+        status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 1);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
@@ -937,7 +937,7 @@ DDSIP_Warm (int iscen)
     {
         DDSIP_bb->effort[0]=2;
         // If not in the root node add solution of father
-        if (DDSIP_bb->curnode && (DDSIP_node[DDSIP_bb->curnode]->step != dual || !DDSIP_bb->dualitcnt))
+        if (DDSIP_bb->curnode && (/*DDSIP_node[DDSIP_bb->curnode]->step != dual ||*/ !DDSIP_bb->dualitcnt))
         {
             // Copy solution from father node to the problem (see initialization of subbound and solut)
             sprintf (DDSIP_bb->Names[0],"Father_%d",scen+1);
@@ -969,7 +969,7 @@ DDSIP_Warm (int iscen)
             }
             // Add start informations to problem
             status = CPXaddmipstarts (DDSIP_env, DDSIP_lp, 1, DDSIP_bb->total_int, DDSIP_bb->beg, DDSIP_bb->intind, DDSIP_bb->values, DDSIP_bb->effort, DDSIP_bb->Names);
-            status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 2);
+            status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 1);
             if (status)
             {
                 fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
@@ -1048,8 +1048,8 @@ DDSIP_Warm (int iscen)
                 fprintf (DDSIP_outfile, "ERROR: Failed to add mip start infos (Warm)\n");
                 return status;
             }
-            // ADVIND must be 2 when using supplied start values
-            status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 2);
+            // ADVIND must be 1 or 2 when using supplied start values
+            status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 1);
             if (status)
             {
                 fprintf (stderr, "ERROR: Failed to set cplex parameter CPX_PARAM_ADVIND.\n");
@@ -1223,10 +1223,10 @@ DDSIP_LowerBoundWriteLp (int scen)
 //==========================================================================
 // Function solves scenario problems in b&b tree and calculates new bounds
 int
-DDSIP_LowerBound (void)
+DDSIP_LowerBound (double * ret_objval)
 {
     double objval, bobjval, tmpbestbound = 0.0, tmpbestvalue = 0.0, tmpfeasbound = 0.0, worst_case_lb = -1.e+10;
-    double we, wr, mipgap, d, time_start, time_end, time_help, wall_secs, cpu_secs, gap, meanGap, maxGap;
+    double we, wr, mipgap, d, time_start, time_end, time_help, wall_secs, cpu_secs, gap, meanGap, maxGap, scenBound;
 #ifdef DEBUG
     double time_lap;
 #endif
@@ -1235,6 +1235,7 @@ DDSIP_LowerBound (void)
     int wall_hrs, wall_mins,cpu_hrs, cpu_mins;
     int nodes_1st = -1, nodes_2nd = -1;
     int nrCuts;
+    static int currentCuts = 3;
 
     int *indices = (int *) DDSIP_Alloc (sizeof (int), (DDSIP_bb->firstvar + DDSIP_bb->secvar),
                                         "indices (LowerBound)");
@@ -1254,6 +1255,7 @@ DDSIP_LowerBound (void)
 
     DDSIP_bb->skip = 0;
     DDSIP_bb->LBIters++;
+    *ret_objval = -DDSIP_infty;
     // Output
     if (DDSIP_param->outlev)
     {
@@ -1347,9 +1349,9 @@ DDSIP_LowerBound (void)
     tmpbestbound = 0.0;
     tmpbestvalue = 0.0;
     // prepare for decision about stopping: rest_bound is the expectation of all the lower bounds in the father node
-    if (DDSIP_bb->curnode /* && DDSIP_node[DDSIP_node[DDSIP_bb->curnode]->father]->step != dual */)
+    if (DDSIP_bb->curnode && DDSIP_node[DDSIP_node[DDSIP_bb->curnode]->father]->step != dual)
     {
-        if(!DDSIP_param->cb || DDSIP_node[DDSIP_node[DDSIP_bb->curnode]->father]->step != dual)
+        if(!DDSIP_param->cb /*|| DDSIP_node[DDSIP_node[DDSIP_bb->curnode]->father]->step != dual*/)
         {
             rest_bound = DDSIP_node[DDSIP_node[DDSIP_bb->curnode]->father]->bound;
         }
@@ -1396,6 +1398,7 @@ DDSIP_LowerBound (void)
                 printf ("*****************************************************************************\n");
                 printf ("Inherited solution for scenario problem %d  ....\n", scen + 1);
             }
+	    scenBound = (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen];
             if (!scen)
                 // Initialize Warm starts in case the solution of scen 0 is inherited
                 status = DDSIP_Warm (iscen);
@@ -1514,13 +1517,13 @@ DDSIP_LowerBound (void)
             {
                 DDSIP_node[DDSIP_bb->curnode]->bound = tmpbestbound + rest_bound;
                 //
-#ifdef DEBUG
+//#ifdef DEBUG
                 if (DDSIP_param->outlev > 21)
                 {
                     fprintf(DDSIP_bb->moreoutfile," --premature stop with tmpbestbound + rest_bound: %22.14g + %22.14g = %22.14g\n", tmpbestbound, rest_bound, DDSIP_node[DDSIP_bb->curnode]->bound);
                     fprintf(DDSIP_bb->moreoutfile,"                       tmpbestbound + rest_bound: %22.14g > %22.14g = %22.14g*%g, difference: %g\n", DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_bb->bestvalue*factor, DDSIP_bb->bestvalue, factor, DDSIP_node[DDSIP_bb->curnode]->bound-(DDSIP_bb->bestvalue*factor));
                 }
-#endif
+//#endif
                 //
                 DDSIP_bb->skip = 2;
                 //DDSIP_bb->cutoff++;
@@ -1542,6 +1545,7 @@ DDSIP_LowerBound (void)
                     printf ("*****************************************************************************\n");
                 printf ("Solving scenario problem %d (for lower bound) in node %d....\n", scen + 1, DDSIP_bb->curnode);
             }
+	    scenBound = -DDSIP_infty;
 NEXT_TRY:
             probs_solved++;
             // Change problem according to scenario
@@ -1741,20 +1745,23 @@ NEXT_TRY:
                                 if (DDSIP_param->outlev)
                                     fprintf (DDSIP_bb->moreoutfile,"      set status: %d to CPXMIP_OPTIMAL_TOL\n",mipstatus);
 #endif
-                                mipstatus = CPXMIP_OPTIMAL_TOL;
+                                if (objval > bobjval)
+                                    mipstatus = CPXMIP_OPTIMAL_TOL;
+				else
+                                    mipstatus = CPXMIP_OPTIMAL;
                             }
                         }
-                        // reset CPLEX parameters to lb
-                        status = DDSIP_SetCpxPara (DDSIP_param->cpxnolb, DDSIP_param->cpxlbisdbl, DDSIP_param->cpxlbwhich, DDSIP_param->cpxlbwhat);
-                        if (status)
-                        {
-                            fprintf (stderr, "ERROR: Failed to set CPLEX parameters (LowerBound) \n");
-                            fprintf (DDSIP_outfile, "ERROR: Failed to set CPLEX parameters (LowerBound) \n");
-                            if (DDSIP_param->outlev)
-                                fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to set CPLEX parameters (LowerBound) \n");
-                            goto TERMINATE;
-                        }
                     }
+                }
+                // reset CPLEX parameters to lb
+                status = DDSIP_SetCpxPara (DDSIP_param->cpxnolb, DDSIP_param->cpxlbisdbl, DDSIP_param->cpxlbwhich, DDSIP_param->cpxlbwhat);
+                if (status)
+                {
+                    fprintf (stderr, "ERROR: Failed to set CPLEX parameters (LowerBound) \n");
+                    fprintf (DDSIP_outfile, "ERROR: Failed to set CPLEX parameters (LowerBound) \n");
+                    if (DDSIP_param->outlev)
+                        fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to set CPLEX parameters (LowerBound) \n");
+                    goto TERMINATE;
                 }
 
                 if ((k = CPXgetnummipstarts(DDSIP_env, DDSIP_lp)) > 2)
@@ -1950,6 +1957,9 @@ NEXT_TRY:
                 if (fabs (bobjval) > DDSIP_infty)
                     bobjval = objval;
             }
+            scenBound = DDSIP_Dmax (scenBound, bobjval);
+//if (DDSIP_param->outlev)
+//    fprintf (DDSIP_bb->moreoutfile," \n	                                    scenBound %.15g\n", scenBound);
             (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] = mipstatus;
             // Debugging information
             gap = 100.0*(objval-bobjval)/(fabs(objval)+1e-4);
@@ -2011,7 +2021,7 @@ NEXT_TRY:
                     DDSIP_node[DDSIP_bb->curnode]->solut[scen * DDSIP_bb->total_int + j] = mipx[DDSIP_bb->intind[j]];
             }
 
-            wr = DDSIP_Dmin (bobjval, objval);
+            wr = DDSIP_Dmin (scenBound, objval);
             (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen] = wr;
             (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen] = objval;
             // Remember objective function contribution
@@ -2138,7 +2148,7 @@ NEXT_TRY:
                     if (DDSIP_param->outlev>= DDSIP_first_stage_outlev)
                         fprintf (DDSIP_bb->moreoutfile, "\n");
                     //
-                    if ((DDSIP_param->addBendersCuts /*|| (DDSIP_param->addIntegerCuts && (DDSIP_bb->curnode < 3))*/) && (DDSIP_param->numberScenReeval > -1) && (DDSIP_bb->curnode < 9) && (j = DDSIP_bb->cutCntr))
+                    if (DDSIP_param->addBendersCuts > 0 && (j = DDSIP_bb->cutCntr) && (DDSIP_param->numberScenReeval > -1) && currentCuts)
                     {
                         // check feasibility for other scenarios and possibly add cuts
                         tmp = DDSIP_bb->sug[DDSIP_param->nodelim + 2];
@@ -2190,10 +2200,12 @@ NEXT_TRY:
                                 return status;
                             }
                         }
-                        if (j < DDSIP_bb->cutCntr && nrFeasCheck <= DDSIP_param->numberScenReeval)
+                        if ((j < DDSIP_bb->cutCntr) && (nrFeasCheck <= ((DDSIP_bb->curnode < 11) ? DDSIP_param->numberScenReeval : DDSIP_Imin(2, DDSIP_param->numberScenReeval))) && !DDSIP_killsignal)
                         {
                             if(DDSIP_param->outlev)
+                            {
                                 fprintf (DDSIP_bb->moreoutfile, " --> scenario reevaluation %d\n", nrFeasCheck);
+                            }
                             goto NEXT_TRY;
                         }
                     }
@@ -2256,14 +2268,28 @@ NEXT_TRY:
                     fprintf (DDSIP_bb->moreoutfile, "\tLower bound of node %d >= %18.16g (-bestvalue = %g) cutoff after evaluation of %d scenarios, skip=%d\n", DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, DDSIP_node[DDSIP_bb->curnode]->bound - DDSIP_bb->bestvalue,iscen+1,DDSIP_bb->skip);
                 }
                 DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
-                if ((j = DDSIP_bb->cutCntr - nrCuts))
+                if ((j = DDSIP_bb->cutCntr - nrCuts) > 2)
+                {
                     fprintf (DDSIP_outfile, " %6d%101d cuts (lb)\n", DDSIP_bb->curnode, j);
+                    if (currentCuts < 10)
+                        currentCuts++;
+                }
+                else if (currentCuts)
+                        currentCuts--;
                 goto TERMINATE;
             }
         }                // end else
     }                // end for iscen
     if ((j = DDSIP_bb->cutCntr - nrCuts))
+    {
         fprintf (DDSIP_outfile, " %6d%101d cuts (lb)\n", DDSIP_bb->curnode, j);
+        if (currentCuts < 10)
+            currentCuts++;
+    }
+    else if (currentCuts)
+    {
+        currentCuts--;
+    }
 
     if (DDSIP_bb->bestvalue < 0.)
     {
@@ -2584,7 +2610,7 @@ NEXT_TRY:
                 }
             }
         }
-        if (DDSIP_param->outlev > 34)
+        if (DDSIP_param->outlev > 24)
         {
             DDSIP_Free ((void **) &(colstore));
             DDSIP_Free ((void **) &(colname));
@@ -3390,6 +3416,7 @@ TERMINATE:
 //   fprintf (DDSIP_bb->moreoutfile, "###### cutNumber: %3d, cutCntr: %3d\n", DDSIP_bb->cutNumber, DDSIP_bb->cutCntr);
 
     // Only if no errors, yet.
+    *ret_objval = DDSIP_node[DDSIP_bb->curnode]->bound;
     if (!status)
     {
         status = DDSIP_RestoreBoundAndType ();
@@ -3414,7 +3441,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
 {
 #ifdef CONIC_BUNDLE
     double objval, bobjval, tmpbestbound = 0.0, tmpupper = 0.0, maxdispersion = 0.;
-    double wr, mipgap, time_start, time_end, time_help, wall_secs, cpu_secs, gap, meanGap, maxGap;
+    double wr, mipgap, time_start, time_end, time_help, wall_secs, cpu_secs, gap, meanGap, maxGap, scenBound;
 #ifdef DEBUG
     double we, time_lap;
 #endif
@@ -3657,12 +3684,12 @@ NEXT_TRY:
     {
         scen=DDSIP_bb->lb_scen_order[iscen];
 
-        // User termination
-        if (DDSIP_killsignal)
-        {
-            DDSIP_bb->skip = 2;
-            goto TERMINATE;
-        }
+        // User termination disabled here - finish evaluation of the dual step and do the test in DDSIPdual
+//        if (DDSIP_killsignal)
+//        {
+//            DDSIP_bb->skip = 2;
+//            goto TERMINATE;
+//        }
 #ifdef SHIFT
         time (&startTime);
 #endif
@@ -3677,6 +3704,7 @@ NEXT_TRY:
                 printf ("Solving scenario problem %d (for dual optimization) in node %d...\n", scen + 1, DDSIP_bb->curnode);
             }
             nrFeasCheck = 0;
+            scenBound = -DDSIP_infty;
 NEXT_SCEN:
             // Change problem according to scenario
             status = DDSIP_ChgProb (scen, DDSIP_bb->multipliers);
@@ -3785,7 +3813,7 @@ NEXT_SCEN:
                         }
                     }
 
-                    if (DDSIP_param->cpxnodual2 && mipstatus != CPXMIP_OPTIMAL)
+                    if (mipstatus != CPXMIP_OPTIMAL && ((use_LB_params && DDSIP_param->cpxnolb2) || (!use_LB_params && DDSIP_param->cpxnodual2)))
                     {
                         // more iterations with different settings
                         if (use_LB_params && DDSIP_param->cpxnolb2)
@@ -3912,7 +3940,10 @@ NEXT_SCEN:
                                 if (DDSIP_param->outlev)
                                     fprintf (DDSIP_bb->moreoutfile,"      set status: %d to CPXMIP_OPTIMAL_TOL\n",mipstatus);
 #endif
-                                mipstatus = CPXMIP_OPTIMAL_TOL;
+                                if (objval > bobjval)
+                                    mipstatus = CPXMIP_OPTIMAL_TOL;
+				else
+                                    mipstatus = CPXMIP_OPTIMAL;
                             }
                         }
                         // reset CPLEX parameters to lb
@@ -4158,9 +4189,10 @@ NEXT_SCEN:
                 if (fabs (bobjval) > DDSIP_infty)
                     bobjval = objval;
             }
+            scenBound = DDSIP_Dmax (scenBound, bobjval);
             (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] = mipstatus;
             gap = 100.0*(objval-bobjval)/(fabs(objval)+1e-4);
-            if (fabs(gap) < 2.e-13)
+            if (fabs(gap) < 2.e-14)
                 gap = 0.;
             meanGap += DDSIP_data->prob[scen] * gap;
             maxGap   = DDSIP_Dmax (maxGap, gap);
@@ -4213,8 +4245,11 @@ NEXT_SCEN:
                 for (j = 0; j < DDSIP_bb->total_int; j++)
                     DDSIP_node[DDSIP_bb->curnode]->solut[scen * DDSIP_bb->total_int + j] = mipx[DDSIP_bb->intind[j]];
             }
-            wr = DDSIP_Dmin (bobjval, objval);
+            wr = DDSIP_Dmin (scenBound, objval);
             (DDSIP_node[DDSIP_bb->curnode]->subbound)[scen] =  wr;
+
+//if (DDSIP_param->outlev)
+//    fprintf (DDSIP_bb->moreoutfile," \n	                                    scenBound %.15g\n", wr);
 
             // Wait-and-see lower bounds, should be set only once
             // Test if btlb contain still the initial value -DDSIP_infty
@@ -4299,7 +4334,7 @@ NEXT_SCEN:
                     if (DDSIP_param->outlev >= DDSIP_first_stage_outlev)
                         fprintf (DDSIP_bb->moreoutfile, "\n");
                     //
-                    if ((DDSIP_param->addBendersCuts /*|| DDSIP_param->addIntegerCuts*/) && (DDSIP_param->numberScenReeval > -1) && ((!(DDSIP_bb->curnode) && (DDSIP_bb->dualdescitcnt < 3)) || ((DDSIP_bb->curnode < 11) && !DDSIP_bb->dualdescitcnt)) && (j = DDSIP_bb->cutCntr))
+                    if (DDSIP_param->addBendersCuts > 0 && DDSIP_param->alwaysBendersCuts && (j = DDSIP_bb->cutCntr) && (DDSIP_param->numberScenReeval > -1) && ((!(DDSIP_bb->curnode) && (DDSIP_bb->dualdescitcnt < 3)) || (!DDSIP_bb->dualdescitcnt)))
                     {
                         // check feasibility for other scenarios and possibly add cuts
                         tmp = DDSIP_bb->sug[DDSIP_param->nodelim + 2];
@@ -4349,10 +4384,12 @@ NEXT_SCEN:
                                 return status;
                             }
                         }
-                        if (j < DDSIP_bb->cutCntr && nrFeasCheck <= DDSIP_param->numberScenReeval)
+                        if ((j < DDSIP_bb->cutCntr) && (nrFeasCheck <= ((DDSIP_bb->curnode < 11) ? DDSIP_param->numberScenReeval : 1)) && !DDSIP_killsignal)
                         {
                             if(DDSIP_param->outlev)
+                            {
                                 fprintf (DDSIP_bb->moreoutfile, " --> scenario reevaluation %d\n", nrFeasCheck);
+                            }
                             goto NEXT_SCEN;
                         }
                     }
@@ -4390,7 +4427,7 @@ NEXT_SCEN:
                         DDSIP_bb->ref_risk[scen] = 0.;
                 }
             }                // end if solstat
-            wr = DDSIP_Dmin (bobjval, objval);
+            wr = DDSIP_Dmin (scenBound, objval);
             // Temporary bound is infinity if a scenario problem is infeasible
             if (DDSIP_Equal (wr, DDSIP_infty))
             {
@@ -4409,7 +4446,7 @@ NEXT_SCEN:
             tmpupper     += DDSIP_data->prob[scen] *  (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen];
             gap = 100.0*((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen]-(DDSIP_node[DDSIP_bb->curnode]->subbound)[scen])/
                   (fabs((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen])+1e-4);
-            if (fabs(gap) < 2.e-13)
+            if (fabs(gap) < 2.e-14)
                 gap = 0.;
             meanGap += DDSIP_data->prob[scen] * gap;
             maxGap   = DDSIP_Dmax (maxGap, gap);
@@ -4484,6 +4521,8 @@ NEXT_SCEN:
             {
                 fprintf(DDSIP_bb->moreoutfile," %3d: Scen %3d  %20.14g\n",
                         iscen+1, DDSIP_bb->lb_scen_order[iscen]+1, DDSIP_bb->aggregate_time[DDSIP_bb->lb_scen_order[iscen]]);
+		//reduce weight of older iters in next sorting
+                DDSIP_bb->aggregate_time[DDSIP_bb->lb_scen_order[iscen]] *= 0.98;
             }
         }
     }
@@ -4517,16 +4556,25 @@ NEXT_SCEN:
             {
                 fprintf (DDSIP_bb->moreoutfile, "\t(Current best bound, improvement %16.12g, %g%%)\n",DDSIP_bb->bestvalue-tmpupper,1e+2*(DDSIP_bb->bestvalue-tmpupper)/(fabs(DDSIP_bb->bestvalue) + 1.e-16));
             }
-            if (!use_LB_params && maxGap > 0.5*DDSIP_param->relgap)
+            if (DDSIP_SolChk (&maxdispersion, 0))
             {
-                if (DDSIP_param->outlev)
+                // in case the cplex parameters for cb produce too big gaps, try again with LB parameters
+                if (!use_LB_params && maxGap > 0.5*DDSIP_param->relgap)
                 {
-                    printf ("\nNo violations, but max MIP gap too big - try again with CPLEX parameters for LB\n");
-                    fprintf (DDSIP_bb->moreoutfile, "\n### No violations, but max MIP gap too big - try again with CPLEX parameters for LB\n");
+                    if (DDSIP_param->outlev)
+                    {
+                        printf ("\nNo violations, but max MIP gap too big - try again with CPLEX parameters for LB\n");
+                        fprintf (DDSIP_bb->moreoutfile, "\n### No violations, but max MIP gap too big - try again with CPLEX parameters for LB\n");
+                    }
+                    use_LB_params = 1;
+                    DDSIP_bb->violations = 999;
+                    goto NEXT_TRY;
                 }
+            }
+            else
+            {
                 use_LB_params = 1;
-                DDSIP_bb->violations = 999;
-                goto NEXT_TRY;
+                DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
             }
             printf ("\nUpper bounds for solution with no violations\n");
             fprintf (DDSIP_bb->moreoutfile, "\nUpper bounds for solution with no violations\n");
@@ -4538,22 +4586,22 @@ NEXT_SCEN:
             DDSIP_EvaluateScenarioSolutions (&jj);
         }
         DDSIP_param->heuristic = j;
-        // in case the cplex parameters for cb produce too big gaps, try again with LB parameters
-        if (!use_LB_params && maxGap > 0.5*DDSIP_param->relgap)
-        {
-            if (DDSIP_param->outlev)
-            {
-                printf ("\nNo violations, but max MIP gap too big - try again with CPLEX parameters for LB\n");
-                fprintf (DDSIP_bb->moreoutfile, "\n### No violations, but max MIP gap too big - try again with CPLEX parameters for LB\n");
-            }
-            use_LB_params = 1;
-            DDSIP_bb->violations = 999;
-            goto NEXT_TRY;
-        }
-        else
-        {
-            DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
-        }
+//        // in case the cplex parameters for cb produce too big gaps, try again with LB parameters
+//        if (!use_LB_params && DDSIP_SolChk (&maxdispersion, 0) && maxGap > 0.5*DDSIP_param->relgap)
+//        {
+//            if (DDSIP_param->outlev)
+//            {
+//                printf ("\nNo violations, but max MIP gap too big - try again with CPLEX parameters for LB\n");
+//                fprintf (DDSIP_bb->moreoutfile, "\n### No violations, but max MIP gap too big - try again with CPLEX parameters for LB\n");
+//            }
+//            use_LB_params = 1;
+//            DDSIP_bb->violations = 999;
+//            goto NEXT_TRY;
+//        }
+//        else
+//        {
+//            DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
+//        }
     }
 
     DDSIP_bb->ref_max = -1;
@@ -4590,12 +4638,15 @@ NEXT_SCEN:
             for (j = 1; j < DDSIP_param->scenarios; j++)
                 DDSIP_node[DDSIP_bb->curnode]->BoundNoLag += DDSIP_node[DDSIP_bb->curnode]->scenBoundsNoLag[j] * DDSIP_data->prob[j];
         }
-        if (DDSIP_bb->dualdescitcnt)
+        if (DDSIP_bb->dualitcnt)
         {
             // Store the current best multipliers in bestdual
             memcpy (DDSIP_bb->local_bestdual, DDSIP_node[DDSIP_bb->curnode]->dual, sizeof (double) * (DDSIP_bb->dimdual));
             // the current weight and the node number, too
-            DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = cb_get_last_weight(DDSIP_bb->dualProblem);
+            if (DDSIP_bb->dualdescitcnt)
+                 DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = cb_get_last_weight(DDSIP_bb->dualProblem);
+	    else
+                 DDSIP_bb->local_bestdual[DDSIP_bb->dimdual] = DDSIP_param->cbweight;
             DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 1] = DDSIP_bb->curnode;
             DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2] = DDSIP_bb->dualitcnt + 1;
             // for the case of no bound increase, when the initial evaluation (with weight -1) was best, make the weight 0.1
@@ -5143,6 +5194,7 @@ NEXT_SCEN:
             cb_set_next_weight (DDSIP_bb->dualProblem, wr);
             nearly_constant = totally_constant = 0;
         }
+#if (CBVERSION != 1101)
         else if (nearly_constant > 4)
         {
             if (cb_get_last_weight(DDSIP_bb->dualProblem) < 1e-3)
@@ -5156,6 +5208,7 @@ NEXT_SCEN:
             cb_set_next_weight (DDSIP_bb->dualProblem, wr);
             nearly_constant = totally_constant = 0;
         }
+#endif
     }
     old_value = -(*objective_val);
 TERMINATE:

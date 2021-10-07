@@ -1540,8 +1540,12 @@ DDSIP_ReadSpec ()
             DDSIP_param->cbrootitlim = (int) floor (DDSIP_ReadDbl (specfile, "CBRITL", " CB DESCENT ITERATIONS IN ROOT", 9, 1, -DDSIP_bigint, DDSIP_bigint) + 0.1);
 
         DDSIP_param->cb_depth = (int) floor (DDSIP_ReadDbl (specfile, "CBDEPT", " CB UNTIL DEPTH", 1., 1, -DDSIP_bigint, DDSIP_bigint) + 0.1);
-        DDSIP_param->cb_depth_iters = (int) floor (DDSIP_ReadDbl (specfile, "CBDITL", " CB DEPTH ITERS", 10., 1, 2., DDSIP_bigint) + 0.1);
+        DDSIP_param->cb_depth_iters = (int) floor (DDSIP_ReadDbl (specfile, "CBDITL", " CB DEPTH ITERS", 10., 1, 0., DDSIP_bigint) + 0.1);
+#if (CBVERSION != 1101)
         DDSIP_param->cb_maxsteps  = (int) floor (DDSIP_ReadDbl (specfile, "CBSTEP", " CB MAXSTEPS", 12., 1, 1., 10000.) + 0.1);
+#else
+        DDSIP_param->cb_maxsteps  = (int) floor (DDSIP_ReadDbl (specfile, "CBSTEP", " CB MAXSTEPS", 0., 1, -10000., 10000.) + 0.1);
+#endif
         DDSIP_param->cbtotalitlim = (int) floor (DDSIP_ReadDbl (specfile, "CBTOTI", " CB ITERATION LIMIT",5000., 1, 0., DDSIP_bigint) + 0.1);
         DDSIP_param->cbContinuous = (int) floor (DDSIP_ReadDbl (specfile, "CBCONT", " CONTINUOUS CB CALLS", 6., 1, 0., DDSIP_bigint) + 0.1);
         DDSIP_param->cbBreakIters = (int) floor (DDSIP_ReadDbl (specfile, "CBBREA", " BREAK FOR CB CALLS", abs(DDSIP_param->cb) > 30?1.*abs(DDSIP_param->cb):30., 1, 0., DDSIP_bigint) + 0.1);
@@ -1574,14 +1578,14 @@ DDSIP_ReadSpec ()
         DDSIP_param->cb_checkBestdual = (int) floor (DDSIP_ReadDbl (specfile, "CBCHEC", " CB CHECK BESTDUAL", (DDSIP_param->cb_bestdualListLength > 0), 1, 0., (DDSIP_param->cb_bestdualListLength > 0)) + 0.1);
         DDSIP_param->cb_test_line = (int) floor (DDSIP_ReadDbl (specfile, "CBLINE", " CB TEST LINE", 1., 1, 0., 1.) + 0.1);
         DDSIP_param->cb_cutnodes = (int) floor (DDSIP_ReadDbl (specfile, "CBCUTN", " CB CUTS UP TO NODE", 4., 1, 0., 100.) + 0.1);
-        DDSIP_param->cb_cutoffs = DDSIP_ReadDbl (specfile, "CBCUTO", " CB CUTOFFS LIMIT", 1.2, 0, 0., DDSIP_infty);
+        DDSIP_param->cb_cutoffs = DDSIP_ReadDbl (specfile, "CBCUTO", " CB CUTOFFS THRESHOLD", 1.2, 0, 0., DDSIP_infty);
     }
 #else
     DDSIP_param->cb = 0;
     DDSIP_param->prematureStop = 1;
 #endif
 #ifdef ADDBENDERSCUTS
-    DDSIP_param->addBendersCuts = (int) floor (DDSIP_ReadDbl (specfile, "ADDBEN", " ADD BENDERS CUTS", DDSIP_param->stocrhs || DDSIP_param->stocmat, 1, 0., 2.) + 0.1);
+    DDSIP_param->addBendersCuts = (int) floor (DDSIP_ReadDbl (specfile, "ADDBEN", " ADD BENDERS CUTS", DDSIP_param->stocrhs || DDSIP_param->stocmat, 1, -1., 2.) + 0.1);
     if (DDSIP_param->addBendersCuts)
     {
         DDSIP_param->alwaysBendersCuts = 1;
@@ -2358,7 +2362,7 @@ DDSIP_AdvStart (void)
 
     printf ("\n\t Reading start info from `%s'.\n", fname);
 
-    fprintf (DDSIP_outfile, "-START INFORMATION\n");
+    fprintf (DDSIP_outfile, "-START INFORMATION  from %s\n", fname);
     if (DDSIP_Find (advfile, "BEST"))
     {
         k = fscanf (advfile, "%lf", &tmp);

@@ -497,6 +497,7 @@ DDSIP_BbTypeInit (void)
         else
             DDSIP_bb->dimdual = DDSIP_bb->firstvar * (DDSIP_param->scenarios - 1);
     }
+    fprintf (DDSIP_outfile, "\t\tDimension of dual problem:        %10d\n", DDSIP_bb->dimdual);
 #endif
 
     if (DDSIP_param->cb || DDSIP_param->hot == 4)

@@ -33,7 +33,6 @@
 static int DDSIP_Leaf (void);
 static int DDSIP_GetCurNode (void);
 static int DDSIP_InitNewNodes (void);
-static int DDSIP_SetBounds (void);
 
 //==========================================================================
 // Select node and value for branching
@@ -828,6 +827,8 @@ DDSIP_Bound (void)
             // feasible point found - switch to other bounding strategy
             DDSIP_param->boundstrat -= 5;
         }
+	if (DDSIP_param->cb && (DDSIP_bb->curnode == DDSIP_param->cbBreakIters))
+            DDSIP_bb->bestBound = -DDSIP_param->cbContinuous - 1;
         if (DDSIP_param->boundstrat > 4 && !(DDSIP_param->cb < 0 && ((DDSIP_bb->cutoff > 5) && (DDSIP_bb->no_reduced_front < 51) && (DDSIP_bb->noiter % -DDSIP_param->cb) < DDSIP_param->cbContinuous)))
         {
             // depth first until a feasible point is found for boustrat 5..9

@@ -7,14 +7,14 @@ CPLEX    = /opt/ibm/ILOG/CPLEX_Studio201/cplex
 LINUXVAR = x86-64_linux
 CB       = ../ConicBundle
 
-CBVERSION= 1.a.2
-CBV      = 1102
+#CBVERSION= 1.a.2
+#CBV      = 1102
 
 #CBVERSION= 1.a.1
 #CBV      = 1101
 
-#CBVERSION= 0.3.11
-#CBV      = 0311
+CBVERSION= 0.3.11
+CBV      = 0311
 
 LIBTYPE   = static_pic
 
@@ -29,13 +29,13 @@ SRCDIR    = $(HOME)
 OBJDIR    = $(SRCDIR)/$(OSTYPE).obj
 # Install here
 BINARY    = $(HOME)
-TARGET    = $(SRCDIR)/DDSIP_20.1.0_v$(CBVERSION)
+TARGET    = $(SRCDIR)/DDSIP_20.1.0_v$(CBVERSION)_debug
 HELP      = $(SRCDIR)/ddsiphelp_20.1.0
 
 # Compiler 
 CC = gcc
 # All warnings, Optimizing level 2
-linux.CFLAGS  =  -std=c99 -O2 -fno-strict-aliasing -Wall -Wextra -Wformat=2 -Wmissing-prototypes  $(PROCESSOR) -DCONIC_BUNDLE -DCPLEX_12_8 -DCBVERSION=$(CBV) -DCBV=\""$(CBVERSION)"\"
+linux.CFLAGS  =  -std=c99 -O0 -g -fno-strict-aliasing -Wall -Wextra -Wformat=2 -Wmissing-prototypes  $(PROCESSOR) -DCONIC_BUNDLE -DCPLEX_12_8 -DCBVERSION=$(CBV) -DCBV=\""$(CBVERSION)"\"
 # Header files are here
 CDIRS   = -I./include_v$(CBVERSION) -I$(CPLEX)/include/ilcplex -I$(CB)_v$(CBVERSION)/include
 
@@ -47,7 +47,7 @@ linux.LIB = -lpthread
 linux.CBLIB = -L$(CB)_v$(CBVERSION)/lib -lcb
 
 # Linker flags
-linux.LDFLAGS= $(PROCESSOR) -O2
+linux.LDFLAGS= $(PROCESSOR) -O0 -g
 
 # Linker directories
 LDDIRS = -L./lib 

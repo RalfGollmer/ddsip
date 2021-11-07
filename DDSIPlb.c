@@ -5194,7 +5194,7 @@ NEXT_SCEN:
             cb_set_next_weight (DDSIP_bb->dualProblem, wr);
             nearly_constant = totally_constant = 0;
         }
-#if (CBVERSION != 1101)
+#if (CBVERSION < 1101)
         else if (nearly_constant > 4)
         {
             if (cb_get_last_weight(DDSIP_bb->dualProblem) < 1e-3)

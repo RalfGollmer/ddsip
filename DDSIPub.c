@@ -461,7 +461,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
     DDSIP_bb->skip = 0;
 
     sort_array = (double *) DDSIP_Alloc(sizeof(double), DDSIP_param->scenarios, "sort_array(UpperBound)");
-    if (DDSIP_param->outlev >= DDSIP_suggested_first_stage_outlev && DDSIP_param->outlev < 50)
+    if (!feasCheckOnly && DDSIP_param->outlev >= DDSIP_suggested_first_stage_outlev && DDSIP_param->outlev < 50)
         // Print output
     {
         int ih;
@@ -1003,7 +1003,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
 #else
                                                     rhs = lhs + viol*security_factor;
 #endif
-                                                    if (rhs > lhs)
+                                                    if ((rhs > lhs)  && (viol > 2e-5*lhs))
                                                         i = 1;
                                                     else
                                                         i = 0;

@@ -2415,7 +2415,7 @@ if (DDSIP_param->outlev > 20)
             /* status = cb_do_descent_step (p); */
             // /* DLW Dec 2014 - limit the number of null steps in order to avoid loops of reevaluations */
 NEXT_TRY:
-#if (CBVERSION != 1101)
+#if (CBVERSION < 1101)
             current_maxsteps = DDSIP_param->cb_maxsteps + (DDSIP_bb->dualdescitcnt==1?5:0) + ((DDSIP_bb->curnode < 5)?4:0);
             cb_set_inner_update_limit (p, current_maxsteps + 2);
             cb_status = cb_do_maxsteps(p, current_maxsteps); /* DLW Dec 2014 */
@@ -2908,7 +2908,7 @@ NEXT_TRY:
                         cur_iters = DDSIP_bb->dualitcnt - DDSIP_bb->last_dualitcnt;
                         cb_get_center (p,center_point);
 ///////////////
-#if (CBVERSION != 1101)
+#if (CBVERSION < 1101)
                         // if the center point is not local_bestdual (may occur when maxsteps reached) - set center point to local_bestdual
                         if (cur_iters > 2 && DDSIP_bb->local_bestdual[DDSIP_bb->dimdual + 2] &&
                                 memcmp(DDSIP_bb->local_bestdual, center_point, sizeof (double) * (DDSIP_bb->dimdual)) &&

@@ -1541,7 +1541,7 @@ DDSIP_ReadSpec ()
 
         DDSIP_param->cb_depth = (int) floor (DDSIP_ReadDbl (specfile, "CBDEPT", " CB UNTIL DEPTH", 1., 1, -DDSIP_bigint, DDSIP_bigint) + 0.1);
         DDSIP_param->cb_depth_iters = (int) floor (DDSIP_ReadDbl (specfile, "CBDITL", " CB DEPTH ITERS", 10., 1, 0., DDSIP_bigint) + 0.1);
-#if (CBVERSION != 1101)
+#if (CBVERSION < 1101)
         DDSIP_param->cb_maxsteps  = (int) floor (DDSIP_ReadDbl (specfile, "CBSTEP", " CB MAXSTEPS", 12., 1, 1., 10000.) + 0.1);
 #else
         DDSIP_param->cb_maxsteps  = (int) floor (DDSIP_ReadDbl (specfile, "CBSTEP", " CB MAXSTEPS", 0., 1, -10000., 10000.) + 0.1);

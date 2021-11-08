@@ -2262,6 +2262,7 @@ if (DDSIP_param->outlev > 20)
     }
     DDSIP_bb->last_dualitcnt = DDSIP_bb->dualitcnt;
 
+    cb_status = 0;
     if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - DDSIP_Dmin (0.5*DDSIP_param->relgap, 2e-3)*(fabs(DDSIP_bb->bestvalue) + 1e-14))
     {
         memcpy (DDSIP_node[DDSIP_bb->curnode]->dual, DDSIP_bb->local_bestdual, sizeof (double) * (DDSIP_bb->dimdual + 3));
@@ -2473,7 +2474,7 @@ NEXT_TRY:
                                 DDSIP_node[DDSIP_bb->curnode]->first_sol[j]   = (DDSIP_bb->bestfirst[j]).first_sol;
                                 (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j] = (DDSIP_bb->bestfirst[j]).cursubsol;
                                 (DDSIP_node[DDSIP_bb->curnode]->subbound)[j]  = (DDSIP_bb->bestfirst[j]).subbound;
-                                DDSIP_bb->bestfirst[j].first_sol = NULL;
+                                //DDSIP_bb->bestfirst[j].first_sol = NULL;
                             }
                         }
                         DDSIP_Free ((void **) &(minfirst));
@@ -3809,7 +3810,7 @@ NEXT_TRY:
     }
     //determine variable to branch on
     diff = -1.;
-    if (!DDSIP_node[DDSIP_bb->curnode]->leaf && !DDSIP_killsignal)
+    if (cb_status || (!DDSIP_node[DDSIP_bb->curnode]->leaf && !DDSIP_killsignal))
     {
         for (j = 0; j < DDSIP_bb->firstvar; j++)
         {
@@ -3820,6 +3821,15 @@ NEXT_TRY:
                 if (DDSIP_param->outlev>40)
                     fprintf (DDSIP_bb->moreoutfile," ---- Deviation of variable %d : %g\n",j,maxfirst[j]);
             }
+        }
+	if (diff == -1.)
+        {
+            for (j = 0; j < DDSIP_bb->firstvar; j++)
+            {
+                maxfirst[j] =  DDSIP_infty;
+                minfirst[j] = -DDSIP_infty;
+            }
+            diff = DDSIP_infty;
         }
         DDSIP_node[DDSIP_bb->curnode]->dispnorm = diff;
         status = DDSIP_GetBranchIndex (maxfirst);

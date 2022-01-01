@@ -7,14 +7,11 @@ CPLEX    = /opt/ibm/ILOG/CPLEX_Studio201/cplex
 LINUXVAR = x86-64_linux
 CB       = ../ConicBundle
 
-CBVERSION= 1.a.2
-CBV      = 1102
+#CBVERSION= 1.a.2
+#CBV      = 1102
 
-#CBVERSION= 1.a.1
-#CBV      = 1101
-
-#CBVERSION= 0.3.11
-#CBV      = 0311
+CBVERSION= 0.3.11
+CBV      = 0311
 
 LIBTYPE   = static_pic
 

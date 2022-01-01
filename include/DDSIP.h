@@ -1,5 +1,6 @@
 #ifndef CBDSIP_H
 #define CBDSIP_H
+#define CBVERSION 0311
 
 #include <cplex.h>
 #include <string.h>
@@ -653,6 +654,12 @@ extern "C" {
         int keepSols;
         // iteration limit for CB
         int current_itlim;
+        // info about received signal SIGUSR2
+        int signal;
+        // info about (nearly) constant objective value
+        int constant_obj;
+        // subgradient norm in descent iteration 0
+        double subgradient_norm;
 
     } bb_t;
 
@@ -844,13 +851,14 @@ extern "C" {
     int  DDSIP_GetBranchIndex (double *);
     int  DDSIP_ChgBounds(int);
     int  DDSIP_ChgProb(int, int);
-    int  DDSIP_LowerBound(void);
+    int  DDSIP_LowerBound(double *);
     int  DDSIP_Heuristics(int *, int, int);
     int  DDSIP_SolChk(double *, int);
     int  DDSIP_UpperBound(int, int);
     void DDSIP_EvaluateScenarioSolutions (int *);
     int  DDSIP_RestoreBoundAndType(void);
     int  DDSIP_Bound(void);
+    int  DDSIP_SetBounds (void);
     int  DDSIP_Branch(void);
     void DDSIP_PrintState(int);
     void DDSIP_PrintStateUB (int);

@@ -492,7 +492,7 @@ DDSIP_BbTypeInit (void)
 #ifdef CONIC_BUNDLE
     if (DDSIP_param->cb)
     {
-        if (DDSIP_param->nonant == 3)
+        if (DDSIP_param->nonant >= 3)
             DDSIP_bb->dimdual = DDSIP_bb->firstvar * DDSIP_param->scenarios;
         else
             DDSIP_bb->dimdual = DDSIP_bb->firstvar * (DDSIP_param->scenarios - 1);
@@ -544,6 +544,7 @@ DDSIP_BbTypeInit (void)
     {
         DDSIP_bb->lb_scen_order[i] = DDSIP_bb->ub_scen_order[i]    = i;
     }
+    DDSIP_bb->signal    = 0;
     DDSIP_bb->lb_sorted = 0;
     DDSIP_bb->ub_sorted = 0;
     DDSIP_bb->front_nodes_sorted = (int *) DDSIP_Alloc (sizeof (int), 1, "DDSIP_bb->front_nodes_sorted(BbInit)");
@@ -567,6 +568,7 @@ DDSIP_BbTypeInit (void)
     DDSIP_bb->weight_reset = 0;
     DDSIP_bb->Dive = 0;
     DDSIP_bb->keepSols = 0;
+    DDSIP_bb->subgradient_norm = 1.;
 
     return status;
 } // DDSIP_BbTypeInit

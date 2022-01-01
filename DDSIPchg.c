@@ -192,7 +192,7 @@ DDSIP_ChgProb (int scen, int multipliers)
             {
                 if(!scen)
                 {
-                    fprintf (DDSIP_bb->moreoutfile, "DDSIP_ChgProb: Current lambda for node %d:\n", DDSIP_bb->curnode);
+                    fprintf (DDSIP_bb->moreoutfile, "\nCurrent lambda (inherited from node %.0g) for node %d:\n", DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual+1], DDSIP_bb->curnode);
                     for (i = 0; i < DDSIP_bb->dimdual; i++)
                     {
                         fprintf (DDSIP_bb->moreoutfile, " %14.8g", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
@@ -230,6 +230,7 @@ DDSIP_ChgProb (int scen, int multipliers)
                 for (j = DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i];
                         j < DDSIP_data->nabeg[scen * DDSIP_bb->firstvar + i] + DDSIP_data->nacnt[scen * DDSIP_bb->firstvar + i]; j++)
                 {
+                    //the test for tiny multipliers was substituted by a cancellation detection for the subgradients
                     //if (fabs (DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_data->naind[j]]) > 1.e-18)
                     {
 #ifdef DEBUG
@@ -265,7 +266,7 @@ DDSIP_ChgProb (int scen, int multipliers)
             {
                 if(!scen)
                 {
-                    fprintf (DDSIP_bb->moreoutfile, "DDSIP_ChgProb: Current lambda for node %d:\n", DDSIP_bb->curnode);
+                    fprintf (DDSIP_bb->moreoutfile, "\nCurrent lambda (inherited from node %.0g) for node %d:\n", DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual+1], DDSIP_bb->curnode);
                     for (i = 0; i < DDSIP_bb->dimdual; i++)
                     {
                         fprintf (DDSIP_bb->moreoutfile, " %14.8g", DDSIP_node[DDSIP_bb->curnode]->dual[i]);

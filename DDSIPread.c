@@ -1556,7 +1556,7 @@ DDSIP_ReadSpec ()
             fprintf (DDSIP_outfile, "     CBBREAK smaller than CBFREQ, setting CBBREAK = %d.\n", DDSIP_param->cbBreakIters);
         }
         DDSIP_param->cbrelgap = DDSIP_ReadDbl (specfile, "CBPREC", " CB PRECISION", 1.e-14, 0, 0., DDSIP_infty);
-        DDSIP_param->nonant = (int) floor (DDSIP_ReadDbl (specfile, "NONANT", " CB NON-ANTICIPATIVITY", 1., 1, 1., 3.) + 0.1);
+        DDSIP_param->nonant = (int) floor (DDSIP_ReadDbl (specfile, "NONANT", " CB NON-ANTICIPATIVITY", 1., 1, 1., 4.) + 0.1);
         DDSIP_param->cbprint = (int) floor (DDSIP_ReadDbl (specfile, "CBPRIN", " CB PRINT LEVEL", 0., 1, 0., DDSIP_bigint) + 0.1);
         DDSIP_param->cbbundlesz = (int) floor (DDSIP_ReadDbl (specfile, "CBBUNS", " CB MAXIMAL BUNDLE SIZE", 200., 1, 0., DDSIP_bigint) + 0.1);
         //DDSIP_param->cbmaxsubg = (int) floor (DDSIP_ReadDbl (specfile, "CBMAXS", " CB MAXIMAL NO OF SUBGRADIENTS", 1., 1, 0., DDSIP_bigint) + 0.1);

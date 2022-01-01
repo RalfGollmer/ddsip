@@ -654,6 +654,12 @@ extern "C" {
         int keepSols;
         // iteration limit for CB
         int current_itlim;
+        // info about received signal SIGUSR2
+        int signal;
+        // info about (nearly) constant objective value
+        int constant_obj;
+        // subgradient norm in descent iteration 0
+        double subgradient_norm;
 
     } bb_t;
 

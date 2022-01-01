@@ -374,7 +374,7 @@ DDSIP_InitNewNodes (void)
                             (DDSIP_node[DDSIP_bb->nonode]->cursubsol)[j] = (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j];
                             (DDSIP_node[DDSIP_bb->nonode]->mipstatus)[j] = (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j];
                             (DDSIP_node[DDSIP_bb->nonode]->ref_scenobj)[j] = (DDSIP_node[DDSIP_bb->curnode]->ref_scenobj)[j];
-			    if (j > i)
+                            if (j > i)
                                 (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j] = NULL;
                             if (DDSIP_param->outlev > 23)
                             {
@@ -382,7 +382,7 @@ DDSIP_InitNewNodes (void)
                                      DDSIP_bb->nonode, j + 1, DDSIP_bb->curnode, (DDSIP_node[DDSIP_bb->nonode]->first_sol)[j][DDSIP_bb->firstvar],
                                      (DDSIP_node[DDSIP_bb->nonode]->mipstatus)[j], ((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_bb->firstvar + 1]);
                             }
-			    if (j > i)
+                            if (j > i)
                                 (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j] = NULL;
                             cnt--;
                         }
@@ -395,7 +395,7 @@ DDSIP_InitNewNodes (void)
                                      (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j], ((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_bb->firstvar + 1]);
                             }
                             ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i])[DDSIP_bb->firstvar] -= 1.;
-			    if (j > i)
+                            if (j > i)
                             {
                                 (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j] = NULL;
                             }
@@ -435,11 +435,11 @@ DDSIP_InitNewNodes (void)
                                      DDSIP_bb->nonode + 1, j + 1, DDSIP_bb->curnode, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j][DDSIP_bb->firstvar],
                                      (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j], ((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_bb->firstvar + 1]);
                             }
-			    if (j > i)
+                            if (j > i)
                                 (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j] = NULL;
                             cnt--;
                         }
-			    else
+                        else
                         {
                             if (DDSIP_param->outlev > 21)
                             {
@@ -827,7 +827,7 @@ DDSIP_Bound (void)
             // feasible point found - switch to other bounding strategy
             DDSIP_param->boundstrat -= 5;
         }
-	if (DDSIP_param->cb && (DDSIP_bb->curnode == DDSIP_param->cbBreakIters))
+        if (DDSIP_param->cb && (DDSIP_bb->curnode == DDSIP_param->cbBreakIters))
             DDSIP_bb->bestBound = -DDSIP_param->cbContinuous - 1;
         if (DDSIP_param->boundstrat > 4 && !(DDSIP_param->cb < 0 && ((DDSIP_bb->cutoff > 5) && (DDSIP_bb->no_reduced_front < 51) && (DDSIP_bb->noiter % -DDSIP_param->cb) < DDSIP_param->cbContinuous)))
         {

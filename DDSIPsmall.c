@@ -195,6 +195,7 @@ DDSIP_HandleUserSignal2 (int signal_number)
         if (error == SIG_IGN)
             signal (SIGUSR2, SIG_IGN);
     }
+    DDSIP_bb->signal    = 12;
     return;
 }
 

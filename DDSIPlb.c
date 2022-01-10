@@ -3855,7 +3855,7 @@ NEXT_SCEN:
                         }
                     }
 
-                    if (mipstatus != CPXMIP_OPTIMAL && ((use_LB_params && DDSIP_param->cpxnolb2) || (!use_LB_params && DDSIP_param->cpxnodual2)))
+                    if (mipgap > 0. && mipstatus != CPXMIP_OPTIMAL && ((use_LB_params && DDSIP_param->cpxnolb2) || (!use_LB_params && DDSIP_param->cpxnodual2)))
                     {
                         // more iterations with different settings
                         if (use_LB_params && DDSIP_param->cpxnolb2)
@@ -4065,8 +4065,6 @@ NEXT_SCEN:
                         DDSIP_bb->signal = 0;
                     }
                 }
-                if (relprec > 1.e-2*last_relprec)
-                    last_relprec = relprec;
 
                 if ((k = CPXgetnummipstarts(DDSIP_env, DDSIP_lp)) > 2)
                 {
@@ -4615,6 +4613,7 @@ NEXT_SCEN:
         }
 
     }                // end for iscen
+    last_relprec = relprec;
 #ifdef SHIFT
     if (shift_in_cb)
     {

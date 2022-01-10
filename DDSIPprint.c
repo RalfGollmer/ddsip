@@ -112,7 +112,7 @@ DDSIP_PrintState (int noiter)
     if (!(DDSIP_bb->curnode) && !noiter)
     {
 #ifndef _WIN32
-        sprintf (astring, "grep 'MHz' /proc/cpuinfo|sort -r|head -1 >> %s\n", DDSIP_outfname);
+        sprintf (astring, "grep 'MHz' /proc/cpuinfo|sort -k 4 -r|head -1 >> %s\n", DDSIP_outfname);
         cpu_hrs = system (astring);
 #endif
         printf ("\n   Node   Nodes   Left   Objective         Heuristic");
@@ -271,7 +271,7 @@ DDSIP_PrintState (int noiter)
 #ifndef _WIN32
         if (!(noiter % (DDSIP_param->logfreq * 40)) || !(noiter % (2 * DDSIP_param->logfreq * DDSIP_Imax(abs(DDSIP_param->cb),15))))
         {
-            sprintf (astring, "grep 'MHz' /proc/cpuinfo|sort -r|head -1 >> %s\n", DDSIP_outfname);
+            sprintf (astring, "grep 'MHz' /proc/cpuinfo|sort -k 4 -r|head -1 >> %s\n", DDSIP_outfname);
             cpu_hrs = system (astring);
         }
         else

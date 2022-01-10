@@ -3143,7 +3143,7 @@ NEXT_TRY:
                                     }
                                     weight_decreases = 0;
                                 }
-                                else if (next_weight < 1.e-2 || (many_iters > 1 && many_iters < 5))
+                                else if (next_weight < 1.e-2 || many_iters > 1)
                                 {
                                     last_weight = next_weight;
                                     if (last_weight < 1e5)

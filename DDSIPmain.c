@@ -341,7 +341,7 @@ main (int argc, char * argv[])
     }
     fprintf (DDSIP_outfile, " Total initialization time: %4.2f seconds.\n", DDSIP_GetCpuTime ());
 #ifndef _WIN32
-    sprintf (astring, "grep 'MHz' /proc/cpuinfo|sort -r|head -1 >> %s\n", DDSIP_outfname);
+    sprintf (astring, "grep 'MHz' /proc/cpuinfo|sort -k 4 -r|head -1 >> %s\n", DDSIP_outfname);
     i = system (astring);
 #endif
 

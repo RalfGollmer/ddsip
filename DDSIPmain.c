@@ -274,6 +274,11 @@ main (int argc, char * argv[])
         fprintf (DDSIP_bb->moreoutfile, "actual amount of output\nis controlled by the parameter ");
         fprintf (DDSIP_bb->moreoutfile, "OUTLEV in the specification file.\n---------");
         fprintf (DDSIP_bb->moreoutfile, "--------------------------------------------------------------\n\n");
+
+        fprintf (DDSIP_bb->moreoutfile, "front node re-eval at nodes %d and %d.\n",
+                  2*((DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters)/2) + DDSIP_Imax (2, 2*(-DDSIP_param->cb/2-1)),
+                  2*(DDSIP_param->cbContinuous + 2*(DDSIP_param->cbBreakIters/2) + 4)
+                );
     }
 
     DDSIP_node = (node_t **) DDSIP_Alloc (sizeof (node_t *), DDSIP_param->nodelim + 3, "node(Main)");
@@ -341,7 +346,7 @@ main (int argc, char * argv[])
     }
     fprintf (DDSIP_outfile, " Total initialization time: %4.2f seconds.\n", DDSIP_GetCpuTime ());
 #ifndef _WIN32
-    sprintf (astring, "grep 'MHz' /proc/cpuinfo|sort -k 4 -r|head -1 >> %s\n", DDSIP_outfname);
+    sprintf (astring, "grep 'MHz' /proc/cpuinfo|sort -k 4 -rn|head -1 >> %s\n", DDSIP_outfname);
     i = system (astring);
 #endif
 
@@ -499,8 +504,8 @@ main (int argc, char * argv[])
                                            ((!(DDSIP_bb->curnode % abs(DDSIP_param->cb))) ||
                                             (!((DDSIP_bb->curnode+1) % -DDSIP_param->cb)) ||
                                             (DDSIP_bb->curnode%200 > 199 - DDSIP_param->cbContinuous) ||
-                                            (DDSIP_bb->curnode < DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters) ||
-                                            ((DDSIP_bb->curnode  >= 2*DDSIP_param->cbBreakIters) && (DDSIP_bb->curnode < DDSIP_param->cbContinuous + 2*DDSIP_param->cbBreakIters)) ||
+                                            (DDSIP_bb->curnode <= DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters) ||
+                                            ((DDSIP_bb->curnode  > 2*DDSIP_param->cbBreakIters) && (DDSIP_bb->curnode <= DDSIP_param->cbContinuous + 2*DDSIP_param->cbBreakIters)) ||
                                             ((DDSIP_bb->cutoff > 6) &&
                                              (((DDSIP_bb->no_reduced_front < 51) && (DDSIP_bb->curnode % -DDSIP_param->cb) < DDSIP_param->cbContinuous)
                                               || (((DDSIP_node[DDSIP_bb->curnode-1])->step == dual) && (DDSIP_node[DDSIP_bb->curnode-1])->leaf /*&& (DDSIP_bb->dualdescitcnt < 11)*/)
@@ -516,7 +521,7 @@ main (int argc, char * argv[])
            )
         {
             DDSIP_bb->DDSIP_step = DDSIP_node[DDSIP_bb->curnode]->step = dual;
-            if ((status = DDSIP_DualOpt ()))
+            if ((status = DDSIP_DualOpt (0)))
             {
                 if (!DDSIP_bb->curnode)
                     goto TERMINATE;
@@ -721,92 +726,228 @@ main (int argc, char * argv[])
         if (DDSIP_param->cb && DDSIP_param->cb_depth>0 && DDSIP_param->cb_depth_iters && DDSIP_bb->curnode == 2 && DDSIP_node[1]->dual && DDSIP_node[2]->dual)
         {
             double old_objval, *save_dual;
-            int cnt, k1;
-            save_dual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 3, "save_dual(DDSIP_main)");
-            memcpy (save_dual, DDSIP_node[1]->dual, sizeof (double) * DDSIP_bb->dimdual + 3);
-            memcpy (DDSIP_node[1]->dual, DDSIP_node[2]->dual, sizeof (double) * DDSIP_bb->dimdual + 3);
-            DDSIP_bb->curnode = 1;
-            status = DDSIP_SetBounds ();
-            if (status)
+            int cnt = 0, k1;
+            for (k1 = 0; k1 < DDSIP_bb->dimdual; k1++)
             {
-                fprintf (stderr, "ERROR: Failed to add new bounds (Branch).\n");
-                return status;
-            }
-            DDSIP_bb->DDSIP_step = solve;
-            for (i = 0; i < DDSIP_param->scenarios; i++)
-            {
-                if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i] != NULL)
+                if (DDSIP_node[2]->dual[k1] != DDSIP_node[1]->dual[k1])
                 {
-                    if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
-                        for (k1 = i + 1; cnt && k1 < DDSIP_param->scenarios; k1++)
-                        {
-                            if ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]) == (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[k1]))
-                            {
-                                ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[k1] = NULL;
-                                cnt--;
-                            }
-                        }
-                    DDSIP_Free ((void **) &(((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]));
+                    cnt = 1;
+                    break;
                 }
             }
-            old_objval = DDSIP_node[1]->bound;
-            DDSIP_bb->dualObjVal = DDSIP_node[1]->bound;
-            DDSIP_LowerBound (&tmp_objval);
-            if (DDSIP_param->outlev > 10)
-                fprintf (DDSIP_bb->moreoutfile, " ## re-eval node %d : %20.14g (new) - %20.14g (old) = %g\n", DDSIP_bb->curnode, tmp_objval, old_objval, tmp_objval - old_objval);
-            if (tmp_objval < old_objval)
+            if (cnt)
             {
-                memcpy (DDSIP_node[1]->dual, save_dual, sizeof (double) * DDSIP_bb->dimdual + 3);
-                DDSIP_node[1]->bound = old_objval;
-                DDSIP_bb->DDSIP_step = DDSIP_node[1]->step = dual;
-            }
-            else
-            {
-                DDSIP_node[1]->bound = tmp_objval;
-                DDSIP_bb->DDSIP_step = DDSIP_node[1]->step = solve;
-#ifdef DELNODE1MULT
-                // delete node 1 multiplier from list
-                bbest_t * tmp_previous, * tmp_bestdual;
-                tmp_bestdual = DDSIP_bb->bestdual;
-                if (tmp_bestdual)
+                save_dual = (double *) DDSIP_Alloc (sizeof (double), DDSIP_bb->dimdual + 3, "save_dual(DDSIP_main)");
+                memcpy (save_dual, DDSIP_node[1]->dual, sizeof (double) * DDSIP_bb->dimdual + 3);
+                memcpy (DDSIP_node[1]->dual, DDSIP_node[2]->dual, sizeof (double) * DDSIP_bb->dimdual + 3);
+                DDSIP_bb->curnode = 1;
+                status = DDSIP_SetBounds ();
+                if (status)
                 {
-                    if (tmp_bestdual->node_nr == 1)
+                    fprintf (stderr, "ERROR: Failed to add new bounds (Branch).\n");
+                    return status;
+                }
+                DDSIP_bb->DDSIP_step = solve;
+                for (i = 0; i < DDSIP_param->scenarios; i++)
+                {
+                    if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i] != NULL)
                     {
-                        DDSIP_bb->bestdual = DDSIP_bb->bestdual->next;
-                        DDSIP_bb->bestdual_cnt--;
-                        if (DDSIP_param->outlev > 10)
-                            fprintf (DDSIP_bb->moreoutfile, " ## delete entry from node %d from bestdual list, #entries: %d\n", tmp_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
-                        DDSIP_Free ((void **) &(tmp_bestdual->dual));
-                        DDSIP_Free ((void **) &(tmp_bestdual));
-                    }
-                    else
-                    {
-                        while (tmp_bestdual)
-                        {
-                            tmp_previous = tmp_bestdual;
-                            tmp_bestdual = tmp_bestdual->next;
-                            if (tmp_bestdual && tmp_bestdual->node_nr == 1)
+                        if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
+                            for (k1 = i + 1; cnt && k1 < DDSIP_param->scenarios; k1++)
                             {
-                                tmp_previous->next = tmp_bestdual->next;
-                                DDSIP_bb->bestdual_cnt--;
-                                if (DDSIP_param->outlev > 10)
-                                    fprintf (DDSIP_bb->moreoutfile, " ## delete entry from node %d from bestdual list, #entries: %d\n", tmp_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
-                                DDSIP_Free ((void **) &(tmp_bestdual->dual));
-                                DDSIP_Free ((void **) &(tmp_bestdual));
-                                break;
+                                if ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]) == (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[k1]))
+                                {
+                                    ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[k1] = NULL;
+                                    cnt--;
+                                }
+                            }
+                        DDSIP_Free ((void **) &(((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]));
+                    }
+                }
+                old_objval = DDSIP_node[1]->bound;
+                DDSIP_bb->dualObjVal = DDSIP_node[1]->bound;
+                DDSIP_LowerBound (&tmp_objval);
+                if (DDSIP_param->outlev > 10)
+                    fprintf (DDSIP_bb->moreoutfile, " ## re-eval node %d : %20.14g (new) - %20.14g (old) = %g\n", DDSIP_bb->curnode, tmp_objval, old_objval, tmp_objval - old_objval);
+                if (tmp_objval <= old_objval)
+                {
+                    memcpy (DDSIP_node[1]->dual, save_dual, sizeof (double) * DDSIP_bb->dimdual + 3);
+                    DDSIP_node[1]->bound = old_objval;
+                    DDSIP_bb->DDSIP_step = DDSIP_node[1]->step = dual;
+                }
+                else
+                {
+                    DDSIP_node[1]->bound = tmp_objval;
+                    DDSIP_bb->DDSIP_step = DDSIP_node[1]->step = solve;
+#ifdef DE1MULT
+                    // delete node 1 multiplier from list
+                    bbest_t * tmp_previous, * tmp_bestdual;
+                    tmp_bestdual = DDSIP_bb->bestdual;
+                    if (tmp_bestdual)
+                    {
+                        if (tmp_bestdual->node_nr == 1)
+                        {
+                            DDSIP_bb->bestdual = DDSIP_bb->bestdual->next;
+                            DDSIP_bb->bestdual_cnt--;
+                            if (DDSIP_param->outlev > 10)
+                                fprintf (DDSIP_bb->moreoutfile, " ## delete entry from node %d from bestdual list, #entries: %d\n", tmp_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
+                            DDSIP_Free ((void **) &(tmp_bestdual->dual));
+                            DDSIP_Free ((void **) &(tmp_bestdual));
+                        }
+                        else
+                        {
+                            while (tmp_bestdual)
+                            {
+                                tmp_previous = tmp_bestdual;
+                                tmp_bestdual = tmp_bestdual->next;
+                                if (tmp_bestdual && tmp_bestdual->node_nr == 1)
+                                {
+                                    tmp_previous->next = tmp_bestdual->next;
+                                    DDSIP_bb->bestdual_cnt--;
+                                    if (DDSIP_param->outlev > 10)
+                                        fprintf (DDSIP_bb->moreoutfile, " ## delete entry from node %d from bestdual list, #entries: %d\n", tmp_bestdual->node_nr, DDSIP_bb->bestdual_cnt);
+                                    DDSIP_Free ((void **) &(tmp_bestdual->dual));
+                                    DDSIP_Free ((void **) &(tmp_bestdual));
+                                    break;
+                                }
                             }
                         }
                     }
-                }
 #endif
+                }
+                DDSIP_Free ((void **) &(save_dual));
+                boundstat = DDSIP_Bound ();
+                if (!DDSIP_bb->skip)
+                    DDSIP_EvaluateScenarioSolutions (&comb);
+                DDSIP_PrintState (DDSIP_bb->noiter);
+                DDSIP_bb->curnode = 2;
             }
-            DDSIP_Free ((void **) &(save_dual));
-            boundstat = DDSIP_Bound ();
-            if (!DDSIP_bb->skip)
-                DDSIP_EvaluateScenarioSolutions (&comb);
-            DDSIP_PrintState (DDSIP_bb->noiter);
-            DDSIP_bb->curnode = 2;
         }
+        // check if the bestdual multipliers improve bounds of the nodes in the front
+        else if (DDSIP_param->cb < 0 && DDSIP_param->cb_checkBestdual && DDSIP_bb->bestdual_cnt &&
+                  (DDSIP_bb->curnode == 2*((DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters)/2) + DDSIP_Imax (2, 2*(-DDSIP_param->cb/2-1)) ||
+                   DDSIP_bb->curnode == 2*(DDSIP_param->cbContinuous + 2*(DDSIP_param->cbBreakIters/2) + 4) ||
+                   DDSIP_bb->curnode == DDSIP_param->nodelim - 2
+                  )
+                )
+        {
+            if (DDSIP_bb->bestdual_improvement > 0)
+            {
+                int ih, inode, nowAdded;
+
+                double * front_node_bound, least_bound = DDSIP_infty;
+                if (DDSIP_param->outlev > 20)
+                    fprintf (DDSIP_bb->moreoutfile, " ## node %d, bestdual_improvement= %d, re-evaluation of nodes in front with bestdual entries\n", DDSIP_bb->curnode, DDSIP_bb->bestdual_improvement); 
+                // sort front nodes ascending wrt. bound
+                DDSIP_Free ((void **) &DDSIP_bb->front_nodes_sorted);
+                DDSIP_bb->front_nodes_sorted = (int *) DDSIP_Alloc(sizeof(int), DDSIP_bb->nofront, "DDSIP_bb->front_nodes_sorted(main)");
+                front_node_bound = (double *) DDSIP_Alloc(sizeof(double), DDSIP_bb->nonode, "front_node_bound(main)");
+                for  (ih = 0; ih < DDSIP_bb->nofront; ih++)
+                {
+                    DDSIP_bb->front_nodes_sorted[ih] = DDSIP_bb->front[ih];
+                    front_node_bound[DDSIP_bb->front_nodes_sorted[ih]] = DDSIP_node[DDSIP_bb->front_nodes_sorted[ih]]->bound;
+                }
+                DDSIP_qsort_ins_A (front_node_bound, DDSIP_bb->front_nodes_sorted, 0, DDSIP_bb->nofront-1);
+                tmp_objval = DDSIP_node[DDSIP_bb->front_nodes_sorted[DDSIP_bb->nofront - 1]]->bound;
+                ih = DDSIP_bb->curnode;
+                for (inode = 0; inode < DDSIP_bb->nofront; inode++)
+                {
+                    if (DDSIP_node[DDSIP_bb->front_nodes_sorted[inode]]->leaf)
+                        continue;
+                    DDSIP_bb->curnode = DDSIP_bb->front_nodes_sorted[inode];
+                    if (DDSIP_node[DDSIP_bb->curnode]->bound > 0.30 * least_bound + 0.70 * tmp_objval)
+                        break;
+                    if (!DDSIP_node[DDSIP_bb->curnode]->leaf && DDSIP_node[DDSIP_bb->curnode]->solved)
+                    {
+                        double old_objval;
+                        int cnt, k1;
+                        nowAdded = DDSIP_bb->cutNumber;
+                        status = DDSIP_SetBounds ();
+                        if (status)
+                        {
+                            fprintf (stderr, "ERROR: Failed to add new bounds (main).\n");
+                            return status;
+                        }
+                        for (i = 0; i < DDSIP_param->scenarios; i++)
+                        {
+                            if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i] != NULL)
+                            {
+                                if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
+                                    for (k1 = i + 1; cnt && k1 < DDSIP_param->scenarios; k1++)
+                                    {
+                                        if ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]) == (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[k1]))
+                                        {
+                                            ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[k1] = NULL;
+                                            cnt--;
+                                        }
+                                    }
+                                DDSIP_Free ((void **) &(((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]));
+                            }
+                        }
+                        old_objval = DDSIP_node[DDSIP_bb->curnode]->bound;
+                        DDSIP_bb->DDSIP_step = DDSIP_node[DDSIP_bb->curnode]->step = dual;
+                        if ((status = DDSIP_DualOpt (1)))
+                        {
+                            if (!DDSIP_bb->curnode)
+                                goto TERMINATE;
+                            else
+                            {
+                                DDSIP_bb->skip = 1;
+                                fprintf (DDSIP_outfile, "### return code of DualOpt is %d.\n", status);
+                                if (status == 2 || DDSIP_bb->skip == 1)
+                                    DDSIP_node[DDSIP_bb->curnode]->bound = DDSIP_infty;
+                            }
+                        }
+                        if (DDSIP_param->outlev > 10)
+                            fprintf (DDSIP_bb->moreoutfile, " ## re-eval %2d node %d : %20.14g (new) - %20.14g (old) = %g\n", inode+1, DDSIP_bb->curnode, DDSIP_node[DDSIP_bb->curnode]->bound, old_objval, DDSIP_node[DDSIP_bb->curnode]->bound - old_objval);
+                        if (DDSIP_node[DDSIP_bb->curnode]->bound < old_objval)
+                        {
+                            DDSIP_node[DDSIP_bb->curnode]->bound = old_objval;
+                        }
+                        least_bound = DDSIP_Dmin (least_bound, DDSIP_node[DDSIP_bb->curnode]->bound);
+                        if (!DDSIP_bb->skip)
+                            DDSIP_EvaluateScenarioSolutions (&comb);
+                        nowAdded = DDSIP_bb->cutNumber - nowAdded;
+                        DDSIP_PrintState (DDSIP_bb->noiter);
+                        if (nowAdded && DDSIP_param->outlev > 1)
+                        {
+                            fprintf (DDSIP_outfile, " %6d%101d cuts (UB)\n", DDSIP_bb->curnode, nowAdded);
+                        }
+                    }
+                }
+                DDSIP_bb->curnode = ih;
+                DDSIP_bb->bestBound = -6;
+                for  (ih = 0; ih < DDSIP_bb->nofront; ih++)
+                {
+                    DDSIP_bb->front_nodes_sorted[ih] = DDSIP_bb->front[ih];
+                    front_node_bound[DDSIP_bb->front_nodes_sorted[ih]] = DDSIP_node[DDSIP_bb->front_nodes_sorted[ih]]->bound;
+                }
+                DDSIP_qsort_ins_A (front_node_bound, DDSIP_bb->front_nodes_sorted, 0, DDSIP_bb->nofront-1);
+                boundstat = DDSIP_Bound ();
+                DDSIP_Free ((void **) &front_node_bound);
+                cont = DDSIP_Continue (&DDSIP_bb->noiter, &boundstat);
+                if (!cont)
+                {
+                    status = boundstat;
+                    goto TERMINATE;
+                }
+
+                if ((status = DDSIP_Branch ()))
+                    goto TERMINATE;
+            }
+            else if (DDSIP_param->outlev > 20)
+                fprintf (DDSIP_bb->moreoutfile, " ## node %d, bestdual_improvement= %d, no re-evaluation of nodes in front with bestdual entries\n", DDSIP_bb->curnode, DDSIP_bb->bestdual_improvement); 
+        }
+        else if (DDSIP_param->cb < 0 && DDSIP_param->cb_checkBestdual && DDSIP_bb->bestdual_cnt &&
+                  (DDSIP_bb->curnode == 2*((DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters)/2) + DDSIP_Imax (2, 2*(-DDSIP_param->cb/2-1)) -2 ||
+                   DDSIP_bb->curnode == 2*(DDSIP_param->cbContinuous + 2*(DDSIP_param->cbBreakIters/2) + 4) -2 ||
+                   DDSIP_bb->curnode == DDSIP_param->nodelim - 4
+                  )
+                )
+        {
+                DDSIP_bb->bestBound = -6;
+        }
+
 
         // DDSIP_bb->skip > 0 indicates that UpperBound calls have been skipped
         // DDSIP_bb->heurval contains the objective value of the heuristic solution

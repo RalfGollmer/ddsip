@@ -494,9 +494,9 @@ extern "C" {
         int    *intind;
         // Pointer to a vector of all integer variables in the solutions of the scenario problems
         // (for warm starts in CB)
-        double **intsolvals;
+        double *intsolvals;
         // (for warm starts in CB)
-        double **boundIncrease_intsolvals;
+        double *boundIncrease_intsolvals;
         // Pointer to a vector of structures for the best found first stage variables in the solutions (in CB)
         bestfirst_t *bestfirst;
         // Priority order
@@ -660,6 +660,8 @@ extern "C" {
         int constant_obj;
         // subgradient norm in descent iteration 0
         double subgradient_norm;
+        // count whether the bestdual checks lead to improvement
+        int bestdual_improvement;
 
     } bb_t;
 
@@ -877,7 +879,7 @@ extern "C" {
 // Lagrangian dual
     int DDSIP_NonAnt(void);
     int DDSIP_DualUpdate(void*, double *, double, int, double *, int*, double *, double *, double *);
-    int DDSIP_DualOpt(void);
+    int DDSIP_DualOpt(int);
     int DDSIP_CBLowerBound(double *, double);
     int DDSIP_Contrib    (double *, int);
     int DDSIP_Contrib_LB (double *, int);

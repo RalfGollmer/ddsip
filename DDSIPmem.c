@@ -333,14 +333,10 @@ DDSIP_FreeBb ()
             DDSIP_Free ((void **) &(DDSIP_bb->intind));
             if (DDSIP_bb->intsolvals)
             {
-                for (i = 0; i < DDSIP_param->scenarios; i++)
-                    DDSIP_Free ((void **) &(DDSIP_bb->intsolvals[i]));
                 DDSIP_Free ((void **) &(DDSIP_bb->intsolvals));
             }
             if (DDSIP_bb->boundIncrease_intsolvals)
             {
-                for (i = 0; i < DDSIP_param->scenarios; i++)
-                    DDSIP_Free ((void **) &(DDSIP_bb->boundIncrease_intsolvals[i]));
                 DDSIP_Free ((void **) &(DDSIP_bb->boundIncrease_intsolvals));
             }
         }

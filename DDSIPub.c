@@ -1327,7 +1327,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     end = (DDSIP_param->addBendersCuts > 1 || (DDSIP_bb->curnode < 11 && DDSIP_param->testOtherScens) || !nrScenarios) ? DDSIP_param->scenarios : nrScenarios;
                     if (feasCheckOnly == 2 && (DDSIP_bb->curnode || DDSIP_bb->dualdescitcnt))
                     {
-                        end = DDSIP_Imin (DDSIP_bb->shifts + 2, DDSIP_param->scenarios);
+                        end = DDSIP_Imin (DDSIP_bb->curnode > 10 ? DDSIP_bb->shifts + 2:DDSIP_bb->shifts + 1, DDSIP_param->scenarios);
                     }
                 }
                 else

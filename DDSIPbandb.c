@@ -41,6 +41,8 @@ DDSIP_GetCurNode (void)
 {
     int i, change = 0;
 
+    // security first: initialize curnode
+    //DDSIP_bb->curnode = DDSIP_bb->front_nodes_sorted[0];
     // Unsolved nodes have priority (width first)
     if (DDSIP_param->boundstrat <= 1 || DDSIP_param->boundstrat == 3 || DDSIP_param->boundstrat > 4)
     {
@@ -52,6 +54,7 @@ DDSIP_GetCurNode (void)
                 i = DDSIP_bb->nofront;
             }
     }
+    // If there was no unsolved node chosen, take the first node not being a leaf and having sufficient dispersion norm from the sorted list
     if (!change)
     {
         for (i = 0; i < DDSIP_bb->nofront; i++)
@@ -827,7 +830,7 @@ DDSIP_Bound (void)
             // feasible point found - switch to other bounding strategy
             DDSIP_param->boundstrat -= 5;
         }
-        if (DDSIP_param->cb && (DDSIP_bb->curnode == DDSIP_param->cbBreakIters))
+        if (DDSIP_param->cb && (DDSIP_bb->curnode == DDSIP_param->cbBreakIters || DDSIP_bb->curnode == DDSIP_param->nodelim - DDSIP_param->cbContinuous - 1))
             DDSIP_bb->bestBound = -DDSIP_param->cbContinuous - 1;
         if (DDSIP_param->boundstrat > 4 && !(DDSIP_param->cb < 0 && ((DDSIP_bb->cutoff > 5) && (DDSIP_bb->no_reduced_front < 51) && (DDSIP_bb->noiter % -DDSIP_param->cb) < DDSIP_param->cbContinuous)))
         {
@@ -869,7 +872,7 @@ DDSIP_Bound (void)
                         }
                         else
                         {
-                            DDSIP_bb->Dive = (DDSIP_bb->curnode > 40 && DDSIP_bb->curnode%500 < 61) ? 1: 0;
+                            DDSIP_bb->Dive = (DDSIP_bb->curnode > 30 && DDSIP_bb->curnode%500 < 61) ? 1: 0;
                             if (DDSIP_bb->Dive)
                                 depth_first_nodes = 2;
                             else
@@ -930,7 +933,9 @@ DDSIP_Bound (void)
                             }
                             if (!DDSIP_bb->Dive)
                             {
-                                for  (i = 0; i < DDSIP_bb->nofront; i++)
+                                front_node_bound[DDSIP_bb->front_nodes_sorted[0]] = !(DDSIP_node[DDSIP_bb->front_nodes_sorted[0]]->solved) ?
+                                        -DDSIP_infty : 2*DDSIP_node[DDSIP_bb->front_nodes_sorted[0]]->violations - DDSIP_node[DDSIP_bb->front_nodes_sorted[0]]->dispnorm - DDSIP_node[DDSIP_bb->front_nodes_sorted[0]]->depth;
+                                for  (i = 1; i < DDSIP_bb->nofront; i++)
                                 {
                                     if ((DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound - DDSIP_bb->bestbound) / (fabs(DDSIP_bb->bestbound) + DDSIP_param->accuracy) > 1.e-12)
                                         break;
@@ -950,10 +955,10 @@ DDSIP_Bound (void)
                             }
                             DDSIP_qsort_ins_A (front_node_bound, DDSIP_bb->front_nodes_sorted, 0, i-1);
                             // reset the sorting criterion to bound
-                            //for  (k = 0; k < DDSIP_Imin(i, DDSIP_bb->nofront); k++)
-                            //{
-                            //    front_node_bound[DDSIP_bb->front_nodes_sorted[k]] =  DDSIP_node[DDSIP_bb->front_nodes_sorted[k]]->bound;
-                            //}
+                            for  (k = 0; k < DDSIP_Imin(i, DDSIP_bb->nofront); k++)
+                            {
+                                front_node_bound[DDSIP_bb->front_nodes_sorted[k]] =  DDSIP_node[DDSIP_bb->front_nodes_sorted[k]]->bound;
+                            }
                         }
                         if (DDSIP_param->outlev > 5)
                             fprintf (DDSIP_bb->moreoutfile, "\n");

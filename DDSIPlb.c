@@ -644,98 +644,67 @@ DDSIP_Warm (int iscen)
         DDSIP_bb->beg[0]=0;
         DDSIP_bb->effort[0]=3;
 
-        if (memcmp(DDSIP_bb->boundIncrease_intsolvals[scen], DDSIP_bb->intsolvals[scen], DDSIP_bb->total_int*sizeof(double)))
+        if (memcmp(DDSIP_bb->boundIncrease_intsolvals + (scen * DDSIP_bb->total_int), DDSIP_bb->intsolvals + (scen * DDSIP_bb->total_int), DDSIP_bb->total_int*sizeof(double)))
         {
             // add solution of previous bound increase
             sprintf (DDSIP_bb->Names[0],"BoundIncr_%d",scen+1);
-#ifdef DEBUG
-            if(DDSIP_param->outlev > 90)
+//#ifdef DEBUG
+            if(DDSIP_param->outlev > 20)
             {
                 fprintf(DDSIP_bb->moreoutfile,"     ### MIP starts (in CB): %s  \n",DDSIP_bb->Names[0]);
                 for (j = 0; j < DDSIP_bb->total_int; j++)
                 {
-                    fprintf(DDSIP_bb->moreoutfile,"%g, ", DDSIP_bb->boundIncrease_intsolvals[scen][j]);
+                    fprintf(DDSIP_bb->moreoutfile,"%g, ", DDSIP_bb->boundIncrease_intsolvals[DDSIP_bb->total_int * scen + j]);
                     if (!((j+1)%20))
                         fprintf(DDSIP_bb->moreoutfile,"\n");
                 }
                 fprintf(DDSIP_bb->moreoutfile,"\n");
             }
-#endif
+//#endif
             // Copy starting informations to problem
-            status = CPXaddmipstarts (DDSIP_env, DDSIP_lp, 1, DDSIP_bb->total_int, DDSIP_bb->beg, DDSIP_bb->intind, DDSIP_bb->boundIncrease_intsolvals[scen], DDSIP_bb->effort, DDSIP_bb->Names);
+            status = CPXaddmipstarts (DDSIP_env, DDSIP_lp, 1, DDSIP_bb->total_int, DDSIP_bb->beg, DDSIP_bb->intind, &DDSIP_bb->boundIncrease_intsolvals[scen*DDSIP_bb->total_int], DDSIP_bb->effort, DDSIP_bb->Names);
             if (status)
             {
                 fprintf (stderr, "ERROR: Failed to copy mip start infos (Warm)\n");
                 fprintf (DDSIP_outfile, "ERROR: Failed to copy mip start infos (Warm)\n");
                 return status;
             }
-#ifdef DEBUG
-            else if (DDSIP_param->outlev > 25)
+//#ifdef DEBUG
+            else if (DDSIP_param->outlev > 20)
                 fprintf (DDSIP_bb->moreoutfile, "##  Copied mip start info %s of previous bound increase (Warm)\n", DDSIP_bb->Names[0]);
-#endif
+//#endif
             added++;
         }
         // add solution of previous iteration
         sprintf (DDSIP_bb->Names[0],"Prev_Iter_%d",scen+1);
         DDSIP_bb->effort[0]=3;
         // print debugging info
-#ifdef DEBUG
-        if(DDSIP_param->outlev > 90)
+//#ifdef DEBUG
+        if(DDSIP_param->outlev > 20)
         {
             fprintf(DDSIP_bb->moreoutfile,"     ### MIP starts (in CB): %s  \n",DDSIP_bb->Names[0]);
             for (j = 0; j < DDSIP_bb->total_int; j++)
             {
-                fprintf(DDSIP_bb->moreoutfile,"%g, ", DDSIP_bb->intsolvals[scen][j]);
+                fprintf(DDSIP_bb->moreoutfile,"%g, ", DDSIP_bb->intsolvals[scen * DDSIP_bb->total_int + j]);
                 if (!((j+1)%20))
                     fprintf(DDSIP_bb->moreoutfile,"\n");
             }
             fprintf(DDSIP_bb->moreoutfile,"\n");
         }
-#endif
+//#endif
         // Copy starting informations to problem
-        status = CPXaddmipstarts (DDSIP_env, DDSIP_lp, 1, DDSIP_bb->total_int, DDSIP_bb->beg, DDSIP_bb->intind, DDSIP_bb->intsolvals[scen], DDSIP_bb->effort, DDSIP_bb->Names);
+        status = CPXaddmipstarts (DDSIP_env, DDSIP_lp, 1, DDSIP_bb->total_int, DDSIP_bb->beg, DDSIP_bb->intind, DDSIP_bb->intsolvals + scen * DDSIP_bb->total_int, DDSIP_bb->effort, DDSIP_bb->Names);
         if (status)
         {
             fprintf (stderr, "ERROR: Failed to copy mip start infos (Warm)\n");
             fprintf (DDSIP_outfile, "ERROR: Failed to copy mip start infos (Warm)\n");
             return status;
         }
-#ifdef DEBUG
-        else if (DDSIP_param->outlev > 30)
+//#ifdef DEBUG
+        else if (DDSIP_param->outlev > 20)
             fprintf (DDSIP_bb->moreoutfile, "##  Copied mip start info %s of previous iteration (Warm)\n", DDSIP_bb->Names[0]);
-#endif
+//#endif
         added++;
-//        if (memcmp(DDSIP_bb->boundIncrease_intsolvals[scen], DDSIP_bb->intsolvals[scen], DDSIP_bb->total_int*sizeof(double)))
-//        {
-//            // add solution of previous bound increase
-//            sprintf (DDSIP_bb->Names[0],"BoundIncr_%d",scen+1);
-//#ifdef DEBUG
-//            if(DDSIP_param->outlev > 90)
-//            {
-//                fprintf(DDSIP_bb->moreoutfile,"     ### MIP starts (in CB): %s  \n",DDSIP_bb->Names[0]);
-//                for (j = 0; j < DDSIP_bb->total_int; j++)
-//                {
-//                    fprintf(DDSIP_bb->moreoutfile,"%g, ", DDSIP_bb->boundIncrease_intsolvals[scen][j]);
-//                    if (!((j+1)%20))
-//                        fprintf(DDSIP_bb->moreoutfile,"\n");
-//                }
-//                fprintf(DDSIP_bb->moreoutfile,"\n");
-//            }
-//#endif
-//            // Copy starting informations to problem
-//            status = CPXaddmipstarts (DDSIP_env, DDSIP_lp, 1, DDSIP_bb->total_int, DDSIP_bb->beg, DDSIP_bb->intind, DDSIP_bb->boundIncrease_intsolvals[scen], DDSIP_bb->effort, DDSIP_bb->Names);
-//            if (status)
-//            {
-//                fprintf (stderr, "ERROR: Failed to copy mip start infos (Warm)\n");
-//                fprintf (DDSIP_outfile, "ERROR: Failed to copy mip start infos (Warm)\n");
-//                return status;
-//            }
-//#ifdef DEBUG
-//            else if (DDSIP_param->outlev > 21)
-//                fprintf (DDSIP_bb->moreoutfile, "##  Copied mip start info %s of previous bound increase (Warm)\n", DDSIP_bb->Names[0]);
-//#endif
-//            added++;
-//        }
 
         // ADVIND must be 1 or 2 when using start values
         status = CPXsetintparam (DDSIP_env, CPX_PARAM_ADVIND, 1);
@@ -4367,7 +4336,7 @@ NEXT_SCEN:
                 {
                     for (j = 0; j < DDSIP_bb->total_int; j++)
                     {
-                        DDSIP_bb->intsolvals[scen][j] = floor (mipx[DDSIP_bb->intind[j]] + 0.1);
+                        DDSIP_bb->intsolvals[scen * DDSIP_bb->total_int + j] = floor (mipx[DDSIP_bb->intind[j]] + 0.1);
                     }
                 }
                 for (i_scen = 0; i_scen < DDSIP_param->scenarios; i_scen++)
@@ -4439,7 +4408,7 @@ NEXT_SCEN:
                     if (DDSIP_param->outlev >= DDSIP_first_stage_outlev)
                         fprintf (DDSIP_bb->moreoutfile, "\n");
                     //
-                    if (DDSIP_param->addBendersCuts > 0 && DDSIP_param->alwaysBendersCuts && (j = DDSIP_bb->cutCntr) && (DDSIP_param->numberScenReeval > -1) && ((!(DDSIP_bb->curnode) && (DDSIP_bb->dualdescitcnt < 3)) || (!DDSIP_bb->dualdescitcnt) || (DDSIP_bb->dualdescitcnt == DDSIP_bb->current_itlim)))
+                    if (DDSIP_param->addBendersCuts > 0 && DDSIP_param->alwaysBendersCuts && (j = DDSIP_bb->cutCntr) && (DDSIP_param->numberScenReeval > -1) && ((!(DDSIP_bb->curnode) && (DDSIP_bb->dualdescitcnt < 3)) || (!DDSIP_bb->dualdescitcnt && DDSIP_bb->curnode <= (DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters)) || (DDSIP_bb->dualdescitcnt == DDSIP_bb->current_itlim)))
                     {
                         // check feasibility for other scenarios and possibly add cuts
                         tmp = DDSIP_bb->sug[DDSIP_param->nodelim + 2];
@@ -4772,8 +4741,7 @@ NEXT_SCEN:
         }
         if (DDSIP_param->hot)
         {
-            for (j = 0; j < DDSIP_param->scenarios; j++)
-                memcpy (DDSIP_bb->boundIncrease_intsolvals[j], DDSIP_bb->intsolvals[j], DDSIP_bb->total_int*sizeof(double));
+            memcpy (DDSIP_bb->boundIncrease_intsolvals, DDSIP_bb->intsolvals, DDSIP_bb->total_int * DDSIP_param->scenarios * sizeof(double));
         }
         // Set lower bound for the node
         DDSIP_node[DDSIP_bb->curnode]->bound = tmpbestbound;
@@ -5222,8 +5190,7 @@ NEXT_SCEN:
         }
         if (!DDSIP_bb->dualdescitcnt && (DualObj <= tmpbestbound) && DDSIP_param->hot)
         {
-            for (j = 0; j < DDSIP_param->scenarios; j++)
-                memcpy (DDSIP_bb->boundIncrease_intsolvals[j], DDSIP_bb->intsolvals[j], DDSIP_bb->total_int*sizeof(double));
+            memcpy (DDSIP_bb->boundIncrease_intsolvals, DDSIP_bb->intsolvals, DDSIP_bb->total_int * DDSIP_param->scenarios * sizeof(double));
             if (DDSIP_param->outlev > 21)
                 fprintf (DDSIP_bb->moreoutfile, "##  Saved mip start info of objective increase\n");
         }

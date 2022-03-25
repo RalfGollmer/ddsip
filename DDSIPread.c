@@ -1125,7 +1125,7 @@ DDSIP_ReadCpxPara (FILE * specfile)
 int
 DDSIP_ReadSpec ()
 {
-    char fname[DDSIP_ln_fname];
+    char *fname = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_fname, "fname (AdvStart)");
     char command[256];
     FILE *specfile;
     char *ref_point_file;
@@ -1555,7 +1555,7 @@ DDSIP_ReadSpec ()
             printf ("     CBBREAK smaller than CBFREQ, setting CBBREAK = %d.\n", DDSIP_param->cbBreakIters);
             fprintf (DDSIP_outfile, "     CBBREAK smaller than CBFREQ, setting CBBREAK = %d.\n", DDSIP_param->cbBreakIters);
         }
-        DDSIP_param->cbrelgap = DDSIP_ReadDbl (specfile, "CBPREC", " CB PRECISION", 1.e-14, 0, 0., DDSIP_infty);
+        DDSIP_param->cbrelgap = DDSIP_ReadDbl (specfile, "CBPREC", " CB PRECISION", 1.e-12, 0, 0., DDSIP_infty);
         DDSIP_param->nonant = (int) floor (DDSIP_ReadDbl (specfile, "NONANT", " CB NON-ANTICIPATIVITY", 1., 1, 1., 4.) + 0.1);
         DDSIP_param->cbprint = (int) floor (DDSIP_ReadDbl (specfile, "CBPRIN", " CB PRINT LEVEL", 0., 1, 0., DDSIP_bigint) + 0.1);
         DDSIP_param->cbbundlesz = (int) floor (DDSIP_ReadDbl (specfile, "CBBUNS", " CB MAXIMAL BUNDLE SIZE", 200., 1, 0., DDSIP_bigint) + 0.1);
@@ -1606,10 +1606,10 @@ DDSIP_ReadSpec ()
     if (DDSIP_param->addBendersCuts || DDSIP_param->addIntegerCuts)
     {
         DDSIP_param->numberReinits  = (int) floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 25., 1, 0., DDSIP_bigint) + 0.1);
-        DDSIP_param->numberScenReeval  = (int) floor (DDSIP_ReadDbl (specfile, "SCENRE", " NR OF SCENARIO REEVALUATIONS", (DDSIP_param->scenarios > 50?2:4), 1, -DDSIP_bigint, DDSIP_bigint) + 0.1);
+        DDSIP_param->numberScenReeval  = (int) floor (DDSIP_ReadDbl (specfile, "SCENRE", " NR OF SCENARIO REEVALUATIONS", (DDSIP_param->scenarios > 50?10:20), 1, -DDSIP_bigint, DDSIP_bigint) + 0.1);
         //DDSIP_param->numberScenReeval  = (int) floor (DDSIP_ReadDbl (specfile, "SCENRE", " NR OF SCENARIO REEVALUATIONS", (DDSIP_param->addBendersCuts?((DDSIP_param->cb && DDSIP_param->cb_depth > -1)?3:2):-1), 1, -DDSIP_bigint, (DDSIP_param->addBendersCuts?DDSIP_bigint:-1)) + 0.1);
         DDSIP_param->deactivate_cuts= (int) floor (DDSIP_ReadDbl (specfile, "DEACTI", " DEACTIVATE CUTS IN UB", 0., 1, 0., 1) + 0.1);
-        DDSIP_param->redundancyCheck = (int) floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", DDSIP_param->deactivate_cuts, 1, 0., DDSIP_param->addBendersCuts ? 1.:0.) + 0.1);
+        DDSIP_param->redundancyCheck = (int) floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", DDSIP_param->deactivate_cuts, 1, 1., DDSIP_param->addBendersCuts ? 1.:0.) + 0.1);
         if (DDSIP_param->redundancyCheck)
             DDSIP_param->deleteRedundantCuts = (int) floor (DDSIP_ReadDbl (specfile, "DELRED", " DELETE REDUNDANT CUTS", 1., 1, 0., 1.) + 0.1);
         else
@@ -1637,6 +1637,7 @@ DDSIP_ReadSpec ()
     }
 
     fclose (specfile);
+    DDSIP_Free ((void **) &(fname));
     return 0;
 }
 
@@ -1760,7 +1761,6 @@ DDSIP_ReadData ()
 
     double probsum, h;
 
-    char fname[DDSIP_ln_fname];
     char identifier[DDSIP_max_str_ln];
     char checkstr[DDSIP_max_str_ln];
     char tmpdata[DDSIP_max_str_ln];
@@ -1770,6 +1770,7 @@ DDSIP_ReadData ()
     FILE *datafile;
     FILE *checkfile;
 
+    char *fname = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_fname, "fname (ReadData)");
     maxVarNameLength = DDSIP_Imin (128, DDSIP_max_str_ln);
 
     // get the column and row names of the problem
@@ -2320,6 +2321,7 @@ DDSIP_ReadData ()
     DDSIP_Free ((void **) &(colname));
     DDSIP_Free ((void **) &(rowstore));
     DDSIP_Free ((void **) &(rowname));
+    DDSIP_Free ((void **) &(fname));
     return 0;
 }
 
@@ -2329,13 +2331,13 @@ DDSIP_ReadData ()
 int
 DDSIP_AdvStart (void)
 {
-    char fname[DDSIP_ln_fname];
     FILE *advfile;
     int i, k, ind, status, maxVarNameLength;
     double tmp;
     char tmpdata[DDSIP_max_str_ln];
     char *colstore = NULL, **colname = NULL;
 
+    char *fname = (char *) DDSIP_Alloc (sizeof (char), DDSIP_ln_fname, "fname (AdvStart)");
     maxVarNameLength = DDSIP_Imin (128, DDSIP_max_str_ln);
 
     colname = (char **) malloc (sizeof(char *) * (DDSIP_data->novar));
@@ -2445,6 +2447,7 @@ DDSIP_AdvStart (void)
     fclose (advfile);
     DDSIP_Free ((void **) &(colstore));
     DDSIP_Free ((void **) &(colname));
+    DDSIP_Free ((void **) &(fname));
 
     return 0;
 }

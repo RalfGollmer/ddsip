@@ -648,8 +648,8 @@ DDSIP_Warm (int iscen)
         {
             // add solution of previous bound increase
             sprintf (DDSIP_bb->Names[0],"BoundIncr_%d",scen+1);
-//#ifdef DEBUG
-            if(DDSIP_param->outlev > 20)
+#ifdef DEBUG
+            if(DDSIP_param->outlev > 30)
             {
                 fprintf(DDSIP_bb->moreoutfile,"     ### MIP starts (in CB): %s  \n",DDSIP_bb->Names[0]);
                 for (j = 0; j < DDSIP_bb->total_int; j++)
@@ -660,7 +660,7 @@ DDSIP_Warm (int iscen)
                 }
                 fprintf(DDSIP_bb->moreoutfile,"\n");
             }
-//#endif
+#endif
             // Copy starting informations to problem
             status = CPXaddmipstarts (DDSIP_env, DDSIP_lp, 1, DDSIP_bb->total_int, DDSIP_bb->beg, DDSIP_bb->intind, &DDSIP_bb->boundIncrease_intsolvals[scen*DDSIP_bb->total_int], DDSIP_bb->effort, DDSIP_bb->Names);
             if (status)
@@ -669,18 +669,18 @@ DDSIP_Warm (int iscen)
                 fprintf (DDSIP_outfile, "ERROR: Failed to copy mip start infos (Warm)\n");
                 return status;
             }
-//#ifdef DEBUG
-            else if (DDSIP_param->outlev > 20)
+#ifdef DEBUG
+            else if (DDSIP_param->outlev > 30)
                 fprintf (DDSIP_bb->moreoutfile, "##  Copied mip start info %s of previous bound increase (Warm)\n", DDSIP_bb->Names[0]);
-//#endif
+#endif
             added++;
         }
         // add solution of previous iteration
         sprintf (DDSIP_bb->Names[0],"Prev_Iter_%d",scen+1);
         DDSIP_bb->effort[0]=3;
         // print debugging info
-//#ifdef DEBUG
-        if(DDSIP_param->outlev > 20)
+#ifdef DEBUG
+        if(DDSIP_param->outlev > 30)
         {
             fprintf(DDSIP_bb->moreoutfile,"     ### MIP starts (in CB): %s  \n",DDSIP_bb->Names[0]);
             for (j = 0; j < DDSIP_bb->total_int; j++)
@@ -691,7 +691,7 @@ DDSIP_Warm (int iscen)
             }
             fprintf(DDSIP_bb->moreoutfile,"\n");
         }
-//#endif
+#endif
         // Copy starting informations to problem
         status = CPXaddmipstarts (DDSIP_env, DDSIP_lp, 1, DDSIP_bb->total_int, DDSIP_bb->beg, DDSIP_bb->intind, DDSIP_bb->intsolvals + scen * DDSIP_bb->total_int, DDSIP_bb->effort, DDSIP_bb->Names);
         if (status)
@@ -700,10 +700,10 @@ DDSIP_Warm (int iscen)
             fprintf (DDSIP_outfile, "ERROR: Failed to copy mip start infos (Warm)\n");
             return status;
         }
-//#ifdef DEBUG
-        else if (DDSIP_param->outlev > 20)
+#ifdef DEBUG
+        else if (DDSIP_param->outlev > 30)
             fprintf (DDSIP_bb->moreoutfile, "##  Copied mip start info %s of previous iteration (Warm)\n", DDSIP_bb->Names[0]);
-//#endif
+#endif
         added++;
 
         // ADVIND must be 1 or 2 when using start values

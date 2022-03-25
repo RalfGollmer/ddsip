@@ -644,7 +644,16 @@ DDSIP_Warm (int iscen)
         DDSIP_bb->beg[0]=0;
         DDSIP_bb->effort[0]=3;
 
-        if (memcmp(DDSIP_bb->boundIncrease_intsolvals + (scen * DDSIP_bb->total_int), DDSIP_bb->intsolvals + (scen * DDSIP_bb->total_int), DDSIP_bb->total_int*sizeof(double)))
+        jt = 0;
+        for (j = 0; j < DDSIP_bb->total_int; j++)
+        {
+            if (!DDSIP_Equal (DDSIP_bb->boundIncrease_intsolvals[scen * DDSIP_bb->total_int + j], DDSIP_bb->intsolvals[scen * DDSIP_bb->total_int + j]))
+            {
+               jt = 1;
+               break;
+            }
+        }
+        if (jt)
         {
             // add solution of previous bound increase
             sprintf (DDSIP_bb->Names[0],"BoundIncr_%d",scen+1);

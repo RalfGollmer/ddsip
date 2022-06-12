@@ -48,7 +48,7 @@ DDSIP_SetCpxPara (const int cnt, const int * isdbl, const int * which, const dou
         fprintf (stderr, "ERROR: Failed to set minimal feasibility tolerance\n");
         return status;
     }
-    if ((status = CPXsetdblparam (DDSIP_env, CPX_PARAM_EPOPT, 1e-8)))
+    if ((status = CPXsetdblparam (DDSIP_env, CPX_PARAM_EPOPT, 1e-9)))
     {
         fprintf (stderr, "ERROR: Failed to set minimal optimality tolerance\n");
         return status;

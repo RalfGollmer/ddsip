@@ -275,7 +275,8 @@ main (int argc, char * argv[])
         fprintf (DDSIP_bb->moreoutfile, "OUTLEV in the specification file.\n---------");
         fprintf (DDSIP_bb->moreoutfile, "--------------------------------------------------------------\n\n");
 
-        fprintf (DDSIP_bb->moreoutfile, "front node re-eval at nodes %d and %d.\n",
+        if (DDSIP_param->cb)
+            fprintf (DDSIP_bb->moreoutfile, "front node re-eval at nodes %d and %d.\n",
                   2*((DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters)/2) + DDSIP_Imax (2, 2*(-DDSIP_param->cb/2-1)),
                   2*(DDSIP_param->cbContinuous + 2*(DDSIP_param->cbBreakIters/2) + 4)
                 );
@@ -856,7 +857,9 @@ main (int argc, char * argv[])
                         continue;
                     DDSIP_bb->curnode = DDSIP_bb->front_nodes_sorted[inode];
                     if (DDSIP_node[DDSIP_bb->curnode]->bound > 0.30 * least_bound + 0.70 * tmp_objval)
+                    {
                         break;
+                    }
                     if (!DDSIP_node[DDSIP_bb->curnode]->leaf && DDSIP_node[DDSIP_bb->curnode]->solved)
                     {
                         double old_objval;

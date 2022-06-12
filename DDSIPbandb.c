@@ -79,7 +79,7 @@ DDSIP_GetCurNode (void)
 int
 DDSIP_InitNewNodes (void)
 {
-    int i, j, status, scen, cnt;
+    int i, j, status, scen, cnt, mult_zero = 1;
     double branchval, lhs;
     cutpool_t *currentCut;
 
@@ -163,6 +163,19 @@ DDSIP_InitNewNodes (void)
     //memcpy (DDSIP_node[DDSIP_bb->nonode + 1]->subbound, DDSIP_node[DDSIP_bb->curnode]->subbound, sizeof (double) * DDSIP_param->scenarios);
     DDSIP_node[DDSIP_bb->nonode + 1]->subbound = DDSIP_node[DDSIP_bb->curnode]->subbound;
     DDSIP_node[DDSIP_bb->curnode]->subbound = NULL;
+    mult_zero = 1;
+    if ((DDSIP_node[DDSIP_bb->curnode])->step == dual)
+    {
+        // check whether all multipliers are zero
+        for (cnt = 0; cnt < DDSIP_bb->dimdual; cnt++)
+        {
+            if (DDSIP_node[DDSIP_bb->curnode]->dual[cnt] != 0.)
+            {
+                mult_zero = 0;
+                break;
+            }
+        }
+    }
 #ifdef CONIC_BUNDLE
     // Initialize multiplier in node
     if (DDSIP_param->cb)
@@ -323,8 +336,8 @@ DDSIP_InitNewNodes (void)
                 }
                 if ((lhs -= currentCut->rhs) < - 1e-7)
                 {
-                    if (DDSIP_param->outlev > 23)
-                        fprintf (DDSIP_bb->moreoutfile,"  nodes %d and %d did not inherit solution of scenario %d from node %d due to added cut %d, violation %g.\n",
+                    if (DDSIP_param->outlev > 21)
+                        fprintf (DDSIP_bb->moreoutfile,"  nodes %d and %d do NOT inherit solution of scenario %d from node %d due to added cut %d, violation %g.\n",
                                  DDSIP_bb->nonode, DDSIP_bb->nonode + 1, i+1, DDSIP_bb->curnode, currentCut->number, -lhs);
                     if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
                         for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
@@ -353,7 +366,7 @@ DDSIP_InitNewNodes (void)
         // due to the change of the lower bound of additional variable in root node for risk model DDSIP_4 (worst case cost) and 5 (TVaR):
         //   do not pass on root node solutions in this case
         // for asd model the same applies in all nodes due to changes of target
-        if ((abs(DDSIP_param->riskmod) != 3 && (DDSIP_bb->curnode || (abs(DDSIP_param->riskmod) != 4 && abs(DDSIP_param->riskmod) != 5)) && (DDSIP_node[DDSIP_bb->curnode])->step != dual))
+        if ((abs(DDSIP_param->riskmod) != 3 && (DDSIP_bb->curnode || (abs(DDSIP_param->riskmod) != 4 && abs(DDSIP_param->riskmod) != 5)) && (mult_zero)))
         {
             cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar]);
             ((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_bb->firstvar + 1] += 1.;
@@ -369,8 +382,11 @@ DDSIP_InitNewNodes (void)
                     if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
                             && ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]) == (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])))
                     {
-                        if ((((DDSIP_node[DDSIP_bb->curnode])->first_sol[j])[DDSIP_bb->firstvar + 1]) <= DDSIP_param->maxinherit ||
-                                (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j] == CPXMIP_OPTIMAL ||
+                        if (((((DDSIP_node[DDSIP_bb->curnode])->first_sol[j])[DDSIP_bb->firstvar + 1]) <= DDSIP_param->maxinherit && 
+                                (((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j]-(DDSIP_node[DDSIP_bb->nonode]->subbound)[j])/
+                                    (fabs((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j])+1e-4)) < 0.5 * DDSIP_param->relgap) ||
+                            ((((DDSIP_node[DDSIP_bb->curnode])->first_sol[j])[DDSIP_bb->firstvar + 1]) <= DDSIP_param->maxinherit /2) ||
+                                (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j] == CPXMIP_OPTIMAL || (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j] == CPXMIP_OPTIMAL_INFEAS ||
                                 ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j] == CPXMIP_OPTIMAL_TOL && (((DDSIP_node[DDSIP_bb->curnode])->first_sol[j])[DDSIP_bb->firstvar + 1]) < 2.*DDSIP_param->maxinherit))
                         {
                             (DDSIP_node[DDSIP_bb->nonode]->first_sol)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i];
@@ -393,8 +409,10 @@ DDSIP_InitNewNodes (void)
                         {
                             if (DDSIP_param->outlev > 21)
                             {
-                                fprintf (DDSIP_bb->moreoutfile,"  node %d NOT inherited solution of scenario %d from node %d due to status (%g identical scen. solutions), mipstatus %d, inh_level %g\n",
+                                fprintf (DDSIP_bb->moreoutfile,"  node %d does NOT inherit solution of scenario %d from node %d due to status (%g identical scen. solutions), gap %g%%, mipstatus %d, inh_level %g\n",
                                      DDSIP_bb->nonode, j + 1, DDSIP_bb->curnode, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j][DDSIP_bb->firstvar],
+                                     (100.*((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j]-(DDSIP_node[DDSIP_bb->nonode]->subbound)[j])/
+                                        (fabs((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j])+1e-4)),
                                      (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j], ((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_bb->firstvar + 1]);
                             }
                             ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i])[DDSIP_bb->firstvar] -= 1.;
@@ -424,8 +442,11 @@ DDSIP_InitNewNodes (void)
                     if (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j]
                             && ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i]) == (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])))
                     {
-                        if ((((DDSIP_node[DDSIP_bb->curnode])->first_sol[j])[DDSIP_bb->firstvar + 1]) <= DDSIP_param->maxinherit ||
-                                (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j] == CPXMIP_OPTIMAL ||
+                        if (((((DDSIP_node[DDSIP_bb->curnode])->first_sol[j])[DDSIP_bb->firstvar + 1]) <= DDSIP_param->maxinherit && 
+                                (((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j]-(DDSIP_node[DDSIP_bb->nonode + 1]->subbound)[j])/
+                                    (fabs((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j])+1e-4)) < 0.5 * DDSIP_param->relgap) ||
+                            ((((DDSIP_node[DDSIP_bb->curnode])->first_sol[j])[DDSIP_bb->firstvar + 1]) <= DDSIP_param->maxinherit /2) ||
+                                (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j] == CPXMIP_OPTIMAL || (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j] == CPXMIP_OPTIMAL_INFEAS ||
                                 ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j] == CPXMIP_OPTIMAL_TOL && (((DDSIP_node[DDSIP_bb->curnode])->first_sol[j])[DDSIP_bb->firstvar + 1]) < 2.*DDSIP_param->maxinherit))
                         {
                             (DDSIP_node[DDSIP_bb->nonode + 1]->first_sol)[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i];
@@ -446,8 +467,10 @@ DDSIP_InitNewNodes (void)
                         {
                             if (DDSIP_param->outlev > 21)
                             {
-                                fprintf (DDSIP_bb->moreoutfile,"  node %d NOT inherited solution of scenario %d from node %d due to status (%g identical scen. solutions), mipstatus %d, inh_level %g\n",
+                                fprintf (DDSIP_bb->moreoutfile,"  node %d does NOT inherit solution of scenario %d from node %d due to status (%g identical scen. solutions), gap %g%%, mipstatus %d, inh_level %g\n",
                                      DDSIP_bb->nonode + 1, j + 1, DDSIP_bb->curnode, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j][DDSIP_bb->firstvar],
+                                     (100.*((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j]-(DDSIP_node[DDSIP_bb->nonode]->subbound)[j])/
+                                        (fabs((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[j])+1e-4)),
                                      (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[j], ((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_bb->firstvar + 1]);
                             }
                             ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i])[DDSIP_bb->firstvar] -= 1.;
@@ -492,7 +515,7 @@ DDSIP_InitNewNodes (void)
         }
         else
         {
-            if (DDSIP_param->outlev > 23)
+            if (DDSIP_param->outlev > 21)
             {
                 if ((abs(DDSIP_param->riskmod) == 3 || abs(DDSIP_param->riskmod) == 4 || abs(DDSIP_param->riskmod) == 5))
                     fprintf (DDSIP_bb->moreoutfile,"  nodes %d and %d did not inherit solution of scenario %d from node %d due to risk model.\n",
@@ -781,6 +804,8 @@ DDSIP_Bound (void)
             // Delete node from the front
             DDSIP_bb->front[i] = DDSIP_bb->front[DDSIP_bb->nofront - 1];
             DDSIP_bb->nofront--;
+            if (DDSIP_bb->bestBound <= 0)
+                DDSIP_bb->bestBound = DDSIP_Imin (DDSIP_bb->bestBound, -2);
         }
     }
 
@@ -884,7 +909,7 @@ DDSIP_Bound (void)
                             bestAmongTheLast = DDSIP_Dmin(front_node_bound[DDSIP_bb->front_nodes_sorted[i]], bestAmongTheLast);
                         }
                         DDSIP_qsort_ins_A (front_node_bound, DDSIP_bb->front_nodes_sorted, 0, depth_first_nodes-1);
-                        threshold = DDSIP_bb->Dive ? 0.20*DDSIP_bb->bestbound + 0.80*worstBound:(1. - DDSIP_param->btTolerance)*DDSIP_bb->bestbound + DDSIP_param->btTolerance*worstBound;
+                        threshold = DDSIP_bb->Dive ? 0.25*DDSIP_bb->bestbound + 0.75*worstBound:(1. - DDSIP_param->btTolerance)*DDSIP_bb->bestbound + DDSIP_param->btTolerance*worstBound;
                         for (i = depth_first_nodes; i < DDSIP_bb->nofront; i++)
                         {
                             front_node_bound[DDSIP_bb->front_nodes_sorted[i]] =  (DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->leaf) ? DDSIP_infty : DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound;

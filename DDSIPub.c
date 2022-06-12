@@ -839,7 +839,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                      wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_help, nodes_1st);
                             fprintf (DDSIP_bb->moreoutfile, ")\n");
                             fprintf (DDSIP_bb->moreoutfile,
-                                     "After %d scenarios lower bound for suggested solution yields expected value already greater than the best known\n (reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk +rest_bound);
+                                     "After %d scenarios lower bound for suggested solution yields expected value already greater than the incumbent objective\n (reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk,tmpbestvalue + bobjval * DDSIP_data->prob[scen] + DDSIP_param->riskweight*tmprisk +rest_bound);
                         }
                         prematureStop = 1;
                         // in the first nodes check all the remaining scenarios whether they give rise to cut
@@ -1951,9 +1951,9 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                 if (DDSIP_param->outlev)
                 {
                     printf (
-                        "Suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue,tmpbestvalue+rest_bound);
+                        "Suggested solution yields expected value already greater than the incumbent objective\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue,tmpbestvalue+rest_bound);
                     fprintf (DDSIP_bb->moreoutfile,
-                             "Suggested solution yields expected value already greater than the best known\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue,tmpbestvalue+rest_bound);
+                             "Suggested solution yields expected value already greater than the incumbent objective\n (after %d scenarios reached %.16g, plus bound for the remaining scenarios: %.16g)\n", iscen + 1,tmpbestvalue,tmpbestvalue+rest_bound);
                     // evaluate solution times in order to see whether there are very difficult ones
                 }
                 if (iscen > DDSIP_bb->shifts + 4)

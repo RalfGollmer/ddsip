@@ -16,7 +16,9 @@ CBV      = 0311
 LIBTYPE   = static_pic
 
 #PROCESSOR = -mtune=corei7 -march=corei7 -mmmx -msse -msse2 -msse3 -mssse3 -m64
-PROCESSOR = -mtune=corei7 -march=corei7 -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -m64
+#PROCESSOR = -mtune=corei7 -march=corei7 -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -m64
+#PROCESSOR = -mtune=tigerlake -march=tigerlake -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx512f -m64
+PROCESSOR = -mtune=tigerlake -march=tigerlake -mmmx -m64
 
 # Directories and target
 HOME      = .
@@ -30,14 +32,14 @@ TARGET    = $(SRCDIR)/DDSIP_20.1.0_v$(CBVERSION)
 HELP      = $(SRCDIR)/ddsiphelp_20.1.0
 
 # Compiler 
-CC = gcc
+CC = gcc-11
 # All warnings, Optimizing level 2
 linux.CFLAGS  =  -std=c99 -O2 -fno-strict-aliasing -Wall -Wextra -Wformat=2 -Wmissing-prototypes  $(PROCESSOR) -DCONIC_BUNDLE -DCPLEX_12_8 -DCBVERSION=$(CBV) -DCBV=\""$(CBVERSION)"\"
 # Header files are here
 CDIRS   = -I./include_v$(CBVERSION) -I$(CPLEX)/include/ilcplex -I$(CB)_v$(CBVERSION)/include
 
 # Linker is g++ because of ConicBundle
-LINKER  = g++
+LINKER  = g++-11
 LIBRARIES = -lcplex -lm -ldl
 # Needed for CPLEX library
 linux.LIB = -lpthread

@@ -1252,7 +1252,7 @@ DDSIP_ReadSpec ()
     DDSIP_param->branchstrat = (int) floor (DDSIP_ReadDbl (specfile, "BRASTR", " BRANCHING STRATEGY", 2., 1, 0., 2.) + 0.1);
     DDSIP_param->equalbranch = (int) floor (DDSIP_ReadDbl (specfile, "BRAEQU", " EQUAL DIVIDE BRANCHING", 0., 1, -1., 1.) + 0.1);
     if (!DDSIP_param->equalbranch)
-        DDSIP_param->depth_uneq  = (int) floor (DDSIP_ReadDbl (specfile, "UNEQUA", " DEPTH LIM UNEQUAL BRANCH", 2., 1, 0., 100.) + 0.1);
+        DDSIP_param->depth_uneq  = (int) floor (DDSIP_ReadDbl (specfile, "UNEQUA", " DEPTH LIM UNEQUAL BRANCH", 3., 1, 0., 100.) + 0.1);
     else
         DDSIP_param->depth_uneq  = 0;
     DDSIP_param->intfirst    = (int) floor (DDSIP_ReadDbl (specfile, "INTFIR", " BRANCH INTEGER FIRST", 1., 1, 0., 1.) + 0.1);
@@ -1269,7 +1269,7 @@ DDSIP_ReadSpec ()
     DDSIP_param->watchkappa  = (int) floor (DDSIP_ReadDbl (specfile, "KAPPA", " GATHER KAPPA INFORMATION", 0., 1, 0., 2.) + 0.1);
     DDSIP_param->relax       = (int) floor (DDSIP_ReadDbl (specfile, "RELAXL", " RELAXATION LEVEL", 0., 1, 0., DDSIP_bigint) + 0.1);
     DDSIP_param->noquant     = (int) floor (DDSIP_ReadDbl (specfile, "QUANTI", " NUMBER OF QUANTILES", 10., 1, 0., DDSIP_bigint) + 0.1);
-    DDSIP_param->maxinherit = (int) floor (DDSIP_ReadDbl (specfile, "MAXINH", " MAX. LEVEL OF INHERITANCE", 5., 1, 0., 100000.) + 0.1);
+    DDSIP_param->maxinherit = (int) floor (DDSIP_ReadDbl (specfile, "MAXINH", " MAX. LEVEL OF INHERITANCE", 6., 1, 0., 100000.) + 0.1);
 
     DDSIP_param->heuristic_vector = NULL;
     DDSIP_param->heuristic_auto = 0;
@@ -1606,10 +1606,9 @@ DDSIP_ReadSpec ()
     if (DDSIP_param->addBendersCuts || DDSIP_param->addIntegerCuts)
     {
         DDSIP_param->numberReinits  = (int) floor (DDSIP_ReadDbl (specfile, "REINIT", " NR OF REINITS DUE TO CUTS", 25., 1, 0., DDSIP_bigint) + 0.1);
-        DDSIP_param->numberScenReeval  = (int) floor (DDSIP_ReadDbl (specfile, "SCENRE", " NR OF SCENARIO REEVALUATIONS", (DDSIP_param->scenarios > 50?10:20), 1, -DDSIP_bigint, DDSIP_bigint) + 0.1);
-        //DDSIP_param->numberScenReeval  = (int) floor (DDSIP_ReadDbl (specfile, "SCENRE", " NR OF SCENARIO REEVALUATIONS", (DDSIP_param->addBendersCuts?((DDSIP_param->cb && DDSIP_param->cb_depth > -1)?3:2):-1), 1, -DDSIP_bigint, (DDSIP_param->addBendersCuts?DDSIP_bigint:-1)) + 0.1);
+        DDSIP_param->numberScenReeval  = (int) floor (DDSIP_ReadDbl (specfile, "SCENRE", " NR OF SCENARIO REEVALUATIONS", (DDSIP_param->scenarios > 50?20:50), 1, -DDSIP_bigint, DDSIP_bigint) + 0.1);
         DDSIP_param->deactivate_cuts= (int) floor (DDSIP_ReadDbl (specfile, "DEACTI", " DEACTIVATE CUTS IN UB", 0., 1, 0., 1) + 0.1);
-        DDSIP_param->redundancyCheck = (int) floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", 1., 1, 0., DDSIP_param->addBendersCuts ? 1.:0.) + 0.1);
+        DDSIP_param->redundancyCheck = (int) floor (DDSIP_ReadDbl (specfile, "REDUND", " CHECK CUTS REDUNDANCY", DDSIP_param->addBendersCuts ? 1.:0., 1, 0., DDSIP_param->addBendersCuts ? 1.:0.) + 0.1);
         if (DDSIP_param->redundancyCheck)
             DDSIP_param->deleteRedundantCuts = (int) floor (DDSIP_ReadDbl (specfile, "DELRED", " DELETE REDUNDANT CUTS", 1., 1, 0., 1.) + 0.1);
         else

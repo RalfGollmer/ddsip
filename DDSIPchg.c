@@ -192,7 +192,7 @@ DDSIP_ChgProb (int scen, int multipliers)
             {
                 if(!scen)
                 {
-                    fprintf (DDSIP_bb->moreoutfile, "\nCurrent lambda (inherited from node %.0g) for node %d:\n", DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual+1], DDSIP_bb->curnode);
+                    fprintf (DDSIP_bb->moreoutfile, "\nCurrent lambda (inherited from node %g) for node %d:\n", DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual+1], DDSIP_bb->curnode);
                     for (i = 0; i < DDSIP_bb->dimdual; i++)
                     {
                         fprintf (DDSIP_bb->moreoutfile, " %14.8g", DDSIP_node[DDSIP_bb->curnode]->dual[i]);
@@ -266,7 +266,7 @@ DDSIP_ChgProb (int scen, int multipliers)
             {
                 if(!scen)
                 {
-                    fprintf (DDSIP_bb->moreoutfile, "\nCurrent lambda (inherited from node %.0g) for node %d:\n", DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual+1], DDSIP_bb->curnode);
+                    fprintf (DDSIP_bb->moreoutfile, "\nCurrent lambda (inherited from node %g) for node %d:\n", DDSIP_node[DDSIP_bb->curnode]->dual[DDSIP_bb->dimdual+1], DDSIP_bb->curnode);
                     for (i = 0; i < DDSIP_bb->dimdual; i++)
                     {
                         fprintf (DDSIP_bb->moreoutfile, " %14.8g", DDSIP_node[DDSIP_bb->curnode]->dual[i]);

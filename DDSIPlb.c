@@ -377,11 +377,6 @@ DDSIP_GetBranchIndex (double *dispnorm)
                     hbranch = DDSIP_data->prob[0] * (DDSIP_node[DDSIP_bb->curnode]->first_sol)[0][index[j]];
                     for (i = 1; i < DDSIP_param->scenarios; i++)
                         hbranch += DDSIP_data->prob[i] * (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][index[j]];
-                    if (DDSIP_param->branchstrat == 2)
-                    {
-                        // branchstrat = 2: take a point between the expected value and the middle
-                        hbranch = 0.25*hbranch + 0.375* (hlb+hub);
-                    }
                 }
             }
             // now count the scenario sol. values below and above the branch value and measure the distances
@@ -392,18 +387,23 @@ DDSIP_GetBranchIndex (double *dispnorm)
                 if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][index[j]] <= hbranch)
                 {
                     below++;
-                    hlb =  hbranch - (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][index[j]];
-                    dist_below += DDSIP_data->prob[i] * hlb*hlb;
+                    h =  hbranch - (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][index[j]];
+                    dist_below += DDSIP_data->prob[i] * h*h;
                 }
                 else if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][index[j]] > hbranch)
                 {
                     above++;
-                    hlb = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][index[j]] - hbranch;
-                    dist_above += DDSIP_data->prob[i] * hlb*hlb;
+                    h = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][index[j]] - hbranch;
+                    dist_above += DDSIP_data->prob[i] * h*h;
                 }
             }
             diff = abs (below-above);
             dist = DDSIP_Dmin (dist_below,dist_above) + 5e-1*(dist_below+dist_above);
+            if (DDSIP_param->branchstrat == 2)
+            {
+                // branchstrat = 2: take a point between the expected value and the middle
+                hbranch = 0.25*hbranch + 0.375* (hlb+hub);
+            }
             if (DDSIP_bb->firsttype[index[j]] == 'B' || DDSIP_bb->firsttype[index[j]] == 'I' || DDSIP_bb->firsttype[index[j]] == 'N')
             {
                 // for integers: make hbranch end in .5
@@ -411,13 +411,12 @@ DDSIP_GetBranchIndex (double *dispnorm)
             }
             if (!((abs(DDSIP_param->riskmod) == 4) && (index[j] == DDSIP_bb->firstvar - 1)) &&
                     ((DDSIP_param->equalbranch == 1) ||
-                     //(!DDSIP_param->equalbranch && ((DDSIP_bb->curnode < 11) || ((DDSIP_bb->curnode > 25) && (DDSIP_bb->curnode%10 >= 6))))
                      ((!DDSIP_param->equalbranch && ((DDSIP_bb->curnode < 17) || ((DDSIP_bb->curnode > 25) && (DDSIP_bb->curnode%10 >= 6)))) &&
                        ((!DDSIP_bb->curnode || DDSIP_node[DDSIP_bb->curnode]->depth > DDSIP_param->depth_uneq)))
                     )
                )
             {
-                if ((diff <= mindiff && dist > maxdist) || (diff < mindiff && dist > DDSIP_Dmax (1. - (mindiff - diff)*0.075, 0.4)*maxdist) || (diff <= mindiff && dispnorm[index[j]] > dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind] && dist > 0.95*maxdist) || (diff < mindiff + DDSIP_Imin (DDSIP_param->scenarios/3, 3) && dispnorm[index[j]] > factor*dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind] && dist > maxdist + 1e-1))
+                if ((diff <= mindiff && dist > maxdist) || (diff < mindiff && dist > DDSIP_Dmax (1. - (mindiff - diff)*0.075, 0.4)*maxdist) || (diff < mindiff && dispnorm[index[j]] > dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind] && dist > 0.95*maxdist) || (diff < mindiff + DDSIP_Imin (DDSIP_param->scenarios/3, 3) && dispnorm[index[j]] > factor*dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind] && dist > maxdist + 1e-1))
                 {
                     if (diff < mindiff)
                         maxdist = dist;
@@ -428,6 +427,10 @@ DDSIP_GetBranchIndex (double *dispnorm)
                     DDSIP_node[DDSIP_bb->curnode]->branchval = hbranch;
                     cur_diff = diff;
                     cur_dist = dist;
+                }
+                else
+                {
+                    maxdist = DDSIP_Dmax (maxdist,dist);
                 }
                 //
                 if (DDSIP_param->outlev > 21)
@@ -447,6 +450,10 @@ DDSIP_GetBranchIndex (double *dispnorm)
                     DDSIP_node[DDSIP_bb->curnode]->branchval = hbranch;
                     cur_diff = diff;
                     cur_dist = dist;
+                }
+                else
+                {
+                    maxdist = DDSIP_Dmax (maxdist,dist);
                 }
                 //
                 if (DDSIP_param->outlev > 21)
@@ -639,7 +646,7 @@ DDSIP_Warm (int iscen)
         status    = CPXdelmipstarts (DDSIP_env, DDSIP_lp, 1, 1);
     }
 
-    if (DDSIP_param->hot && DDSIP_bb->DDSIP_step == dual && DDSIP_bb->dualitcnt)
+    if (DDSIP_param->hot && DDSIP_bb->DDSIP_step == dual && DDSIP_bb->dualitcnt > 0)
     {
         DDSIP_bb->beg[0]=0;
         DDSIP_bb->effort[0]=3;
@@ -749,7 +756,7 @@ DDSIP_Warm (int iscen)
             )
     {
         int addMax = 14;
-        if (DDSIP_param->cbhot > 2)
+        if (DDSIP_param->cbhot > 2 || DDSIP_param->hot == 4)
             addMax = 25;
         else if (DDSIP_param->cbhot == 2)
             addMax = 15;
@@ -763,64 +770,9 @@ DDSIP_Warm (int iscen)
         DDSIP_bb->effort[0]=2;
         added = 0;
         inserted = 0;
-        // If not in the root node
-        if (DDSIP_bb->curnode && (DDSIP_node[DDSIP_bb->curnode]->step != dual || DDSIP_bb->dualitcnt < 3))
-        {
-            // Copy solutions from father node to the problem (see initialization of subbound and solut)
-            for(j=0; j<DDSIP_param->scenarios; j++)
-            {
-                sprintf (DDSIP_bb->Names[added],"Father_s_%d",j+1);
-                for(k=0; k<DDSIP_bb->total_int; k++)
-                {
-                    DDSIP_bb->values[added*DDSIP_bb->total_int+k] = DDSIP_node[DDSIP_bb->curnode]->solut[j*DDSIP_bb->total_int + k];
-                }
-                already_there = 0;
-                for(jt=0; jt<added; jt++)
-                {
-                    for(k=0; k<DDSIP_bb->total_int; k++)
-                        if (!DDSIP_Equal (DDSIP_bb->values[added*DDSIP_bb->total_int+k], DDSIP_bb->values[jt*DDSIP_bb->total_int + k]))
-                            break;
-                    if (k >= DDSIP_bb->total_int)
-                    {
-                        already_there = 1;
-                        break;
-                    }
-                }
-                if (!already_there)
-                    added++;
-            }
-            // A priori feasibility check (branching may lead to infeasibility)
-            kf= DDSIP_node[DDSIP_bb->curnode]->neoind;
-            k = DDSIP_bb->firstindex[kf];
-            if (DDSIP_bb->firsttype[kf] == 'B' || DDSIP_bb->firsttype[kf] == 'I' || DDSIP_bb->firsttype[kf] == 'N')
-            {
-                for(i=0; i<DDSIP_bb->total_int; i++)
-                    if (k == DDSIP_bb->intind[i])
-                        break;
-                if (i>DDSIP_bb->total_int-1)
-                {
-                    /* if this happens it is an error!!! */
-                    fprintf (stderr,"XXX ERROR: variable %d branched on is of type %c, but not in DDSIP_bb->intind! DDSIP_bb->intind is:\n", k,DDSIP_bb->firsttype[kf]);
-                    fprintf (DDSIP_outfile,"XXX ERROR: variable %d branched on is of type %c, but not in DDSIP_bb->intind! DDSIP_bb->intind is:\n", k,DDSIP_bb->firsttype[kf]);
-                    exit (99);
-                }
-                for(j=0; j<added; j++)
-                {
-                    if (DDSIP_bb->values[j*DDSIP_bb->total_int + i] < DDSIP_node[DDSIP_bb->curnode]->neolb)
-                    {
-                        DDSIP_bb->values[j*DDSIP_bb->total_int + i] = DDSIP_node[DDSIP_bb->curnode]->neolb;
-                    }
-                    else if (DDSIP_bb->values[j*DDSIP_bb->total_int + i] > DDSIP_node[DDSIP_bb->curnode]->neoub)
-                    {
-                        DDSIP_bb->values[j*DDSIP_bb->total_int + i] = DDSIP_node[DDSIP_bb->curnode]->neolb;
-                    }
-                }
-            }
-        }
         // Add solutions of previous scenarios (the directly preceding scenario's are in m1 etc.)
         if (iscen > 1)
         {
-//            for (kf=0; kf<iscen - 2; kf++)
             for (kf=iscen - 2; kf>-1; kf--)
             {
                 if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[DDSIP_bb->lb_scen_order[kf]])
@@ -828,6 +780,10 @@ DDSIP_Warm (int iscen)
                     if (!((DDSIP_node[DDSIP_bb->curnode]->first_sol)[DDSIP_bb->lb_scen_order[kf]][DDSIP_bb->firstvar + 1]) || DDSIP_bb->dualitcnt)
                     {
                         // if inherited, the solution is already there from the father
+#ifdef DEBUG
+                        if (DDSIP_param->outlev)
+                            fprintf (DDSIP_bb->moreoutfile,"     check start info from scenario %d if equal to a previously added one (added: %d).\n",DDSIP_bb->lb_scen_order[kf], added);
+#endif
                         already_there = 0;
                         for(jt=0; jt<added; jt++)
                         {
@@ -837,6 +793,10 @@ DDSIP_Warm (int iscen)
                             if (k >= DDSIP_bb->total_int)
                             {
                                 already_there = 1;
+#ifdef DEBUG
+                                if (DDSIP_param->outlev)
+                                    fprintf (DDSIP_bb->moreoutfile,"     INFO: start info from scenario %d already there as MIP start no. %d.\n",DDSIP_bb->lb_scen_order[kf], jt);
+#endif
                                 break;
                             }
                         }
@@ -847,6 +807,10 @@ DDSIP_Warm (int iscen)
                                 sprintf (DDSIP_bb->Names[added],"Scen_%d",DDSIP_bb->lb_scen_order[kf]+1);
                                 for(k=0; k<DDSIP_bb->total_int; k++)
                                     DDSIP_bb->values [added*DDSIP_bb->total_int+k] = DDSIP_node[DDSIP_bb->curnode]->solut[ (DDSIP_bb->lb_scen_order[kf])*DDSIP_bb->total_int + k];
+#ifdef DEBUG
+                                if (DDSIP_param->outlev)
+                                    fprintf (DDSIP_bb->moreoutfile," XXX INFO: start info from scenario %d added as MIP %s, added=%d\n", DDSIP_bb->lb_scen_order[kf] ,DDSIP_bb->Names[added], added);
+#endif
                                 added++;
                                 if (DDSIP_node[DDSIP_bb->curnode]->step == dual && added > addMax)
                                     break;
@@ -861,10 +825,79 @@ DDSIP_Warm (int iscen)
                             else
                             {
                                 fprintf (stderr," XXX WARNING: Scenario %d - No space for MIP start info, added = %d, inserted = %d.\n",DDSIP_bb->lb_scen_order[kf], added, inserted);
-                                fprintf (DDSIP_bb->moreoutfile," XXX WARNING: Scenario %d - No space for MIP start info, added = %d, inserted = %d.\n",DDSIP_bb->lb_scen_order[kf], added, inserted);
+                                if (DDSIP_param->outlev)
+                                    fprintf (DDSIP_bb->moreoutfile," XXX WARNING: Scenario %d - No space for MIP start info, added = %d, inserted = %d.\n",DDSIP_bb->lb_scen_order[kf], added, inserted);
                             }
                         }
                     }
+                }
+            }
+        }
+        // If not in the root node
+        if (DDSIP_bb->curnode && (DDSIP_node[DDSIP_bb->curnode]->step != dual || DDSIP_bb->dualitcnt < 3))
+        {
+            kf= DDSIP_node[DDSIP_bb->curnode]->neoind;
+            i = k = DDSIP_bb->firstindex[kf];
+            if (DDSIP_bb->firsttype[kf] == 'B' || DDSIP_bb->firsttype[kf] == 'I' || DDSIP_bb->firsttype[kf] == 'N')
+            {
+                for(i=0; i<DDSIP_bb->total_int; i++)
+                    if (k == DDSIP_bb->intind[i])
+                        break;
+                if (i>DDSIP_bb->total_int-1)
+                {
+                    /* if this happens it is an error!!! */
+                    fprintf (stderr,"XXX ERROR: variable %d branched on is of type %c, but not in DDSIP_bb->intind! DDSIP_bb->intind is:\n", k,DDSIP_bb->firsttype[kf]);
+                    fprintf (DDSIP_outfile,"XXX ERROR: variable %d branched on is of type %c, but not in DDSIP_bb->intind! DDSIP_bb->intind is:\n", k,DDSIP_bb->firsttype[kf]);
+                    exit (99);
+                }
+            }
+            // Copy solutions from father node to the problem (see initialization of subbound and solut)
+            for(j=0; j<DDSIP_param->scenarios; j++)
+            {
+#ifdef DEBUG
+                        if (DDSIP_param->outlev)
+                            fprintf (DDSIP_bb->moreoutfile,"     check start info from father s %d if equal to a previously added one (added: %d).\n", j, added);
+#endif
+                sprintf (DDSIP_bb->Names[added],"Father_s_%d",j+1);
+                for(k=0; k<DDSIP_bb->total_int; k++)
+                {
+                    DDSIP_bb->values[added*DDSIP_bb->total_int+k] = DDSIP_node[DDSIP_bb->curnode]->solut[j*DDSIP_bb->total_int + k];
+                }
+                // A priori feasibility check (branching may lead to infeasibility)
+                if (DDSIP_bb->firsttype[kf] == 'B' || DDSIP_bb->firsttype[kf] == 'I' || DDSIP_bb->firsttype[kf] == 'N')
+                {
+                   if (DDSIP_bb->values[added*DDSIP_bb->total_int + i] < DDSIP_node[DDSIP_bb->curnode]->neolb)
+                   {
+                       DDSIP_bb->values[added*DDSIP_bb->total_int + i] = DDSIP_node[DDSIP_bb->curnode]->neolb;
+                   }
+                   else if (DDSIP_bb->values[added*DDSIP_bb->total_int + i] > DDSIP_node[DDSIP_bb->curnode]->neoub)
+                   {
+                       DDSIP_bb->values[added*DDSIP_bb->total_int + i] = DDSIP_node[DDSIP_bb->curnode]->neolb;
+                   }
+                }
+                already_there = 0;
+                for(jt=0; jt<added; jt++)
+                {
+                    for(k=0; k<DDSIP_bb->total_int; k++)
+                        if (!DDSIP_Equal (DDSIP_bb->values[added*DDSIP_bb->total_int+k], DDSIP_bb->values[jt*DDSIP_bb->total_int + k]))
+                            break;
+                    if (k >= DDSIP_bb->total_int)
+                    {
+#ifdef DEBUG
+                                if (DDSIP_param->outlev)
+                                    fprintf (DDSIP_bb->moreoutfile,"     INFO: start info from scenario %d already there as MIP start no. %d.\n", j, jt);
+#endif
+                        already_there = 1;
+                        break;
+                    }
+                }
+                if (!already_there)
+                {
+#ifdef DEBUG
+                                if (DDSIP_param->outlev)
+                                    fprintf (DDSIP_bb->moreoutfile," XXX INFO: start info from father s %d added as MIP %s, added=%d\n", j, DDSIP_bb->Names[added], added);
+#endif
+                    added++;
                 }
             }
         }
@@ -874,9 +907,9 @@ DDSIP_Warm (int iscen)
             for (j = 0; j < added; j++)
             {
 #ifdef DEBUG
-                if (DDSIP_param->outlev > 99)
+                if (DDSIP_param->outlev > 20)
                 {
-                    fprintf (DDSIP_bb->moreoutfile,"Scenario %d  - %s:\n",j+1, DDSIP_bb->Names[j]);
+                    fprintf (DDSIP_bb->moreoutfile,"MIP start %d  - %s:\n",j, DDSIP_bb->Names[j]);
                     for (k = 0; k < DDSIP_bb->total_int; k++)
                         fprintf (DDSIP_bb->moreoutfile,"%d:%g, ",DDSIP_bb->intind[k],DDSIP_bb->values[j*DDSIP_bb->total_int + k]);
                     fprintf (DDSIP_bb->moreoutfile,"\n");
@@ -916,7 +949,7 @@ DDSIP_Warm (int iscen)
     {
         DDSIP_bb->effort[0]=2;
         // If not in the root node add solution of father
-        if (DDSIP_bb->curnode && (DDSIP_node[DDSIP_bb->curnode]->step != dual || !DDSIP_bb->dualitcnt))
+        if (DDSIP_bb->curnode && (DDSIP_node[DDSIP_bb->curnode]->step != dual || DDSIP_bb->dualitcnt < 6))
         {
             // Copy solution from father node to the problem (see initialization of subbound and solut)
             sprintf (DDSIP_bb->Names[0],"Father_%d",scen+1);
@@ -2038,7 +2071,7 @@ NEXT_TRY:
                     if (DDSIP_param->outlev)
                     {
                         if (nodes_2nd < 0)
-                            fprintf (DDSIP_bb->moreoutfile," \t\t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                            fprintf (DDSIP_bb->moreoutfile,"      \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                         else
                             fprintf (DDSIP_bb->moreoutfile," \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                         if (DDSIP_param->outlev > 5)
@@ -3432,7 +3465,7 @@ DDSIP_CBLowerBound (double *objective_val, double relprec)
 {
 #ifdef CONIC_BUNDLE
     double objval, bobjval, tmpbestbound = 0.0, tmpupper = 0.0, maxdispersion = 0.;
-    double wr, mipgap, time_start, time_end, time_help, wall_secs, cpu_secs, gap, meanGap, maxGap, scenBound;
+    double wr, mipgap, time_start, time_end, time_help, wall_secs, cpu_secs, gap, meanGap, maxGap, scenBound, old_scenBound;
 #ifdef DEBUG
     double we, time_lap;
 #endif
@@ -3725,6 +3758,7 @@ NEXT_TRY:
             }
             nrFeasCheck = 0;
             scenBound = -DDSIP_infty;
+            old_scenBound = 0.0001;
 NEXT_SCEN:
             // Change problem according to scenario
             status = DDSIP_ChgProb (scen, DDSIP_bb->multipliers);
@@ -4375,7 +4409,7 @@ NEXT_SCEN:
                     if (DDSIP_param->outlev)
                     {
                         if (nodes_2nd < 0)
-                            fprintf (DDSIP_bb->moreoutfile," \t\t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                            fprintf (DDSIP_bb->moreoutfile,"      \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                         else
                             fprintf (DDSIP_bb->moreoutfile," \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                     }
@@ -4417,7 +4451,7 @@ NEXT_SCEN:
                     if (DDSIP_param->outlev >= DDSIP_first_stage_outlev)
                         fprintf (DDSIP_bb->moreoutfile, "\n");
                     //
-                    if (DDSIP_param->addBendersCuts > 0 && DDSIP_param->alwaysBendersCuts && (j = DDSIP_bb->cutCntr) && (DDSIP_param->numberScenReeval > -1) && ((!(DDSIP_bb->curnode) && (DDSIP_bb->dualdescitcnt < 3)) || (!DDSIP_bb->dualdescitcnt && DDSIP_bb->curnode <= (DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters)) || (DDSIP_bb->dualdescitcnt == DDSIP_bb->current_itlim)))
+                    if (DDSIP_param->addBendersCuts > 0 && DDSIP_param->alwaysBendersCuts && (j = DDSIP_bb->cutCntr) && (DDSIP_param->numberScenReeval > -1) && ((!(DDSIP_bb->curnode) && (DDSIP_bb->dualdescitcnt > 1) && (DDSIP_bb->dualdescitcnt < 4)) || (!DDSIP_bb->dualdescitcnt && DDSIP_bb->curnode <= (DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters)) || (DDSIP_bb->dualdescitcnt == DDSIP_bb->current_itlim)))
                     {
                         // check feasibility for other scenarios and possibly add cuts
                         tmp = DDSIP_bb->sug[DDSIP_param->nodelim + 2];
@@ -4467,12 +4501,13 @@ NEXT_SCEN:
                                 return status;
                             }
                         }
-                        if ((j < DDSIP_bb->cutCntr) && (nrFeasCheck <= ((DDSIP_bb->curnode < 11 || DDSIP_node[DDSIP_bb->curnode]->depth < 4 || (DDSIP_bb->dualdescitcnt == DDSIP_bb->current_itlim)) ? DDSIP_param->numberScenReeval : 1)) && !DDSIP_killsignal)
+                        if ((j < DDSIP_bb->cutCntr) && (nrFeasCheck <= (DDSIP_bb->curnode < 11 || DDSIP_node[DDSIP_bb->curnode]->depth < 4 || (DDSIP_bb->dualdescitcnt == DDSIP_bb->current_itlim || ((scenBound - old_scenBound) > 1e-3*fabs(old_scenBound))) ? DDSIP_param->numberScenReeval : 1) && !DDSIP_killsignal))
                         {
                             if(DDSIP_param->outlev)
                             {
                                 fprintf (DDSIP_bb->moreoutfile, " --> scenario reevaluation %d\n", nrFeasCheck);
                             }
+                            old_scenBound = scenBound;
                             goto NEXT_SCEN;
                         }
                     }
@@ -4574,7 +4609,7 @@ NEXT_SCEN:
                 {
                     //first_sol[DDSIP_bb->firstvar]   equals the number of identical first stage scenario solutions
                     if (nodes_2nd < 0)
-                        fprintf (DDSIP_bb->moreoutfile," \t\t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                        fprintf (DDSIP_bb->moreoutfile,"      \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                     else
                         fprintf (DDSIP_bb->moreoutfile," \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                 }

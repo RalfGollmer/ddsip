@@ -35,7 +35,7 @@ HELP      = $(SRCDIR)/ddsiphelp_20.1.0
 # Compiler 
 CC = gcc
 # All warnings, Optimizing level 2
-linux.CFLAGS  =  -std=c99 -O0 -g -fno-strict-aliasing -Wall -Wextra -Wformat=2 -Wmissing-prototypes  $(PROCESSOR) -DCONIC_BUNDLE -DCPLEX_12_8 -DCBVERSION=$(CBV) -DCBV=\""$(CBVERSION)"\"
+linux.CFLAGS  =  -std=c99 -O0 -g -fno-strict-aliasing -Wall -Wextra -Wformat=2 -Wmissing-prototypes  $(PROCESSOR) -DCONIC_BUNDLE -DCPLEX_12_8 -DCBVERSION=$(CBV) -DCBV=\""$(CBVERSION)"\" -DDEBUG
 # Header files are here
 CDIRS   = -I./include_v$(CBVERSION) -I$(CPLEX)/include/ilcplex -I$(CB)_v$(CBVERSION)/include
 
@@ -44,7 +44,7 @@ LINKER  = g++
 LIBRARIES = -lcplex -lm -ldl
 # Needed for CPLEX library
 linux.LIB = -lpthread
-linux.CBLIB = -L$(CB)_v$(CBVERSION)/lib -lcb
+linux.CBLIB = -L$(CB)_v$(CBVERSION)/lib -lcb_debug
 
 # Linker flags
 linux.LDFLAGS= $(PROCESSOR) -O0 -g

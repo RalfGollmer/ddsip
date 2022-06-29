@@ -2016,7 +2016,7 @@ NEXT_TRY:
                          wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_help, nodes_1st);
                 if (nodes_2nd >= 0)
                 {
-                    fprintf (DDSIP_bb->moreoutfile, " +%4d)", nodes_2nd - nodes_1st);
+                    fprintf (DDSIP_bb->moreoutfile, " +%5d)", nodes_2nd - nodes_1st);
 // negative differences did occur - strange!...
                     if (nodes_2nd < nodes_1st)
                        fprintf (DDSIP_bb->moreoutfile, "### 1st: %d 2nd: %d ###", nodes_1st, nodes_2nd);
@@ -3331,7 +3331,7 @@ NEXT_TRY:
                                                  "\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%7.2fs n:%5d",
                                                  wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_help, nodes_1st);
                                         if (nodes_2nd >= 0)
-                                            fprintf (DDSIP_bb->moreoutfile, " +%4d)", nodes_2nd - nodes_1st);
+                                            fprintf (DDSIP_bb->moreoutfile, " +%5d)", nodes_2nd - nodes_1st);
                                         else
                                             fprintf (DDSIP_bb->moreoutfile, ")");
                                     }
@@ -4354,7 +4354,7 @@ NEXT_SCEN:
                          "\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%7.2fs n:%5d",
                          wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_help, nodes_1st);
                 if (nodes_2nd >= 0)
-                    fprintf (DDSIP_bb->moreoutfile, " +%4d)", nodes_2nd - nodes_1st);
+                    fprintf (DDSIP_bb->moreoutfile, " +%5d)", nodes_2nd - nodes_1st);
                 else
                     fprintf (DDSIP_bb->moreoutfile, ")");
             }

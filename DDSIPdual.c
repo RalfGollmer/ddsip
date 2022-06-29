@@ -629,6 +629,16 @@ DDSIP_DualOpt (int bestdual_only)
             if (maxcutoffs < DDSIP_param->cb_cutoffs)
                 tmp1_maxcutoffs = NULL;
         }
+        // check whether startmultipliers are zero
+        final_mult_zero = 1;
+        for (wall_hrs = 0; wall_hrs < DDSIP_bb->dimdual; wall_hrs++)
+        {
+            if (DDSIP_bb->startinfo_multipliers[wall_hrs] != 0.)
+            {
+                final_mult_zero = 0;
+                break;
+            }
+        }
         if (DDSIP_param->outlev)
         {
             fprintf (DDSIP_outfile, "\n   -- Dual:  Descent    Total  Objective        Weight ----------------------- Bound ------------------------------------------ Wall Time    CPU Time\n");

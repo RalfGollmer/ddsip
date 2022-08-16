@@ -310,6 +310,8 @@ extern "C" {
         int cb_depth;
         // min. number of descent iters for depth > 1, <= cb_depth
         int cb_depth_iters;
+        // start of dive iters
+        int dive_start;
     } para_t;
 
     typedef struct

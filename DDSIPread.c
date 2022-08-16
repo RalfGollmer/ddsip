@@ -1252,7 +1252,7 @@ DDSIP_ReadSpec ()
     DDSIP_param->branchstrat = (int) floor (DDSIP_ReadDbl (specfile, "BRASTR", " BRANCHING STRATEGY", 2., 1, 0., 2.) + 0.1);
     DDSIP_param->equalbranch = (int) floor (DDSIP_ReadDbl (specfile, "BRAEQU", " EQUAL DIVIDE BRANCHING", 0., 1, -1., 1.) + 0.1);
     if (!DDSIP_param->equalbranch)
-        DDSIP_param->depth_uneq  = (int) floor (DDSIP_ReadDbl (specfile, "UNEQUA", " DEPTH LIM UNEQUAL BRANCH", 3., 1, 0., 100.) + 0.1);
+        DDSIP_param->depth_uneq  = (int) floor (DDSIP_ReadDbl (specfile, "UNEQUA", " DEPTH LIM UNEQUAL BRANCH", 5., 1, 0., 1000.) + 0.1);
     else
         DDSIP_param->depth_uneq  = 0;
     DDSIP_param->intfirst    = (int) floor (DDSIP_ReadDbl (specfile, "INTFIR", " BRANCH INTEGER FIRST", 1., 1, 0., 1.) + 0.1);
@@ -1336,7 +1336,8 @@ DDSIP_ReadSpec ()
         DDSIP_param->interrupt_heur = 0;
     }
     //DDSIP_param->prepro = (int) floor (DDSIP_ReadDbl (specfile, "PREPRO", " PREPROCESSING", 0., 1, 0., 3.) + 0.1);
-    DDSIP_param->prepro = 0;
+    DDSIP_param->prepro = 0; 
+    DDSIP_param->dive_start = (int) floor (DDSIP_ReadDbl (specfile, "DIVEST", " DIVE START NODE", 33., 1, 4., 58.) + 0.1);
     DDSIP_param->annotationFile = DDSIP_ReadString (specfile, "ANNOTA", " ANNOTATION FILE FOR CPLEX BENDERS");
     fprintf (DDSIP_outfile, "\n");
 

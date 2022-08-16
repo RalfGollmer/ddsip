@@ -79,7 +79,7 @@ int
 DDSIP_GetBranchIndex (double *dispnorm)
 {
     int i, j, k, cnt, below, above, diff, mindiff, maxdiff, cur_diff = 99999, maxord = -1;
-    double hlb, hub, h, hbranch = 0., dist, dist_below = 0., dist_above = 0., maxdist = 0., factor = 1., cur_dist = DDSIP_infty;
+    double hlb, hub, h, hbranch = 0., dist, dist_below = 0., dist_above = 0., maxdist = 0., factor = 1., cur_dist = -DDSIP_infty;
     int *index = (int *) DDSIP_Alloc (sizeof (int), DDSIP_bb->firstvar, "index GetBI");
     // no branching on leaf
     if (DDSIP_node[DDSIP_bb->curnode]->leaf)
@@ -402,25 +402,32 @@ DDSIP_GetBranchIndex (double *dispnorm)
             if (DDSIP_param->branchstrat == 2)
             {
                 // branchstrat = 2: take a point between the expected value and the middle
-                hbranch = 0.25*hbranch + 0.375* (hlb+hub);
-            }
-            if (DDSIP_bb->firsttype[index[j]] == 'B' || DDSIP_bb->firsttype[index[j]] == 'I' || DDSIP_bb->firsttype[index[j]] == 'N')
-            {
-                // for integers: make hbranch end in .5
-                hbranch=floor (hbranch + 1.e-6) + 0.5;
+                if (DDSIP_bb->firsttype[index[j]] == 'C' && hub - hlb < 5e+1)
+                {
+                    // for continuous variables with difference small enough: take the middle of the values
+                    hbranch = 0.5 * (hlb + hub);
+                }
+                else
+                {
+                    //hbranch = 0.5*hbranch + 0.25* (hlb+hub);
+                    hbranch = 0.25*hbranch + 0.375* (hlb+hub);
+                }
             }
             if (!((abs(DDSIP_param->riskmod) == 4) && (index[j] == DDSIP_bb->firstvar - 1)) &&
-                    ((DDSIP_param->equalbranch == 1) ||
+                    ((DDSIP_param->equalbranch == 1) || (DDSIP_node[DDSIP_bb->curnode]->depth > DDSIP_param->depth_uneq && DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->depth_uneq +3) ||
                      ((!DDSIP_param->equalbranch && ((DDSIP_bb->curnode < 17) || ((DDSIP_bb->curnode > 25) && (DDSIP_bb->curnode%10 >= 6)))) &&
                        ((!DDSIP_bb->curnode || DDSIP_node[DDSIP_bb->curnode]->depth > DDSIP_param->depth_uneq)))
                     )
                )
             {
-                if ((diff <= mindiff && dist > maxdist) || (diff < mindiff && dist > DDSIP_Dmax (1. - (mindiff - diff)*0.075, 0.4)*maxdist) || (diff < mindiff && dispnorm[index[j]] > dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind] && dist > 0.95*maxdist) || (diff < mindiff + DDSIP_Imin (DDSIP_param->scenarios/3, 3) && dispnorm[index[j]] > factor*dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind] && dist > maxdist + 1e-1))
+                if (((diff <= mindiff && dist > maxdist) ||
+                     (diff < mindiff && dist > DDSIP_Dmax (1. - (mindiff - diff)*0.075, 0.6)*maxdist) ||
+                     (diff < mindiff && ((dispnorm[index[j]] >= dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind] && dist > 0.95*maxdist) || dist > maxdist)) ||
+                     (diff < mindiff + DDSIP_Imin (DDSIP_param->scenarios/3, 3) && (dispnorm[index[j]] > factor*dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind] && dist > maxdist + 1e-1))))
                 {
-                    if (diff < mindiff)
-                        maxdist = dist;
-                    else
+                    //^if (diff < mindiff)
+                    //    maxdist = dist;
+                    //else
                         maxdist = DDSIP_Dmax (maxdist,dist);
                     mindiff = DDSIP_Imin (mindiff,diff);
                     DDSIP_node[DDSIP_bb->curnode]->branchind = index[j];
@@ -434,17 +441,17 @@ DDSIP_GetBranchIndex (double *dispnorm)
                 }
                 //
                 if (DDSIP_param->outlev > 21)
-                    fprintf (DDSIP_bb->moreoutfile,"\tGetBranchIndex 1: index  %5d disp. %15.12g,  below: %3d above: %3d diff %3d  mindiff %3d dist %12.7g branchindex %d\n",DDSIP_bb->firstindex[index[j]],dispnorm[index[j]],below,above,diff,mindiff,dist,DDSIP_bb->firstindex[DDSIP_node[DDSIP_bb->curnode]->branchind]);
+                    fprintf (DDSIP_bb->moreoutfile,"\tGetBranchIndex 1: index  %5d disp. %15.12g,  below: %3d above: %3d diff %3d  mindiff %3d dist %12.7g branchindex %d \thbranch %12.7g\n",DDSIP_bb->firstindex[index[j]],dispnorm[index[j]],below,above,diff,mindiff,dist,DDSIP_bb->firstindex[DDSIP_node[DDSIP_bb->curnode]->branchind], hbranch);
                 //
             }
             else
             {
-                if ((above && below) && (diff > maxdiff || (diff >= maxdiff && dist > maxdist) || (diff == maxdiff && dispnorm[index[j]] > dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind]) || (diff > maxdiff-4 && dist > 1.2*maxdist)))
+                if ((above && below) && ((diff > maxdiff && dist > 0.1*cur_dist) ||
+                                         (diff >= maxdiff && (dispnorm[index[j]] > dispnorm[DDSIP_node[DDSIP_bb->curnode]->branchind] || dist > cur_dist)) ||
+                                         (diff > maxdiff-4 && dist > 2.*maxdist)))
                 {
-                    if (diff > maxdiff)
-                        maxdist = dist;
-                    else
-                        maxdist = DDSIP_Dmax (maxdist,dist);
+                    cur_dist = dist;
+                    maxdist = DDSIP_Dmax (maxdist,dist);
                     maxdiff = DDSIP_Imax (maxdiff,diff);
                     DDSIP_node[DDSIP_bb->curnode]->branchind = index[j];
                     DDSIP_node[DDSIP_bb->curnode]->branchval = hbranch;
@@ -457,9 +464,14 @@ DDSIP_GetBranchIndex (double *dispnorm)
                 }
                 //
                 if (DDSIP_param->outlev > 21)
-                    fprintf (DDSIP_bb->moreoutfile,"\tGetBranchIndex 2: index  %5d disp. %15.12g  below %3d above %3d diff %3d  maxdiff %3d dist %12.7g branchindex %d\n",DDSIP_bb->firstindex[index[j]],dispnorm[index[j]],below,above,diff,maxdiff,dist,DDSIP_bb->firstindex[DDSIP_node[DDSIP_bb->curnode]->branchind]);
+                    fprintf (DDSIP_bb->moreoutfile,"\tGetBranchIndex 2: index  %5d disp. %15.12g  below %3d above %3d diff %3d  maxdiff %3d dist %12.7g branchindex %d \thbranch %12.7g\n",DDSIP_bb->firstindex[index[j]],dispnorm[index[j]],below,above,diff,maxdiff,dist,DDSIP_bb->firstindex[DDSIP_node[DDSIP_bb->curnode]->branchind], hbranch);
                 //
             }
+            //if (DDSIP_bb->firsttype[index[j]] == 'B' || DDSIP_bb->firsttype[index[j]] == 'I' || DDSIP_bb->firsttype[index[j]] == 'N')
+            //{
+            //    // for integers: make hbranch end in .5
+            //    hbranch=floor (hbranch + 1.e-6) + 0.5;
+            //}
         }
         if (DDSIP_param->outlev > 19)
             fprintf (DDSIP_bb->moreoutfile,"\tGetBranchIndex: index %d, diff %3d  dist %8.5g, maxdist %8.5g mindiff %d maxdiff %3d\n",DDSIP_bb->firstindex[DDSIP_node[DDSIP_bb->curnode]->branchind],cur_diff,cur_dist,maxdist,mindiff,maxdiff);
@@ -535,20 +547,21 @@ DDSIP_GetBranchIndex (double *dispnorm)
                 hlb = DDSIP_Dmin (hlb, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j][DDSIP_node[DDSIP_bb->curnode]->branchind]);
                 hub = DDSIP_Dmax (hub, (DDSIP_node[DDSIP_bb->curnode]->first_sol)[j][DDSIP_node[DDSIP_bb->curnode]->branchind]);
             }
-            if (DDSIP_node[DDSIP_bb->curnode]->dispnorm < 1e-4)
+            //if (hub - hlb < 9e-1)
+            if (DDSIP_bb->firsttype[DDSIP_node[DDSIP_bb->curnode]->branchind] == 'C' && hub - hlb < 2e+2)
             {
                 // for continuous variables with difference small enough: take the middle of the values
-                DDSIP_node[DDSIP_bb->curnode]->branchval = 0.5 * (hlb + hub);
+                hbranch = DDSIP_node[DDSIP_bb->curnode]->branchval = 0.5 * (hlb + hub);
             }
             else
                 DDSIP_node[DDSIP_bb->curnode]->branchval = 0.25 * DDSIP_node[DDSIP_bb->curnode]->branchval + 0.375 * (hlb+hub);
         }
     }
-    if (DDSIP_bb->firsttype[DDSIP_node[DDSIP_bb->curnode]->branchind] == 'B' || DDSIP_bb->firsttype[DDSIP_node[DDSIP_bb->curnode]->branchind] == 'I' || DDSIP_bb->firsttype[DDSIP_node[DDSIP_bb->curnode]->branchind] == 'N')
-    {
-        // for integers: make it end in .5
-        DDSIP_node[DDSIP_bb->curnode]->branchval = floor (DDSIP_node[DDSIP_bb->curnode]->branchval + 1.e-6) + 0.5;
-    }
+    //if (DDSIP_bb->firsttype[DDSIP_node[DDSIP_bb->curnode]->branchind] == 'B' || DDSIP_bb->firsttype[DDSIP_node[DDSIP_bb->curnode]->branchind] == 'I' || DDSIP_bb->firsttype[DDSIP_node[DDSIP_bb->curnode]->branchind] == 'N')
+    //{
+    //    // for integers: make it end in .5
+    //    DDSIP_node[DDSIP_bb->curnode]->branchval = floor (DDSIP_node[DDSIP_bb->curnode]->branchval + 1.e-6) + 0.5;
+    //}
     // Don't cut out the individual optimal solutions
     hlb = -DDSIP_infty;
     hub =  DDSIP_infty;
@@ -2073,7 +2086,7 @@ NEXT_TRY:
                         if (nodes_2nd < 0)
                             fprintf (DDSIP_bb->moreoutfile,"      \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                         else
-                            fprintf (DDSIP_bb->moreoutfile," \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                            fprintf (DDSIP_bb->moreoutfile,"\t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                         if (DDSIP_param->outlev > 5)
                         {
                             //Print each solution once (also inherited ones)
@@ -4411,7 +4424,7 @@ NEXT_SCEN:
                         if (nodes_2nd < 0)
                             fprintf (DDSIP_bb->moreoutfile,"      \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                         else
-                            fprintf (DDSIP_bb->moreoutfile," \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                            fprintf (DDSIP_bb->moreoutfile,"\t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                     }
                 }
                 else
@@ -4611,7 +4624,7 @@ NEXT_SCEN:
                     if (nodes_2nd < 0)
                         fprintf (DDSIP_bb->moreoutfile,"      \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                     else
-                        fprintf (DDSIP_bb->moreoutfile," \t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
+                        fprintf (DDSIP_bb->moreoutfile,"\t->scen %4d (%3g ident.)\n", i_scen + 1, DDSIP_node[DDSIP_bb->curnode]->first_sol[scen][DDSIP_bb->firstvar]);
                 }
                 else
                     fprintf (DDSIP_bb->moreoutfile,"\n");

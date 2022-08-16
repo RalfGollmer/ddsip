@@ -337,8 +337,18 @@ DDSIP_InitNewNodes (void)
                 if ((lhs -= currentCut->rhs) < - 1e-7)
                 {
                     if (DDSIP_param->outlev > 21)
-                        fprintf (DDSIP_bb->moreoutfile,"  nodes %d and %d do NOT inherit solution of scenario %d from node %d due to added cut %d, violation %g.\n",
-                                 DDSIP_bb->nonode, DDSIP_bb->nonode + 1, i+1, DDSIP_bb->curnode, currentCut->number, -lhs);
+                    {
+                        if (((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_node[DDSIP_bb->nonode]->neoind] <= DDSIP_node[DDSIP_bb->nonode]->neoub)
+                        {
+                            fprintf (DDSIP_bb->moreoutfile,"  node %d does NOT inherit solution of scenario %d from node %d due to added cut %d, violation %g.\n",
+                                 DDSIP_bb->nonode, i+1, DDSIP_bb->curnode, currentCut->number, -lhs);
+                        }
+                        else
+                        {
+                            fprintf (DDSIP_bb->moreoutfile,"  node %d does NOT inherit solution of scenario %d from node %d due to added cut %d, violation %g.\n",
+                                     DDSIP_bb->nonode + 1, i+1, DDSIP_bb->curnode, currentCut->number, -lhs);
+                        }
+                    }
                     if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
                         for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
                         {
@@ -897,7 +907,7 @@ DDSIP_Bound (void)
                         }
                         else
                         {
-                            DDSIP_bb->Dive = (DDSIP_bb->curnode > 30 && DDSIP_bb->curnode%500 < 61) ? 1: 0;
+                            DDSIP_bb->Dive = (DDSIP_bb->curnode >= DDSIP_param->dive_start && DDSIP_bb->curnode%500 < 61) ? 1: 0;
                             if (DDSIP_bb->Dive)
                                 depth_first_nodes = 2;
                             else
@@ -1041,6 +1051,10 @@ DDSIP_Bound (void)
                     }
                     DDSIP_qsort_ins_A (front_node_bound, DDSIP_bb->front_nodes_sorted, 0, i-1);
                 }
+            }
+            else
+            {
+                DDSIP_bb->Dive = (DDSIP_bb->curnode >= DDSIP_param->dive_start && DDSIP_bb->curnode%500 < 61) ? 1: 0;
             }
         }
         else

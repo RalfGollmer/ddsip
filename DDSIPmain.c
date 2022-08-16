@@ -826,8 +826,8 @@ main (int argc, char * argv[])
         }
         // check if the bestdual multipliers improve bounds of the nodes in the front
         else if (DDSIP_param->cb < 0 && DDSIP_param->cb_checkBestdual && DDSIP_bb->bestdual_cnt &&
-                  (DDSIP_bb->curnode == 2*((DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters)/2) + DDSIP_Imax (2, 2*(-DDSIP_param->cb/2-1)) ||
-                   DDSIP_bb->curnode == 2*(DDSIP_param->cbContinuous + 2*(DDSIP_param->cbBreakIters/2) + 4) ||
+                  (DDSIP_bb->curnode == DDSIP_Imin (2*((DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters)/2) + DDSIP_Imax (2, 2*(-DDSIP_param->cb/2-1)), DDSIP_param->dive_start - 7) ||
+                   DDSIP_bb->curnode == DDSIP_Imax (2*(DDSIP_param->cbContinuous + 2*(DDSIP_param->cbBreakIters/2) + 4), 62) ||
                    DDSIP_bb->curnode == DDSIP_param->nodelim - 2
                   )
                 )
@@ -919,6 +919,8 @@ main (int argc, char * argv[])
                     }
                 }
                 DDSIP_bb->curnode = ih;
+                if (DDSIP_param->outlev)
+                    fprintf (DDSIP_bb->moreoutfile, "##### node %d: set bestBound to -6\n", DDSIP_bb->curnode);
                 DDSIP_bb->bestBound = -6;
                 for  (ih = 0; ih < DDSIP_bb->nofront; ih++)
                 {
@@ -941,13 +943,14 @@ main (int argc, char * argv[])
             else if (DDSIP_param->outlev > 20)
                 fprintf (DDSIP_bb->moreoutfile, " ## node %d, bestdual_improvement= %d, no re-evaluation of nodes in front with bestdual entries\n", DDSIP_bb->curnode, DDSIP_bb->bestdual_improvement); 
         }
-        else if (DDSIP_param->cb < 0 && DDSIP_param->cb_checkBestdual && DDSIP_bb->bestdual_cnt &&
-                  (DDSIP_bb->curnode == 2*((DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters)/2) + DDSIP_Imax (2, 2*(-DDSIP_param->cb/2-1)) -2 ||
-                   DDSIP_bb->curnode == 2*(DDSIP_param->cbContinuous + 2*(DDSIP_param->cbBreakIters/2) + 4) -2 ||
-                   DDSIP_bb->curnode == DDSIP_param->nodelim - 4
+        else if ( (DDSIP_bb->curnode == DDSIP_param->dive_start - 7 ||
+                   DDSIP_bb->curnode == 62 ||
+                   DDSIP_bb->curnode == DDSIP_param->nodelim - 6
                   )
                 )
         {
+                if (DDSIP_param->outlev)
+                    fprintf (DDSIP_bb->moreoutfile, "##### node %d: set bestBound to -6\n", DDSIP_bb->curnode);
                 DDSIP_bb->bestBound = -6;
         }
 

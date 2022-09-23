@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #define CHECKINTEGERCUT
 #define DEACTIVATECUTS
-#define SECURITYSHIFT 5e-15
+#define SECURITYSHIFT 2e-13
 
 //#define SCENSHIFTsmall
 
@@ -796,7 +796,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         if (DDSIP_param->outlev > 50 && ((DDSIP_param->riskmod == 1)||(DDSIP_param->riskmod == 2)||(DDSIP_param->riskmod == 4)))
                             fprintf(DDSIP_bb->moreoutfile, " for premature stop: riskweight*tmprisk = %g\n", DDSIP_param->riskweight*tmprisk);
                     }
-                    if (tmpbestvalue + DDSIP_param->riskweight*tmprisk + bobjval * DDSIP_data->prob[scen] + rest_bound > DDSIP_bb->bestvalue + DDSIP_param->accuracy)
+                    if (tmpbestvalue + DDSIP_param->riskweight*tmprisk + bobjval * DDSIP_data->prob[scen] + rest_bound > DDSIP_bb->bestvalue + DDSIP_bb->correct_bounding)
                     {
                         if (!(DDSIP_bb->heurval < DDSIP_infty))
                             DDSIP_bb->skip = 100 + iscen;
@@ -999,7 +999,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                 {
                                                     icnt = i;
 #ifdef SECURITYSHIFT
-                                                    rhs = lhs + (viol*security_factor - SECURITYSHIFT*lhs);
+                                                    rhs = lhs + (viol*security_factor - SECURITYSHIFT*fabs(lhs));
 #else
                                                     rhs = lhs + viol*security_factor;
 #endif
@@ -1012,7 +1012,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                 {
                                                     icnt = i;
 #ifdef SECURITYSHIFT
-                                                    rhs = lhs + (viol - SECURITYSHIFT*lhs);
+                                                    rhs = lhs + (viol - SECURITYSHIFT*fabs(lhs));
 #else
                                                     rhs = lhs + viol;
 #endif
@@ -1488,7 +1488,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                     {
                                         icnt = i;
 #ifdef SECURITYSHIFT
-                                        rhs = lhs + (viol*security_factor - SECURITYSHIFT*lhs);
+                                        rhs = lhs + (viol*security_factor - SECURITYSHIFT*fabs(lhs));
 #else
                                         rhs = lhs + viol*security_factor;
 #endif
@@ -1501,7 +1501,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                     {
                                         icnt = i;
 #ifdef SECURITYSHIFT
-                                        rhs = lhs + (viol - SECURITYSHIFT*lhs);
+                                        rhs = lhs + (viol - SECURITYSHIFT*fabs(lhs));
 #else
                                         rhs = lhs + viol;
 #endif
@@ -1944,7 +1944,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
             // If even with the lower bounds we would reach a greater value we may stop here and save some time
             // reduce the sum of the bounds rest_bound by the term for the current scenario
             if (DDSIP_param->prematureStop && DDSIP_bb->DDSIP_step != dual && DDSIP_param->heuristic > 99 && DDSIP_bb->bestvalue < DDSIP_infty && !DDSIP_param->riskalg && iscen < DDSIP_param->scenarios - 1 &&
-                    tmpbestvalue + rest_bound > DDSIP_bb->bestvalue + DDSIP_param->accuracy && !DDSIP_param->scalarization)
+                    tmpbestvalue + rest_bound > DDSIP_bb->bestvalue + DDSIP_bb->correct_bounding && !DDSIP_param->scalarization)
             {
                 if (!(DDSIP_bb->heurval < DDSIP_infty))
                     DDSIP_bb->skip = 100 + iscen;

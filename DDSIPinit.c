@@ -502,7 +502,7 @@ DDSIP_BbTypeInit (void)
 
     if (DDSIP_param->cb || DDSIP_param->hot == 4)
     {
-        DDSIP_bb->aggregate_time = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "ref_scenobj(BbTypeInit)");
+        DDSIP_bb->aggregate_time = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "aggregate_time(BbTypeInit)");
     }
     DDSIP_node[0]->father = -1;
     DDSIP_node[0]->depth  = 0;

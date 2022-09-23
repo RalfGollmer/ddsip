@@ -1,6 +1,7 @@
 #ifndef CBDSIP_H
 #define CBDSIP_H
 #define CBVERSION 0311
+#define GREATERMIPGAP
 
 #include <cplex.h>
 #include <string.h>
@@ -855,7 +856,7 @@ extern "C" {
     int  DDSIP_GetBranchIndex (double *);
     int  DDSIP_ChgBounds(int);
     int  DDSIP_ChgProb(int, int);
-    int  DDSIP_LowerBound(double *);
+    int  DDSIP_LowerBound(double *, int);
     int  DDSIP_Heuristics(int *, int, int);
     int  DDSIP_SolChk(double *, int);
     int  DDSIP_UpperBound(int, int);

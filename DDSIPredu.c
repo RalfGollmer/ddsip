@@ -406,7 +406,7 @@ DDSIP_CheckRedundancy (int automatic)
         // we leave cuts with "not really positive" objval in - to be sorted out by the solver
         //if (objval >= 0.1*DDSIP_param->accuracy)
         // we delete cuts with "not really negative" objval, too
-        if (objval > -1e-11)
+        if (objval > -1e-12)
         {
             statusget = CPXgetrowname (DDSIP_env, DDSIP_lp, rowname, rownamestore, rowstorespace, &rowsurplus, DDSIP_bb->nocon + DDSIP_bb->cutCntr - k -1, DDSIP_bb->nocon + DDSIP_bb->cutCntr - k -1);
             if (DDSIP_param->outlev)

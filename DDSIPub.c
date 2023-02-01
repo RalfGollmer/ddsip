@@ -26,9 +26,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #define CHECKINTEGERCUT
 #define DEACTIVATECUTS
-#define SECURITYSHIFT 2e-13
+#define SECURITYSHIFT 2e-14
 
-//#define SCENSHIFTsmall
+#define SCENSHIFTsmall
 
 //#define DEBUG
 
@@ -713,9 +713,9 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
 #ifdef DEBUG
                 if (DDSIP_param->cpxubscr ||  DDSIP_param->outlev > 11)
                 {
-                    printf ("      UB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
+                    printf ("      UB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%7.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
                     if (DDSIP_param->outlev)
-                        fprintf (DDSIP_bb->moreoutfile,"      UB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
+                        fprintf (DDSIP_bb->moreoutfile,"      UB: after 1st optimization: mipgap %% %-12lg %7d nodes  (%7.2fs)\n",mipgap*100.0,nodes_1st,time_lap-time_start);
                 }
 #endif
                 if (DDSIP_param->watchkappa)
@@ -1134,19 +1134,19 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                             }
                             wall_secs /= (1.05 + iscen);
 #ifdef SCENSHIFTsmall
-                            if (timeLimit)
-                                viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
-                            else
-                                viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                    if (timeLimit)
+                        viol =  5.5 - (1.5*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
+                    else
+                        viol = 12.5 - (6.0*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
 #else
-                            if (timeLimit)
-                                viol = 6.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
-                            else
-                                viol = 15.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                    if (timeLimit)
+                        viol =  5.0 - (2.5*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
+                    else
+                        viol = 15.5 - (7.5*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
 #endif
 //#ifdef DEBUG
-                            if (DDSIP_param->outlev > 20)
-                                fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1.);
+                    if (DDSIP_param->outlev > 20)
+                        fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d (shifts: %d, timeLimit: %d)###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1., DDSIP_bb->shifts, timeLimit);
 //#endif
                             viol = viol*wall_secs + 1.;
                             if (cpu_secs > viol)
@@ -1214,9 +1214,9 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                             else
                             {
                                 time_end = DDSIP_GetCpuTime ();
-                                printf ("      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
+                                printf ("      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%7.2fs)\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
                                 if (DDSIP_param->outlev)
-                                    fprintf (DDSIP_bb->moreoutfile,"      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%6.2fs)\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
+                                    fprintf (DDSIP_bb->moreoutfile,"      UB: after 2nd optimization: mipgap %% %-12lg %7d nodes  (%7.2fs)\n",mipgap*100.0,nodes_2nd,time_end-time_lap);
                             }
                         }
 #endif
@@ -1826,20 +1826,20 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         wall_secs += sort_array[wall_hrs];
                     }
                     wall_secs /= (0.01 + iscen - DDSIP_bb->shifts);
-#ifdef SCENSHIFT
+#ifdef SCENSHIFTsmall
                     if (timeLimit)
-                        viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                        viol =  5.5 - (1.5*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
                     else
-                        viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                        viol = 12.5 - (6.0*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
 #else
                     if (timeLimit)
-                        viol = 6.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                        viol =  5.0 - (2.5*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
                     else
-                        viol = 15.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                        viol = 15.5 - (7.5*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
 #endif
 //#ifdef DEBUG
                     if (DDSIP_param->outlev > 20)
-                        fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1.);
+                        fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d (shifts: %d, timeLimit: %d)###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1., DDSIP_bb->shifts, timeLimit);
 //#endif
                     viol = viol*wall_secs + 1.;
                     if (cpu_secs > viol)
@@ -1965,20 +1965,20 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                         wall_secs += sort_array[wall_hrs];
                     }
                     wall_secs /= (0.01 + iscen - DDSIP_bb->shifts);
-#ifdef SCENSHIFT
+#ifdef SCENSHIFTsmall
                     if (timeLimit)
-                        viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                        viol =  5.5 - (1.5*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
                     else
-                        viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                        viol = 12.5 - (6.0*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
 #else
                     if (timeLimit)
-                        viol = 6.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                        viol =  5.0 - (2.5*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
                     else
-                        viol = 15.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                        viol = 15.5 - (7.5*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
 #endif
 //#ifdef DEBUG
                     if (DDSIP_param->outlev > 20)
-                        fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > 5.2*wall_secs + 1.);
+                        fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d (shifts: %d, timeLimit: %d)###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1., DDSIP_bb->shifts, timeLimit);
 //#endif
                     viol = viol*wall_secs + 1.;
                     if (cpu_secs > viol)
@@ -2165,20 +2165,20 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
             wall_secs += sort_array[wall_hrs];
         }
         wall_secs /= (0.01 + DDSIP_param->scenarios - DDSIP_bb->shifts);
-#ifdef SCENSHIFT
-        if (timeLimit)
-            viol = 5.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
-        else
-            viol = 12.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+#ifdef SCENSHIFTsmall
+                    if (timeLimit)
+                        viol =  5.5 - (1.5*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
+                    else
+                        viol = 12.5 - (6.0*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
 #else
-        if (timeLimit)
-            viol = 6.5 - 1.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
-        else
-            viol = 15.5 - 5.5*(iscen - DDSIP_bb->shifts)/(DDSIP_param->scenarios - DDSIP_bb->shifts + 1.);
+                    if (timeLimit)
+                        viol =  5.9 - (2.5*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
+                    else
+                        viol = 15.5 - (7.5*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
 #endif
 //#ifdef DEBUG
-        if (DDSIP_param->outlev > 20)
-            fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1.: %d ###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1.);
+                    if (DDSIP_param->outlev > 20)
+                        fprintf (DDSIP_bb->moreoutfile, "  ### max time %g, mean %g, max>%g*mean+1: %d (shifts: %d, timeLimit: %d)###\n", cpu_secs, wall_secs, viol, cpu_secs > viol*wall_secs + 1., DDSIP_bb->shifts, timeLimit);
 //#endif
         viol = viol*wall_secs + 1.;
         if (cpu_secs > viol)

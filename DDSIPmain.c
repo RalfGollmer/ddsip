@@ -545,7 +545,7 @@ main (int argc, char * argv[])
 #else
         DDSIP_node[DDSIP_bb->curnode]->step = DDSIP_bb->DDSIP_step = solve;
         // status=1 means there was no solution found to a subproblem
-        if ((status = LowerBound ()))
+        if ((status = DDSIP_LowerBound (&tmp_objval, 0)))
             goto TERMINATE;
 #endif
 
@@ -639,8 +639,13 @@ main (int argc, char * argv[])
                     result = DDSIP_bb->cutNumber;
                     DDSIP_node[0]->step = DDSIP_bb->DDSIP_step = solve;
                     // status=1 means there was no solution found to a scenario problem
+#ifdef GREATERMIPGAP
                     if ((status = DDSIP_LowerBound (&tmp_objval, 1)))
                         goto TERMINATE;
+#else
+                    if ((status = DDSIP_LowerBound (&tmp_objval, 0)))
+                        goto TERMINATE;
+#endif
                     nowAdded = DDSIP_bb->cutAdded = DDSIP_bb->cutNumber - result;
                     DDSIP_EvaluateScenarioSolutions (&comb);
                     nowAdded = DDSIP_bb->cutAdded - nowAdded;
@@ -659,95 +664,104 @@ main (int argc, char * argv[])
                 }
                 if (DDSIP_param->deleteRedundantCuts)
                     DDSIP_CheckRedundancy(1);
-#ifdef GREATERMIPGAP
-                // in case the computations werde done with reduced accuracy, repeat
-                DDSIP_bb->cutAdded = 1;
-                while (DDSIP_bb->cutAdded && cntr < maxCntr)
+// #ifdef GREATERMIPGAP
+//                 // in case the computations werde done with reduced accuracy, repeat
+//                 DDSIP_bb->cutAdded = 1;
+//                 while (DDSIP_bb->cutAdded && cntr < maxCntr)
+//                 {
+//                     cntr++;
+//                     old_bound = DDSIP_node[0]->bound;
+//                     // Free the solutions from former LowerBound
+//                     for (i = 0; i < DDSIP_param->scenarios; i++)
+//                     {
+//                         if (((DDSIP_node[0])->first_sol)[i])
+//                         {
+//                             double gap;
+//                             gap = 100.0*((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[i]-(DDSIP_node[DDSIP_bb->curnode]->subbound)[i])/
+//                                   (fabs((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[i])+1e-4);
+//                             if (fabs(gap) < 1.e-10)
+//                             {
+//                                 currentCut = DDSIP_bb->cutpool;
+//                                 while (currentCut)
+//                                 {
+//                                     lhs = 0.;
+//                                     for (j = 0; j < DDSIP_bb->firstvar; j++)
+//                                     {
+//                                         lhs += (DDSIP_node[0])->first_sol[i][j] * currentCut->matval[j];
+//                                     }
+//                                     if (lhs < currentCut->rhs - 1.e-7)
+//                                     {
+// #ifdef DEBUG
+//                                         if (DDSIP_param->outlev > 50)
+//                                             fprintf (DDSIP_bb->moreoutfile, "scen %d solution violates cut %d.\n", i+1, currentCut->number);
+// #endif
+//                                         if ((cnt = (int) ((((DDSIP_node[0])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
+//                                             for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
+//                                             {
+//                                                 {
+//                                                     if (((DDSIP_node[0])->first_sol)[j]
+//                                                             && ((DDSIP_node[0])->first_sol)[i] == ((DDSIP_node[0])->first_sol)[j])
+//                                                     {
+//                                                         ((DDSIP_node[0])->first_sol)[j] = NULL;
+//                                                         cnt--;
+//                                                     }
+//                                                 }
+//                                             }
+//                                         DDSIP_Free ((void **) &(((DDSIP_node[0])->first_sol)[i]));
+//                                         break;
+//                                     }
+//                                     currentCut = currentCut->prev;
+//                                 }
+//                             }
+//                             else
+//                             {
+//                                 if ((cnt = (int) ((((DDSIP_node[0])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
+//                                     for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
+//                                     {
+//                                         {
+//                                             if (((DDSIP_node[0])->first_sol)[j]
+//                                                     && ((DDSIP_node[0])->first_sol)[i] == ((DDSIP_node[0])->first_sol)[j])
+//                                             {
+//                                                 ((DDSIP_node[0])->first_sol)[j] = NULL;
+//                                                 cnt--;
+//                                             }
+//                                         }
+//                                     }
+//                                 DDSIP_Free ((void **) &(((DDSIP_node[0])->first_sol)[i]));
+//                             }
+//                         }
+//                     }
+//                     result = DDSIP_bb->cutNumber;
+//                     DDSIP_node[0]->step = DDSIP_bb->DDSIP_step = solve;
+//                     // status=1 means there was no solution found to a scenario problem
+//                     if ((status = DDSIP_LowerBound (&tmp_objval, 0)))
+//                         goto TERMINATE;
+//                     nowAdded = DDSIP_bb->cutAdded = DDSIP_bb->cutNumber - result;
+//                     DDSIP_EvaluateScenarioSolutions (&comb);
+//                     nowAdded = DDSIP_bb->cutAdded - nowAdded;
+//                     DDSIP_bb->bestbound = DDSIP_node[0]->bound;
+//                     DDSIP_bb->noiter++;
+//                     DDSIP_PrintState (1);
+//                     if (/*nowAdded &&*/ DDSIP_param->outlev)
+//                     {
+//                         fprintf (DDSIP_outfile, " %6d %82d. reinit: %8d cuts (UB)\n", 0, cntr, nowAdded);
+//                     }
+//                     if ((DDSIP_node[0]->bound - old_bound)/(fabs(old_bound) + 1e-16) < 1.e-10)
+//                         noIncreaseCntr++;
+//                     if (noIncreaseCntr > 2 ||
+//                             (DDSIP_bb->bestvalue - DDSIP_node[0]->bound)/(fabs(DDSIP_bb->bestvalue) + 1e-16) < 0.5*DDSIP_param->relgap)
+//                         break;
+//                 }
+// #endif
+                for (i = 0; i < DDSIP_param->scenarios; i++)
                 {
-                    cntr++;
-                    old_bound = DDSIP_node[0]->bound;
-                    // Free the solutions from former LowerBound
-                    for (i = 0; i < DDSIP_param->scenarios; i++)
+                    tmp_objval = 100.0*((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[i]-(DDSIP_node[DDSIP_bb->curnode]->subbound)[i])/
+                          (fabs((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[i])+1e-4);
+                    if (tmp_objval > DDSIP_param->relgap)
                     {
-                        if (((DDSIP_node[0])->first_sol)[i])
-                        {
-                            double gap;
-                            gap = 100.0*((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[i]-(DDSIP_node[DDSIP_bb->curnode]->subbound)[i])/
-                                  (fabs((DDSIP_node[DDSIP_bb->curnode]->cursubsol)[i])+1e-4);
-                            if (fabs(gap) < 1.e-10)
-                            {
-                                currentCut = DDSIP_bb->cutpool;
-                                while (currentCut)
-                                {
-                                    lhs = 0.;
-                                    for (j = 0; j < DDSIP_bb->firstvar; j++)
-                                    {
-                                        lhs += (DDSIP_node[0])->first_sol[i][j] * currentCut->matval[j];
-                                    }
-                                    if (lhs < currentCut->rhs - 1.e-7)
-                                    {
-#ifdef DEBUG
-                                        if (DDSIP_param->outlev > 50)
-                                            fprintf (DDSIP_bb->moreoutfile, "scen %d solution violates cut %d.\n", i+1, currentCut->number);
-#endif
-                                        if ((cnt = (int) ((((DDSIP_node[0])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
-                                            for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
-                                            {
-                                                {
-                                                    if (((DDSIP_node[0])->first_sol)[j]
-                                                            && ((DDSIP_node[0])->first_sol)[i] == ((DDSIP_node[0])->first_sol)[j])
-                                                    {
-                                                        ((DDSIP_node[0])->first_sol)[j] = NULL;
-                                                        cnt--;
-                                                    }
-                                                }
-                                            }
-                                        DDSIP_Free ((void **) &(((DDSIP_node[0])->first_sol)[i]));
-                                        break;
-                                    }
-                                    currentCut = currentCut->prev;
-                                }
-                            }
-                            else
-                            {
-                                if ((cnt = (int) ((((DDSIP_node[0])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
-                                    for (j = i + 1; cnt && j < DDSIP_param->scenarios; j++)
-                                    {
-                                        {
-                                            if (((DDSIP_node[0])->first_sol)[j]
-                                                    && ((DDSIP_node[0])->first_sol)[i] == ((DDSIP_node[0])->first_sol)[j])
-                                            {
-                                                ((DDSIP_node[0])->first_sol)[j] = NULL;
-                                                cnt--;
-                                            }
-                                        }
-                                    }
-                                DDSIP_Free ((void **) &(((DDSIP_node[0])->first_sol)[i]));
-                            }
-                        }
+                        (DDSIP_node[DDSIP_bb->curnode]->mipstatus)[i] = CPXMIP_NODE_LIM_FEAS;
                     }
-                    result = DDSIP_bb->cutNumber;
-                    DDSIP_node[0]->step = DDSIP_bb->DDSIP_step = solve;
-                    // status=1 means there was no solution found to a scenario problem
-                    if ((status = DDSIP_LowerBound (&tmp_objval, 0)))
-                        goto TERMINATE;
-                    nowAdded = DDSIP_bb->cutAdded = DDSIP_bb->cutNumber - result;
-                    DDSIP_EvaluateScenarioSolutions (&comb);
-                    nowAdded = DDSIP_bb->cutAdded - nowAdded;
-                    DDSIP_bb->bestbound = DDSIP_node[0]->bound;
-                    DDSIP_bb->noiter++;
-                    DDSIP_PrintState (1);
-                    if (/*nowAdded &&*/ DDSIP_param->outlev)
-                    {
-                        fprintf (DDSIP_outfile, " %6d %82d. reinit: %8d cuts (UB)\n", 0, cntr, nowAdded);
-                    }
-                    if ((DDSIP_node[0]->bound - old_bound)/(fabs(old_bound) + 1e-16) < 1.e-10)
-                        noIncreaseCntr++;
-                    if (noIncreaseCntr > 2 ||
-                            (DDSIP_bb->bestvalue - DDSIP_node[0]->bound)/(fabs(DDSIP_bb->bestvalue) + 1e-16) < 0.5*DDSIP_param->relgap)
-                        break;
                 }
-#endif
             }
             else
             {
@@ -770,7 +784,7 @@ main (int argc, char * argv[])
         if (!DDSIP_bb->curnode)
         {
             DDSIP_bb->cutCntr0 = DDSIP_bb->cutNumber;
-            DDSIP_bb->correct_bounding = fabs(DDSIP_node[0]->bound)*2.e-09;
+            DDSIP_bb->correct_bounding = fabs(DDSIP_node[0]->bound)*5.e-10;
         }
         else if (DDSIP_param->alwaysBendersCuts)
         {
@@ -815,7 +829,7 @@ main (int argc, char * argv[])
                 }
             }
         }
-        DDSIP_bb->correct_bounding = fabs(DDSIP_bb->bestbound)*2.e-10;
+        DDSIP_bb->correct_bounding = fabs(DDSIP_bb->bestbound)*5.e-10;
 
         if (DDSIP_param->cb && DDSIP_param->cb_depth>0 && DDSIP_param->cb_depth_iters && DDSIP_bb->curnode == 2 && DDSIP_node[1]->dual && DDSIP_node[2]->dual)
         {
@@ -918,7 +932,7 @@ main (int argc, char * argv[])
             }
         }
         // check if the bestdual multipliers improve bounds of the nodes in the front
-        else if (DDSIP_param->cb < 0 && DDSIP_param->cb_checkBestdual && DDSIP_bb->bestdual_cnt &&
+        if (DDSIP_param->cb < 0 && DDSIP_param->cb_checkBestdual && DDSIP_bb->bestdual_cnt &&
                   (DDSIP_bb->curnode == DDSIP_Imin (2*((DDSIP_param->cbContinuous + DDSIP_param->cbBreakIters)/2) + DDSIP_Imax (2, 2*(-DDSIP_param->cb/2-1)), DDSIP_param->dive_start - 7) ||
                    DDSIP_bb->curnode == DDSIP_Imax (2*(DDSIP_param->cbContinuous + 2*(DDSIP_param->cbBreakIters/2) + 4), 62) ||
                    DDSIP_bb->curnode == DDSIP_param->nodelim - 2
@@ -931,7 +945,7 @@ main (int argc, char * argv[])
 
                 double * front_node_bound, least_bound = DDSIP_infty;
                 if (DDSIP_param->outlev > 20)
-                    fprintf (DDSIP_bb->moreoutfile, " ## node %d, bestdual_improvement= %d, re-evaluation of nodes in front with bestdual entries\n", DDSIP_bb->curnode, DDSIP_bb->bestdual_improvement); 
+                    fprintf (DDSIP_bb->moreoutfile, " ## node %d, bestdual_improvement= %d, re-evaluation of front nodes with bestdual entries\n", DDSIP_bb->curnode, DDSIP_bb->bestdual_improvement); 
                 // sort front nodes ascending wrt. bound
                 DDSIP_Free ((void **) &DDSIP_bb->front_nodes_sorted);
                 DDSIP_bb->front_nodes_sorted = (int *) DDSIP_Alloc(sizeof(int), DDSIP_bb->nofront, "DDSIP_bb->front_nodes_sorted(main)");
@@ -1034,7 +1048,7 @@ main (int argc, char * argv[])
                     goto TERMINATE;
             }
             else if (DDSIP_param->outlev > 20)
-                fprintf (DDSIP_bb->moreoutfile, " ## node %d, bestdual_improvement= %d, no re-evaluation of nodes in front with bestdual entries\n", DDSIP_bb->curnode, DDSIP_bb->bestdual_improvement); 
+                fprintf (DDSIP_bb->moreoutfile, " ## node %d, bestdual_improvement= %d, no re-evaluation of front nodes with bestdual entries\n", DDSIP_bb->curnode, DDSIP_bb->bestdual_improvement); 
         }
         else if ( (DDSIP_bb->curnode == DDSIP_param->dive_start - 7 ||
                    DDSIP_bb->curnode == 62 ||

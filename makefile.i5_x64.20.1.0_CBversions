@@ -17,8 +17,8 @@ LIBTYPE   = static_pic
 
 #PROCESSOR = -mtune=corei7 -march=corei7 -mmmx -msse -msse2 -msse3 -mssse3 -m64
 #PROCESSOR = -mtune=corei7 -march=corei7 -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -m64
-#PROCESSOR = -mtune=tigerlake -march=tigerlake -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx512f -m64
-PROCESSOR = -mtune=tigerlake -march=tigerlake -mmmx -m64
+PROCESSOR = -mtune=tigerlake -march=tigerlake -mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx512f -m64
+#PROCESSOR = -mtune=tigerlake -march=tigerlake -mmmx -m64
 
 # Directories and target
 HOME      = .

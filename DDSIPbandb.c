@@ -340,13 +340,13 @@ DDSIP_InitNewNodes (void)
                     {
                         if (((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_node[DDSIP_bb->nonode]->neoind] <= DDSIP_node[DDSIP_bb->nonode]->neoub)
                         {
-                            fprintf (DDSIP_bb->moreoutfile,"  node %d does NOT inherit solution of scenario %d from node %d due to added cut %d, violation %g.\n",
-                                 DDSIP_bb->nonode, i+1, DDSIP_bb->curnode, currentCut->number, -lhs);
+                            fprintf (DDSIP_bb->moreoutfile,"  node %d does NOT inherit solution of scenario %d from node %d due to added cut %d, violation %g (%g ident.).\n",
+                                 DDSIP_bb->nonode, i+1, DDSIP_bb->curnode, currentCut->number, -lhs, (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar]);
                         }
                         else
                         {
-                            fprintf (DDSIP_bb->moreoutfile,"  node %d does NOT inherit solution of scenario %d from node %d due to added cut %d, violation %g.\n",
-                                     DDSIP_bb->nonode + 1, i+1, DDSIP_bb->curnode, currentCut->number, -lhs);
+                            fprintf (DDSIP_bb->moreoutfile,"  node %d does NOT inherit solution of scenario %d from node %d due to added cut %d, violation %g (%g ident.).\n",
+                                     DDSIP_bb->nonode + 1, i+1, DDSIP_bb->curnode, currentCut->number, -lhs, (((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar]);
                         }
                     }
                     if ((cnt = (int) ((((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i])[DDSIP_bb->firstvar] - 0.9)))
@@ -356,6 +356,19 @@ DDSIP_InitNewNodes (void)
                                     && ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[i] == ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j])
                             {
                                 ((DDSIP_node[DDSIP_bb->curnode])->first_sol)[j] = NULL;
+                                if (DDSIP_param->outlev > 21)
+                                {
+                                    if (((DDSIP_node[DDSIP_bb->curnode])->first_sol[i])[DDSIP_node[DDSIP_bb->nonode]->neoind] <= DDSIP_node[DDSIP_bb->nonode]->neoub)
+                                    {
+                                        fprintf (DDSIP_bb->moreoutfile,"  node %d does NOT inherit solution of scenario %d from node %d due to added cut %d, violation %g (%d ident.).\n",
+                                                 DDSIP_bb->nonode, j+1, DDSIP_bb->curnode, currentCut->number, -lhs, cnt);
+                                    }
+                                    else
+                                    {
+                                        fprintf (DDSIP_bb->moreoutfile,"  node %d does NOT inherit solution of scenario %d from node %d due to added cut %d, violation %g (%d ident.).\n",
+                                                 DDSIP_bb->nonode + 1, j+1, DDSIP_bb->curnode, currentCut->number, -lhs, cnt);
+                                    }
+                                }
                                 cnt--;
                             }
                         }
@@ -745,7 +758,7 @@ DDSIP_Bound (void)
     double * front_node_bound, rgap, factor, worstBound;
     double bestAmongTheLast;
     callcnt++;
-    factor = (DDSIP_bb->bestvalue < 0.)? 1.-3.e-15 :  1.+3.e-15;
+    factor = (DDSIP_bb->bestvalue < 0.)? 1.-5.e-10 :  1.+5.e-10;
 
     if (DDSIP_param->outlev > 2)
     {
@@ -814,8 +827,9 @@ DDSIP_Bound (void)
             // Delete node from the front
             DDSIP_bb->front[i] = DDSIP_bb->front[DDSIP_bb->nofront - 1];
             DDSIP_bb->nofront--;
-            if (DDSIP_bb->bestBound <= 0)
-                DDSIP_bb->bestBound = DDSIP_Imin (DDSIP_bb->bestBound, -2);
+            // no idea what that was meant do achieve:
+            //if (DDSIP_bb->bestBound <= 0)
+            //    DDSIP_bb->bestBound = DDSIP_Imin (DDSIP_bb->bestBound, -2);
         }
     }
 

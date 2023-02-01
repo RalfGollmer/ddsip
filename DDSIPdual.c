@@ -770,6 +770,7 @@ if (DDSIP_param->outlev > 20)
 if (DDSIP_param->outlev > 20)
 {
    fprintf (DDSIP_bb->moreoutfile, "  for startinfo_multipliers\n");
+   printf ("  for startinfo_multipliers\n");
 }
                    // the multipliers from father
                    memcpy (DDSIP_node[DDSIP_bb->curnode]->dual, DDSIP_bb->startinfo_multipliers, sizeof (double) * (DDSIP_bb->dimdual+3));
@@ -1513,6 +1514,7 @@ if (DDSIP_param->outlev > 20)
                     if (DDSIP_param->outlev > 20)
                     {
                         fprintf (DDSIP_bb->moreoutfile, "## while-loop node %3d: multiplier from node %d: cutoffs= %g\n",DDSIP_bb->curnode,tmp_bestdual->node_nr,tmp_bestdual->cutoffs);
+                        printf ("## while-loop node %3d: multiplier from node %d: cutoffs= %g\n",DDSIP_bb->curnode,tmp_bestdual->node_nr,tmp_bestdual->cutoffs);
                     }
 //*********************
 

@@ -106,7 +106,7 @@ DDSIP_PrintState (int noiter)
         rgap = 100. * (DDSIP_bb->bestvalue - DDSIP_bb->bestbound) / (fabs (DDSIP_bb->bestvalue) + DDSIP_param->accuracy);
 
     rgap = DDSIP_Dmin (rgap, 100.0);
-    factor = (DDSIP_bb->bestvalue < 0.)? 1.-DDSIP_param->accuracy :  1.+DDSIP_param->accuracy;
+    factor = (DDSIP_bb->bestvalue < 0.)? 1.-5e-09 :  1.+5e-09;
 
     //if (!(DDSIP_bb->curnode) && (DDSIP_param->cb || !DDSIP_bb->cutAdded || !DDSIP_bb->noiter))
     if (!(DDSIP_bb->curnode) && !noiter)
@@ -150,7 +150,6 @@ DDSIP_PrintState (int noiter)
         printf ("         cutoff     ");
         fprintf (DDSIP_outfile, "         cutoff     ");
         print_violations  = 0;
-        DDSIP_node[DDSIP_bb->curnode]->bound = DDSIP_bb->bestvalue + (1. + 1e-11)*fabs(DDSIP_bb->bestvalue);
     }
     else if (DDSIP_node[DDSIP_bb->curnode]->bound < DDSIP_infty)
     {

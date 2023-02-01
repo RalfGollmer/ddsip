@@ -1,6 +1,7 @@
 #ifndef CBDSIP_H
 #define CBDSIP_H
 #define CBVERSION 0311
+//#undef  GREATERMIPGAP
 #define GREATERMIPGAP
 
 #include <cplex.h>

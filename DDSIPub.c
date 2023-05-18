@@ -1135,7 +1135,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                             wall_secs /= (1.05 + iscen);
 #ifdef SCENSHIFTsmall
                     if (timeLimit)
-                        viol =  5.5 - (1.5*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
+                        viol =  5.0 - (1.2*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
                     else
                         viol = 12.5 - (6.0*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
 #else
@@ -1828,7 +1828,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     wall_secs /= (0.01 + iscen - DDSIP_bb->shifts);
 #ifdef SCENSHIFTsmall
                     if (timeLimit)
-                        viol =  5.5 - (1.5*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
+                        viol =  5.0 - (1.2*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
                     else
                         viol = 12.5 - (6.0*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
 #else
@@ -1967,7 +1967,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                     wall_secs /= (0.01 + iscen - DDSIP_bb->shifts);
 #ifdef SCENSHIFTsmall
                     if (timeLimit)
-                        viol =  5.5 - (1.5*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
+                        viol =  5.0 - (1.2*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
                     else
                         viol = 12.5 - (6.0*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
 #else
@@ -2167,7 +2167,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
         wall_secs /= (0.01 + DDSIP_param->scenarios - DDSIP_bb->shifts);
 #ifdef SCENSHIFTsmall
                     if (timeLimit)
-                        viol =  5.5 - (1.5*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
+                        viol =  5.0 - (1.2*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
                     else
                         viol = 12.5 - (6.0*(iscen - DDSIP_bb->shifts))/(DDSIP_param->scenarios - DDSIP_bb->shifts + 0.1);
 #else

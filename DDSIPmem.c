@@ -313,8 +313,9 @@ DDSIP_FreeBb ()
                 DDSIP_Free ((void **) &(DDSIP_bb->bestfirst));
             }
             DDSIP_Free ((void **) &(DDSIP_bb->startinfo_multipliers));
-            DDSIP_Free ((void **) &(DDSIP_bb->aggregate_time));
         }
+ 
+        DDSIP_Free ((void **) &(DDSIP_bb->aggregate_time));
 
         DDSIP_Free ((void **) &(DDSIP_bb->curind));
         DDSIP_Free ((void **) &(DDSIP_bb->curub));

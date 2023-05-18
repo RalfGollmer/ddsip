@@ -2369,7 +2369,7 @@ if (DDSIP_param->outlev > 20)
             if (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - 1.e-11*fabs(DDSIP_bb->bestvalue))
                 DDSIP_bb->skip = -2;
             if ((DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue*nfactor) &&
-                    (!(DDSIP_bb->found_optimal_node) || (DDSIP_bb->found_optimal_node && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node)))
+                    (!(DDSIP_bb->found_optimal_node) || (DDSIP_bb->found_optimal_node && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node && DDSIP_node[DDSIP_bb->curnode]->bound <= DDSIP_bb->bestvalue)))
             {
                 //////////////////////////////////////////////////////////////////
                 if (DDSIP_param->outlev > 20)

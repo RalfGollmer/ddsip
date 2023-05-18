@@ -252,6 +252,8 @@ extern "C" {
         double accuracy;
         // Branching on continuous variables uses this values
         double brancheps;
+        // increaded relative MIP tolerance in node 0 (if not rootCB)
+        double increasedTolerance;
 
         // 4. Risk model
         // (Mean-)risk model

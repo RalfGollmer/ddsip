@@ -1223,8 +1223,8 @@ DDSIP_ReadSpec ()
     DDSIP_param->nodelim   = (int) floor (DDSIP_ReadDbl (specfile, "NODELI", " NODE LIMIT", DDSIP_bigint, 1, 0., INT_MAX-1) + 0.1);
     // Accuracy, e.g. for the  comparison of double numbers
     DDSIP_param->accuracy  = DDSIP_ReadDbl (specfile, "ACCURA", " ACCURACY", 1.0e-12, 0, 1.e-14, 1.);
-    DDSIP_param->brancheps = DDSIP_ReadDbl (specfile, "EPSILO", " EPSILON", 1.e-10, 0, 5.e-14, 1.);
-    DDSIP_param->nulldisp  = DDSIP_ReadDbl (specfile, "NULLDI", " NULL DISPERSION", 1.5e-10, 0, 7.5e-13, DDSIP_infty);
+    DDSIP_param->brancheps = DDSIP_ReadDbl (specfile, "EPSILO", " EPSILON", 2.e-09, 0, 5.e-12, 1.);
+    DDSIP_param->nulldisp  = DDSIP_ReadDbl (specfile, "NULLDI", " NULL DISPERSION", 0.5e-09, 0, 7.5e-12, DDSIP_infty);
     DDSIP_param->absgap    = DDSIP_ReadDbl (specfile, "ABSOLU", " ABSOLUTE GAP", 0., 0, 0., DDSIP_infty);
     DDSIP_param->relgap    = DDSIP_ReadDbl (specfile, "RELATI", " RELATIVE GAP", 1.0e-6, 0, 1.1*DDSIP_param->brancheps, 1.);
     DDSIP_param->expected  = (int) floor (DDSIP_ReadDbl (specfile, "EEVPRO", " EXPECTED VALUE PROBLEM", 0., 1, 0., 1.) + 0.1);
@@ -1284,11 +1284,11 @@ DDSIP_ReadSpec ()
         }
         DDSIP_param->interrupt_heur = (int) floor (DDSIP_ReadDbl (specfile, "INTHEU", " INTERRUPT HEURISTIC LOOP", 0., 1, -1., 1.) + 0.1);
     }
-    else if (DDSIP_param->heuristic >= 100)
+    else if ((DDSIP_param->heuristic >= 100))
     {
         DDSIP_param->heuristic_order = (int) floor (DDSIP_ReadDbl (specfile, "HEUROR", " HEURISTIC ORDER", 2., 1, 0., 3.) + 0.1);
         DDSIP_param->heuristic_vector = (double *) DDSIP_Alloc (sizeof (double), 15, "values(DDSIP_ReadDblVec)");
-        DDSIP_param->heuristic_vector[0] = 100;
+        DDSIP_param->heuristic_vector[0] = DDSIP_param->heuristic;
         DDSIP_param->heuristic_vector[1] = 11;
         switch (DDSIP_param->heuristic_order)
         {
@@ -1338,6 +1338,7 @@ DDSIP_ReadSpec ()
     //DDSIP_param->prepro = (int) floor (DDSIP_ReadDbl (specfile, "PREPRO", " PREPROCESSING", 0., 1, 0., 3.) + 0.1);
     DDSIP_param->prepro = 0; 
     DDSIP_param->dive_start = (int) floor (DDSIP_ReadDbl (specfile, "DIVEST", " DIVE START NODE", 33., 1, 4., 500.) + 0.1);
+    DDSIP_param->increasedTolerance = DDSIP_ReadDbl (specfile, "INCTOL", " INCREASED TOL NODE 0", 5.e-3, 0, 1.e-6, 0.8);
     DDSIP_param->annotationFile = DDSIP_ReadString (specfile, "ANNOTA", " ANNOTATION FILE FOR CPLEX BENDERS");
     fprintf (DDSIP_outfile, "\n");
 

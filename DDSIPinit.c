@@ -500,7 +500,7 @@ DDSIP_BbTypeInit (void)
     fprintf (DDSIP_outfile, "\t\tDimension of dual problem:        %10d\n", DDSIP_bb->dimdual);
 #endif
 
-    if (DDSIP_param->cb || DDSIP_param->hot == 4)
+    //if (DDSIP_param->cb || DDSIP_param->hot == 4)
     {
         DDSIP_bb->aggregate_time = (double *) DDSIP_Alloc (sizeof (double), DDSIP_param->scenarios, "aggregate_time(BbTypeInit)");
     }

@@ -27,6 +27,7 @@
 #define CBHOTSTART
 //#define CHECK_BOUNDS
 #define REDUCPLEXMIPGAP
+#undef BRANCHMIDDLE
 
 #include <DDSIP.h>
 #include <DDSIPconst.h>
@@ -379,7 +380,7 @@ DDSIP_GetBranchIndex (double *dispnorm)
                         hbranch += DDSIP_data->prob[i] * (DDSIP_node[DDSIP_bb->curnode]->first_sol)[i][index[j]];
                 }
             }
-            hbranch = 0.4*hbranch + 0.3*(hlb+hub);
+            hbranch = 0.6*hbranch + 0.20*(hlb+hub);
             // now count the scenario sol. values below and above the branch value and measure the distances
             dist_below = dist_above = dist = 0.;
             below = above = 0;
@@ -399,7 +400,7 @@ DDSIP_GetBranchIndex (double *dispnorm)
                 }
             }
             diff = abs (below-above);
-            dist = DDSIP_Dmin (dist_below,dist_above) + 5e-1*(dist_below+dist_above);
+            dist = DDSIP_Dmin (dist_below,dist_above) + 3e-1*dist_below + 5e-1*dist_above;
             if (DDSIP_param->branchstrat == 2)
             {
                 // branchstrat = 2: take a point between the expected value and the middle
@@ -410,8 +411,9 @@ DDSIP_GetBranchIndex (double *dispnorm)
                 }
                 else
                 {
+                    hbranch = 0.6*hbranch + 0.20*(hlb+hub);
                     //hbranch = 0.5*hbranch + 0.25* (hlb+hub);
-                    hbranch = 0.4*hbranch + 0.3* (hlb+hub);
+                    //hbranch = 0.4*hbranch + 0.3* (hlb+hub);
                 }
             }
             if (!((abs(DDSIP_param->riskmod) == 4) && (index[j] == DDSIP_bb->firstvar - 1)) &&
@@ -551,11 +553,16 @@ DDSIP_GetBranchIndex (double *dispnorm)
             //if (hub - hlb < 9e-1)
             if (DDSIP_bb->firsttype[DDSIP_node[DDSIP_bb->curnode]->branchind] == 'C' && hub - hlb < 1e+3)
             {
-                // use golden cut
+#ifdef BRANCHMIDDLE
+                // use the middle
+                hbranch = 0.5* (hlb+hub);
+#else
+                // use the golden ratio
                 if (DDSIP_node[DDSIP_bb->curnode]->depth%2)
                     hbranch = DDSIP_node[DDSIP_bb->curnode]->branchval =  0.61803398874989484820458683*hlb + 0.38196601125010515179541317*hub;
                 else
                     hbranch = DDSIP_node[DDSIP_bb->curnode]->branchval =  0.61803398874989484820458683*hub + 0.38196601125010515179541317*hlb;
+#endif
             }
             else
                 DDSIP_node[DDSIP_bb->curnode]->branchval = 0.4 * DDSIP_node[DDSIP_bb->curnode]->branchval + 0.3 * (hlb+hub);
@@ -1320,37 +1327,6 @@ DDSIP_LowerBound (double * ret_objval, int ChangeMipGap)
             goto TERMINATE;
         }
     }
-#ifdef GREATERMIPGAP
-    if (ChangeMipGap && (DDSIP_bb->LBIters > 1))
-    {
-        double cplexRelGap;
-        if ((status = CPXgetdblparam (DDSIP_env, CPX_PARAM_EPGAP, &cplexRelGap)))
-        {
-            fprintf (stderr, "ERROR: Failed to ge CPLEX parameter CPX_PARAM_EPGAP (LowerBound) \n");
-            fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get CPLEX parameter CPX_PARAM_EPGAP (LowerBound) \n");
-        }
-        else
-        {
-            cplexRelGap = DDSIP_Dmin (DDSIP_Dmax(1.e+3*cplexRelGap, 5e-3), .9);
-            if ((status = CPXsetdblparam (DDSIP_env, CPX_PARAM_EPGAP, cplexRelGap)))
-            {
-              fprintf (stderr, "ERROR: Failed to set CPLEX parameter CPX_PARAM_EPGAP to %g (LowerBound) \n", cplexRelGap);
-              if (DDSIP_param->outlev)
-                fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to set CPLEX parameter CPX_PARAM_EPGAP to %g (LowerBound) \n", cplexRelGap);
-            }
-            else
-            {
-              fprintf (stderr, "1 reset CPLEX parameter CPX_PARAM_EPGAP from %g (LowerBound) \n", cplexRelGap);
-              if (DDSIP_param->outlev)
-                fprintf (DDSIP_bb->moreoutfile, "1 reset CPLEX parameter CPX_PARAM_EPGAP to %g (LowerBound) \n", cplexRelGap);
-            }
-        }
-    }
-    if (DDSIP_bb->curnode == 1)
-    {
-        DDSIP_bb->meanGapLB = 0.0;
-    }
-#endif
     // Absolute semideviation: change the lower bound on the risk variable
     // Details: See description of mean-asd-algorithm
     if (DDSIP_param->riskmod == 3 && !DDSIP_param->riskalg && DDSIP_bb->DDSIP_step != dual)
@@ -1636,6 +1612,32 @@ NEXT_TRY:
                 goto TERMINATE;
             time_start = DDSIP_GetCpuTime ();
             // Optimize
+#ifdef GREATERMIPGAP
+    if (ChangeMipGap && (DDSIP_bb->LBIters > 1))
+    {
+        double cplexRelGap;
+        if ((status = CPXgetdblparam (DDSIP_env, CPX_PARAM_EPGAP, &cplexRelGap)))
+        {
+            fprintf (stderr, "ERROR: Failed to get CPLEX parameter CPX_PARAM_EPGAP (LowerBound) \n");
+            fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get CPLEX parameter CPX_PARAM_EPGAP (LowerBound) \n");
+        }
+        else
+        {
+            cplexRelGap = DDSIP_Dmin (DDSIP_Dmax(1.e+3*cplexRelGap, DDSIP_param->increasedTolerance), .8);
+            if ((status = CPXsetdblparam (DDSIP_env, CPX_PARAM_EPGAP, cplexRelGap)))
+            {
+              fprintf (stderr, "ERROR: Failed to set CPLEX parameter CPX_PARAM_EPGAP to %g (LowerBound) \n", cplexRelGap);
+              if (DDSIP_param->outlev)
+                fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to set CPLEX parameter CPX_PARAM_EPGAP to %g (LowerBound) \n", cplexRelGap);
+            }
+            else
+            {
+              if (DDSIP_param->outlev)
+                fprintf (DDSIP_bb->moreoutfile, " reset CPLEX parameter CPX_PARAM_EPGAP to %g (LowerBound) \n", cplexRelGap);
+            }
+        }
+    }
+#endif
             if (relax < 2)
             {
 #ifdef DEBUG
@@ -1731,12 +1733,12 @@ NEXT_TRY:
         double cplexRelGap;
         if ((status = CPXgetdblparam (DDSIP_env, CPX_PARAM_EPGAP, &cplexRelGap)))
         {
-            fprintf (stderr, "ERROR: Failed to ge CPLEX parameter CPX_PARAM_EPGAP (LowerBound) \n");
+            fprintf (stderr, "ERROR: Failed to get CPLEX parameter CPX_PARAM_EPGAP (LowerBound) \n");
             fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get CPLEX parameter CPX_PARAM_EPGAP (LowerBound) \n");
         }
         else
         {
-            cplexRelGap = DDSIP_Dmin (DDSIP_Dmax(1.e+3*cplexRelGap, 5e-3), .9);
+            cplexRelGap = DDSIP_Dmin (DDSIP_Dmax(1.e+3*cplexRelGap, DDSIP_param->increasedTolerance), .8);
             if ((status = CPXsetdblparam (DDSIP_env, CPX_PARAM_EPGAP, cplexRelGap)))
             {
               fprintf (stderr, "ERROR: Failed to set CPLEX parameter CPX_PARAM_EPGAP to %g (LowerBound) \n", cplexRelGap);
@@ -1745,9 +1747,8 @@ NEXT_TRY:
             }
             else
             {
-              fprintf (stderr, "2 reset CPLEX parameter CPX_PARAM_EPGAP from %g (LowerBound) \n", cplexRelGap);
               if (DDSIP_param->outlev)
-                fprintf (DDSIP_bb->moreoutfile, "2 reset CPLEX parameter CPX_PARAM_EPGAP to %g (LowerBound) \n", cplexRelGap);
+                fprintf (DDSIP_bb->moreoutfile, " reset CPLEX parameter CPX_PARAM_EPGAP to %g (LowerBound) \n", cplexRelGap);
             }
         }
     }
@@ -1855,33 +1856,6 @@ NEXT_TRY:
                         fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to set CPLEX parameters (LowerBound) \n");
                     goto TERMINATE;
                 }
-#ifdef GREATERMIPGAP
-    if (ChangeMipGap && (DDSIP_bb->LBIters > 1))
-    {
-        double cplexRelGap;
-        if ((status = CPXgetdblparam (DDSIP_env, CPX_PARAM_EPGAP, &cplexRelGap)))
-        {
-            fprintf (stderr, "ERROR: Failed to ge CPLEX parameter CPX_PARAM_EPGAP (LowerBound) \n");
-            fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get CPLEX parameter CPX_PARAM_EPGAP (LowerBound) \n");
-        }
-        else
-        {
-            cplexRelGap = DDSIP_Dmin (DDSIP_Dmax(1.e+3*cplexRelGap, 5e-3), .9);
-            if ((status = CPXsetdblparam (DDSIP_env, CPX_PARAM_EPGAP, cplexRelGap)))
-            {
-              fprintf (stderr, "ERROR: Failed to set CPLEX parameter CPX_PARAM_EPGAP to %g (LowerBound) \n", cplexRelGap);
-              if (DDSIP_param->outlev)
-                fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to set CPLEX parameter CPX_PARAM_EPGAP to %g (LowerBound) \n", cplexRelGap);
-            }
-            else
-            {
-              fprintf (stderr, "3 reset CPLEX parameter CPX_PARAM_EPGAP from %g (LowerBound) \n", cplexRelGap);
-              if (DDSIP_param->outlev)
-                fprintf (DDSIP_bb->moreoutfile, "3 reset CPLEX parameter CPX_PARAM_EPGAP to %g (LowerBound) \n", cplexRelGap);
-            }
-        }
-    }
-#endif
 
                 if ((k = CPXgetnummipstarts(DDSIP_env, DDSIP_lp)) > 2)
                 {
@@ -2220,7 +2194,7 @@ NEXT_TRY:
                     (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][DDSIP_bb->firstvar] = 1.0;
                     //first_sol[DDSIP_bb->firstvar+1] equals the levels of inheritance
                     if (ChangeMipGap)
-                        (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][DDSIP_bb->firstvar + 1] = 2.0;
+                        (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][DDSIP_bb->firstvar + 1] = 1.0;
                     else
                         (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][DDSIP_bb->firstvar + 1] = 0.0;
                     //first_sol[DDSIP_bb->firstvar+2] is the number of the node where the solution was computed
@@ -2229,11 +2203,23 @@ NEXT_TRY:
                         fprintf (DDSIP_bb->moreoutfile, "    First-stage solution:\n");
                     for (j = 0; j < DDSIP_bb->firstvar; j++)
                     {
-                        //// Collect solution vector
-                        //if (DDSIP_bb->firsttype[j] == 'B' || DDSIP_bb->firsttype[j] == 'I' || DDSIP_bb->firsttype[j] == 'N')
-                        //    (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] = floor (mipx[DDSIP_bb->firstindex[j]] + 0.1);
-                        //else
-                        //    (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] = mipx[DDSIP_bb->firstindex[j]];
+                        // check and correct feasibility wrt. origial bounds on variable, since CPLEX may give slight violations
+                        //
+                        if (mipx[DDSIP_bb->firstindex[j]] < DDSIP_bb->lborg[j])
+                        {
+                            if (DDSIP_param->outlev)
+                                fprintf (DDSIP_bb->moreoutfile,"XXXX solution of variable %d in scenario %d: %22.15g less than original lb %22.15g\n", j, scen+1, mipx[DDSIP_bb->firstindex[j]], DDSIP_bb->lborg[j]);
+                            mipx[DDSIP_bb->firstindex[j]] = DDSIP_bb->lborg[j];
+                        
+                        }    
+                        else if (mipx[DDSIP_bb->firstindex[j]] > DDSIP_bb->uborg[j])
+                        {
+                            if (DDSIP_param->outlev)
+                                fprintf (DDSIP_bb->moreoutfile,"XXXX solution of variable %d in scenario %d: %22.15g greater than original ub %22.15g\n", j, scen+1, mipx[DDSIP_bb->firstindex[j]], DDSIP_bb->uborg[j]);
+                            mipx[DDSIP_bb->firstindex[j]] = DDSIP_bb->uborg[j];
+                        }    
+                        //mipx[DDSIP_bb->firstindex[j]] = DDSIP_Dmax(mipx[DDSIP_bb->firstindex[j]], DDSIP_bb->lborg[j]);
+                        //mipx[DDSIP_bb->firstindex[j]] = DDSIP_Dmin(mipx[DDSIP_bb->firstindex[j]], DDSIP_bb->uborg[j]);
 
                         (DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][j] = mipx[DDSIP_bb->firstindex[j]];
 
@@ -2312,33 +2298,6 @@ NEXT_TRY:
                                 fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to set CPLEX parameters (LowerBound) \n");
                             goto TERMINATE;
                         }
-#ifdef GREATERMIPGAP
-    if (ChangeMipGap && (DDSIP_bb->LBIters > 1))
-    {
-        double cplexRelGap;
-        if ((status = CPXgetdblparam (DDSIP_env, CPX_PARAM_EPGAP, &cplexRelGap)))
-        {
-            fprintf (stderr, "ERROR: Failed to ge CPLEX parameter CPX_PARAM_EPGAP (LowerBound) \n");
-            fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get CPLEX parameter CPX_PARAM_EPGAP (LowerBound) \n");
-        }
-        else
-        {
-            cplexRelGap = DDSIP_Dmin (DDSIP_Dmax(1.e+3*cplexRelGap, 5e-3), .9);
-            if ((status = CPXsetdblparam (DDSIP_env, CPX_PARAM_EPGAP, cplexRelGap)))
-            {
-              fprintf (stderr, "ERROR: Failed to set CPLEX parameter CPX_PARAM_EPGAP to %g (LowerBound) \n", cplexRelGap);
-              if (DDSIP_param->outlev)
-                fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to set CPLEX parameter CPX_PARAM_EPGAP to %g (LowerBound) \n", cplexRelGap);
-            }
-            else
-            {
-              fprintf (stderr, "4 reset CPLEX parameter CPX_PARAM_EPGAP from %g (LowerBound) \n", cplexRelGap);
-              if (DDSIP_param->outlev)
-                fprintf (DDSIP_bb->moreoutfile, "4 reset CPLEX parameter CPX_PARAM_EPGAP to %g (LowerBound) \n", cplexRelGap);
-            }
-        }
-    }
-#endif
                         nrFeasCheck++;
                         // Change bounds according to node in bb tree
                         if (DDSIP_bb->curbdcnt)
@@ -2711,7 +2670,7 @@ NEXT_TRY:
             }
         }
         if ((!(DDSIP_bb->found_optimal_node) && DDSIP_node[DDSIP_bb->curnode]->bound <= DDSIP_bb->bestvalue && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*DDSIP_Dmin(0.9*DDSIP_param->relgap, 1.e-8)) ||
-                ( (DDSIP_bb->found_optimal_node) && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node))
+                ( (DDSIP_bb->found_optimal_node) && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node && DDSIP_node[DDSIP_bb->curnode]->bound <= DDSIP_bb->bestvalue))
         {
 //////////////////////////////////////////////////////////////
             if (DDSIP_param->outlev > 20)
@@ -2797,7 +2756,7 @@ NEXT_TRY:
             }
         }
         if ((!(DDSIP_bb->found_optimal_node) && DDSIP_node[DDSIP_bb->curnode]->bound <= DDSIP_bb->bestvalue && DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bestvalue - fabs(DDSIP_bb->bestvalue)*DDSIP_Dmin(0.9*DDSIP_param->relgap, 1.e-8)) ||
-                ( (DDSIP_bb->found_optimal_node) && (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node)))
+                ( (DDSIP_bb->found_optimal_node) && (DDSIP_node[DDSIP_bb->curnode]->bound > DDSIP_bb->bound_optimal_node && DDSIP_node[DDSIP_bb->curnode]->bound <= DDSIP_bb->bestvalue)))
         {
 //////////////////////////////////////////////////////////////
             if (DDSIP_param->outlev > 20)
@@ -3195,12 +3154,12 @@ NEXT_TRY:
         double cplexRelGap;
         if ((status = CPXgetdblparam (DDSIP_env, CPX_PARAM_EPGAP, &cplexRelGap)))
         {
-            fprintf (stderr, "ERROR: Failed to ge CPLEX parameter CPX_PARAM_EPGAP (LowerBound) \n");
+            fprintf (stderr, "ERROR: Failed to get CPLEX parameter CPX_PARAM_EPGAP (LowerBound) \n");
             fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to get CPLEX parameter CPX_PARAM_EPGAP (LowerBound) \n");
         }
         else
         {
-            cplexRelGap = DDSIP_Dmin (DDSIP_Dmax(1.e+3*cplexRelGap, 5e-3), .9);
+            cplexRelGap = DDSIP_Dmin (DDSIP_Dmax(1.e+3*cplexRelGap,DDSIP_param->increasedTolerance ), .8);
             if ((status = CPXsetdblparam (DDSIP_env, CPX_PARAM_EPGAP, cplexRelGap)))
             {
               fprintf (stderr, "ERROR: Failed to set CPLEX parameter CPX_PARAM_EPGAP to %g (LowerBound) \n", cplexRelGap);
@@ -3605,16 +3564,16 @@ NEXT_TRY:
     }
 
     // Retrieve branching index and branching value
-    if (DDSIP_node[DDSIP_bb->curnode]->dispnorm < DDSIP_param->nulldisp)
+    if (DDSIP_node[DDSIP_bb->curnode]->dispnorm <= DDSIP_param->nulldisp)
     {
         DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
         //
-#ifdef DEBUG
+//#ifdef DEBUG
         if (DDSIP_param->outlev > 29)
         {
-            fprintf(DDSIP_bb->moreoutfile," dispersion in node %d less than nulldisp, make it a leaf\n", DDSIP_bb->curnode);
+            fprintf(DDSIP_bb->moreoutfile," dispersion in node %d less than nulldisp %g, make it a leaf\n", DDSIP_bb->curnode, DDSIP_param->nulldisp);
         }
-#endif
+//#endif
         //
     }
     else if (!DDSIP_node[DDSIP_bb->curnode]->leaf && DDSIP_bb->skip != 2)

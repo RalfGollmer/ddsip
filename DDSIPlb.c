@@ -1263,9 +1263,9 @@ DDSIP_LowerBound (double * ret_objval, int ChangeMipGap)
 {
     double objval, bobjval, tmpbestbound = 0.0, tmpbestvalue = 0.0, tmpfeasbound = 0.0, worst_case_lb = -1.e+10;
     double we, wr, mipgap, d, time_start, time_end, time_help, wall_secs, cpu_secs, gap, meanGap, maxGap, scenBound;
-#ifdef DEBUG
+//#ifdef DEBUG
     double time_lap;
-#endif
+//#endif
 
     int iscen, i_scen, probs_solved=0, i, j, k, status = 0, optstatus, mipstatus, scen, allopt = 1, relax = 0;
     int wall_hrs, wall_mins,cpu_hrs, cpu_mins;
@@ -1525,7 +1525,7 @@ DDSIP_LowerBound (double * ret_objval, int ChangeMipGap)
             }
             //****************************************************************************
             DDSIP_bb->solstat[scen] = 1;
-            if (!((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_OPTIMAL))
+            if (!(((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_OPTIMAL) || ((DDSIP_node[DDSIP_bb->curnode]->mipstatus)[scen] == CPXMIP_OPTIMAL_INFEAS)))
                 allopt = 0;
             // Temporary bound is infinity if a scenario problem is infeasible
             if (DDSIP_Equal ((DDSIP_node[DDSIP_bb->curnode]->subbound)[scen], DDSIP_infty))
@@ -2043,7 +2043,7 @@ NEXT_TRY:
             }                // end for else
 
             // If all scenario problems were solved to optimality ....
-            if (!(mipstatus == CPXMIP_OPTIMAL))
+            if (!(mipstatus == CPXMIP_OPTIMAL || mipstatus == CPXMIP_OPTIMAL_INFEAS))
             {
                 allopt = 0;
                 // If the tree was exhausted bobjval is huge
@@ -2693,18 +2693,6 @@ NEXT_TRY:
     }
     else
     {
-        if ((DDSIP_node[DDSIP_bb->curnode]->bound <  DDSIP_bb->bestvalue + DDSIP_param->accuracy) && (tmpbestvalue > DDSIP_bb->bestvalue + DDSIP_param->accuracy))
-        {
-            fprintf(DDSIP_outfile, "          WARNING: node %d is possibly not cut off just due to the MIP gaps. max MIP gap = %g%%, upper bound= %16.12g\n",
-                    DDSIP_bb->curnode, maxGap, tmpbestvalue);
-            if (DDSIP_param->outlev)
-            {
-                printf("          WARNING: node %d is possibly not cut off just due to the MIP gaps. max MIP gap = %g%%, upper bound= %16.12g\n", DDSIP_bb->curnode, maxGap, tmpbestvalue);
-                fprintf(DDSIP_bb->moreoutfile, "          WARNING: node %d is possibly not cut off just due to the MIP gaps. max MIP gap = %g%%, upper bound= %16.12g\n",
-                        DDSIP_bb->curnode, maxGap, tmpbestvalue);
-            }
-            DDSIP_bb->bestBound = 1;
-        }
         // Count number of differences within first stage solution in current node
         // DDSIP_bb->violations=k means differences in k components
         if (DDSIP_param->outlev > 24)
@@ -2766,6 +2754,29 @@ NEXT_TRY:
 //////////////////////////////////////////////////////////////
             DDSIP_bb->found_optimal_node = DDSIP_bb->curnode;
             DDSIP_bb->bound_optimal_node = DDSIP_node[DDSIP_bb->curnode]->bound;
+        }
+        if ((DDSIP_node[DDSIP_bb->curnode]->bound <  DDSIP_bb->bestvalue + DDSIP_param->accuracy) && (tmpbestvalue > DDSIP_bb->bestvalue + DDSIP_param->accuracy))
+        {
+            fprintf(DDSIP_outfile, "          WARNING: node %d is possibly not cut off just due to the MIP gaps. max MIP gap = %g%%, upper bound= %16.12g\n",
+                    DDSIP_bb->curnode, maxGap, tmpbestvalue);
+            if (DDSIP_param->outlev)
+            {
+                printf("          WARNING: node %d is possibly not cut off just due to the MIP gaps. max MIP gap = %g%%, upper bound= %16.12g\n", DDSIP_bb->curnode, maxGap, tmpbestvalue);
+                fprintf(DDSIP_bb->moreoutfile, "          WARNING: node %d is possibly not cut off just due to the MIP gaps. max MIP gap = %g%%, upper bound= %16.12g\n",
+                        DDSIP_bb->curnode, maxGap, tmpbestvalue);
+            }
+            DDSIP_bb->bestBound = 1;
+/*
+//          if (DDSIP_node[DDSIP_bb->curnode]->dispnorm < DDSIP_Dmax (5.e-10, DDSIP_param->nulldisp))
+//          {
+//              if (DDSIP_param->outlev)
+//              {
+//                  fprintf(DDSIP_bb->moreoutfile, "          WARNING: setting bond for node %d to bestvalue= %16.12g in order to avoid unnecessary branching later on.\n",
+//                      DDSIP_bb->curnode, DDSIP_bb->bestvalue);
+//              }
+//              DDSIP_node[DDSIP_bb->curnode]->bound = DDSIP_bb->bestvalue;
+//          }
+*/
         }
 
         // More debugging information
@@ -2991,7 +3002,7 @@ NEXT_TRY:
                         fprintf (DDSIP_bb->moreoutfile, "######  set skip to -1, riskmod= %d, param->cb= %d ###########\n", DDSIP_param->riskmod, DDSIP_param->cb);
                 }
                 // Update if better solution was found
-                if (DDSIP_bb->heurval < DDSIP_bb->bestvalue - 1.e-14)
+                if (DDSIP_bb->heurval < DDSIP_bb->bestvalue - 1.e-10)
                 {
 //////////////////////////////////////////////////////////////////
                     if (DDSIP_param->outlev > 21)
@@ -3028,6 +3039,16 @@ NEXT_TRY:
                                 if ((DDSIP_node[DDSIP_bb->curnode]->first_sol)[scen][DDSIP_bb->firstvar + 2] < DDSIP_bb->curnode)
                                 {
                                     nodes_1st = nodes_2nd = -1;
+                                    // reset CPLEX parameters to lb
+                                    status = DDSIP_SetCpxPara (DDSIP_param->cpxnolb, DDSIP_param->cpxlbisdbl, DDSIP_param->cpxlbwhich, DDSIP_param->cpxlbwhat);
+                                    if (status)
+                                    {
+                                        fprintf (stderr, "ERROR: Failed to set CPLEX parameters (LowerBound) \n");
+                                        fprintf (DDSIP_outfile, "ERROR: Failed to set CPLEX parameters (LowerBound) \n");
+                                        if (DDSIP_param->outlev)
+                                            fprintf (DDSIP_bb->moreoutfile, "ERROR: Failed to set CPLEX parameters (LowerBound) \n");
+                                        goto TERMINATE;
+                                    }
                                     // Output
                                     if (DDSIP_param->outlev)
                                     {
@@ -3062,7 +3083,7 @@ NEXT_TRY:
                                     // Optimize
                                     if (relax < 2)
                                     {
-#ifdef DEBUG
+//#ifdef DEBUG
                                         // query time limit amd mip rel. gap parameters
                                         if (DDSIP_param->cpxscr || DDSIP_param->outlev > 21)
                                         {
@@ -3070,7 +3091,7 @@ NEXT_TRY:
                                             status = CPXgetdblparam (DDSIP_env,CPX_PARAM_EPGAP,&wr);
                                             printf ("   -- 1st optimization time limit: %gs, rel. gap: %g%% --\n",we,wr*100.0);
                                         }
-#endif
+//#endif
                                         // Optimize MIP
                                         DDSIP_bb->scenLBIters++;
                                         optstatus = CPXmipopt (DDSIP_env, DDSIP_lp);
@@ -3082,7 +3103,7 @@ NEXT_TRY:
                                                 fprintf (stderr, "ERROR: Query of CPLEX mip gap from 1st optimization failed (LowerBound) \n");
                                                 fprintf (stderr, "       CPXgetstat returned: %d\n",status);
                                             }
-#ifdef DEBUG
+//#ifdef DEBUG
                                             time_lap = DDSIP_GetCpuTime ();
                                             nodes_1st = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
                                             if (DDSIP_param->cpxscr || DDSIP_param->outlev > 11)
@@ -3091,7 +3112,7 @@ NEXT_TRY:
                                                 if (DDSIP_param->outlev)
                                                     fprintf (DDSIP_bb->moreoutfile,"      LB: after 1st optimization: mipgap %% %-12g %7d nodes  (%7.2fs), status: %d\n",mipgap*100.0,nodes_1st,time_lap-time_start,mipstatus);
                                             }
-#endif
+//#endif
                                             if (DDSIP_param->watchkappa)
                                             {
                                                 double maxkappaval, stablekappaval, suspiciouskappaval, unstablekappaval, illposedkappaval;
@@ -3177,13 +3198,13 @@ NEXT_TRY:
 #endif
                                                 // query time limit amd mip rel. gap parameters
                                                 status = CPXgetdblparam (DDSIP_env,CPX_PARAM_EPGAP,&wr);
-#ifdef DEBUG
+//#ifdef DEBUG
                                                 if (DDSIP_param->cpxscr || DDSIP_param->outlev > 21)
                                                 {
                                                     status = CPXgetdblparam (DDSIP_env,CPX_PARAM_TILIM,&we);
                                                     printf ("   -- 2nd optimization time limit: %gs, rel. gap: %g%% --\n",we,wr*100.0);
                                                 }
-#endif
+//#endif
                                                 // continue if desired gap is not reached yet
                                                 if (mipgap > wr)
                                                 {
@@ -3204,7 +3225,7 @@ NEXT_TRY:
                                                     }
                                                     optstatus = CPXmipopt (DDSIP_env, DDSIP_lp);
                                                     nodes_2nd = CPXgetnodecnt (DDSIP_env,DDSIP_lp);
-#ifdef DEBUG
+//#ifdef DEBUG
                                                     if (DDSIP_param->cpxscr || DDSIP_param->outlev > 11)
                                                     {
                                                         if (CPXgetmiprelgap(DDSIP_env, DDSIP_lp, &mipgap))
@@ -3220,7 +3241,7 @@ NEXT_TRY:
                                                                 fprintf (DDSIP_bb->moreoutfile,"      LB: after 2nd optimization: mipgap %% %-12g %7d nodes  (%7.2fs), status: %d\n",mipgap*100.0,nodes_2nd,time_lap-time_start,mipstatus);
                                                         }
                                                     }
-#endif
+//#endif
                                                 }
                                                 if (DDSIP_param->watchkappa)
                                                 {
@@ -3436,7 +3457,7 @@ NEXT_TRY:
 
                                     (DDSIP_node[DDSIP_bb->curnode]->cursubsol)[scen] = objval;
                                     // If all scenario problems were solved to optimality ....
-                                    if (!(mipstatus == CPXMIP_OPTIMAL))
+                                    if (!((mipstatus == CPXMIP_OPTIMAL) || (mipstatus == CPXMIP_OPTIMAL_INFEAS)))
                                     {
                                         allopt = 0;
                                         // If the tree was exhausted bobjval is huge
@@ -3459,23 +3480,23 @@ NEXT_TRY:
                                         if (mipstatus == CPXMIP_OPTIMAL)
                                             fprintf (DDSIP_bb->moreoutfile,
                                                      "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%10.4g%%)     ",
-                                                     iscen + 1, scen + 1, objval, bobjval, gap);
+                                                     scen + 1, scen + 1, objval, bobjval, gap);
                                         else if (mipstatus == CPXMIP_OPTIMAL_TOL)
                                             fprintf (DDSIP_bb->moreoutfile,
                                                      "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%10.4g%%) tol.",
-                                                     iscen + 1, scen + 1, objval, bobjval, gap);
+                                                     scen + 1, scen + 1, objval, bobjval, gap);
                                         else if (mipstatus == CPXMIP_NODE_LIM_FEAS)
                                             fprintf (DDSIP_bb->moreoutfile,
                                                      "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%10.4g%%) NODE",
-                                                     iscen + 1, scen + 1, objval, bobjval, gap);
+                                                     scen + 1, scen + 1, objval, bobjval, gap);
                                         else if (mipstatus == CPXMIP_TIME_LIM_FEAS)
                                             fprintf (DDSIP_bb->moreoutfile,
                                                      "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%10.4g%%) TIME",
-                                                     iscen + 1, scen + 1, objval, bobjval, gap);
+                                                     scen + 1, scen + 1, objval, bobjval, gap);
                                         else
                                             fprintf (DDSIP_bb->moreoutfile,
                                                      "%4d Scenario %4.0d:  Best=%-20.14g\tBound=%-20.14g (%10.4g%%) %-4.0d ",
-                                                     iscen + 1, scen + 1, objval, bobjval, gap, mipstatus);
+                                                     scen + 1, scen + 1, objval, bobjval, gap, mipstatus);
                                         fprintf (DDSIP_bb->moreoutfile,
                                                  "\t %3dh %02d:%02.0f / %3dh %02d:%05.2f (%7.2fs n:%5d",
                                                  wall_hrs,wall_mins,wall_secs,cpu_hrs,cpu_mins,cpu_secs, time_help, nodes_1st);
@@ -3520,8 +3541,6 @@ NEXT_TRY:
                                         fprintf (DDSIP_bb->moreoutfile, "\n");
                                 }
                             }
-                            DDSIP_bb->bestvalue = tmpbestvalue;
-                            DDSIP_bb->feasbound = tmpfeasbound;
                             if (!DDSIP_param->riskmod)
                             {
                                 DDSIP_bb->bestexp = DDSIP_bb->bestvalue;
@@ -3538,6 +3557,17 @@ NEXT_TRY:
                                 DDSIP_bb->bestsol[j] = (DDSIP_node[DDSIP_bb->curnode]->first_sol)[0][j];
                             if (DDSIP_param->outlev)
                                 fprintf (DDSIP_bb->moreoutfile, "\t(Current best bound, improvement %16.12g, %g%%)\n",DDSIP_bb->bestvalue-tmpbestvalue,1e+2*(DDSIP_bb->bestvalue-tmpbestvalue)/(fabs(DDSIP_bb->bestvalue) + 1.e-16));
+                            DDSIP_bb->bestvalue = tmpbestvalue;
+                            DDSIP_bb->feasbound = tmpfeasbound;
+                            // in order to avoid unnecessary further branching set the bound for the node to the heuristic value, even if there are nonzero MIP gaps
+                            if (DDSIP_param->outlev)
+                                fprintf (DDSIP_bb->moreoutfile, "\tWARNING: Set bound of node to bestvalue - in order to avoid useless bounding later on.\n");
+                
+                            if (DDSIP_node[DDSIP_bb->curnode]->bound < tmpbestvalue)
+                            {
+                                fprintf (DDSIP_outfile, "\tWARNING: Set bound %18.10g of node to bestvalue %18.10g - in order to avoid useless bounding later on.\n", DDSIP_node[DDSIP_bb->curnode]->bound, tmpbestvalue);
+                                DDSIP_node[DDSIP_bb->curnode]->bound = tmpbestvalue;
+                            }
                             // Print a line of output
                             DDSIP_PrintStateUB (0);
                             // copy second stage solutions of current best

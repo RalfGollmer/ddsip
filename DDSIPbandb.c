@@ -866,6 +866,8 @@ DDSIP_Bound (void)
             front_node_bound[DDSIP_bb->front_nodes_sorted[i]] =  (DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->leaf) ? DDSIP_infty : DDSIP_node[DDSIP_bb->front_nodes_sorted[i]]->bound;
         }
         DDSIP_qsort_ins_A (front_node_bound, DDSIP_bb->front_nodes_sorted, 0, DDSIP_bb->nofront-1);
+        DDSIP_bb->bestbound_red = DDSIP_node[DDSIP_bb->front_nodes_sorted[0]]->bound;
+
         cnt = 1;
 
         // sort the least bound nodes according to the violations and depth

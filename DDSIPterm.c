@@ -88,6 +88,13 @@ DDSIP_Continue (int *noiter, int *boundstat)
         sprintf (message, "\nGap reached.\n");
         solstat = 2;
     }
+    // Gap wrt. reduced front
+    else if ((DDSIP_bb->bestvalue - DDSIP_bb->bestbound_red <= DDSIP_param->absgap + DDSIP_param->accuracy)
+             || ((DDSIP_bb->bestvalue - DDSIP_bb->bestbound_red) / (fabs(DDSIP_bb->bestvalue)+1e-16) <= DDSIP_param->relgap))
+    {
+        sprintf (message, "\nGap within the reduced front (excl. leaves) reached.\n");
+        solstat = 5;
+    }
     // Nodelimit
     else if (DDSIP_bb->nonode > DDSIP_param->nodelim + 1)
     {

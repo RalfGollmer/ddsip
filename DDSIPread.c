@@ -1222,9 +1222,9 @@ DDSIP_ReadSpec ()
     DDSIP_param->logfreq   = (int) floor (DDSIP_ReadDbl (specfile, "LOGFRE", " LOG FREQUENCY", 1., 1, 0., DDSIP_bigint) + 0.1);
     DDSIP_param->nodelim   = (int) floor (DDSIP_ReadDbl (specfile, "NODELI", " NODE LIMIT", DDSIP_bigint, 1, 0., INT_MAX-1) + 0.1);
     // Accuracy, e.g. for the  comparison of double numbers
-    DDSIP_param->accuracy  = DDSIP_ReadDbl (specfile, "ACCURA", " ACCURACY", 1.0e-12, 0, 1.e-14, 1.);
-    DDSIP_param->brancheps = DDSIP_ReadDbl (specfile, "EPSILO", " EPSILON", 2.e-09, 0, 5.e-12, 1.);
-    DDSIP_param->nulldisp  = DDSIP_ReadDbl (specfile, "NULLDI", " NULL DISPERSION", 0.5e-09, 0, 7.5e-12, DDSIP_infty);
+    DDSIP_param->accuracy  = DDSIP_ReadDbl (specfile, "ACCURA", " ACCURACY", 1.0e-11, 0, 1.e-14, 1.);
+    DDSIP_param->brancheps = DDSIP_ReadDbl (specfile, "EPSILO", " EPSILON", 2.e-09, 0, 5.e-10, 1.);
+    DDSIP_param->nulldisp  = DDSIP_ReadDbl (specfile, "NULLDI", " NULL DISPERSION", 7.5e-10, 0, 7e-10, DDSIP_infty);
     DDSIP_param->absgap    = DDSIP_ReadDbl (specfile, "ABSOLU", " ABSOLUTE GAP", 0., 0, 0., DDSIP_infty);
     DDSIP_param->relgap    = DDSIP_ReadDbl (specfile, "RELATI", " RELATIVE GAP", 1.0e-6, 0, 1.1*DDSIP_param->brancheps, 1.);
     DDSIP_param->expected  = (int) floor (DDSIP_ReadDbl (specfile, "EEVPRO", " EXPECTED VALUE PROBLEM", 0., 1, 0., 1.) + 0.1);
@@ -1292,6 +1292,14 @@ DDSIP_ReadSpec ()
         DDSIP_param->heuristic_vector[1] = 11;
         switch (DDSIP_param->heuristic_order)
         {
+        case 0:
+            // no rounded means at all
+            for (i = 2; i< 9; i++)
+            {
+                DDSIP_param->heuristic_vector[i]     = i + 2;
+            }
+            DDSIP_param->heuristic_num = 9;
+            break;
         case 1:
             // rounded means at the end
             for (i = 2; i< 9; i++)
@@ -1303,6 +1311,7 @@ DDSIP_ReadSpec ()
                 DDSIP_param->heuristic_vector[i + 8] = i;
                 DDSIP_param->heuristic_vector[i + 11] = i + 20;
             }
+            DDSIP_param->heuristic_num = 12;
             break;
         case 2:
             // rounded means in the middle
@@ -1314,6 +1323,7 @@ DDSIP_ReadSpec ()
             }
             for (i = 7; i< 11; i++)
                 DDSIP_param->heuristic_vector[i + 1] = i;
+            DDSIP_param->heuristic_num = 12;
             break;
         default:
             // rounded means at the beginning
@@ -1326,8 +1336,8 @@ DDSIP_ReadSpec ()
             {
                 DDSIP_param->heuristic_vector[i + 1]  = i;
             }
+            DDSIP_param->heuristic_num = 12;
         }
-        DDSIP_param->heuristic_num = 12;
         DDSIP_param->heuristic_auto = 1;
         DDSIP_param->interrupt_heur = (int) floor (DDSIP_ReadDbl (specfile, "INTHEU", " INTERRUPT HEURISTIC LOOP", -1., 1, -1., 1.) + 0.1);
     }
@@ -1900,13 +1910,13 @@ DDSIP_ReadData ()
     }
     fprintf (DDSIP_outfile, "\nSTOCHASTIC RHS DATA READ FROM `%s'.\n", fname);
     h = DDSIP_data->prob[0];
-    if (DDSIP_param->heuristic == 100)
+    if (DDSIP_param->heuristic == 100 && DDSIP_param->heuristic_order)
     {
         for (i = 1; i < DDSIP_param->scenarios; i++)
         {
             if (!DDSIP_Equal (h, DDSIP_data->prob[i]))
             {
-                DDSIP_param->heuristic_num = 15;
+                DDSIP_param->heuristic_num += 3;
                 break;
             }
         }

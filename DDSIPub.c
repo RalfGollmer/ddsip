@@ -1028,6 +1028,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                     if (DDSIP_param->outlev)
                                                     {
                                                         fprintf (DDSIP_bb->moreoutfile," ##### adding cut %s  (infeas. scen %2d), violation %.15g, lhs= %.15g, min/max coeff %.6g/%.6g, #: %d rhs= %.16g ######\n", rowstore, Bs+1, viol, lhs, min_entry, max_entry, icnt, rhs);
+                                                        fprintf (DDSIP_bb->moreoutfile," ##### Bi= %d, shifts=%d)\n", Bi, DDSIP_bb->shifts);
                                                         if (DDSIP_param->outlev > 8)
                                                             printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
                                                     }
@@ -1053,10 +1054,14 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                     //shift this infeasible scenario to first place, such that next time it is checked first
                                                     if (Bi)
                                                     {
-#ifdef DEBUG
+                                                        if (Bi >= DDSIP_bb->shifts)
+                                                        {
+                                                            DDSIP_bb->shifts++;
+                                                        }
+//#ifdef DEBUG
                                                         if(DDSIP_param->outlev > 20)
                                                             fprintf(DDSIP_bb->moreoutfile," ######## shift infeasible scen %d to top, (index, shifts: %d, %d)\n", DDSIP_bb->ub_scen_order[Bi]+1, Bi, DDSIP_bb->shifts);
-#endif
+//#endif
                                                         if (Bi >= DDSIP_bb->shifts)
                                                         {
                                                             DDSIP_bb->shifts++;
@@ -1071,6 +1076,8 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                                     else if (!DDSIP_bb->shifts)
                                                     {
                                                         DDSIP_bb->shifts = 1;
+                                                        if(DDSIP_param->outlev)
+                                                            fprintf(DDSIP_bb->moreoutfile," ######## set shifts to 1: Bi: %d shifts: %d)\n", Bi, DDSIP_bb->shifts);
                                                     }
                                                 }
                                                 else
@@ -1517,6 +1524,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                         if (DDSIP_param->outlev)
                                         {
                                             fprintf (DDSIP_bb->moreoutfile," ##### adding cut %s  (infeas. scen %2d), violation %.15g, lhs= %.15g, min/max coeff %.6g/%.6g, #: %d rhs= %.16g ######\n", rowstore, Bs+1, viol, lhs, min_entry, max_entry, icnt, rhs);
+                                            fprintf (DDSIP_bb->moreoutfile," ##### Bi= %d, shifts=%d)\n", Bi, DDSIP_bb->shifts);
                                             if (DDSIP_param->outlev > 8)
                                                 printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
                                         }
@@ -1548,12 +1556,12 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                             end = DDSIP_Imin (DDSIP_bb->shifts + 2, DDSIP_param->scenarios);
                                         }
                                         //shift this infeasible scenario to first place, such that next time it is checked first
-                                        if (Bi != iscen)
+                                        if (Bi)
                                         {
-#ifdef DEBUG
+//#ifdef DEBUG
                                             if(DDSIP_param->outlev > 20)
                                                 fprintf(DDSIP_bb->moreoutfile," ######## shift infeasible scen %d to top, (index, shifts: %d, %d)\n", DDSIP_bb->ub_scen_order[Bi]+1, Bi, DDSIP_bb->shifts);
-#endif
+//#endif
                                             if (Bi >= DDSIP_bb->shifts)
                                             {
                                                 DDSIP_bb->shifts++;

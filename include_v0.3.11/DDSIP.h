@@ -458,6 +458,8 @@ extern "C" {
         double expbest;
         // Current lower bound (minimum of lower bounds of all front nodes)
         double bestbound;
+        // Current lower bound (minimum of lower bounds of all reduced front nodes)
+        double bestbound_red;
         // Current best upper bound
         double bestvalue;
         // Last best upper bound

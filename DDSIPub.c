@@ -1524,7 +1524,7 @@ DDSIP_UpperBound (int nrScenarios, int feasCheckOnly)
                                         if (DDSIP_param->outlev)
                                         {
                                             fprintf (DDSIP_bb->moreoutfile," ##### adding cut %s  (infeas. scen %2d), violation %.15g, lhs= %.15g, min/max coeff %.6g/%.6g, #: %d rhs= %.16g ######\n", rowstore, Bs+1, viol, lhs, min_entry, max_entry, icnt, rhs);
-                                            fprintf (DDSIP_bb->moreoutfile," ##### Bi= %d, shifts=%d)\n", Bi, DDSIP_bb->shifts);
+                                            //fprintf (DDSIP_bb->moreoutfile," ##### Bi= %d, shifts=%d)\n", Bi, DDSIP_bb->shifts);
                                             if (DDSIP_param->outlev > 8)
                                                 printf (" ############ adding cut %s  (infeas. scen %2d) ############\n", rowstore, Bs+1);
                                         }

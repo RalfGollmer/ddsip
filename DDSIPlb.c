@@ -417,8 +417,8 @@ DDSIP_GetBranchIndex (double *dispnorm)
                 }
             }
             if (!((abs(DDSIP_param->riskmod) == 4) && (index[j] == DDSIP_bb->firstvar - 1)) &&
-                    ((DDSIP_param->equalbranch == 1) || (DDSIP_node[DDSIP_bb->curnode]->depth > DDSIP_param->depth_uneq && DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->depth_uneq +3) ||
-                     ((!DDSIP_param->equalbranch && ((DDSIP_bb->curnode < 17) || ((DDSIP_bb->curnode > 25) && (DDSIP_bb->curnode%10 >= 6|| DDSIP_node[DDSIP_bb->curnode]->depth < DDSIP_param->depth_uneq + 4)))) &&
+                    ((DDSIP_param->equalbranch == 1) ||
+                     ((!DDSIP_param->equalbranch && ((DDSIP_node[DDSIP_bb->curnode]->depth > DDSIP_param->depth_uneq && DDSIP_node[DDSIP_bb->curnode]->depth <= DDSIP_param->depth_uneq +3) || (DDSIP_bb->curnode < 17) || ((DDSIP_bb->curnode > 25) && (DDSIP_bb->curnode%10 >= 6|| DDSIP_node[DDSIP_bb->curnode]->depth < DDSIP_param->depth_uneq + 4)))) &&
                        ((!DDSIP_bb->curnode || DDSIP_node[DDSIP_bb->curnode]->depth > DDSIP_param->depth_uneq)))
                     )
                )

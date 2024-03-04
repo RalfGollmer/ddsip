@@ -2733,7 +2733,10 @@ NEXT_TRY:
         }
         DDSIP_node[DDSIP_bb->curnode]->dispnorm = maxdispersion;
         DDSIP_node[DDSIP_bb->curnode]->violations = DDSIP_bb->violations;
-        DDSIP_bb->meanGapLB = DDSIP_Dmax(DDSIP_bb->meanGapLB, meanGap);
+        if (DDSIP_bb->curnode == 2)
+            DDSIP_bb->meanGapLB = meanGap;
+        else
+            DDSIP_bb->meanGapLB = DDSIP_Dmax(DDSIP_bb->meanGapLB, meanGap);
         if (!DDSIP_bb->violations)
         {
             DDSIP_node[DDSIP_bb->curnode]->leaf = 1;
